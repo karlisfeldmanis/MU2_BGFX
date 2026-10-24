@@ -1,6 +1,7 @@
 #include "game/ui/card.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
@@ -84,6 +85,8 @@ constexpr uint32_t kDivider = style::kAsh3;
 // A rune row's pips (Card::pipsAt): where they start, their size and step, in units, and the
 // hole an empty one's ring is drawn round.
 constexpr float kPipsX = 64.0f, kPipRadius = 1.9f, kPipPitch = 5.4f;
+// A rune row's effect under its name: its share of a row's height, and its type.
+constexpr float kNoteShare = 0.7f, kNoteSize = 6.5f;
 constexpr uint32_t kPipHole = gfx::rgba(0.075f, 0.067f, 0.055f);
 // The Bonuses page's values, each in what it is: a stat's, an element's, a fortune's colour.
 // Never red: red reads as a loss (the user, 2026-10-23).
@@ -410,15 +413,21 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
                                       total.agility - hero->points.agility,
                                       total.vitality - hero->points.vitality,
                                       total.energy - hero->points.energy};
-                const char* const statWords[4] = {"Strength", "Agility", "Vitality", "Energy"};
+                // Named by the runes, not the stat (the user, 2026-10-24: "Strength is rune
+                // name?"): Might, Grace, Vigor, Insight, in the strongest worn's ink.
+                const char* const statWords[4] = {"Might", "Grace", "Vigor", "Insight"};
+                const char* const statLong[4] = {"strength", "agility", "vitality", "energy"};
                 const uint32_t statInks[4] = {kStrengthInk, kAgilityInk, kVitalityInk, kEnergyInk};
                 const sim::Power statRunes[4] = {sim::Power::LesserMight, sim::Power::LesserGrace,
                                                  sim::Power::LesserVigor, sim::Power::LesserInsight};
                 for (int k = 0; k < 4; ++k) {
                     if (shares[k] <= 0) continue;
-                    Line line{statWords[k], plusPercent(shares[k]) + " (" + plus(added[k]) + ")", false};
+                    Line line{statWords[k], plusPercent(shares[k]), false};
+                    line.note = std::string(statLong[k]) + ", " + plus(added[k]) + " points";
+                    line.note[0] = char(std::toupper(static_cast<unsigned char>(line.note[0])));
                     line.ink = statInks[k];
                     pipsOf(line, statRunes[k]);
+                    if (!line.stones.empty()) line.labelInk = line.stones.front();
                     runes.lines.push_back(std::move(line));
                 }
                 // The rest, a row a power in the order worn; Bulwark's kin and the Volleys' each
@@ -452,8 +461,10 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
                         if (tells[0] == '+' && std::sscanf(tells + 1, "%d%%", &each) == 1 &&
                             std::strchr(tells, '%') != nullptr) {
                             line.value = plusPercent(each * counted);
+                            line.note = std::string(tells) + (count > 1 ? " each" : "");
                         } else {
                             line.value = "x" + std::to_string(count);
+                            line.note = tells;
                         }
                         line.ink = kHeading;
                         runes.lines.push_back(std::move(line));
@@ -907,21 +918,27 @@ void Card::rebuild() {
             }
         }
     } else {
-        // A page heavy with gear's chances closes its rows up before it would cross the foot.
-        size_t rows = 0;
-        for (const Group& group : now_.groups) rows += group.lines.size();
+        // A page heavy with gear's chances closes its rows up before it would cross the foot. A
+        // rune's row has its effect under it (Line::note), the note kNoteShare of a row tall.
+        float rows = 0.0f;
+        for (const Group& group : now_.groups) {
+            for (const Line& line : group.lines) rows += line.note.empty() ? 1.0f : 1.0f + kNoteShare;
+        }
         const float heads = (kGroupHead + kGroupGap) * float(now_.groups.size());
         const float rowTall =
-            rows ? std::min(kRowTall, (kBodyBottom - kBodyTop - drop - heads) / float(rows)) : kRowTall;
+            rows > 0.0f ? std::min(kRowTall, (kBodyBottom - kBodyTop - drop - heads) / rows) : kRowTall;
         float uy = kBodyTop + drop;
         for (const Group& group : now_.groups) {
             smallCaps(kWellX + 2.0f, at(uy + 1.0f, kSmallCaps), kDim, group.name);
             uy += kGroupHead;
-            const float tall = rowTall * float(group.lines.size());
+            float tall = 0.0f;
+            for (const Line& line : group.lines) tall += rowTall * (line.note.empty() ? 1.0f : 1.0f + kNoteShare);
             panel::cell(canvas_, x, y, {kWellX, uy, kWellW, tall}, sheet::Cell::Rest);
+            float ly = uy;
             for (size_t l = 0; l < group.lines.size(); ++l) {
                 const Line& line = group.lines[l];
-                const Box row{kWellX, uy + rowTall * float(l), kWellW, rowTall};
+                const float noteTall = line.note.empty() ? 0.0f : rowTall * kNoteShare;
+                const Box row{kWellX, ly, kWellW, rowTall};
                 if (l > 0) canvas_.rect(panel::scaled(x, y, {row.x + 1.0f, row.y, row.w - 2.0f, 0.5f}), kDivider);
                 const float base = panel::centredBaseline(face, panel::scaled(x, y, row), kRowSize * k);
                 controls::label(canvas_, x + kLeft * k, base, kRowSize * k,
@@ -929,6 +946,14 @@ void Card::rebuild() {
                 if (line.pips > 0 || !line.stones.empty()) pipsAt(line, x + kPipsX * k, base - kRowSize * k * 0.32f, k);
                 controls::ranged(canvas_, x + kRight * k, base, kRowSize * k, line.dim ? kDim : line.ink ? line.ink : kHeading,
                                  line.value);
+                if (!line.note.empty()) {
+                    // What the rune does, quiet under its name.
+                    const Box under{kWellX, ly + rowTall - 1.5f, kWellW, noteTall};
+                    controls::label(canvas_, x + kLeft * k,
+                                    panel::centredBaseline(face, panel::scaled(x, y, under), kNoteSize * k),
+                                    kNoteSize * k, kQuiet, line.note);
+                }
+                ly += rowTall + noteTall;
             }
             uy += tall + kGroupGap;
         }

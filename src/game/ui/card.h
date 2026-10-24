@@ -61,6 +61,8 @@ private:
         uint32_t labelInk = 0;
         int pips = 0;
         std::vector<uint32_t> stones;
+        // What it does, quiet on a second line under its name: "+10% critical chance each".
+        std::string note;
         bool operator==(const Line&) const = default;
     };
     // A headed block of lines on the Combat and Bonuses pages.
