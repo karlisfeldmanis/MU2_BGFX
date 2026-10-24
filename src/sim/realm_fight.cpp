@@ -463,8 +463,8 @@ void Realm::stormcall(Body& hero, Body& struck, int wound) {
     for (const int slot : {int(kWeaponRight), int(kWeaponLeft)}) {
         const Held& hand = kit[slot];
         if (hand.empty()) continue;
-        // Each socket's power rolls on its own, in socket order -- three of one at most, the
-        // pair's other three idle (sim::kRuneStackMost).
+        // Each socket's power rolls on its own, in socket order -- kRuneStackMost of one at
+        // most (sim::kRuneStackMost).
         for (int socket = 0; socket < std::min<int>(hand.sockets, kMostSockets); ++socket) {
             const PowerRow* power = powerOf(hand.powers[socket]);
             if (power == nullptr || !power->weapon() || !power->takenBy(hero.kin, hero.second) ||

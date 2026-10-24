@@ -395,7 +395,7 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
             if (has(5)) e.excellentChance += 0.2;
         }
     }
-    // Which worn runes count (sim::kRuneStackMost): of each family the strongest three, the
+    // Which worn runes count (sim::kRuneStackMost): of each family the strongest kRuneStackMost, the
     // first found where they are as strong.
     bool counted[kRingLeft + 1][kMostSockets] = {};
     {
@@ -704,7 +704,7 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
         }
     }
     // The stat runes, in any socket of anything worn, summed (sim::statShareOf) -- the best
-    // three for each stat (sim::kRuneStackMost), Might and Ascendance alike.
+    // sim::kRuneStackMost for each stat, Might and Ascendance alike.
     hero.runeShare = HeroPoints{};
     {
         int shares[4][(kRingLeft + 1) * kMostSockets];

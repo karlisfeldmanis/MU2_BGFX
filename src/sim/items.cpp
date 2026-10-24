@@ -707,6 +707,7 @@ const PowerRow* powerOf(uint8_t power) {
 }
 
 Stacking stackingOf(Power power) {
+    static_assert(kRuneStackMost == 6, "the lines below say the count");
     switch (power) {
         // Read once, a flag or a count that is only asked `> 0` (Excellence::frenzies, volleys;
         // skills.h lanesOf), or the best share of the worn kept (bulwarkShare, the volleys' side).
@@ -727,8 +728,8 @@ Stacking stackingOf(Power power) {
         // burst but Fire Ball's +50% is asked `pyroblasts() > 0`.
         case Power::Whirlwind:
         case Power::Eddy:
-        case Power::Swirl: return {true, "Damage stacks up to 3, pull chance doesn't"};
-        case Power::Pyroblast: return {true, "Burst chance stacks up to 3, damage doesn't"};
+        case Power::Swirl: return {true, "Damage stacks up to 6, pull chance doesn't"};
+        case Power::Pyroblast: return {true, "Burst chance stacks up to 6, damage doesn't"};
         // Their own ceilings, kSteadfastMost (its line says it) and kPlagueMost.
         case Power::Steadfast: return {true, "Stacks"};
         case Power::Plague:
@@ -743,15 +744,15 @@ Stacking stackingOf(Power power) {
         case Power::LesserInsight:
         case Power::GreaterInsight:
         case Power::LesserAscendance:
-        case Power::GreaterAscendance: return {true, "Stacks, the best 3 of a stat count"};
+        case Power::GreaterAscendance: return {true, "Stacks, the best 6 of a stat count"};
         default: break;
     }
     // A family of tiers keeps its strongest three, a lone rune its first three.
     const Power family = Power(stackFamilyOf(power));
     for (const Power tier : {Power::FaintWellspring, Power::LesserBarrage, Power::Spite}) {
-        if (family == tier) return {true, "Stacks, the best 3 of its kind count"};
+        if (family == tier) return {true, "Stacks, the best 6 of its kind count"};
     }
-    return {true, "Stacks, up to 3"};
+    return {true, "Stacks, up to 6"};
 }
 
 uint8_t stackFamilyOf(Power power) {
