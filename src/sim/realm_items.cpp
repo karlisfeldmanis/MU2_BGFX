@@ -2590,12 +2590,20 @@ uint32_t Realm::lay(int32_t item, int refinement, bool luck, int option, uint8_t
     return one.id;
 }
 
+namespace {
+// Whether a drop may draw this rune for a hero of `kin`: one his class may set, an element rune
+// only where his class throws something of its element.
+bool runeDrawable(const PowerRow& row, Kin kin, bool second) {
+    const Element element = elementOf(row.power);
+    if (element != Element::None) return elementServes(element, kin);
+    return row.takenBy(kin, second);
+}
+}  // namespace
+
 uint8_t drawRunePower(Random& dice, Kin kin, bool second, int level, bool commons) {
     const auto drawable = [&](const PowerRow& row) {
         if (!commons && row.rarity == Rarity::Common) return false;
-        const Element element = elementOf(row.power);
-        if (element != Element::None) return elementServes(element, kin);
-        return row.takenBy(kin, second);
+        return runeDrawable(row, kin, second);
     };
     int count[kRarities] = {};
     double held = 0.0;
@@ -2621,6 +2629,20 @@ uint8_t drawRunePower(Random& dice, Kin kin, bool second, int level, bool common
         if (drawable(row) && int(row.rarity) == rarity && level >= kRuneRarityLevel[rarity] &&
             pick-- == 0)
             return uint8_t(p);
+    }
+    return 0;
+}
+
+uint8_t drawRuneOf(Random& dice, Kin kin, bool second, Rarity rarity) {
+    int count = 0;
+    for (int p = 1; powerOf(uint8_t(p)); ++p) {
+        const PowerRow& row = *powerOf(uint8_t(p));
+        count += row.rarity == rarity && runeDrawable(row, kin, second) ? 1 : 0;
+    }
+    int pick = count > 0 ? dice.nextInt(0, count) : -1;
+    for (int p = 1; pick >= 0 && powerOf(uint8_t(p)); ++p) {
+        const PowerRow& row = *powerOf(uint8_t(p));
+        if (row.rarity == rarity && runeDrawable(row, kin, second) && pick-- == 0) return uint8_t(p);
     }
     return 0;
 }

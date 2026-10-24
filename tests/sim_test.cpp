@@ -593,6 +593,29 @@ void testRaid(const content::Tables& tables) {
           "content/raid/party.json reads");
     checkEqual((long long)party.size(), 10, "ten in the party");
     if (party.size() != 10) return;
+    // Its hoard matches the fight (2026-10-24): each class's runes Legendary, never Ancient, and
+    // its excellents its own gear of the top band, worn by somebody.
+    {
+        sim::Random dice(7);
+        bool legendary = true, pools = true, inBand = true;
+        for (sim::Kin kin : {sim::Kin::DarkKnight, sim::Kin::DarkWizard, sim::Kin::FairyElf,
+                             sim::Kin::MagicGladiator}) {
+            for (int i = 0; i < 50; ++i) {
+                const sim::PowerRow* rune = sim::powerOf(sim::drawRuneOf(dice, kin, true, sim::Rarity::Legendary));
+                legendary &= rune && rune->rarity == sim::Rarity::Legendary;
+            }
+            int fine = 0;
+            for (const content::ItemRow& row : tables.items) {
+                if (!sim::hoardFine(row, kin, true)) continue;
+                ++fine;
+                inBand &= row.dropLevel >= sim::kHoardFineLeast && row.dropLevel <= sim::kHoardFineMost &&
+                          !sim::archangelWeapon(row) && (row.classes & (1 << int(kin))) != 0;
+            }
+            pools &= fine >= 8;
+        }
+        check(legendary, "the dragon's runes are Legendary, each his class's");
+        check(pools && inBand, "and its excellents each class's own top gear, eight pieces or more");
+    }
     {
         sim::Realm plain;
         plain.raise(&tables, 5, 140, 65);

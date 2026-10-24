@@ -132,6 +132,15 @@ the boxes, rolled off the raid's own stream:
 
 The counts and the feather's odds are placeholders for the user to tune.
 
+**Matched to the fight (2026-10-24; the user: "we need that loot. match the fight").** The pile
+above was set at level 30-80 for a kill tuned for ten level-400 heroes at +11. Now each hero's
+hoard is (sim/raid.h): **2 Boxes of Kundun +3** (the renewal's box kept, at its best); **2
+Legendary Runes of Creation** of his class (`drawRuneOf`; an Ancient stays Kanturu's); **a Jewel
+of Life** and the 3 refining jewels; **Loch's Feather always**; and **1 excellent, 1 in 3 a
+second**, drawn evenly from his class's own gear at drop level 100-147 (`hoardFine`: the second
+class's sets once promoted, Aida's sets, the level-147 weapons; never an Archangel weapon). The
+minions keep theirs.
+
 **Each Golden Budge Dragon minion** (the user, 2026-10-06: 'can drop good loot'). Every one drops
 these, beside its corpse, on the raid's stream:
 

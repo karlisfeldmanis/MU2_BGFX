@@ -458,7 +458,7 @@ void dragonHoard(const Kill& k, Model& m) {
     const Tables& t = *k.t;
     const int32_t box = first(t, [](const ItemRow& r) { return sim::boxOfKundun(r); });
     if (box >= 0) {
-        Roll r{Roll::Kind::Own, "raid_hoard", 1.0, 1, sim::kKundunTiers};
+        Roll r{Roll::Kind::Own, "raid_hoard", 1.0, sim::kKundunTiers, sim::kKundunTiers};
         r.count = sim::kHoardBoxes;
         m.add(box, r);
     }
@@ -468,21 +468,31 @@ void dragonHoard(const Kill& k, Model& m) {
         r.count = sim::kHoardRunes;
         m.add(rune, r);
     }
+    const int32_t life = t.itemAt(14, 16);
+    if (life >= 0) {
+        Roll r{Roll::Kind::Own, "raid_hoard", 1.0};
+        r.count = sim::kHoardLives;
+        m.add(life, r);
+    }
     const auto jewels = pool(t, [](const ItemRow& r) { return sim::refiningJewel(r); });
     for (const int32_t item : jewels) {
         m.add(item, Roll{Roll::Kind::Own, "raid_hoard",
                          1.0 - std::pow(1.0 - 1.0 / double(jewels.size()), sim::kHoardJewels)});
     }
-    const auto fine = bagRows(t, sim::kKundunExcellent3, std::size(sim::kKundunExcellent3), true);
+    // Each class's own pool (sim::hoardFine), as a promoted hero of it draws.
     const double more = 1.0 / sim::kHoardExcellentOdds;
-    for (const int32_t item : fine) {
-        const double miss = 1.0 - double(std::count(fine.begin(), fine.end(), item)) / double(fine.size());
-        Roll r{Roll::Kind::Own, "raid_hoard", 1.0 - ((1.0 - more) * std::pow(miss, sim::kHoardExcellents) +
-                                                      more * std::pow(miss, sim::kHoardExcellents + 1))};
-        r.excellent = true;
-        boxOptions(r, sim::kBoxLuckIn100 / 100.0, false);
-        r.twoOptions = secondOption();
-        m.add(item, r);
+    for (sim::Kin kin : kKins) {
+        const auto fine = pool(t, [kin](const ItemRow& r) { return sim::hoardFine(r, kin, true); });
+        for (const int32_t item : fine) {
+            const double miss = 1.0 - 1.0 / double(fine.size());
+            Roll r{Roll::Kind::Own, "raid_hoard", 1.0 - ((1.0 - more) * std::pow(miss, sim::kHoardExcellents) +
+                                                          more * std::pow(miss, sim::kHoardExcellents + 1))};
+            r.excellent = true;
+            r.kin = int(kin);
+            boxOptions(r, sim::kBoxLuckIn100 / 100.0, false);
+            r.twoOptions = secondOption();
+            m.add(item, r);
+        }
     }
     m.add(first(t, [](const ItemRow& r) { return sim::lochsFeather(r); }),
           Roll{Roll::Kind::Own, "raid_hoard", 1.0 / sim::kHoardFeatherOdds});

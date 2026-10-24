@@ -1069,6 +1069,9 @@ constexpr int kRuneRarityLevel[kRarities] = {kCreationLevel, 40, 60, 1, kAncient
 class Random;
 // `commons` false leaves the Common runes out: a reward's rune (Blood Castle) is never one.
 uint8_t drawRunePower(Random& dice, Kin kin, bool second, int level, bool commons = true);
+// One of `rarity` evenly, as drawRunePower draws within the rarity it picks, whatever the level:
+// the raid's dragon's Legendary runes (Realm::dragonHoard). 0 when none is his class's.
+uint8_t drawRuneOf(Random& dice, Kin kin, bool second, Rarity rarity);
 // The Bless (14, 13), the Soul (14, 14), the Life (14, 16) and the Chaos (12, 15): the
 // kJewelChance draws. The Life falls from 72 (OpenMU Version095d Jewels.cs:43), past Devias.
 bool refiningJewel(const content::ItemRow& row);
