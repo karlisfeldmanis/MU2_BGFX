@@ -607,12 +607,9 @@ float heavy(const Type& type, gfx::Canvas& canvas, float x, float baseline, floa
 }
 
 // A free row as one string: the keyword, the prose and the value, which wrap together.
-// A rune's pips hold their room as a word of 'n's, three for every two pips, which wraps whole
-// and is never printed: the pips are drawn over it.
-size_t pipRoom(const Row& row) {
-    const size_t slots = size_t(std::max(row.pips, row.lit));
-    return slots + (slots + 1) / 2;
-}
+// A rune's pips hold their room as a word of one 'n' a pip, which wraps whole and is never
+// printed: the pips are drawn over it.
+size_t pipRoom(const Row& row) { return size_t(std::max(row.pips, row.lit)); }
 std::string composed(const Row& row) {
     std::string s;
     if (!row.keyword.empty() && row.pips > 0) {
@@ -626,29 +623,30 @@ std::string composed(const Row& row) {
 }
 bool prosaic(const Row& row) { return !row.free.empty() || !row.tail.empty(); }
 
-// A rune's pips over the room `composed` left them, from `x` across `wide`: a lozenge each, the
-// rune's own shape as the socket's stone is drawn.
-void pipsAt(gfx::Canvas& canvas, const Row& row, float x, float cy, float wide, float size,
-            uint32_t ink, uint32_t gold, uint32_t dim) {
+// A rune's pips over the room `composed` left them, from `x`: a tight cluster of small round
+// stones, lit for those worn, dark for room left.
+void pipsAt(gfx::Canvas& canvas, const Row& row, float x, float cy, float size, uint32_t ink,
+            uint32_t gold, uint32_t dim) {
     const int slots = std::max(row.pips, row.lit);
-    if (slots <= 0) return;
-    const float pitch = wide / float(slots);
-    const float hh = size * 0.30f, ww = hh * kJewelAspect;
+    const float r = size * 0.19f, pitch = r * 2.6f;
     const bool full = row.lit >= row.pips;
+    const auto disc = [&](float cx, uint32_t colour) {
+        constexpr int kSides = 16;
+        float xy[kSides * 2];
+        for (int k = 0; k < kSides; ++k) {
+            const float a = 6.2831853f * float(k) / float(kSides);
+            xy[k * 2] = cx + r * std::cos(a);
+            xy[k * 2 + 1] = cy + r * std::sin(a);
+        }
+        canvas.polygon(nullptr, xy, nullptr, kSides, colour);
+    };
     for (int i = 0; i < slots; ++i) {
-        const float cx = x + pitch * (float(i) + 0.5f);
-        const auto lozenge = [&](float h, uint32_t c) {
-            const float w = h * kJewelAspect;
-            const float xy[8] = {cx, cy - h, cx + w, cy, cx, cy + h, cx - w, cy};
-            canvas.polygon(nullptr, xy, nullptr, 4, c);
-        };
+        const float cx = x + r * 1.6f + pitch * float(i);
         if (i >= row.pips) {  // past the limit: dim, struck through
-            lozenge(hh, dim);
-            canvas.rect({cx - ww * 1.3f, cy - size * 0.03f, ww * 2.6f, size * 0.06f}, gold);
-        } else if (i < row.lit) {
-            lozenge(hh, full ? gold : ink);
-        } else {  // room for one more: a small faint stone
-            lozenge(hh * 0.45f, (dim & 0x00FFFFFFu) | (((dim >> 24) / 2) << 24));
+            disc(cx, dim);
+            canvas.rect({cx - r * 1.4f, cy - size * 0.03f, r * 2.8f, size * 0.06f}, gold);
+        } else {
+            disc(cx, i < row.lit ? (full ? gold : ink) : dim);
         }
     }
 }
@@ -1070,9 +1068,10 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, const gfx::Box& over, float s
                         if (at == pipAt) {
                             const size_t stop = std::min(end, pipEnd);
                             const float wide = face.measure(rowSize, full.substr(at, stop - at));
-                            pipsAt(canvas, row, px, baseline - rowSize * 0.32f, wide, rowSize,
+                            const uint32_t gray = fade(colourOf(Tone::Gray));
+                            pipsAt(canvas, row, px, baseline - rowSize * 0.32f, rowSize,
                                    fade(colourOf(row.keywordTone)), fade(colourOf(Tone::Yellow)),
-                                   fade(colourOf(Tone::Gray)));
+                                   (gray & 0x00FFFFFFu) | (((gray >> 24) * 2 / 5) << 24));
                             px += wide;
                             at = stop;
                             continue;
