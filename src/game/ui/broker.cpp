@@ -308,18 +308,28 @@ void Broker::layout(Play& play) {
         }
     } else {
         if (!mine_.box.empty()) spot({kStrip.right() - 108.0f, kStrip.y + (kStrip.h - kPrimaryH) * 0.5f, 100.0f, kPrimaryH}, Hit::Collect);
-        for (int r = 0; r < int(mine_.mine.size()) && r < kRows; ++r) {
+        // A page of his listings, each spot's index the listing's in the whole list (Gordichan on
+        // Discord: "if I have 20 items listed, it only shows 12").
+        const int pages = std::max(1, int((mine_.mine.size() + kRows - 1) / kRows));
+        minePage_ = std::clamp(minePage_, 0, pages - 1);
+        const int first = minePage_ * kRows;
+        for (int r = 0; r < kRows && first + r < int(mine_.mine.size()); ++r) {
+            const int i = first + r;
             const float y = kMine.y + kListHead + float(r) * kMineRowH;
             // The listing's name, for its card on hover; clicks nothing.
-            spot({kMine.x, y, kMine.w - 110.0f, kMineRowH}, Hit::Listing, r);
-            if (mine_.mine[size_t(r)].id == editing_) {
-                spot({kMine.right() - 190.0f, y + 2.0f, 86.0f, kButtonH}, Hit::LowerField, r);
-                spot({kMine.right() - 100.0f, y + 2.0f, 46.0f, kButtonH}, Hit::Save, r);
-                spot({kMine.right() - 50.0f, y + 2.0f, 46.0f, kButtonH}, Hit::Back, r);
+            spot({kMine.x, y, kMine.w - 110.0f, kMineRowH}, Hit::Listing, i);
+            if (mine_.mine[size_t(i)].id == editing_) {
+                spot({kMine.right() - 190.0f, y + 2.0f, 86.0f, kButtonH}, Hit::LowerField, i);
+                spot({kMine.right() - 100.0f, y + 2.0f, 46.0f, kButtonH}, Hit::Save, i);
+                spot({kMine.right() - 50.0f, y + 2.0f, 46.0f, kButtonH}, Hit::Back, i);
             } else {
-                spot({kMine.right() - 100.0f, y + 2.0f, 46.0f, kButtonH}, Hit::Lower, r);
-                spot({kMine.right() - 50.0f, y + 2.0f, 46.0f, kButtonH}, Hit::Cancel, r);
+                spot({kMine.right() - 100.0f, y + 2.0f, 46.0f, kButtonH}, Hit::Lower, i);
+                spot({kMine.right() - 50.0f, y + 2.0f, 46.0f, kButtonH}, Hit::Cancel, i);
             }
+        }
+        if (pages > 1) {
+            spot({kMine.right() - 2.0f * kButtonH - kGap, kFootButtonY, kButtonH, kButtonH}, Hit::MinePrev);
+            spot({kMine.right() - kButtonH, kFootButtonY, kButtonH, kButtonH}, Hit::MineNext);
         }
     }
 }
@@ -475,6 +485,8 @@ void Broker::press(Play& play, const Spot& s) {
         }
         case Hit::ThingPrev: thingsPage_ = std::max(0, thingsPage_ - 1); click(); break;
         case Hit::ThingNext: ++thingsPage_; click(); break;
+        case Hit::MinePrev: minePage_ = std::max(0, minePage_ - 1); editing_ = 0; click(); break;
+        case Hit::MineNext: ++minePage_; editing_ = 0; click(); break;
         case Hit::Quick: {
             const int64_t npc = realm.tables() && !sellSeen_.empty() ? sim::npcValue(*realm.tables(), sellPart(play)) : 0;
             const int64_t typical = !quote_.sales.empty() ? quote_.sales.front().price : 4 * std::max<int64_t>(1, npc);

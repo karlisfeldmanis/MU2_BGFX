@@ -67,7 +67,8 @@ public:
     enum class Hit : uint8_t {
         None, Close, Tab, Kind, Flag, Clear, Head, Row, Prev, Next, Search, Qty, MostQty, Buy,
         Whisper, Seller, Source, Thing, ThingPrev, ThingNext, Price, Quick, Hours, List,
-        Collect, Lower, Cancel, LowerField, Save, Back, Listing, Category, Pieces, AllPieces,
+        Collect, Lower, Cancel, LowerField, Save, Back, Listing, Category, Pieces, AllPieces, MinePrev,
+        MineNext,
     };
     struct Spot {
         gfx::Box box;
@@ -128,6 +129,7 @@ private:
     bool fromVault_ = false;
     std::vector<Thing> things_;
     int thingsPage_ = 0;
+    int minePage_ = 0;  // My listings: 20 an account, kRows a page
     int sellSlot_ = -1;  // in the chosen source
     sim::Held sellSeen_;
     int sellQty_ = 0;           // of a stack, how many go up

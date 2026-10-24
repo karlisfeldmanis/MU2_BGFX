@@ -848,13 +848,15 @@ void Broker::rebuild(Play& play, Stage* stage) {
         right(priceAt, headBase, kCaption, style::kAshInk, "Price");
         right(list.right() - kRowPad, headBase, kCaption, style::kAshInk, std::to_string(mine_.accountCount) + " of 20 used");
         hair(list.x + 1.0f, list.y + kListHead - 1.0f, list.w - 2.0f, style::kIronDk);
-        for (int r = 0; r < int(mine_.mine.size()) && r < kRows; ++r) {
-            const net::BrokerRow& row = mine_.mine[size_t(r)];
+        const int first = minePage_ * kRows;
+        for (int r = 0; r < kRows && first + r < int(mine_.mine.size()); ++r) {
+            const int i = first + r;
+            const net::BrokerRow& row = mine_.mine[size_t(i)];
             const float ry = list.y + kListHead + float(r) * kMineRowH;
             const float nameBase = mid(ry, kMineRowH, kName), textBase = mid(ry, kMineRowH, kText);
             hair(list.x + 1.0f, ry + kMineRowH - 1.0f, list.w - 2.0f, style::kAsh3);
             // No picture: its card on hover instead (the user, 2026-10-11).
-            if (state(Hit::Listing, r).lift > 0.0f) canvas_.rect(P({list.x + 1.0f, ry, list.w - 110.0f, kMineRowH - 1.0f}), kHover);
+            if (state(Hit::Listing, i).lift > 0.0f) canvas_.rect(P({list.x + 1.0f, ry, list.w - 110.0f, kMineRowH - 1.0f}), kHover);
             const float named = text(list.x + kRowPad, nameBase, kName, inkOf(tables, row.what), nameOf(tables, row.what)) / k;
             const std::string sub = traits(row.what);
             if (!sub.empty() && list.x + kRowPad + named + 6.0f + controls::labelWidth(S(kCaption), sub) / k < leftAt - 30.0f) {
@@ -862,18 +864,25 @@ void Broker::rebuild(Play& play, Stage* stage) {
             }
             right(leftAt, textBase, kText, row.secondsLeft < 7200 ? style::kDanger : style::kAshInk, hoursLeft(row.secondsLeft));
             if (row.id == editing_) {
-                if (const Spot* s = spotOf(Hit::LowerField, r)) {
+                if (const Spot* s = spotOf(Hit::LowerField, i)) {
                     controls::field(canvas_, P(s->box), lowerText_.empty() ? "" : panel::commas(std::stoll("0" + lowerText_)),
                                     "", focus_ == Focus::Lower, false, focus_ == Focus::Lower && caret, false, u);
                 }
-                button(Hit::Save, r, "Save", controls::Kind::Secondary);
-                button(Hit::Back, r, "Back", controls::Kind::Quiet);
+                button(Hit::Save, i, "Save", controls::Kind::Secondary);
+                button(Hit::Back, i, "Back", controls::Kind::Quiet);
             } else {
                 right(priceAt, nameBase, kName, kGold, panel::commas(row.price));
-                button(Hit::Lower, r, "Lower", controls::Kind::Secondary);
-                button(Hit::Cancel, r, "Cancel", controls::Kind::Quiet);
+                button(Hit::Lower, i, "Lower", controls::Kind::Secondary);
+                button(Hit::Cancel, i, "Cancel", controls::Kind::Quiet);
             }
         }
+        if (const Spot* s = spotOf(Hit::MinePrev, 0)) {
+            const int pages = int((mine_.mine.size() + kRows - 1) / kRows);
+            right(s->box.x - 8.0f, kFootBaseline, 12.5f, style::kBone2,
+                  "Page " + std::to_string(minePage_ + 1) + " of " + std::to_string(pages));
+        }
+        square(Hit::MinePrev, controls::Glyph::Left);
+        square(Hit::MineNext, controls::Glyph::Right);
         if (mine_.mine.empty()) {
             text(list.x + kRowPad, list.y + kListHead + 24.0f, kText, style::kAshInk, "Nothing on sale. List something from the Sell tab.");
         }
