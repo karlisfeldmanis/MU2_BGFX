@@ -868,11 +868,12 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     // and heavier, and a mark in the gutter that says which kind it is -- a blue diamond for
     // what a drop rolls, a green star for an excellent option. The text stays MU's blue. Luck's
     // two lines become "Luck" as a keyword on each, which is the only change to MU's wording.
-    const bool carriesSkill = what.skill && row.skill > 0;
+    // No "Skill" line: a weapon's skill comes from orbs here, never from the weapon (Discord,
+    // 2026-10-25: "my sword says Skill Cyclone but it doesnt appear in skill bar").
     // A wing is past takesOptions' boots and carries its Life option all the same (Discord,
     // 2026-10-24: "jewel of life on wings ... no stats appeared").
     if ((sim::takesOptions(row) || sim::jewellery(row) || sim::anyWing(row)) &&
-        (what.luck || what.option > 0 || what.excellent != 0 || carriesSkill ||
+        (what.luck || what.option > 0 || what.excellent != 0 ||
          (sim::secondWing(row) && what.wing != 0))) {
         Section options;
         // MU's line split at its last word where that word is the value: "Max life +8%"
@@ -897,11 +898,6 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         const auto rolled = [&](const std::string& keyword, const std::string& text) {
             option(keyword, text, tip::Mark::Diamond, Tone::Blue);
         };
-        // The weapon's own skill, first, as MU prints it above the options.
-        if (carriesSkill) {
-            const sim::SkillRow* skill = sim::skillNumbered(row.skill);
-            rolled("Skill", skill && skill->name[0] ? skill->name : "carried");
-        }
         // One line (the tooltip audit, 2026-10-05), where MU prints two.
         if (what.luck) rolled("Luck", "+5% critical, Jewel of Soul always succeeds");
         if (what.option > 0) {
