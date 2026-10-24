@@ -593,7 +593,7 @@ QuestRow pit() {
     row.paid[n++] = {.item = "NecklaceFury", .plus = 3, .firstOnly = true,
                      .affixes = {uint8_t(Affix::Leech), uint8_t(Affix::Wisdom)}};
     // No Imp (the user, 2026-10-24: "we are not giving imp on quest rewards, but we are giving
-    // guardian angels"): it is the tavern's and the drops'; Devin's Angels stay.
+    // guardian angels"): it only drops (off the tavern since 2026-10-11); Devin's Angels stay.
     // And the chain's last skills (2026-10-07): the knight's Cyclone, Devias's until 2026-10-09
     // (its orb asks 72; Death Stab's 120 went to Tersia's sixth floor), and the wizard's
     // Hellfire. The elf's Penetration went to Tersia's sixth floor too (the user, 2026-10-09:

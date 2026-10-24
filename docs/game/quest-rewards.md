@@ -29,7 +29,7 @@ the rules below. Where this disagrees with an older quest doc's reward section, 
 7. **Jewellery, pets and jewels rise with the acts**; a skill orb comes at about its level. The
    Angel lasts 2 hours and Uniria 24, and they stack (1298be3b), so their quests pay them
    **every clear**: 2 Angels (Devin), 1 Uniria (Tersia's first floor). No quest pays the Imp
-   (2026-10-24); it is the tavern's.
+   (2026-10-24); it only drops, no shop sells it since 2026-10-11.
 8. Every quest still pays 3 Firecrackers, the class change 10.
 9. **The talents' Attunements get their runes.** Wind counts Tempest, Fire Inferno, Storm Thunder
    and Tempest, Frost and Venom Glacier and Venom. The Sky Door pays the knight and the elf a
