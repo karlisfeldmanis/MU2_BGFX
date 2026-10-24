@@ -238,7 +238,9 @@ ${req ? `<span>${esc(t('Requires {what}', { what: req }))}</span>` : ''}<span st
     const drops = e.drops || [];
     const releases = (hist && hist.releases) || [];
     const changes = releases.filter(r => (r.changes || []).length || r.added);
-    const tabs = [['stats', t('Stats & scaling'), ''], ['drops', t('Dropped by'), drops.length], ['shops', t('Sold by'), gives('shops').length + gives('npcs').length],
+    // A box's own tables, one a level (the Box of Kundun's +1 to +3).
+    const boxes = (rowsOf('boxes') || []).filter(b => b.item === e.key);
+    const tabs = [['stats', t('Stats & scaling'), ''], ...(boxes.length ? [['inside', t("What's inside"), boxes.length]] : []), ['drops', t('Dropped by'), drops.length], ['shops', t('Sold by'), gives('shops').length + gives('npcs').length],
       ['crafts', t('Created by'), gives('mixes').length], ['used', t('Used in'), needs.length], ['rewards', t('Reward from'), gives('quests').length + gives('events').length + gives('boxes').length],
       ['updates', t('Updates'), changes.length], ['comments', t('Comments'), '']];
     const tab = tabs.some(x => x[0] === R.q.tab) ? R.q.tab : 'stats';
@@ -263,6 +265,8 @@ ${facts([st.drop_level ? [t('Drop level'), st.drop_level] : null, row && row.src
 <div><h2 class="rh" style="padding:0">${esc(t('More {what}', { what: (e.sub || '').toLowerCase() }))}</h2>${similar.map(i => `<a class="sim" href="${href('items', i.slug)}"><span style="flex:1">${esc(i.n)}</span><span class="mute num small">${i.lv ? 'Lv ' + i.lv : i.dl ? t('Drop {n}', { n: i.dl }) : ''}</span></a>`).join('')}</div></aside>`;
     let body = '';
     if (tab === 'stats') body = itemStats(e, cardFile);
+    else if (tab === 'inside') body = boxes.map(b => { const x = have(`boxes/${b.slug}.json`);
+      return `<section style="margin-bottom:28px">${boxes.length > 1 ? `<h2 class="h3">${a('boxes', b.slug, b.n)}</h2>` : ''}${x ? boxContents(x) : x === null ? '' : ld}</section>`; }).join('');
     else if (tab === 'drops') body = itemDrops(drops);
     else if (tab === 'shops') body = refsTable(gives('shops').concat(gives('npcs')), t('Sold by'), 'shops');
     else if (tab === 'crafts') body = refsTable(gives('mixes'), t('Mix'), 'mixes');
@@ -728,15 +732,21 @@ ${feeds.length ? `<section class="rbox"><b>${esc(t('Talent columns that feed it'
       table([[t('Map')], [t('At once'), 1], [t('Life'), 1], [t('Damage'), 1], [t('Defense'), 1], [t('Rises every')]], rows.map(e => `<tr><td>${a('elites', e.slug, worldName(e.world || e.k))}${notLive(e.live)}</td><td class="r num">${N(e.count)}</td><td class="r num" style="color:#F2C14E">×${N(e.life)}</td><td class="r num">×${N(e.damage)}</td><td class="r num">×${N(e.defense)}</td>
 <td class="mute">${e.rise_seconds ? esc(t('{a}–{b} min', { a: e.rise_seconds[0] / 60, b: e.rise_seconds[1] / 60 })) : '—'}</td></tr>`), 'sm'));
   }
+  // What a box gives when opened: its Zen first, then each item, the chances a box (together 1).
+  function boxContents(e) {
+    const I = by('items', 'k');
+    const res = (e.result || []).slice().sort((x, y) => (y.chance || 0) - (x.chance || 0));
+    const zen = e.zen_amount ? N(e.zen_amount) : e.zen_range ? `${N(e.zen_range[0])} – ${N(e.zen_range[1])}` : '';
+    const plusOf = (r) => (Array.isArray(r.plus) ? `+${r.plus[0]} – +${r.plus[1]}` : r.plus ? `+${r.plus}` : '');
+    return table([[t('Item')], [t('How')], [t('Chance a box'), 1]],
+      (e.zen ? [`<tr><td style="color:#F2C14E">Zen${zen ? ` <span class="num">${zen}</span>` : ''}</td><td></td><td class="r">${oddsCell(e.zen)}</td></tr>`] : []).concat(res.map(r => { const it = I && I[r.item]; return `<tr><td>${it ? `<span class="nm" data-card="${esc(it.slug)}">${a('items', it.slug, it.n)}<span class="pop" role="tooltip">${simpleCard(it)}</span></span>` : esc(r.item)}</td><td style="color:${r.excellent ? '#7FD66A' : '#C9BFAE'}">${esc([ROLL[r.roll] || pretty(r.roll || ''), plusOf(r)].filter(Boolean).join(' '))}</td><td class="r">${oddsCell(r.chance)}</td></tr>`; })), 'sm pops');
+  }
   function genericPage(kind, e) {
     crumbs([[LIST[kind] || kind, listHref(kind)], [e.name || e.title || e.slug]]);
     let body = '';
     if (kind === 'mixes') body = mixCard(e, true);
-    else if (kind === 'boxes') {
-      const I = by('items', 'k');
-      const res = (e.result || []).slice().sort((x, y) => (y.chance || 0) - (x.chance || 0));
-      body = table([[t('Item')], [t('How')], [t('Chance a box'), 1]], res.map(r => { const it = I && I[r.item]; return `<tr><td>${it ? `<span class="nm" data-card="${esc(it.slug)}">${a('items', it.slug, it.n)}<span class="pop" role="tooltip">${simpleCard(it)}</span></span>` : esc(r.item)}</td><td style="color:${r.excellent ? '#7FD66A' : '#C9BFAE'}">${esc(ROLL[r.roll] || pretty(r.roll || ''))}</td><td class="r">${oddsCell(r.chance)}</td></tr>`; }), 'sm pops');
-    } else {
+    else if (kind === 'boxes') body = boxContents(e);
+    else {
       const rest = Object.entries(e).filter(([k]) => !['kind', 'slug', 'commit', 'protocol', 'key'].includes(k));
       body = `<div class="tbox"><table class="tbl sm wrapc"><tbody>${rest.map(([k, v]) => `<tr><th scope="row" class="plain rowh">${esc(pretty(k))}</th><td>${esc(Array.isArray(v) ? v.map(x => (typeof x === 'object' ? JSON.stringify(x) : x)).join(', ') : typeof v === 'object' && v ? JSON.stringify(v) : v)}</td></tr>`).join('')}</tbody></table></div>`;
       if (kind === 'elites') body = `<div class="roll" style="margin-bottom:20px"><div class="rbox"><b>${esc(worldName(e.world))}</b>${kv([[t('At once'), e.count], [t('Life'), '×' + e.life], [t('Damage'), '×' + e.damage], [t('Defense'), '×' + e.defense], [t('Levels higher'), e.levels_up]])}</div></div>` + body;
@@ -766,7 +776,7 @@ ${feeds.length ? `<section class="rbox"><b>${esc(t('Talent columns that feed it'
     return (pages[R.kind] || ((x) => genericPage(R.kind, x)))(e);
   }
   // Every page's indexes, asked up front so they come together.
-  const NEEDS = { items: ['items'], monsters: ['items', 'worlds', 'events', 'elites'], npcs: ['items', 'worlds', 'quests', 'mixes'], worlds: ['worlds'], quests: ['npcs', 'items', 'monsters', 'quests'],
+  const NEEDS = { items: ['items', 'boxes'], monsters: ['items', 'worlds', 'events', 'elites'], npcs: ['items', 'worlds', 'quests', 'mixes'], worlds: ['worlds'], quests: ['npcs', 'items', 'monsters', 'quests'],
     events: ['events'], runes: [], skills: [], mixes: ['npcs', 'items'], elites: ['worlds'], boxes: ['items'], talents: ['talents'] };
   function titleOf() {
     const e = R.view === 'entity' ? files[`${R.kind}/${R.slug}.json`] : null;
