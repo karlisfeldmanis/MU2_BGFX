@@ -79,9 +79,10 @@
         "Object55": 30,
         "Object57": 31,
         "Object66": 32,
-        "Object56": 33
+        "Object56": 33,
+        "Object54": 34
       },
-      "note": "The Relics' hidden lightning boxes (MoveKanturu2ndObject, GM_Kanturu_2nd.cpp:489-520): Object55 (type 54, 18 in the void) a bolt falling 11 m into it one frame in 20; Object57 (type 56, 13 on the walls) a half-metre arc from its west one in 10; Object66 (type 65, 2) a 3.5 m bolt from its north one in 10; Object56 (type 55, 32) a Fenrir thunder flash within 20 units one in 5. game/world/ruin_effects.h (the user, 2026-10-24: \"better\", \"next\", effects 3)."
+      "note": "The Relics' hidden lightning, thunder and water boxes (MoveKanturu2ndObject, GM_Kanturu_2nd.cpp:482-520): Object55 (type 54, 18 in the void) a bolt falling 11 m into it one frame in 20; Object57 (type 56, 13 on the walls) a half-metre arc from its west one in 10; Object66 (type 65, 2) a 3.5 m bolt from its north one in 10; Object56 (type 55, 32) a Fenrir thunder flash within 20 units one in 5; Object54 (type 53, 34, 1.8-2.7 m up on the walls) a drop of water rising, one in 3. game/world/ruin_effects.h (the user, 2026-10-24: \"better\", \"next\", effects 3)."
     }
   },
   "npcs": [
@@ -134,6 +135,9 @@
     },
     "ruin_effects": {
       "note": "The jade towers' spark and bolts (Object09, kind tower): game/world/ruin_effects.h, the Ruins' tank arcs' class. (the user, 2026-10-24: \"next\", effects 2)."
+    },
+    "chasm_mist": {
+      "note": "MU's blue cloud boxes, type 50 (Object51, 18 at the floor by the walls; MoveKanturu2ndObject, GM_Kanturu_2nd.cpp:448-459): a faint blue haze drifting from each one frame in 3, gone 5 m from where it was born (game/world/chasm_mist.h, effects 3c). Ours: half as bright, lying flat over the floor as the void clouds' soft masses (the user, 2026-10-24: \"more subtle and not cuted\", \"smoke is cuted/croped\", \"also to blurry\"); type 48's grey MINUS smoke (Object49) is not drawn, it stained the lit floor black (\"some smoke is black, is that expected?\")."
     }
   }
 }

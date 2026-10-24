@@ -34,6 +34,10 @@
 //         lit (0.8, 0.8, 1.0), with a BITMAP_LIGHT of Scale 2 lit 0.3 less on its first frame
 //         (ZzzEffect.cpp:4314-4336, MoveHandlers.cpp:6679-6710). Ours, marked: the lightning
 //         model is drawn as a Thunder01 crackle of its size, the engine drawing no effect models.
+//   Spray The Relics' water boxes, kind 34 (type 53, Object54, 34 on the walls 1.8-2.7 m up): one
+//         frame in three the plants' particle at sub-type 1, light (0.4, 0.6, 0.7): born within
+//         40 units across and 80 up, unscaled, Scale 0.5-0.81 shrinking 0.013 a frame, living
+//         20-29 frames (GM_Kanturu_2nd.cpp:480-487, ZzzEffectParticle.cpp:1124-1130, 5255-5266).
 //
 // The points are the recipes' `emitters` (kinds "arc_from", "arc_to", "spit", "tower"), the rigs' rest
 // positions in the model's frame, laid once per placement turned and scaled as MU's bones are.
@@ -77,11 +81,13 @@ private:
         float colour[3] = {0.5f, 0.6f, 0.1f};
         float scale = 1.0f;  // the placement's, which MU's bones carry
         float owed = 0.0f;
+        bool spray = false;  // a Relics water box (sub-type 1), not a plant
     };
     struct Blob {
         float at[3] = {0, 0, 0};
         float rise = 0.0f;   // metres a second
         float scale = 1.0f;  // MU's Scale, shrinking to nothing
+        float shrink = 0.0f;  // Scale a second
         float age = 0.0f, life = 1.0f;
         float colour[3] = {0, 0, 0};
     };

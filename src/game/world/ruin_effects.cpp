@@ -25,6 +25,7 @@ constexpr float kSpitEvery = 3.0f;             // rand_fps_check(3)
 constexpr float kUnit = 0.01f;                 // metres a MU unit
 constexpr float kSpitSheetMetres = 32.0f * kUnit;  // water is 32 texels: Scale 1 is 32 units
 constexpr float kSpitShrink = 0.026f * kFrames;    // Scale a second
+constexpr float kSprayShrink = 0.013f * kFrames;   // sub-type 1's
 constexpr float kSpitDim = 1.02f;                  // the light's fall a frame
 constexpr float kReach = 30.0f;                // ours: metres from the camera's point
 constexpr size_t kMostBlobs = 600;
@@ -51,9 +52,17 @@ void RuinEffects::open(const std::string& assetDir, const std::string& world,
             flare_ = textures.load(assetDir + "/" + sheet->path, content::TextureRole::Albedo);
         thunderOpen_ = thunder_.open(assetDir, textures, table);
     }
-    // The world's lightning boxes.
+    // The world's lightning and water boxes.
     for (const content::TownEmitter& one : town.emitters) {
         if (one.model != content::TownEmitter::kWorld) continue;
+        if (one.kind == content::EmitterKind::Spray) {
+            Plant spray;
+            for (int k = 0; k < 3; ++k) spray.at[k] = one.at[k];
+            spray.spray = true;
+            spray.owed = unit();
+            plants_.push_back(spray);
+            continue;
+        }
         if (one.kind == content::EmitterKind::VoidStrike || one.kind == content::EmitterKind::WallArc ||
             one.kind == content::EmitterKind::NorthBolt || one.kind == content::EmitterKind::FenrirFlash) {
             Bolt bolt;
@@ -111,7 +120,7 @@ void RuinEffects::open(const std::string& assetDir, const std::string& world,
     }
     blobs_.reserve(kMostBlobs);
     open_ = true;
-    core::logf("ruin effects: %zu tank arcs, %zu spitting plants, %zu towers, %zu bolt boxes; water %s, "
+    core::logf("ruin effects: %zu tank arcs, %zu spitting plants and water boxes, %zu towers, %zu bolt boxes; water %s, "
                "energy %s, thunder %s",
                tanks_.size(), plants_.size(), towers_.size(), bolts_.size(), bgfx::isValid(spit_) ? "yes" : "NO",
                bgfx::isValid(energy_) ? "yes" : "NO", thunderOpen_ ? "yes" : "NO");
@@ -200,7 +209,7 @@ void RuinEffects::update(float seconds, const float near[3]) {
     for (Blob& one : blobs_) {
         one.age += dt;
         one.at[1] += one.rise * dt;
-        one.scale -= kSpitShrink * dt;
+        one.scale -= one.shrink * dt;
         const float keep = std::pow(1.0f / kSpitDim, frames);
         for (int k = 0; k < 3; ++k) one.colour[k] *= keep;
     }
@@ -218,15 +227,31 @@ void RuinEffects::update(float seconds, const float near[3]) {
             plant.owed -= 1.0f;
             if (blobs_.size() >= kMostBlobs) break;
             Blob blob;
-            // Within 20 units across in MU's x and y and 0-40 up, scaled as the bone is.
-            const float across = 20.0f * kUnit * plant.scale;
-            blob.at[0] = plant.at[0] + (unit() * 2.0f - 1.0f) * across;
-            blob.at[1] = plant.at[1] + unit() * 2.0f * across;
-            blob.at[2] = plant.at[2] + (unit() * 2.0f - 1.0f) * across;
+            if (plant.spray) {
+                // Sub-type 1: within 40 units across and 0-80 up, unscaled; Scale 0.5-0.81
+                // shrinking 0.013 a frame, living 20-29 frames, light (0.4, 0.6, 0.7).
+                const float across = 40.0f * kUnit;
+                blob.at[0] = plant.at[0] + (unit() * 2.0f - 1.0f) * across;
+                blob.at[1] = plant.at[1] + unit() * 2.0f * across;
+                blob.at[2] = plant.at[2] + (unit() * 2.0f - 1.0f) * across;
+                blob.scale = (50.0f + unit() * 31.0f) * 0.01f;
+                blob.shrink = kSprayShrink;
+                blob.life = (20.0f + unit() * 9.0f) / kFrames;
+                blob.colour[0] = 0.4f;
+                blob.colour[1] = 0.6f;
+                blob.colour[2] = 0.7f;
+            } else {
+                // Within 20 units across in MU's x and y and 0-40 up, scaled as the bone is.
+                const float across = 20.0f * kUnit * plant.scale;
+                blob.at[0] = plant.at[0] + (unit() * 2.0f - 1.0f) * across;
+                blob.at[1] = plant.at[1] + unit() * 2.0f * across;
+                blob.at[2] = plant.at[2] + (unit() * 2.0f - 1.0f) * across;
+                blob.scale = (50.0f + unit() * 31.0f) * 0.02f;
+                blob.shrink = kSpitShrink;
+                blob.life = (60.0f + unit() * 9.0f) / kFrames;
+                for (int k = 0; k < 3; ++k) blob.colour[k] = plant.colour[k];
+            }
             blob.rise = (2.0f + unit()) * kFrames * kUnit;
-            blob.scale = (50.0f + unit() * 31.0f) * 0.02f;
-            blob.life = (60.0f + unit() * 9.0f) / kFrames;
-            for (int k = 0; k < 3; ++k) blob.colour[k] = plant.colour[k];
             blobs_.push_back(blob);
         }
     }

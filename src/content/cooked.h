@@ -222,7 +222,9 @@ enum class EmitterKind : uint8_t {
     // game/world/ruin_effects.h.
     VoidStrike = 30, WallArc = 31, NorthBolt = 32,
     // And its Fenrir thunder boxes (type 55): a crackle flashing within 20 units, one frame in 5.
-    FenrirFlash = 33
+    FenrirFlash = 33,
+    // And its water boxes (type 53): a drop of Effect/water rising, one frame in 3.
+    Spray = 34
 };
 struct TownEmitter {
     static constexpr uint16_t kWorld = 0xFFFF;
