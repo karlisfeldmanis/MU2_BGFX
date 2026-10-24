@@ -170,9 +170,24 @@ void Play::exhale(float seconds) {
         if (skill && one.swingSkill == sim::skill::kImpale) continue;
         const FigureBody* look = one.figure.body();
         if (look == nullptr) continue;
+        // **Power Slash's blade trails the whole clip** (`AnimationFrame >= 3 || CurrentAction ==
+        // PLAYER_ATTACK_TWO_HAND_SWORD_TWO`, ZzzCharacter.cpp:3767-3770) on BlurMapping 1, the
+        // blue lightning of motion_blur -- 2, motion_blur_r's fire, on the Sword Dancer (0/25,
+        // :3830-3846). fx/power_slash.h is its waves.
+        const bool powerSlash = skill && one.swingSkill == sim::skill::kPowerSlash;
         // Three keys of wind-up: the client's `AnimationFrame >= 3`, so the gathering of the
         // swing leaves nothing and the streak appears as the blade comes round.
-        if (keyOf(one.figure) < kStreakWindUp) continue;
+        if (!powerSlash && keyOf(one.figure) < kStreakWindUp) continue;
+        Streak::Sheet skillSheet = Streak::Sheet::Skill;
+        if (powerSlash) {
+            skillSheet = Streak::Sheet::Lightning;
+            const sim::Body* body = realm_.find(one.id);
+            const content::Arm* arm = body != nullptr && body->weapon >= 0 &&
+                                              size_t(body->weapon) < tables_.arms.size()
+                                          ? &tables_.arms[size_t(body->weapon)]
+                                          : nullptr;
+            if (arm != nullptr && arm->group == 0 && arm->number == 25) skillSheet = Streak::Sheet::Skill;
+        }
         for (const HeldItem& held : look->held) {
             if (held.kind != "weapon" || held.mesh == nullptr || held.bone < 0) continue;
             if (held.stance == "bow" || held.stance == "crossbow") continue;
@@ -195,7 +210,7 @@ void Play::exhale(float seconds) {
             // The look: white on motion_blur_r for a skill; for a plain blow, blur01 from a sixth
             // of the blade, or blur02 over a spear's or a scythe's head, lit by mapping 0's ladder.
             const bool pole = held.stance == "spear" || held.stance == "scythe";
-            Streak::Sheet sheet = Streak::Sheet::Skill;
+            Streak::Sheet sheet = skillSheet;
             float light[3] = {1.0f, 1.0f, 1.0f};
             if (blow) {
                 sheet = pole ? Streak::Sheet::Spear : Streak::Sheet::Plain;

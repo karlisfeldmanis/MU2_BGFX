@@ -59,6 +59,7 @@
 #include "game/fx/wheel.h"
 #include "game/fx/fury.h"
 #include "game/fx/fire_slash.h"
+#include "game/fx/power_slash.h"
 #include "game/fx/hellfire.h"
 #include "game/fx/storm.h"
 #include "game/fx/inferno.h"
@@ -1089,6 +1090,8 @@ public:
     Fury& fury() { return fury_; }
     // The gladiator's Fire Slash: its ribbon, the lightning at his hand, the skulls. fx/fire_slash.h.
     FireSlash& fireSlash() { return fireSlash_; }
+    // The gladiator's Power Slash: its five waves and their smoke. fx/power_slash.h.
+    PowerSlash& powerSlash() { return powerSlash_; }
     // The wizard's Hellfire: the sigil and the wall of fire at his feet. fx/hellfire.h.
     Hellfire& hellfire() { return hellfire_; }
     // The wizard's Twister: the whirlwind walked out ahead of him. fx/storm.h.
@@ -1954,6 +1957,7 @@ private:
     Wheel wheel_;
     Fury fury_;
     FireSlash fireSlash_;
+    PowerSlash powerSlash_;
     Hellfire hellfire_;
     Storm storm_;
     Inferno inferno_;

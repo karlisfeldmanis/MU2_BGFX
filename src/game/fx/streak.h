@@ -53,8 +53,10 @@ namespace mu::game {
 
 class Streak {
 public:
-    // Which of MU's sheets a ribbon is drawn with. See the header.
-    enum class Sheet : uint8_t { Skill, Plain, Spear };
+    // Which of MU's sheets a ribbon is drawn with. See the header. Lightning is BlurMapping 1,
+    // `motion_blur` (cooked `trail_motion`), the blue streaks of a gladiator's Power Slash blade
+    // (ZzzCharacter.cpp:3830-3846), drawn as the skill's is.
+    enum class Sheet : uint8_t { Skill, Plain, Spear, Lightning };
 
     bool open(const std::string& assetDir, content::Textures& textures,
               const content::Showing& table);
@@ -97,8 +99,8 @@ private:
     Ribbon* ribbonFor(uint32_t id);
 
     Ribbon ribbons_[kRibbons];
-    bgfx::TextureHandle sheets_[3] = {BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE,
-                                      BGFX_INVALID_HANDLE};
+    bgfx::TextureHandle sheets_[4] = {BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE,
+                                      BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE};
 };
 
 }  // namespace mu::game

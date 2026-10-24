@@ -2025,8 +2025,9 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
         const bool court = row.aura() && tables.map == sim::kBloodCastleMap;
         // Nor a summon where none is raised: Icarus (Realm::conjure, sim::MapRow::summons).
         const bool raised = row.summons <= 0 || sim::summonsHere(row, uint32_t(tables.map));
+        // A blade's (Power Slash) never ridden, as MU greys it on a mount (NewUIMainFrameWindow.cpp:2159-2163).
         return hero.alive() && (!inTown || court) && armedFor(row) && hero.mana >= sim::manaCostOf(hero, row) &&
-               (!row.mounted || hero.riding) && raised;
+               (!row.mounted || hero.riding) && (!row.wielded || !hero.riding) && raised;
     };
 
     fan_.clear();
@@ -2357,6 +2358,13 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
     for (int key = 0; key < Hud::kSkillBoxes; ++key) {
         Hud::Skill box;
         box.number = bound_[key];
+        // **A blade's skill is on the bar while the blade is in his hand** (Power Slash, the
+        // dossier's 5.1): put away, its key draws empty and keeps it, so the blade taken up again
+        // brings it back where he put it. A press on the empty key is the realm's to refuse.
+        if (const sim::SkillRow* granted = sim::skillNumbered(box.number);
+            granted != nullptr && granted->wielded && !realm.knows(box.number)) {
+            box.number = 0;
+        }
         if (box.number != 0) {
             box.icon = "skill_" + std::to_string(box.number);
             const int64_t left = realm.cooling(box.number);
@@ -2495,7 +2503,7 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm) c
     // throws, every knight's blow since e4054cd5 (the user, 2026-10-23: "we can remove that
     // completly because all orbs work for all weapons"): "Any weapon" asks nothing of the hand.
     // What is left are the real asks, Defense's shield and the elf's bows.
-    if (!row.wizardry && !row.mounted && !(row.anyHand && row.onSelf()) &&
+    if (!row.wizardry && !row.granted() && !(row.anyHand && row.onSelf()) &&
         (row.families & sim::arms::kEvery) != sim::arms::kEvery &&
         !sim::familiesListed(row.families).empty()) {
         facts.rows.push_back(weapon);
@@ -2503,6 +2511,12 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm) c
     if (row.mounted) {
         facts.rows.push_back(line("Mount", "Horn of Dinorant",
                                   hero.riding ? tip::Tone::White : tip::Tone::Red));
+    }
+    // A blade's (Power Slash): the blade is the skill, and no mount under him -- red while he rides.
+    if (row.wielded) {
+        facts.rows.push_back(line("Weapon", "The blade in his hand", tip::Tone::White));
+        facts.rows.push_back(line("Mount", "Not while riding",
+                                  hero.riding ? tip::Tone::Red : tip::Tone::White));
     }
     // **Her walking summons, not over Icarus** (Realm::conjure refuses them there; the user,
     // 2026-10-20: "dont allow walking pets for elf in icarus, basically we need to show that its

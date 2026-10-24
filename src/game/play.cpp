@@ -1881,6 +1881,15 @@ void Play::update(double seconds) {
                                 cry = -1;
                                 fireSlash_.cast(swinger->id, released);
                             }
+                            // Power Slash's SOUND_SKILL_SWORD3 with its five waves, which leave as
+                            // the swing begins -- a tick on, as the realm lets the blow go -- along
+                            // the realm's aim, the way they strike. fx/power_slash.h.
+                            if (swinger->castSkill == sim::skill::kPowerSlash && body != nullptr) {
+                                cry = -1;
+                                const float aim = body->aim;
+                                powerSlash_.cast(swinger->id, std::atan2(std::cos(aim), -std::sin(aim)),
+                                                 std::max(released, float(kTickSeconds)));
+                            }
                         }
                         if (cry >= 0 && swinger->placed) {
                             emit(cry, swinger->crown[0], swinger->crown[2],
@@ -2900,6 +2909,17 @@ void Play::update(double seconds) {
     // Impale's sound and ghosts (fx/impale.h).
     impale_.update(float(seconds), bodyAt,
                    [&](uint32_t id) { skillWave(sim::skill::kImpale, id); });
+    // Power Slash's waves and their smoke (fx/power_slash.h), its swing's wave as they leave.
+    powerSlash_.update(
+        float(seconds),
+        [&](uint32_t id, float* feet) {
+            float tall = 1.8f, yaw = 0.0f;
+            return bodyAt(id, feet, &tall, &yaw);
+        },
+        [&](uint32_t id, const float* feet) {
+            const int index = sim::skillIndexOf(sim::skill::kPowerSlash);
+            if (index >= 0 && heard_.skill[index] >= 0) emit(heard_.skill[index], feet[0], feet[2], id);
+        });
     // Fire Slash's gathering, ribbon and skulls (fx/fire_slash.h): its swing's wave as the ribbon
     // is made, and eBloodAttack on a body as a cut is laid on it or laid again.
     fireSlash_.update(

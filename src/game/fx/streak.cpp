@@ -31,8 +31,8 @@ bool Streak::open(const std::string& assetDir, content::Textures& textures,
     clear();
     // In `Sheet`'s order. The skill's is the one the rest cannot do without; a missing plain or
     // spear sheet leaves that swing bare and says so.
-    static constexpr const char* kNames[3] = {"trail_skill", "trail", "trail_spear"};
-    for (int i = 0; i < 3; ++i) {
+    static constexpr const char* kNames[4] = {"trail_skill", "trail", "trail_spear", "trail_motion"};
+    for (int i = 0; i < 4; ++i) {
         sheets_[i] = BGFX_INVALID_HANDLE;
         const content::EffectSheet* sheet = table.effect(kNames[i]);
         if (sheet == nullptr) {
@@ -127,7 +127,7 @@ void Streak::gather(gfx::Effects& effects) const {
             // linear ramp over 29 quads reads as a band with an edge on it rather than a smear.
             const float atNear = 1.0f - float(i) / float(one.count);
             const float atFar = 1.0f - float(i + 1) / float(one.count);
-            const bool plain = one.sheet != Sheet::Skill;
+            const bool plain = one.sheet == Sheet::Plain || one.sheet == Sheet::Spear;
             const float alpha =
                 (plain ? kPlainBrightest : kBrightest) * leaving * atNear * atNear;
             if (alpha <= 0.004f) continue;

@@ -569,6 +569,9 @@ bool PlayMode::open(Context& ctx) {
                 world_.played().fireSlash().open(assets, ctx.textures,
                                                  world_.played().showing().table(),
                                                  &world_.ground());
+                world_.played().powerSlash().open(assets, ctx.textures,
+                                                  world_.played().showing().table(),
+                                                  &world_.ground());
                 world_.played().hellfire().open(assets, ctx.textures, &world_.ground());
                 world_.played().storm().open(assets, ctx.textures,
                                              world_.played().showing().table(), &world_.ground());
@@ -1763,6 +1766,9 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         // And Rageful Blow's broken ground, MU's red under its fires, as one.
         count += world_.played().fury().lights(falling + count,
                                                kGatheredLights - count);
+        // And Power Slash's waves, MU's blue under each (fx/power_slash.h).
+        count += world_.played().powerSlash().lights(falling + count,
+                                                     kGatheredLights - count);
         // And Hellfire's wall, MU's orange four tiles round (fx/hellfire.h).
         count += world_.played().hellfire().lights(falling + count,
                                                    kGatheredLights - count);
@@ -2029,6 +2035,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().aqua().gatherEffects(ctx.renderer.effects());
         world_.played().deathStab().gatherEffects(ctx.renderer.effects());
         world_.played().fireSlash().gatherEffects(ctx.renderer.effects());
+        world_.played().powerSlash().gatherEffects(ctx.renderer.effects());
         world_.played().impale().gatherEffects(ctx.renderer.effects());
         world_.played().fireBreath().gatherEffects(ctx.renderer.effects(), eye.position,
                                                    eye.target, daylightOf(ctx.lighting));

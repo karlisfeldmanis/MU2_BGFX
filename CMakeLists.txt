@@ -729,6 +729,7 @@ add_library(mu_game STATIC
   src/game/fx/wheel.cpp
   src/game/fx/fury.cpp
   src/game/fx/fire_slash.cpp
+  src/game/fx/power_slash.cpp
   src/game/fx/hellfire.cpp
   src/game/fx/storm.cpp
   src/game/fx/inferno.cpp
