@@ -84,13 +84,15 @@ void Broker::requote(const Play& play) {
     for (sim::Sale& sale : quote_.sales) sale.price *= pieces;
 }
 
-void Broker::ask(Play& play, net::BrokerAsk asked) {
+uint32_t Broker::ask(Play& play, net::BrokerAsk asked) {
     asked.ask = nextAsk_++;
     const bool moves = asked.what == net::BrokerWhat::List || asked.what == net::BrokerWhat::Buy ||
                        asked.what == net::BrokerWhat::Collect || asked.what == net::BrokerWhat::Cancel ||
                        asked.what == net::BrokerWhat::Lower;
     if (moves) waiting_ = asked.ask, waitingWhat_ = asked.what;
+    if (asked.what == net::BrokerWhat::Buy) bought_ = asked.listing;
     play.askBroker(asked);
+    return asked.ask;
 }
 
 // An ask whose answer goes somewhere of its own (the strip, an item's offers and sales): its
@@ -106,7 +108,7 @@ void Broker::browse(Play& play) {
         net::BrokerAsk asked;
         asked.what = net::BrokerWhat::Browse;
         asked.query = query_;
-        ask(play, asked);
+        pageAsk_ = ask(play, asked);
         browseOwed_ = false;
     }
     if (tickerOwed_) {
@@ -153,12 +155,29 @@ void Broker::heard(Play& play, const net::BrokerView& view) {
     if (view.parts & net::BrokerView::Page) {
         if (view.answered != 0 && view.answered == tickerAsk_) {
             ticker_ = view.rows;
+        } else if (view.answered != 0 && view.answered == itemAsk_) {
+            // The alike things just bought, asked again: the page follows their row, or closes
+            // when none are left.
+            bool found = false;
+            for (const net::BrokerRow& r : view.rows) {
+                if ((r.flags & net::BrokerRow::Alike) && r.what.item == open_.what.item) open_ = r, found = true;
+            }
+            if (item_ && (open_.flags & net::BrokerRow::Alike)) {
+                if (found) {
+                    qty_ = market::clampQty(qty_, open_);
+                } else {
+                    item_ = false;
+                    said_ = "None left on sale.";
+                    saidBad_ = false;
+                    saidFor_ = 4.0f;
+                }
+            }
         } else if (view.answered != 0 && view.answered == offersAsk_) {
             offers_.clear();
             for (const net::BrokerRow& r : view.rows) {
                 if (r.id != open_.id && r.what.item == open_.what.item && !(r.flags & net::BrokerRow::Alike)) offers_.push_back(r);
             }
-        } else {
+        } else if (view.answered == pageAsk_) {
             page_.rows = view.rows;
             page_.total = view.total;
             page_.page = view.page;
@@ -174,6 +193,11 @@ void Broker::heard(Play& play, const net::BrokerView& view) {
     }
     if (view.parts & net::BrokerView::Mine) {
         mine_.mine = view.mine;
+        // A listing being lowered that sold or ran out meanwhile: nothing left to lower.
+        if (editing_ != 0 && std::none_of(mine_.mine.begin(), mine_.mine.end(), [&](const net::BrokerRow& r) { return r.id == editing_; })) {
+            editing_ = 0;
+            if (focus_ == Focus::Lower) focus_ = Focus::None;
+        }
         mine_.accountCount = view.accountCount;
         mine_.soldLately = view.soldLately;
     }
@@ -181,7 +205,7 @@ void Broker::heard(Play& play, const net::BrokerView& view) {
     if (view.parts & net::BrokerView::Quoted) {
         if (view.answered != 0 && view.answered == salesAsk_) {
             sales_ = view.sales;
-        } else {
+        } else if (view.answered == quoteAsk_) {
             quoteEach_ = view;
             requote(play);
             // A price to start from: the cheapest on sale, or what has sold, or four times the NPC's.
@@ -219,9 +243,19 @@ void Broker::heard(Play& play, const net::BrokerView& view) {
             confirm_ = 0;
             browseOwed_ = tickerOwed_ = true;
             browseIn_ = 0.0f;
-            // One listing bought is gone from the market: back to the grid. Alike things stay
-            // open, their row refreshed by the page asked now.
-            if (item_ && !(open_.flags & net::BrokerRow::Alike)) item_ = false;
+            // One listing bought is gone from the market: back to the grid, if it is that one's
+            // page still. Alike things stay open, their row asked again.
+            if (item_ && !(open_.flags & net::BrokerRow::Alike) && open_.id == bought_) item_ = false;
+            if (item_ && (open_.flags & net::BrokerRow::Alike) && play.realm().tables() &&
+                size_t(open_.what.item) < play.realm().tables()->items.size()) {
+                const content::ItemRow& shape = play.realm().tables()->items[size_t(open_.what.item)];
+                net::BrokerAsk again;
+                again.what = net::BrokerWhat::Browse;
+                again.query.kind = int(sim::brokerKind(shape));
+                again.query.text = shape.label;
+                again.query.sort = sim::BrokerQuery::Sort::Price;
+                itemAsk_ = askQuiet(play, again);
+            }
             qty_ = 1;
         } else if (did == net::BrokerWhat::List) {
             sellSlot_ = -1;
@@ -260,7 +294,7 @@ void Broker::gather(Play& play) {
         net::BrokerAsk asked;
         asked.what = net::BrokerWhat::Quote;
         asked.item = sellSeen_.item;
-        ask(play, asked);
+        quoteAsk_ = ask(play, asked);
     } else if (at != things_.end()) {
         const bool resized = sellSeen_.durability != at->what.durability;
         sellSeen_ = at->what;
@@ -347,7 +381,13 @@ void Broker::layout(Play& play) {
         }
     } else if (tab_ == Tab::Shop) {
         spot(g_.back, Hit::Back);
-        spot({g_.back.right() + 12.0f, g_.back.y, 80.0f, g_.back.h}, Hit::Path);
+        // The category in the breadcrumb, as wide as its word (the item's name after it is not a link).
+        if (const content::Tables* tables = play.realm().tables(); tables && size_t(open_.what.item) < tables->items.size()) {
+            const int kind = int(sim::brokerKind(tables->items[size_t(open_.what.item)]));
+            if (kind >= 0 && kind < int(sim::BrokerKind::Count)) {
+                spot({g_.back.right() + 12.0f, g_.back.y, controls::labelWidth(kText * u, market::kKinds[kind]) / k, g_.back.h}, Hit::Path);
+            }
+        }
         const Box& b = g_.buyBox;
         const float bx = b.x + 12.0f, bw = b.w - 24.0f;
         const bool alike = (open_.flags & net::BrokerRow::Alike) != 0;
@@ -383,7 +423,7 @@ void Broker::layout(Play& play) {
             spot(g_.thingsPrev, Hit::ThingPrev);
             spot(g_.thingsNext, Hit::ThingNext);
         }
-        if (sellSlot_ >= 0) {
+        if (sellSlot_ >= 0 && !sellSeen_.empty()) {
             const Box& f = g_.form;
             const float fx = f.x + 14.0f, fw = f.w - 28.0f, half = (fw - 16.0f) * 0.5f, rx = fx + half + 16.0f;
             spot({fx, f.y + 104.0f, half, kPrimaryH}, Hit::Price);
@@ -553,7 +593,8 @@ void Broker::press(Play& play, const Spot& s) {
         case Hit::Path:
             if (realm.tables() && size_t(open_.what.item) < realm.tables()->items.size()) {
                 query_ = sim::BrokerQuery{.sort = query_.sort, .descending = query_.descending};
-                query_.kind = int(sim::brokerKind(realm.tables()->items[size_t(open_.what.item)]));
+                query_.kind = std::clamp(int(sim::brokerKind(realm.tables()->items[size_t(open_.what.item)])), -1,
+                                         int(sim::BrokerKind::Count) - 1);
                 minText_.clear();
                 maxText_.clear();
                 item_ = false;

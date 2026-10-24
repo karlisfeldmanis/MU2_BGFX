@@ -156,6 +156,16 @@ void Broker::rebuild(Play& play, Stage* stage) {
     uint32_t standKey = 0;
     float standW = 0.0f, standH = 0.0f;
     const gfx::Art turned = stage ? stage->picture() : gfx::Art{};
+    // What stands, as one number: the stage's picture is drawn only when it was taken of this.
+    const auto keyOf = [&](uint32_t base) {
+        uint32_t key = base * 2654435761u;
+        for (const Standing& s : standing) {
+            key = (key ^ uint32_t(s.item + 1)) * 16777619u;
+            key = (key ^ uint32_t(s.refinement)) * 16777619u;
+            key = (key ^ uint32_t(s.box.x * 8.0f) ^ (uint32_t(s.box.y * 8.0f) << 16)) * 16777619u;
+        }
+        return key;
+    };
     // The thing, market-style (the user, 2026-10-12): one framed block, the picture turning on the
     // left and its name, kind and lines on the right, a buyer's lines only. `pic` is the square's
     // side; lines that do not fit beside it run on under the block to `stop`.
@@ -183,8 +193,12 @@ void Broker::rebuild(Play& play, Stage* stage) {
         standing.push_back({what.item, {0.0f, 0.0f, pic, pic}, what.refinement, true, what.excellent != 0});
         standKey = 2u + uint32_t(pic);
         standW = standH = pic;
-        if (turned.valid() && stood_ == standKey) {
-            const float side = (pic - 2.0f * std::round(pic * 0.06f)) * std::clamp(sheet.artScale, 0.62f, 1.0f);
+        if (turned.valid() && stood_ == keyOf(standKey)) {
+            // A thing as big as its cells (describe's artScale, a jewel 0.42): in the 150-unit
+            // square a one-cell jewel at the small card's 0.62 filled it (the user, 2026-10-24:
+            // "jewels to big on large contrainer").
+            const float least = pic > 80.0f ? 0.42f : 0.62f;
+            const float side = (pic - 2.0f * std::round(pic * 0.06f)) * std::clamp(sheet.artScale, least, 1.0f);
             canvas_.image(turned, P({well.midX() - side * 0.5f, well.midY() - side * 0.5f, side, side}));
         }
         struct Said {
@@ -483,7 +497,8 @@ void Broker::rebuild(Play& play, Stage* stage) {
                                 row.what.excellent != 0});
             const float tx = t.x + side + 9.0f, room = t.right() - 4.0f - tx;
             text(tx, t.y + 11.0f, kCaption, inkOf(tables, row.what), fitted(nameOf(tables, row.what), kCaption, room));
-            const int64_t each = row.price;
+            // A stack's price a piece, as the strip prices every jewel.
+            const int64_t each = !(row.flags & net::BrokerRow::Alike) && stackOf(tables, row.what) ? row.price / row.what.durability : row.price;
             const float pw = text(tx, t.y + 23.0f, kText, style::kBoneHi, market::commas(each)) / k;
             if (row.lastSale > 0) {
                 const int64_t pct = (each - row.lastSale) * 100 / row.lastSale;
@@ -569,8 +584,10 @@ void Broker::rebuild(Play& play, Stage* stage) {
             if (asking) {
                 text(tx, ly, kCaption, kGold, fitted("Pay " + market::commas(row->price) + "?", kCaption, room));
             } else {
-                const std::string vs = market::againstLast(row->price, row->lastSale);
-                text(tx, ly, kCaption, vs.empty() ? style::kAshInk2 : row->price < row->lastSale ? style::kLive : style::kAshInk,
+                // A stack against the last sale of one piece of it: its price a piece.
+                const int64_t each = stack ? row->price / row->what.durability : row->price;
+                const std::string vs = market::againstLast(each, row->lastSale);
+                text(tx, ly, kCaption, vs.empty() ? style::kAshInk2 : each < row->lastSale ? style::kLive : style::kAshInk,
                      fitted(vs.empty() ? "New on the market" : vs, kCaption, room));
             }
             // The foot.
@@ -630,7 +647,7 @@ void Broker::rebuild(Play& play, Stage* stage) {
         // The shop's pictures, stood on a stage the window's size and drawn over the cards' floors.
         standKey = 1;
         standW = W, standH = kTall;
-        if (turned.valid() && stood_ == standKey) canvas_.image(turned, P(window));
+        if (turned.valid() && stood_ == keyOf(standKey)) canvas_.image(turned, P(window));
         // The open sort list, over the grid under its button.
         if (sorting_) {
             const Box sheet{g_.sort.x, g_.sort.bottom() + 1.0f, g_.sort.w, float(kSorts) * 16.0f + 3.0f};
@@ -654,7 +671,7 @@ void Broker::rebuild(Play& play, Stage* stage) {
                              state(Hit::Back, 0), u, S(12.5f));
         }
         if (const Spot* s = spotOf(Hit::Path, 0); s && size_t(open_.what.item) < tables.items.size()) {
-            const int kind = int(sim::brokerKind(tables.items[size_t(open_.what.item)]));
+            const int kind = std::clamp(int(sim::brokerKind(tables.items[size_t(open_.what.item)])), 0, int(sim::BrokerKind::Count) - 1);
             const float base = mid(s->box.y, s->box.h, kText);
             float px = s->box.x;
             px += text(px, base, kText, state(Hit::Path, 0).lift > 0.0f ? style::kBoneHi : kGold, market::kKinds[kind]) / k;
@@ -678,9 +695,10 @@ void Broker::rebuild(Play& play, Stage* stage) {
             text(bx + cw, b.y + 42.0f, 22.0f, style::kBoneHi, market::commas(open_.price));
         }
         {
-            const std::string vs = market::againstLast(open_.price, open_.lastSale);
-            text(bx, b.y + 56.0f, kCaption, vs.empty() ? style::kAshInk2 : open_.price < open_.lastSale ? style::kLive : style::kAshInk,
-                 vs.empty() ? "Not sold before" : vs + " \xC2\xB7 last " + market::commas(open_.lastSale));
+            const int64_t each = !alike && stackOf(tables, open_.what) ? open_.price / open_.what.durability : open_.price;
+            const std::string vs = market::againstLast(each, open_.lastSale);
+            text(bx, b.y + 56.0f, kCaption, vs.empty() ? style::kAshInk2 : each < open_.lastSale ? style::kLive : style::kAshInk,
+                 vs.empty() ? "Not sold before" : fitted(vs + " \xC2\xB7 last " + market::commas(open_.lastSale) + (each != open_.price ? " each" : ""), kCaption, bw));
         }
         if (alike) {
             square(Hit::Qty, -1, controls::Glyph::Left);
@@ -1067,7 +1085,8 @@ void Broker::rebuild(Play& play, Stage* stage) {
         }
         if (!line.empty()) {
             const float tw = wide(kText, line) + 28.0f;
-            const Box b{W * 0.5f - tw * 0.5f, kBottom - 46.0f, tw, 22.0f};
+            // In the window's foot under every pane, so it covers no figure (it sat over Sell's total).
+            const Box b{W * 0.5f - tw * 0.5f, kBottom - 9.0f, tw, 18.0f};
             canvas_.rect(P(b), style::kAsh3);
             canvas_.outline(P(b), std::max(1.0f, u), edge);
             text(b.x + 14.0f, mid(b.y, b.h, kText), kText, ink, line);
@@ -1080,7 +1099,7 @@ void Broker::rebuild(Play& play, Stage* stage) {
     if (stage) {
         if (standing.empty()) standKey = 0, standW = standH = 1.0f;
         stage->stand(standing, standW, standH);
-        stood_ = standKey;
+        stood_ = keyOf(standKey);
     }
 
     // The item card over his own listing under the pointer, the bag's own card: My listings has

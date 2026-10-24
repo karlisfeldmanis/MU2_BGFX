@@ -87,7 +87,7 @@ public:
 
 private:
     const gfx::Art* classFaces_[8] = {};
-    void ask(Play& play, net::BrokerAsk asked);
+    uint32_t ask(Play& play, net::BrokerAsk asked);
     uint32_t askQuiet(Play& play, net::BrokerAsk asked);
     void heard(Play& play, const net::BrokerView& view);
     void browse(Play& play);
@@ -140,7 +140,9 @@ private:
     bool sorting_ = false;           // the sort list open under its button
     net::BrokerView page_, mine_, quote_;
     std::vector<net::BrokerRow> ticker_;
-    uint32_t tickerAsk_ = 0;
+    // Each answer is taken only by the ask that is still its place's newest: a late answer to an
+    // older ask (an item opened and left within one round trip) is dropped, not laid over the grid.
+    uint32_t pageAsk_ = 0, tickerAsk_ = 0, quoteAsk_ = 0;
     uint32_t confirm_ = 0;  // the listing whose Buy asks a second press, on its card or page
 
     // An item's page: the row as it was opened, others like it, and its last sales.
@@ -148,6 +150,9 @@ private:
     net::BrokerRow open_;
     std::vector<net::BrokerRow> offers_;
     uint32_t offersAsk_ = 0, salesAsk_ = 0;
+    // After alike things are bought, their row asked again to refresh the page (itemAsk_); the
+    // listing a Buy was asked of, so its answer closes only that one's page.
+    uint32_t itemAsk_ = 0, bought_ = 0;
     std::vector<sim::Sale> sales_;
     int qty_ = 1;
 
