@@ -1035,6 +1035,15 @@ target_compile_definitions(sim_test PRIVATE MU2_ASSET_DIR="${MU_ASSETS}"
                                           MU2_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 target_compile_options(sim_test PRIVATE -Wall -Wextra -Wno-unused-parameter)
 
+# The Broker's window without a window (tests/market_test.cpp): its sums and its rectangles at
+# every width it may be. The headers it reads are the game's; gfx::Box wants bgfx's headers only.
+add_executable(market_test EXCLUDE_FROM_ALL
+  tests/market_test.cpp
+)
+target_link_libraries(market_test PRIVATE mu_net)
+target_include_directories(market_test PRIVATE src $<TARGET_PROPERTY:bgfx,INTERFACE_INCLUDE_DIRECTORIES>)
+target_compile_options(market_test PRIVATE ${MU_WARNINGS})
+
 # Sprint 16, step 3: a save names quests, travel rows and skills by what they are, not where
 # they sit. A version 2 character read, written as version 3 and read back the same, and read
 # the same again with its quests reordered and an unknown one in them (tests/save_test.cpp).

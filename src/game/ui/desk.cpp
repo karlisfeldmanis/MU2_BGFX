@@ -1357,6 +1357,9 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         bagForBroker_ = !inventoryOpen_;
         inventoryOpen_ = true;
     }
+    // A screen too narrow for the market beside the bag: the market stands in the middle, and the
+    // bag over it would hide its cards (game/ui/broker.h besideBag).
+    if (brokering && inventoryOpen_ && !Broker::besideBag(float(window.width()))) inventoryOpen_ = false;
     if (!brokering && brokering_ && bagForBroker_) inventoryOpen_ = bagForBroker_ = false;
     brokering_ = brokering;
     if (play.isOpen()) {
