@@ -1038,13 +1038,16 @@ target_compile_definitions(sim_test PRIVATE MU2_ASSET_DIR="${MU_ASSETS}"
 target_compile_options(sim_test PRIVATE -Wall -Wextra -Wno-unused-parameter)
 
 # The Broker's window without a window (tests/market_test.cpp): its sums and its rectangles at
-# every width it may be. The headers it reads are the game's; gfx::Box wants bgfx's headers only.
-add_executable(market_test EXCLUDE_FROM_ALL
-  tests/market_test.cpp
-)
-target_link_libraries(market_test PRIVATE mu_net)
-target_include_directories(market_test PRIVATE src $<TARGET_PROPERTY:bgfx,INTERFACE_INCLUDE_DIRECTORIES>)
-target_compile_options(market_test PRIVATE ${MU_WARNINGS})
+# every width it may be. The headers it reads are the game's; gfx::Box wants bgfx's headers only,
+# so never a server's (MU2_SERVER_ONLY has no bgfx).
+if(NOT MU2_SERVER_ONLY)
+  add_executable(market_test EXCLUDE_FROM_ALL
+    tests/market_test.cpp
+  )
+  target_link_libraries(market_test PRIVATE mu_net)
+  target_include_directories(market_test PRIVATE src $<TARGET_PROPERTY:bgfx,INTERFACE_INCLUDE_DIRECTORIES>)
+  target_compile_options(market_test PRIVATE ${MU_WARNINGS})
+endif()
 
 # Sprint 16, step 3: a save names quests, travel rows and skills by what they are, not where
 # they sit. A version 2 character read, written as version 3 and read back the same, and read
@@ -1141,8 +1144,11 @@ target_compile_definitions(raid PRIVATE MU2_ASSET_DIR="${MU_ASSETS}"
 target_compile_options(raid PRIVATE -Wall -Wextra -Wno-unused-parameter)
 
 # The Armory's dump: cards, drop odds, skills, talents and rules for mu-classic.com, from the
-# game's own code and the release's packs (docs/plans/armory.md; `armory_dump --help`).
-include(tools/armory/dump/armory.cmake)
+# game's own code and the release's packs (docs/plans/armory.md; `armory_dump --help`). Never a
+# server's: server/deploy.sh sends no tools/armory/.
+if(NOT MU2_SERVER_ONLY)
+  include(tools/armory/dump/armory.cmake)
+endif()
 
 # The server build's own: every test that runs without a window, a sound device or the client's
 # meshes (cooked_test reads those; a server has only the tables).
