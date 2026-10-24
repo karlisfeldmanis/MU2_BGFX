@@ -402,8 +402,12 @@ the visual":
    included), named at the roll; only while he lives; no miss, no defence, never chaining. Its own dice stream. Drawn as MU's three
    bombs with eExplosion, said (`Loosed` 79) on the tick its numbers come. The plan row's "on a double hit" is "on a hit": WebZen
    rolls on every hit and again on a double, and there is no double damage here.
-4. **The fire sheet kept frontal**: darkfirescrem01's trail behind its head is clipped where it would pass behind his shoulders; the
-   lanes, flames and ribbon run forward from him as MU's do.
+4. **The fire sheet kept frontal, slid forward** (the user, 2026-10-24, "shift it forward"): MU's whole darkfirescrem01 and
+   darkfirescrem02, each slid down its lane until its tail starts at his shoulders -- at the let-go the sheet's head stands about
+   7.8 tiles out (its 341-unit tail at scale 2.3), shrinking back to the lane's own head as MU's scale falls. Cutting the sheet at
+   his shoulders, built first, left little of MU's red streaks to see. The lanes, flames and ribbon run forward from him as MU's do.
+   Hits stay once a cast (8.2), the user's pick over WebZen's three a lane (one serial a lane, `WZ/MultiAttackHackCheck.cpp`
+   CheckFireScreamSkill, `FireScreamMaxAttackCountSameSerial` 3).
 5. **MU's row**: level 102, damage 130, 45 mana, six tiles of aim, the strike (80), let go at key 5 of 7; no AG. **Ours**: a 3 s
    cooldown (MU has none; every QWER skill here has one). Command 70 and energy 150 (the client's) go on the scroll.
 6. **MU's look at MU's numbers**: the three pairs, the Inferno ribbon, the flames, the puffs; Darklord_firescream.wav once at the cast

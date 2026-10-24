@@ -16,9 +16,10 @@
 // Spark02 sparks and one Explotion01 (the meteor's) and eExplosion (WSclient.cpp:4789-4802,
 // ZzzEffect.cpp:6275-6347).
 //
-// **Ours, and marked**: the flame sheet is cut where it would trail behind his shoulders, and a
-// flame never stands wider behind its head than the head is ahead of him -- the user's "only
-// frontal" (MU's first frames reach six tiles behind him).
+// **Ours, and marked**: each mesh is slid down its lane until its tail starts at his shoulders, and
+// a flame never stands wider behind its head than the head is ahead of him -- the user's "only
+// frontal" (MU's first frames reach six tiles behind him); the user's pick of 2026-10-24, "shift it
+// forward", over cutting the sheet there, which left little of MU's streaks to see.
 //
 // Presentation only: who is struck and when is the realm's (Realm::fireScream).
 #pragma once
@@ -94,7 +95,8 @@ private:
     static constexpr int kLanes = 24, kFlames = 512, kPuffs = 24, kSparks = 240, kBombs = 24;
 
     std::vector<EffectCorner> sheet_, streak_, ring_;
-    mutable std::vector<EffectCorner> cut_;
+    // How far each model trails behind its head, loaded metres at scale 1 (its largest Z).
+    float sheetTail_ = 0.0f, ringTail_ = 0.0f;
     bgfx::TextureHandle sheetTex_ = BGFX_INVALID_HANDLE, streakTex_ = BGFX_INVALID_HANDLE,
                         ringTex_ = BGFX_INVALID_HANDLE, infernoTex_ = BGFX_INVALID_HANDLE,
                         flameTex_ = BGFX_INVALID_HANDLE, puffTex_ = BGFX_INVALID_HANDLE,
@@ -114,9 +116,6 @@ private:
     void head(const Lane& lane, float along, float out[3]) const;
     void step(float frames);
     void flame(const float at[3], float scale);
-    // `tris` cut to the part of the model no further behind its head than `keep` (model units at
-    // its scale): the corners whose loaded z -- MU's +Y, behind -- stays under it.
-    void cut(const std::vector<EffectCorner>& tris, float keep) const;
 };
 
 template <typename Blast>

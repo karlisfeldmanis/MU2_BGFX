@@ -36,7 +36,13 @@ bool FireScream::open(const std::string& assetDir, content::Textures& textures,
     loadEffectObj(dir + "darkfirescrem01.obj", kUnit, "motion_blurr", sheet_);
     loadEffectObj(dir + "darkfirescrem01.obj", kUnit, "SwordEffor2", streak_);
     loadEffectObj(dir + "darkfirescrem02.obj", kUnit, "", ring_);
-    cut_.reserve(std::max(sheet_.size(), streak_.size()) * 2 + 8);
+    const auto tail = [](const std::vector<EffectCorner>& tris) {
+        float most = 0.0f;
+        for (const EffectCorner& c : tris) most = std::max(most, c.z);
+        return most;
+    };
+    sheetTail_ = std::max(tail(sheet_), tail(streak_));
+    ringTail_ = tail(ring_);
     sheetTex_ = sheet("/effects/fire_scream/motion_blurr.png");
     streakTex_ = sheet("/effects/fire_scream/swordeffor2.png");
     ringTex_ = sheet("/effects/fire_scream/chainring3.png");
@@ -196,36 +202,6 @@ void FireScream::step(float frames) {
     }
 }
 
-void FireScream::cut(const std::vector<EffectCorner>& tris, float keep) const {
-    cut_.clear();
-    const auto lerp = [](const EffectCorner& a, const EffectCorner& b, float t) {
-        return EffectCorner{a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t,
-                            a.u + (b.u - a.u) * t, a.v + (b.v - a.v) * t};
-    };
-    for (size_t i = 0; i + 2 < tris.size(); i += 3) {
-        // Sutherland-Hodgman against z <= keep: a triangle in, at most a quad out.
-        EffectCorner in[3] = {tris[i], tris[i + 1], tris[i + 2]};
-        EffectCorner out[4];
-        int n = 0;
-        for (int k = 0; k < 3; ++k) {
-            const EffectCorner& a = in[k];
-            const EffectCorner& b = in[(k + 1) % 3];
-            const bool aIn = a.z <= keep, bIn = b.z <= keep;
-            if (aIn) out[n++] = a;
-            if (aIn != bIn) out[n++] = lerp(a, b, (keep - a.z) / (b.z - a.z));
-        }
-        if (n < 3) continue;
-        cut_.push_back(out[0]);
-        cut_.push_back(out[1]);
-        cut_.push_back(out[2]);
-        if (n == 4) {
-            cut_.push_back(out[0]);
-            cut_.push_back(out[2]);
-            cut_.push_back(out[3]);
-        }
-    }
-}
-
 void FireScream::gatherEffects(gfx::Effects& effects) const {
     const float m = metre();
     const float tile = m / kUnit;
@@ -236,24 +212,23 @@ void FireScream::gatherEffects(gfx::Effects& effects) const {
         // The pair's heads while they live, MU's scale at this frame.
         if (lane.frame < float(kFrames)) {
             const float along = kFrom + kStep * lane.frame;
-            float at[3];
-            head(lane, along, at);
-            // The model's loaded Z is MU's +Y, behind it: down the lane backwards.
+            // The model's loaded Z is MU's +Y, behind it: down the lane backwards. Each slid on
+            // until its tail starts at his shoulders.
             const float back[3] = {-lane.way[0], 0.0f, -lane.way[2]};
             const float fire = kFireScale - kFireShrink * lane.frame;
             if (fire >= 0.1f) {
-                const float keep = along * kUnit / fire;
-                cut(sheet_, keep);
-                submitEffectAlong(effects, cut_, sheetTex_, gfx::Blend::Additive, at, lane.across, up, back,
+                float at[3];
+                head(lane, std::max(along, sheetTail_ * fire / kUnit), at);
+                submitEffectAlong(effects, sheet_, sheetTex_, gfx::Blend::Additive, at, lane.across, up, back,
                                   fire * tile, white, 1.0f);
-                cut(streak_, keep);
-                submitEffectAlong(effects, cut_, streakTex_, gfx::Blend::Additive, at, lane.across, up, back,
+                submitEffectAlong(effects, streak_, streakTex_, gfx::Blend::Additive, at, lane.across, up, back,
                                   fire * tile, white, 1.0f);
             }
             const float ring = kRingScale - kRingShrink * lane.frame;
             if (ring >= 0.1f) {
-                cut(ring_, along * kUnit / ring);
-                submitEffectAlong(effects, cut_, ringTex_, gfx::Blend::Alpha, at, lane.across, up, back,
+                float at[3];
+                head(lane, std::max(along, ringTail_ * ring / kUnit), at);
+                submitEffectAlong(effects, ring_, ringTex_, gfx::Blend::Alpha, at, lane.across, up, back,
                                   ring * tile, white, 1.0f);
             }
         }
@@ -296,6 +271,8 @@ void FireScream::gatherEffects(gfx::Effects& effects) const {
         for (int k = 0; k < 3; ++k) flame.position[k] = one.at[k];
         flame.halfWidth = flame.halfHeight = 32.0f * one.scale * m;
         flame.spin = one.spin;
+        // Thinned into the ground it stands on, not cut flat by it (ours: MU draws it over the land).
+        flame.soft = 1.0f;
         for (int k = 0; k < 3; ++k) flame.colour[k] = std::min(1.0f, one.light);
         flame.sheet = flameTex_;
         flame.blend = gfx::Blend::Additive;
