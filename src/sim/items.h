@@ -982,6 +982,19 @@ struct Stacking {
     const char* says;
 };
 Stacking stackingOf(Power power);
+// How many of a rune count where it stacks (the user, 2026-10-24: "check which stacking runes is
+// way to powerfull to stuck and nerf them"): some twenty-six sockets worn would have summed
+// Keen Eye to +260% critical, Bloodwell to 78% of every wound back, the Undying to x2.5 life and a
+// stat rune to +800%. Three now, one thing's worth -- of a family of tiers (Wellspring, Barrage,
+// Whirlwind's, Wrath and Spite) the strongest three, of the stat runes three for each stat.
+// Steadfast and the Plagues keep the ceilings they had. Ours.
+constexpr int kRuneStackMost = 3;
+// The family a rune's three are counted in -- its weakest tier's power -- and 0 for those not
+// counted here: the stat runes (counted a stat at a time) and those with ceilings of their own.
+uint8_t stackFamilyOf(Power power);
+// A rune's strength within its family, to keep the strongest: Common, Rare, Epic, Legendary,
+// Ancient.
+int rarityRank(Rarity rarity);
 // A rune paid to the Magic Gladiator that he may not set -- a Legendary of the knight's or the
 // wizard's, from a giver's path -- comes as its weaker kin he may: Arcane Echo as Faint Echo,
 // Pyroblaster as Scorch, Whirlwind as Eddy, Fireburst as Sparkburst, Hellfire as Brimstone,

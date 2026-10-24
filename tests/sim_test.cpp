@@ -10860,6 +10860,34 @@ void testRunes(const content::Tables& tables) {
         check(e.whirlwinds == 1 && e.runeDefense > 0.0 && e.blockChance > 0.0 &&
                   e.killLife >= sim::kSecondWindShare && e.killMana >= sim::kSecondWindShare,
               "worn, the four are each counted");
+        // Three of a rune count (sim::kRuneStackMost): six Keen Eyes, in the armour and the
+        // helm, are three's critical; four Greater Mights three's strength, and a Lesser none.
+        {
+            sim::Realm keen;
+            keen.raise(&tables, 7, 190, 110, dk, 200);
+            const uint8_t eyes[3] = {uint8_t(sim::Power::KeenEye), uint8_t(sim::Power::KeenEye),
+                                     uint8_t(sim::Power::KeenEye)};
+            const int32_t helm = tables.itemNamed("HelmMale01");
+            keen.give(plate, sim::placeOf(tables.items[size_t(plate)]), 0, -1, false, 0, 0, 3, eyes);
+            keen.give(helm, sim::kHelm, 0, -1, false, 0, 0, 3, eyes);
+            checkNear(keen.hero().excel.runeCritical, 3 * sim::kKeenEyeCritical, 1e-9,
+                      "six Keen Eyes worn are three's critical chance");
+            const uint8_t might[3] = {uint8_t(sim::Power::GreaterMight),
+                                      uint8_t(sim::Power::GreaterMight),
+                                      uint8_t(sim::Power::LesserMight)};
+            sim::Realm mighty;
+            mighty.raise(&tables, 7, 190, 110, dk, 200);
+            mighty.give(plate, sim::placeOf(tables.items[size_t(plate)]), 0, -1, false, 0, 0, 3, might);
+            const uint8_t two[3] = {uint8_t(sim::Power::GreaterMight),
+                                    uint8_t(sim::Power::GreaterMight), 0};
+            mighty.give(serpent, sim::kWeaponRight, 0, -1, false, 0, 0, 3, two);
+            checkEqual(mighty.hero().runeShare.strength,
+                       3 * sim::statShareOf(sim::Power::GreaterMight).strength,
+                       "four Greater Mights and a Lesser are three Greaters' strength");
+            check(sim::stackingOf(sim::Power::KeenEye).stacks &&
+                      !sim::stackingOf(sim::Power::Frenzy).stacks,
+                  "and their tooltips say which stack");
+        }
         // Twisting Slash, again and again at the nearest: a Whirlwind's pull shoves monsters in.
         check(realm.learn(sim::skill::kTwistingSlash), "he knows Twisting Slash");
         int shoved = 0, casts = 0;
