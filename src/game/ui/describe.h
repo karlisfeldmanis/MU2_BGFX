@@ -36,6 +36,18 @@ tip::Sheet describe(const content::Tables& tables, const sim::Held& what, const 
 // one, where it can be split -- the bag, the vault and the machine's box call it, nothing else.
 void splitHint(const content::Tables& tables, const sim::Held& what, tip::Sheet& sheet);
 
+// **The runes worn that share one limit** (sim::stackMostOf, sim::kStatRuneMost): the limit,
+// and those worn strongest first in their rarities -- of a stat rune every rune adding to its
+// stat, of Bulwark's kin or the Volleys' the kin. `most` 0 for a rune that stacks free. The item
+// card's pips and the character window's Runes rows both read it.
+struct RunePool {
+    int most = 0;
+    std::vector<sim::Rarity> worn;
+};
+RunePool runePool(const sim::Satchel& bag, sim::Power power);
+// A rune's rarity as the cards colour it: its name, its stone, its pip.
+tip::Tone rarityTone(sim::Rarity rarity);
+
 // The colour a Zen figure is drawn in: getGoldColor, a pale blue that steps through green and
 // blue as the amount grows. Bag.MoneyColour.
 uint32_t moneyColour(long long zen);

@@ -3,9 +3,11 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <cstring>
 #include <string>
 
 #include "game/ui/controls.h"
+#include "game/ui/describe.h"
 #include "game/ui/sheet.h"
 #include "game/ui/style.h"
 #include "game/ui/tip.h"
@@ -79,6 +81,10 @@ constexpr uint32_t kSpendWash = gfx::rgba(0.165f, 0.051f, 0.035f);
 constexpr uint32_t kChosen = gfx::rgba(0.941f, 0.843f, 0.604f);
 constexpr uint32_t kChosenBar = gfx::rgba(0.788f, 0.639f, 0.353f);
 constexpr uint32_t kDivider = style::kAsh3;
+// A rune row's pips (Card::pipsAt): where they start, their size and step, in units, and the
+// hole an empty one's ring is drawn round.
+constexpr float kPipsX = 64.0f, kPipRadius = 1.9f, kPipPitch = 5.4f;
+constexpr uint32_t kPipHole = gfx::rgba(0.075f, 0.067f, 0.055f);
 // The Bonuses page's values, each in what it is: a stat's, an element's, a fortune's colour.
 // Never red: red reads as a loss (the user, 2026-10-23).
 constexpr uint32_t kStrengthInk = gfx::rgba(1.0f, 0.647f, 0.282f);
@@ -384,19 +390,78 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
                 line.ink = ink;
                 return line;
             };
-            // The stat runes worn (Body::runeShare): the share, and what it adds to his points.
-            const auto rune = [](const char* label, int share, int added, uint32_t ink) {
-                if (share <= 0) return Line{label, "0%", true};
-                Line line{label, plusPercent(share) + " (" + plus(added) + ")", false};
-                line.ink = ink;
-                return line;
-            };
-            const sim::HeroPoints& share = hero->runeShare;
-            now_.groups.push_back({"Stat runes",
-                                   {rune("Strength", share.strength, total.strength - hero->points.strength, kStrengthInk),
-                                    rune("Agility", share.agility, total.agility - hero->points.agility, kAgilityInk),
-                                    rune("Vitality", share.vitality, total.vitality - hero->points.vitality, kVitalityInk),
-                                    rune("Energy", share.energy, total.energy - hero->points.energy, kEnergyInk)}});
+            // **Runes** (the user, 2026-10-24, the canvas's B): one row a kind of rune he wears --
+            // a limited one's pips (game::runePool), its total where its line is a "+N%", else
+            // how many; the stat runes a row a stat, their share and what it adds to his points.
+            Group runes{"Runes", {}};
+            {
+                const sim::Satchel* bag = realm ? &realm->satchel() : nullptr;
+                const auto pipsOf = [&](Line& line, sim::Power power) {
+                    if (!bag) return;
+                    const RunePool pool = runePool(*bag, power);
+                    line.pips = pool.most;
+                    for (const sim::Rarity rarity : pool.worn) {
+                        line.stones.push_back(tip::colourOf(rarityTone(rarity)));
+                    }
+                };
+                const sim::HeroPoints& share = hero->runeShare;
+                const int shares[4] = {share.strength, share.agility, share.vitality, share.energy};
+                const int added[4] = {total.strength - hero->points.strength,
+                                      total.agility - hero->points.agility,
+                                      total.vitality - hero->points.vitality,
+                                      total.energy - hero->points.energy};
+                const char* const statWords[4] = {"Strength", "Agility", "Vitality", "Energy"};
+                const uint32_t statInks[4] = {kStrengthInk, kAgilityInk, kVitalityInk, kEnergyInk};
+                const sim::Power statRunes[4] = {sim::Power::LesserMight, sim::Power::LesserGrace,
+                                                 sim::Power::LesserVigor, sim::Power::LesserInsight};
+                for (int k = 0; k < 4; ++k) {
+                    if (shares[k] <= 0) continue;
+                    Line line{statWords[k], plusPercent(shares[k]) + " (" + plus(added[k]) + ")", false};
+                    line.ink = statInks[k];
+                    pipsOf(line, statRunes[k]);
+                    runes.lines.push_back(std::move(line));
+                }
+                // The rest, a row a power in the order worn; Bulwark's kin and the Volleys' each
+                // show the kin's one shared pip.
+                std::vector<uint8_t> seen;
+                for (int slot = sim::kWeaponRight; bag && slot <= sim::kRingLeft; ++slot) {
+                    const sim::Held& held = (*bag)[slot];
+                    if (held.empty()) continue;
+                    for (int at = 0; at < std::min<int>(held.sockets, sim::kMostSockets); ++at) {
+                        const sim::PowerRow* power = sim::powerOf(held.powers[at]);
+                        if (!power) continue;
+                        const sim::HeroPoints its = sim::statShareOf(power->power);
+                        if (its.strength || its.agility || its.vitality || its.energy) continue;
+                        if (std::find(seen.begin(), seen.end(), held.powers[at]) != seen.end()) continue;
+                        seen.push_back(held.powers[at]);
+                        int count = 0;
+                        for (int s2 = sim::kWeaponRight; s2 <= sim::kRingLeft; ++s2) {
+                            const sim::Held& h2 = (*bag)[s2];
+                            if (h2.empty()) continue;
+                            for (int a2 = 0; a2 < std::min<int>(h2.sockets, sim::kMostSockets); ++a2) {
+                                count += h2.powers[a2] == held.powers[at];
+                            }
+                        }
+                        Line line{power->name, "", false};
+                        line.labelInk = tip::colourOf(rarityTone(power->rarity));
+                        pipsOf(line, power->power);
+                        // "+10% critical chance" times those that count; otherwise how many.
+                        const char* tells = power->tells ? power->tells : "";
+                        const int counted = line.pips > 0 ? std::min(count, line.pips) : count;
+                        int each = 0;
+                        if (tells[0] == '+' && std::sscanf(tells + 1, "%d%%", &each) == 1 &&
+                            std::strchr(tells, '%') != nullptr) {
+                            line.value = plusPercent(each * counted);
+                        } else {
+                            line.value = "x" + std::to_string(count);
+                        }
+                        line.ink = kHeading;
+                        runes.lines.push_back(std::move(line));
+                    }
+                }
+                if (runes.lines.empty()) runes.lines.push_back(Line{"No runes worn", "", true});
+            }
+            now_.groups.push_back(std::move(runes));
             now_.groups.push_back({"Resistances",
                                    {row("Ice", ex.iceResistance, false, kIceInk),
                                     row("Poison", ex.poisonResistance, false, kPoisonInk),
@@ -604,6 +669,37 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
     if (now_ == drawn_ && rebuilds_ > 0) return;
     drawn_ = now_;
     rebuild();
+}
+
+// A rune row's pips on the Bonuses page (Line::pips), as the item card draws them: a solid
+// stone for each worn in its rarity, an outlined ring for room left, past the limit dim and
+// struck through.
+void Card::pipsAt(const Line& line, float px, float cy, float k) {
+    const float r = kPipRadius * k, line1 = std::max(1.0f, 0.5f * k);
+    const auto disc = [&](float cx, float radius, uint32_t colour) {
+        constexpr int kSides = 16;
+        float xy[kSides * 2];
+        for (int i = 0; i < kSides; ++i) {
+            const float a = 6.2831853f * float(i) / float(kSides);
+            xy[i * 2] = cx + radius * std::cos(a);
+            xy[i * 2 + 1] = cy + radius * std::sin(a);
+        }
+        canvas_.polygon(nullptr, xy, nullptr, kSides, colour);
+    };
+    const int slots = std::max(line.pips, int(line.stones.size()));
+    for (int i = 0; i < slots; ++i) {
+        const float cx = px + r + kPipPitch * k * float(i);
+        const bool worn = i < int(line.stones.size());
+        if (i >= line.pips) {
+            disc(cx, r, kDim);
+            canvas_.rect({cx - r * 1.4f, cy - line1 * 0.5f, r * 2.8f, line1}, line.stones[size_t(i)]);
+        } else if (worn) {
+            disc(cx, r, line.stones[size_t(i)]);
+        } else {
+            disc(cx, r, kDim);
+            disc(cx, r - line1 * 1.2f, kPipHole);
+        }
+    }
 }
 
 void Card::rebuild() {
@@ -828,8 +924,9 @@ void Card::rebuild() {
                 const Box row{kWellX, uy + rowTall * float(l), kWellW, rowTall};
                 if (l > 0) canvas_.rect(panel::scaled(x, y, {row.x + 1.0f, row.y, row.w - 2.0f, 0.5f}), kDivider);
                 const float base = panel::centredBaseline(face, panel::scaled(x, y, row), kRowSize * k);
-                controls::label(canvas_, x + kLeft * k, base, kRowSize * k, line.dim ? kDim : kPlain,
-                                line.label);
+                controls::label(canvas_, x + kLeft * k, base, kRowSize * k,
+                                line.dim ? kDim : line.labelInk ? line.labelInk : kPlain, line.label);
+                if (line.pips > 0 || !line.stones.empty()) pipsAt(line, x + kPipsX * k, base - kRowSize * k * 0.32f, k);
                 controls::ranged(canvas_, x + kRight * k, base, kRowSize * k, line.dim ? kDim : line.ink ? line.ink : kHeading,
                                  line.value);
             }

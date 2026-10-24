@@ -117,10 +117,6 @@ Row stat(const char* name, const std::string& text, Tone tone) {
 // limited rune its copies (sim::stackMostOf), of a Bulwark or a Volley its kin too (kinOf); of a
 // stat rune every rune adding to its stat -- Lesser and Greater, Might and Ascendance -- the best
 // kStatRuneMost of them counting. An Ascendance's stat is the one he wears most runes for.
-struct Pool {
-    int most = 0;
-    std::vector<sim::Rarity> worn;
-};
 // Of the runes where only the strongest worn works (Excellence::bulwarkShare, volleySide), its
 // kin and its strength among them: Bulwark, Buckler and Brace one, the three Volleys another.
 std::pair<int, int> kinOf(sim::Power power) {
@@ -134,8 +130,8 @@ std::pair<int, int> kinOf(sim::Power power) {
         default: return {0, 0};
     }
 }
-Pool poolOf(const sim::Satchel& bag, sim::Power power) {
-    Pool pool;
+RunePool poolOf(const sim::Satchel& bag, sim::Power power) {
+    RunePool pool;
     const sim::HeroPoints mine = sim::statShareOf(power);
     const int shares[4] = {mine.strength, mine.agility, mine.vitality, mine.energy};
     const bool stat = shares[0] || shares[1] || shares[2] || shares[3];
@@ -175,6 +171,8 @@ Pool poolOf(const sim::Satchel& bag, sim::Power power) {
 }
 
 }  // namespace
+
+RunePool runePool(const sim::Satchel& bag, sim::Power power) { return poolOf(bag, power); }
 
 void spellLines(const sim::SkillRow& row, const sim::Wearer& who, bool dim,
                 std::vector<Row>& out) {
@@ -346,7 +344,7 @@ uint32_t moneyColour(long long) { return gfx::rgba(0.851f, 0.706f, 0.373f); }
 
 // A rune's rarity in WoW's colour for it (sim::Rarity): a legendary one orange, not the green
 // of every other legendary (the user, 2026-10-04: 'legendary runes has to use orange color').
-static Tone rarityTone(sim::Rarity rarity) {
+Tone rarityTone(sim::Rarity rarity) {
     return rarity == sim::Rarity::Ancient     ? Tone::RuneAncient
            : rarity == sim::Rarity::Legendary ? Tone::RuneLegendary
            : rarity == sim::Rarity::Epic    ? Tone::Epic
@@ -972,7 +970,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                 // 2026-10-24: "we need to show on toolttip that he can use some amount of specific
                 // rune", then pips, then "use color coding for type"): a ring for each allowed,
                 // the runes of its kind worn set in them in their rarities (tip::Row::pips).
-                if (const Pool pool = poolOf(bag, power->power); pool.most > 0) {
+                if (const RunePool pool = poolOf(bag, power->power); pool.most > 0) {
                     socket.rows.back().pips = pool.most;
                     for (const sim::Rarity rarity : pool.worn) {
                         socket.rows.back().worn.push_back(rarityTone(rarity));
