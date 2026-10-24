@@ -3009,6 +3009,33 @@
         "geno_death.wav"
       ],
       "from": "SOUND_KANTURU_1ST_GENO_DIE once as it dies (GM_Kanturu_1st.cpp:1196-1203); w37/geno_death.wav (MapManager.cpp:398)."
+    },
+    "world_kanturu_relics": {
+      "files": [
+        "kan_relic_global.wav"
+      ],
+      "from": "SOUND_KANTURU_2ND_MAPSOUND_GLOBAL, Data\\Sound\\w38\\kan_relic_global.wav (MapManager.cpp:442). Sound_Kanturu2nd_Object plays it from every object every frame (GM_Kanturu_2nd.cpp:194-196), so it is always on in the Relics: a 12 s loop.",
+      "loop": true,
+      "gain_db": -14.0,
+      "note": "At the Ruins air's level: the file is 10.3 dB quieter than kan_ruin_global (-30.4 to -20.1 dBFS), so 10 dB less down than world_kanturu's -24 (2026-10-24). A first level for the user to judge."
+    },
+    "kanturu_gear": {
+      "files": [
+        "kan_relic_gear.wav"
+      ],
+      "from": "SOUND_KANTURU_2ND_MAPSOUND_GEAR, Data\\Sound\\w38\\kan_relic_gear.wav (MapManager.cpp:439), played flat while a type 9 (Object10) is moved (GM_Kanturu_2nd.cpp:198-201).",
+      "loop": true,
+      "gain_db": -24.0,
+      "note": "Ours: heard from the nearest gear (world.json show.object_loops). As loud as the Ruins wheel: the file is 2.1 dB quieter, so 2 dB less down than kanturu_wheel's -26. A first level for the user to judge."
+    },
+    "kanturu_incubator": {
+      "files": [
+        "kan_relic_incubator.wav"
+      ],
+      "from": "SOUND_KANTURU_2ND_MAPSOUND_INCUBATOR, Data\\Sound\\w38\\kan_relic_incubator.wav (MapManager.cpp:440), played flat while a type 31, 35, 36 or 37 (Object32, 36, 37, 38) is moved (GM_Kanturu_2nd.cpp:202-208).",
+      "loop": true,
+      "gain_db": -21.0,
+      "note": "Ours: heard from the nearest incubator tank. The file is as loud as kan_ruin_elec (-25.8 dBFS), so at kanturu_elec's -21. A first level for the user to judge."
     }
   },
   "not_built_yet": "Built: a monster's Sounds[0]/[1] while it walks (SetPlayerWalk's rand_fps_check(16), every frame it moves, ZzzCharacter.cpp:788-804) and once as its walk ends (SetPlayerStop's, one in sixteen, :429-443) -- game/play_show.cpp. MuMain has no cry on an idle loop: PlayMonsterSound (:216-237) is map-specific and handles no 0.75 monster. Not built: SetPlayerStop's other callers (a refused path, a server stand), which the realm has no counterpart for."

@@ -138,6 +138,45 @@
     },
     "chasm_mist": {
       "note": "MU's blue cloud boxes, type 50 (Object51, 18 at the floor by the walls; MoveKanturu2ndObject, GM_Kanturu_2nd.cpp:448-459): a faint blue haze drifting from each one frame in 3, gone 5 m from where it was born (game/world/chasm_mist.h, effects 3c). Ours: half as bright, lying flat over the floor as the void clouds' soft masses (the user, 2026-10-24: \"more subtle and not cuted\", \"smoke is cuted/croped\", \"also to blurry\"); type 48's grey MINUS smoke (Object49) is not drawn, it stained the lit floor black (\"some smoke is black, is that expected?\")."
-    }
+    },
+    "air": {
+      "loop": "world_kanturu_relics",
+      "everywhere": true,
+      "room": "open",
+      "note": "SOUND_KANTURU_2ND_MAPSOUND_GLOBAL, kan_relic_global.wav, which Sound_Kanturu2nd_Object plays from every object every frame (GM_Kanturu_2nd.cpp:194-196): always on, the whole map, the maze open to the void."
+    },
+    "object_loops": [
+      {
+        "model": "Object10",
+        "loop": "kanturu_gear",
+        "full": 4,
+        "reach": 14
+      },
+      {
+        "model": "Object32",
+        "loop": "kanturu_incubator",
+        "full": 3,
+        "reach": 12
+      },
+      {
+        "model": "Object36",
+        "loop": "kanturu_incubator",
+        "full": 3,
+        "reach": 12
+      },
+      {
+        "model": "Object37",
+        "loop": "kanturu_incubator",
+        "full": 3,
+        "reach": 12
+      },
+      {
+        "model": "Object38",
+        "loop": "kanturu_incubator",
+        "full": 3,
+        "reach": 12
+      }
+    ],
+    "object_loops_note": "MU plays its gear and incubator sounds flat while any gear (type 9, Object10, 6) or incubator tank (types 31, 35-37: Object32, 36, 37, 38, 37 in all) is moved, which is the ones near the camera (GM_Kanturu_2nd.cpp:198-208). Ours, marked, as the Ruins: each from its nearest one, full to `full` metres and gone at `reach` (Play::hearWorld; the four tank models share one loop). Not built: kan_relic_hole.wav, which MU plays while the Gateway Machine opens (:1089-1093), an event not built yet. First distances, for the user to judge."
   }
 }
