@@ -1392,7 +1392,13 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         }
         // **The Helper** (game/helper.h): started and stopped by H, the minimap's H and its
         // window, stopped by a click of his own on the world, as Auto-play is; the two never run
-        // together.
+        // together. In Blood Castle and Devil Square its Follow my quest is set aside: it hunts
+        // where he stands, as with the box unticked, and travels nowhere (the user, 2026-10-25:
+        // "dont teleport character away from instances if follow quest is enabled").
+        game::HelperSettings helping = desk_.helperSettings();
+        if (world_.played().isOpen() && world_.played().realm().event() != sim::EventKind::None) {
+            helping.quest = false;
+        }
         int helperAsked = desk_.takeHelperAsk();
         helperClock_ += deltaSeconds;
         if (ctx.args.helperAfter >= 0.0f && helperClock_ >= ctx.args.helperAfter) {
@@ -1415,7 +1421,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             if (asked == 0) {
                 if (helper_.on()) world_.played().notice("Helper stopped.", false);
                 helper_.stop();
-            } else if (!desk_.helperSettings().quest && played.realm().tables()->grid.safe(hero.column(), hero.row())) {
+            } else if (!helping.quest && played.realm().tables()->grid.safe(hero.column(), hero.row())) {
                 world_.played().notice("The Helper works outside safe zones.", true);
                 core::logf("helper: not started on a safe tile, %d,%d", hero.column(), hero.row());
             } else if (hero.alive()) {
@@ -1449,20 +1455,15 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         }
         // Not in Blood Castle or Devil Square (a player, 2026-10-21: "deactivating the auto quest
         // function while you are in devil square or blood castle since it can take you out of it"):
-        // Auto-play and the Helper's Follow my quest travel by the Move list, and would walk him out
-        // of his run. The Helper's own hunt stays.
-        if (world_.played().isOpen() && world_.played().realm().event() != sim::EventKind::None) {
-            if (ctx.autoQuest >= 0) {
-                ctx.autoQuest = -1;
-                questAuto_.reset();
-                world_.played().notice("Auto-play is off in Blood Castle and Devil Square.", true);
-            }
-            if (helper_.on() && desk_.helperSettings().quest) {
-                helper_.stop();
-                world_.played().notice("The Helper follows no quest in Blood Castle and Devil Square.", true);
-            }
+        // Auto-play travels by the Move list, and would walk him out of his run. The Helper hunts
+        // on there, its quest set aside (`helping`, above).
+        if (world_.played().isOpen() && world_.played().realm().event() != sim::EventKind::None &&
+            ctx.autoQuest >= 0) {
+            ctx.autoQuest = -1;
+            questAuto_.reset();
+            world_.played().notice("Auto-play is off in Blood Castle and Devil Square.", true);
         }
-        if (ctx.autoQuest >= 0 || (helper_.on() && desk_.helperSettings().quest)) {
+        if (ctx.autoQuest >= 0 || (helper_.on() && helping.quest)) {
             game::quest_world::open(ctx.paths.assets);  // once, where it lives
         }
         int32_t bar[game::Hud::kSkillBoxes] = {};
@@ -1476,7 +1477,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         }
         desk_.setAutoPlaying(ctx.autoQuest);
         for (const game::Play::Picked& one : world_.played().takePicked()) helper_.picked(world_.played(), one.what, one.zen);
-        if (const std::string said = helper_.update(world_.played(), desk_.helperSettings(), deltaSeconds, bar,
+        if (const std::string said = helper_.update(world_.played(), helping, deltaSeconds, bar,
                                                     game::Hud::kSkillBoxes, desk_.shownQuest());
             !said.empty()) {
             const bool done = said.size() > 10 && said.compare(said.size() - 10, 10, " complete.") == 0;
