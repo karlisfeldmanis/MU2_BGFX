@@ -282,5 +282,7 @@ settled from section 7's recommendations against "DL has to be true on actual MU
 5. **Monsters only** on the strip, as Electric Spike; the aimed body whatever it is, as Force.
 6. **Only a scepter he may wear and not broken** (`fits`, durability > 0) -- WebZen asks neither.
 7. **Force's cost and no cooldown**; the skill damage 50..75 in place of 10..15 (`skill::kForceWaveDamage`, `Realm::strikeAt`).
-8. **The look is Force's**; MU draws nothing more. The tooltip names Force "Force Wave" while a scepter is held, and the scepter's
+8. **The look is Force's**; MU draws nothing more. Settled again 2026-10-25 (the user: "you decide"): Force's streaks run their
+   full six tiles down his facing whatever he aimed at (fx/force.h), and the strip is a tile wide (two in dirs 19 and 28) and cut
+   at 6.5, so every body struck is under the streaks -- the number comes with the visual, and nothing invented is added. The tooltip names Force "Force Wave" while a scepter is held, and the scepter's
    card carries "Force wave skill (Mana: 10)" -- with the Battle Scepter (Mace09, MU 2/8, skill 66), cooked in the studio.
