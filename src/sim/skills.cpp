@@ -975,6 +975,19 @@ constexpr SkillRow kRows[kSkills] = {
               "unless they move.",
      .clip = 81, .sound = "", .built = true, .families = arms::kNone, .needLevel = 98,
      .kin = Kin::DarkLord, .anyHand = true, .release = 0.2f / 1.14f, .recalls = true},
+    // Fire Scream 78 (docs/plans/dark-lord-spells/fire-scream.md): MU's row, MuMain's Skill.bmd
+    // (WebZen's server data has none) -- level 102, 130 damage (rolled to 195), 45 mana, six tiles
+    // of aim, Command 70 -- on PLAYER_ATTACK_STRIKE (80), let go at its key 5 of 7
+    // (ZzzCharacter.cpp:4851-4856). Three lanes of fire down his facing, each body struck once as a
+    // lane's head passes it (Realm::fireScream); 3% of its blows burst (kExplosion).
+    // **Ours**: three seconds' cooldown, where MU has none and spends 10 AG; struck once a cast, as
+    // Aqua Beam, where WebZen takes up to three a lane serial off the client's list.
+    {.number = skill::kFireScream, .name = "Fire Scream", .mana = 45, .reach = 6.0f, .force = 2.0f,
+     .coolTicks = 60, .spread = Spread::Line,
+     .tells = "Three lanes of fire along the ground ahead of him, through everything they reach. "
+              "Now and then a blow bursts on what stands round it.",
+     .clip = 80, .sound = "", .built = true, .families = arms::kNone, .needLevel = 102,
+     .kin = Kin::DarkLord, .damage = 130, .flies = 40.0f, .anyHand = true, .release = 5.0f / 7.0f},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy

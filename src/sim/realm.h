@@ -1842,6 +1842,12 @@ private:
     // Electric Spike: one `Loosed` down his aim (in `c`, thousandths of a radian), and a flight to
     // every monster WebZen's table marks in that direction (sim/electric_spike_box.h).
     void electricSpike(Body& hero, const SkillRow& row, uint32_t aimedAt, float force);
+    // Fire Scream (docs/plans/dark-lord-spells/fire-scream.md): its three lanes measured off his
+    // facing, each body loosed the ticks its nearest lane's head takes to reach it; and its
+    // Explosion, rolled on a landed blow and burst kExplosionTicks on (landBlasts).
+    void fireScream(Body& hero, const SkillRow& row, uint32_t aimedAt, float force);
+    void explode(Body& hero, const Body& struck, int32_t damage);
+    void landBlasts();
     // A shower (SkillRow::showers): `kShowerRocks` rocks at random within the splash of `spot`
     // (tiles), or of the body `aimedAt` when there is none, each said as a `Loosed` with no body
     // and its ground in `x`/`y`; every monster within `kRockBlast` of one, in its sight, takes
@@ -2340,6 +2346,19 @@ private:
     Random burstDice_{0};
     // And where each member of a Summon lands, for the same reason.
     Random recallDice_{0};
+    // And whether a Fire Scream blow bursts.
+    Random screamDice_{0};
+    // An Explosion on its way: whose, when, its damage, the body it burst off and those round it
+    // (chosen at the roll, as WebZen's delayed message names them).
+    struct Blast {
+        int64_t at = 0;  // 0 for an empty place
+        uint32_t owner = 0, struck = 0;
+        int32_t damage = 0;
+        uint32_t victims[9] = {};
+        int count = 0;
+    };
+    static constexpr int kBlasts = 16;
+    Blast blasts_[kBlasts] = {};
     void raiseElites();
     // Drawn again and stood up: a breed of the map's nests, a tile in one, its numbers raised.
     void riseElite(Body& elite);

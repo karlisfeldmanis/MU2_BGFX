@@ -476,4 +476,95 @@ void testDarkLord(void (*check)(bool, const char*), void (*checkEqual)(long long
         checkEqual(std::max(std::abs(came.column() - hx), std::abs(came.row() - hy)), 1,
                    "cast in town, he lands beside the lord");
     }
+
+    // **Fire Scream** (78, docs/plans/dark-lord-spells/fire-scream.md): three lanes of fire down his
+    // facing, each body struck as a head passes it; 3% of its blows burst on the 3 x 3 round them.
+    {
+        const sim::SkillRow* scream = sim::skillNumbered(sim::skill::kFireScream);
+        check(scream != nullptr && !scream->primary() && scream->kin == sim::Kin::DarkLord && scream->mana == 45 &&
+                  scream->damage == 130 && scream->needLevel == 102 && scream->clip == 80 && scream->aimsAtPointer(),
+              "Fire Scream: level 102, 130 damage, 45 mana, the strike, thrown at the ground");
+        check(sim::skillNumbered(sim::skill::kExplosion) == nullptr, "Explosion has no row");
+        sim::Realm lordRealm;
+        check(lordRealm.raise(&lorencia, 9, 160, 60, sim::Kin::DarkLord, 100), "a level-100 Dark Lord raises");
+        check(lordRealm.learn(sim::skill::kFireScream), "he learns it");
+        lordRealm.unseen(true);
+        lordRealm.benchUndying(true);
+        const sim::Body& me = lordRealm.hero();
+        const int hx = me.column(), hy = me.row();
+        // Thrown due east: three and seven tiles down the middle lane and two tiles off it at three
+        // (the side lane's) are struck; three off it, behind him, and nine out are not.
+        const int offsets[6][2] = {{3, 0}, {7, 0}, {3, 2}, {3, 4}, {-3, 0}, {10, 0}};
+        uint32_t ids[6] = {};
+        int found = 0;
+        for (const sim::Body& one : lordRealm.bodies()) {
+            if (found == 6) break;
+            if (!one.monster() || !one.alive()) continue;
+            ids[found++] = one.id;
+        }
+        check(found == 6, "six monsters to strike");
+        const auto hold = [&] {
+            for (int i = 0; i < 6; ++i) {
+                auto* held = const_cast<sim::Body*>(lordRealm.find(ids[i]));
+                held->x = float(hx + offsets[i][0]);
+                held->y = float(hy + offsets[i][1]);
+                held->walking = false;
+            }
+        };
+        hold();
+        lordRealm.invokeAt(sim::skill::kFireScream, hx + 6, hy);
+        int64_t letGo = -1;
+        int64_t struck[6] = {-1, -1, -1, -1, -1, -1};
+        int loosed = 0;
+        for (int tick = 0; tick < 80; ++tick) {
+            hold();
+            lordRealm.step();
+            for (const sim::Happening& one : lordRealm.happenings()) {
+                if (one.who != lordRealm.hero().id) continue;
+                if (one.what == sim::What::Loosed && one.a == sim::skill::kFireScream) ++loosed, letGo = tick;
+                if (one.what != sim::What::Hit && one.what != sim::What::Missed) continue;
+                for (int i = 0; i < 6; ++i) {
+                    if (one.whom == ids[i] && struck[i] < 0) struck[i] = tick;
+                }
+            }
+        }
+        std::printf("  fire scream: let go %lld, struck %lld %lld %lld %lld %lld %lld\n", (long long)letGo,
+                    (long long)struck[0], (long long)struck[1], (long long)struck[2], (long long)struck[3],
+                    (long long)struck[4], (long long)struck[5]);
+        checkEqual(loosed, 1, "the three lanes are said once");
+        checkEqual(int(struck[0] - letGo), 3, "three tiles down the middle: struck as the head passes, MU's frame 4");
+        check(struck[1] - letGo >= 12 && struck[1] - letGo <= 14, "seven tiles: as late as frame 16");
+        check(struck[2] >= 0, "two tiles off the middle at three: the side lane's");
+        check(struck[3] < 0 && struck[4] < 0 && struck[5] < 0, "four off, behind him and ten out: nothing");
+
+        // Explosion: over many casts, about 3% of the blows burst, a tenth of the blow each.
+        int blows = 0, bursts = 0, tenths = 0;
+        for (int cast = 0; cast < 300; ++cast) {
+            auto* hero = const_cast<sim::Body*>(&lordRealm.hero());
+            hero->mana = hero->maxMana;
+            for (int64_t& cool : hero->cools) cool = 0;
+            lordRealm.invokeAt(sim::skill::kFireScream, hx + 6, hy);
+            for (int tick = 0; tick < 30; ++tick) {
+                hold();
+                lordRealm.step();
+                bool bursting = false;
+                for (const sim::Happening& one : lordRealm.happenings()) {
+                    if (one.who != lordRealm.hero().id) continue;
+                    if (one.what == sim::What::Loosed && one.a == sim::skill::kExplosion) {
+                        ++bursts;
+                        bursting = true;
+                        continue;
+                    }
+                    if (one.what != sim::What::Hit) continue;
+                    if (bursting) ++tenths;
+                    else ++blows;
+                }
+            }
+        }
+        std::printf("  fire scream: %d blows, %d bursts, %d burst hits\n", blows, bursts, tenths);
+        check(bursts > 0 && bursts * 100 < blows * 8, "about three blows in a hundred burst");
+        check(tenths >= bursts, "each burst strikes the body it burst off at least");
+        check(sim::kExplosionRate == 301 && sim::kExplosionReach == 1 && sim::kExplosionTicks == 2,
+              "WebZen's 301 in 10,000, one tile round, 100 ms on");
+    }
 }

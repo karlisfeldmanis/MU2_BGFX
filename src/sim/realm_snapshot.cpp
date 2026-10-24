@@ -133,6 +133,7 @@ void Realm::serialize(Archive& a) {
     a.vec(commands_);
     a.vec(carried_);
     a.pod(flights_);
+    a.pod(blasts_);
     a.pod(volleys_);
     a.pod(spiritBlows_);
     a.pod(fires_);
@@ -144,7 +145,7 @@ void Realm::serialize(Archive& a) {
                          &chillDice_, &crackerDice_, &featherDice_, &novaScrollDice_, &wingDice_,
                          &gearDice_, &ticketDice_, &devilDice_, &treasureDice_, &orbDice_, &showerDice_,
                          &invasionDice_, &raidDice_, &raiderDice_, &mixDice_, &lifeDice_, &talentDice_,
-                         &eliteDice_, &burstDice_, &recallDice_}) {
+                         &eliteDice_, &burstDice_, &recallDice_, &screamDice_}) {
         a.pod(*dice);
     }
     a.vec(eliteSlots_);

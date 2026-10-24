@@ -329,6 +329,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     eliteDice_.seed(seed ^ 0xa54ff53a3c6ef372ull);
     burstDice_.seed(seed ^ 0x3c6ef372a54ff53aull);
     recallDice_.seed(seed ^ 0x9b05688c510e527full);
+    screamDice_.seed(seed ^ 0x1f83d9ab9b05688cull);
     for (int slot = 0; slot < kWorn; ++slot) {
         me().wearCarry[slot] = 0.0;
         me().wearItem[slot] = -1;
@@ -1553,6 +1554,7 @@ void Realm::heroAfter() {
         }
         // And whatever he let go earlier and has now arrived, and the fires on the ground.
         arrive();
+        landBlasts();
         flyVolleys();
         burn();
         channel(hero);

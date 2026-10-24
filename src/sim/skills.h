@@ -137,6 +137,13 @@ constexpr int32_t kCriticalDamage = 64;
 // within four of where he stood (WebZen ObjUseSkill.cpp:3928-4119, user.cpp:25460-25510;
 // docs/plans/dark-lord-spells/summon.md).
 constexpr int32_t kSummon = 63;
+// `AT_SKILL_FIRESCREAM`, Fire Scream: three lanes of fire along the ground ahead of him, each body
+// struck as a lane's head passes it (1.03.35 ZzzEffect.cpp:7641-7657, ZzzCharacter.cpp:5298-5347;
+// docs/plans/dark-lord-spells/fire-scream.md). And `AT_SKILL_EXPLOSION`, its Explosion: no row and
+// never learned -- 3% of its landed blows burst a tenth of the blow on the 3 x 3 round the body
+// (WebZen ObjUseSkill.cpp:5530-5629), said as Loosed so the drawing sets its bombs off.
+constexpr int32_t kFireScream = 78;
+constexpr int32_t kExplosion = 79;
 // `AT_SKILL_PENETRATION`, off the Orb of Penetration (group 12 number 17): 0.95d's and not
 // 0.75's (Version095d is where OpenMU first has it; VersionSeasonSix/SkillsInitializer.cs:171
 // carries the row). An arrow that flies on through everything in its line.
@@ -533,9 +540,9 @@ struct SkillRow {
 // again, which the static_assert below says. Also the width of a body's cooldown array -- and
 // the learned mask is by INDEX, so a new row goes on the END of the table or an old save
 // gives a knight somebody else's skill. The Dark Lord's Force past the Alquamos (41), his Fire
-// Burst (42), Electric Spike (43), Critical Damage (44) and Summon (45); a kept layout before 15
-// carries 40 cools, net/wire.cpp.
-constexpr int kSkills = 45;
+// Burst (42), Electric Spike (43), Critical Damage (44), Summon (45) and Fire Scream (46); a kept
+// layout before 15 carries 40 cools, net/wire.cpp.
+constexpr int kSkills = 46;
 
 // What each of Nova's stages adds to its blow: OpenMU's NovaDamageTable (NovaSkillStartPlugin.cs:30),
 // stage 0 to 12, with the strength's half beside it (SkillsInitializer.cs:610-611).
@@ -844,6 +851,17 @@ int32_t keenTicksOf(const HeroPoints& points);
 constexpr int64_t kRecallTicks = 7 * 20;
 constexpr int kRecallReach = 4;
 constexpr int kRecallTries = 50;
+// Fire Scream's three lanes (1.03.35 ZzzCharacter.cpp:5298-5347, ZzzEffect.cpp:2198-2230, 7641-7657):
+// one down his facing and one 80 units to each side turned 10 degrees out, each head 80 units
+// out at the let-go and on 35 a frame for its 19 frames, striking what it comes within 100
+// units of. In tiles; a frame is MU's 25th of a second.
+constexpr float kScreamSide = 0.8f, kScreamTurn = 10.0f, kScreamFrom = 0.8f, kScreamStep = 0.35f,
+                kScreamReach = 1.0f;
+constexpr int kScreamFrames = 19;
+// Explosion: 301 in 10,000 of its landed blows (`rand() % 10000 > 300` refuses), a tenth of the
+// blow 100 ms on, on every monster within whole-tile distance 1 of the body struck, that one too
+// (SkillAdditionInfo.cpp:81-82, ObjUseSkill.cpp:5530-5629).
+constexpr int kExplosionRate = 301, kExplosionOf = 10000, kExplosionReach = 1, kExplosionTicks = 2;
 
 // Whichever of the two a self-cast row is, so the realm, the card, the scroll and the strip ask
 // one question and cannot say different numbers for the same buff.

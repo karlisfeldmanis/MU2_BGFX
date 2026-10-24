@@ -1312,6 +1312,11 @@ void Realm::release(Body& hero, uint32_t at, float force, int32_t skill, const f
         electricSpike(hero, *row, at, force);
         return;
     }
+    // Fire Scream: its three lanes down his facing.
+    if (row && row->number == skill::kFireScream) {
+        fireScream(hero, *row, at, force);
+        return;
+    }
     // A line is let go along where he aimed, whether or not what he aimed at still stands, and
     // flies to every body in it.
     if (row && row->spread == Spread::Line) {
@@ -1427,6 +1432,10 @@ void Realm::loose(Body& hero, const SkillRow& row, uint32_t at, float force, boo
         if (row.number == skill::kFireBall && hero.player && said < happenings_.size() &&
             happenings_[said].what == What::Hit) {
             pyroblast(hero, at, x, y, force);
+        }
+        if (row.number == skill::kFireScream && said < happenings_.size() &&
+            happenings_[said].what == What::Hit) {
+            explode(hero, *struck, happenings_[said].a);
         }
     }
 }
@@ -1749,6 +1758,8 @@ void Realm::arrive() {
                 hop(hero, flight, flight.target, x, y);
             } else if (flight.skill == skill::kFireBall && happenings_[said].what == What::Hit) {
                 pyroblast(hero, flight.target, x, y, flight.force);
+            } else if (flight.skill == skill::kFireScream && happenings_[said].what == What::Hit) {
+                explode(hero, *target, happenings_[said].a);
             }
         }
     }
@@ -2067,6 +2078,114 @@ void Realm::electricSpike(Body& hero, const SkillRow& row, uint32_t aimedAt, flo
                 one->id);
         }
         loose(hero, row, victims[i], force, false, victims[i] == aimedAt, wait);
+    }
+}
+
+void Realm::fireScream(Body& hero, const SkillRow& row, uint32_t aimedAt, float force) {
+    // Said once down his aim, so the three lanes are drawn once.
+    say(What::Loosed, hero, row.number, 0, int32_t(std::lround(hero.aim * 1000.0f)), aimedAt);
+    // Each lane: where it starts and which way it runs, off his place and his aim. The middle
+    // straight down it; the sides kScreamSide across, turned kScreamTurn out.
+    const float turn = kScreamTurn * 3.14159265f / 180.0f;
+    float ox[3], oy[3], ux[3], uy[3];
+    for (int lane = 0; lane < 3; ++lane) {
+        const float side = float(lane - 1);  // -1, 0, +1
+        const float a = hero.aim + side * turn;
+        const float acrossX = -fm::sin(hero.aim), acrossY = fm::cos(hero.aim);
+        ox[lane] = hero.x + acrossX * kScreamSide * side;
+        oy[lane] = hero.y + acrossY * kScreamSide * side;
+        ux[lane] = fm::cos(a);
+        uy[lane] = fm::sin(a);
+    }
+    // Every monster a head comes within kScreamReach of on any of its frames, at the first such
+    // frame of the three lanes: MU's client names it in a hit packet as the head passes. Nearest
+    // first and then by id, so the landings come in the order the fire meets them.
+    uint32_t victims[kVictims];
+    int32_t frames[kVictims] = {};
+    int found = 0;
+    const float far = kScreamFrom + kScreamStep * float(kScreamFrames - 1) + kScreamReach + kScreamSide;
+    for (const Body& one : bodies_) {
+        if (!one.monster() || !one.alive() || found >= kVictims) continue;
+        if (tables_->grid.safe(one.column(), one.row())) continue;
+        if (fm::hypot(one.x - hero.x, one.y - hero.y) > far) continue;
+        int first = kScreamFrames;
+        for (int lane = 0; lane < 3; ++lane) {
+            for (int f = 0; f < first; ++f) {
+                const float along = kScreamFrom + kScreamStep * float(f);
+                const float hx = ox[lane] + ux[lane] * along, hy = oy[lane] + uy[lane] * along;
+                if (fm::hypot(one.x - hx, one.y - hy) <= kScreamReach) {
+                    first = f;
+                    break;
+                }
+            }
+        }
+        if (first >= kScreamFrames) continue;
+        int at = found;
+        while (at > 0 && (frames[at - 1] > first || (frames[at - 1] == first && victims[at - 1] > one.id))) {
+            frames[at] = frames[at - 1];
+            victims[at] = victims[at - 1];
+            --at;
+        }
+        frames[at] = first;
+        victims[at] = one.id;
+        ++found;
+    }
+    // Struck once a cast as the head reaches it, the number with the fire (ours: WebZen takes up
+    // to three a lane serial). Only the aimed body pays back.
+    for (int i = 0; i < found; ++i) {
+        const int32_t wait = std::max<int32_t>(1, int32_t(std::lround(float(frames[i]) * kTicksPerSecond / 25.0f)));
+        loose(hero, row, victims[i], force, false, victims[i] == aimedAt, wait);
+    }
+}
+
+void Realm::explode(Body& hero, const Body& struck, int32_t damage) {
+    // WebZen's: one roll a landed blow, a tenth of it, nothing under one; the bodies within
+    // whole-tile distance 1 of the struck, itself included, named now and struck 100 ms on.
+    if (screamDice_.nextInt(0, kExplosionOf) > kExplosionRate) return;
+    const int32_t blow = damage / 10;
+    if (blow < 1) return;
+    Blast* blast = nullptr;
+    for (Blast& one : blasts_) {
+        if (one.at == 0) {
+            blast = &one;
+            break;
+        }
+    }
+    if (blast == nullptr) return;
+    *blast = Blast{};
+    blast->at = tick_ + kExplosionTicks;
+    blast->owner = hero.id;
+    blast->struck = struck.id;
+    blast->damage = blow;
+    for (const Body& one : bodies_) {
+        if (!one.monster() || !one.alive() || blast->count >= 9) continue;
+        const float dx = float(one.column() - struck.column()), dy = float(one.row() - struck.row());
+        if (int(std::sqrt(dx * dx + dy * dy)) > kExplosionReach) continue;
+        blast->victims[blast->count++] = one.id;
+    }
+}
+
+void Realm::landBlasts() {
+    for (Blast& blast : blasts_) {
+        if (blast.at == 0 || blast.at > tick_ || !lands(blast.owner)) continue;
+        const Blast one = blast;
+        blast = Blast{};
+        Body* hero = body(one.owner);
+        // Only while he lives, as WebZen's delayed message asks.
+        if (hero == nullptr || !hero->alive()) continue;
+        // The bombs, said before their numbers, so the number comes with them.
+        say(What::Loosed, *hero, skill::kExplosion, 0, 0, one.struck);
+        for (int i = 0; i < one.count; ++i) {
+            Body* beast = body(one.victims[i]);
+            if (beast == nullptr || !beast->alive()) continue;
+            // No miss, no defence: the tenth as it is (user.cpp:7298-7309).
+            const int bite = std::min(one.damage, beast->health);
+            beast->health -= bite;
+            noteHurt(*beast, *hero, bite);
+            say(What::Hit, *hero, bite, bite, beast->health, beast->id);
+            happenings_.back().thrown = true;
+            if (beast->health <= 0) kill(*beast, *hero);
+        }
     }
 }
 
