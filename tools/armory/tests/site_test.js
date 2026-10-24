@@ -100,15 +100,23 @@ async function main() {
       }
     }
     // The item page: the game's card, its tabs, a hover card in the list.
-    await visit(`/armory/item/${sod.slug}`, () => !!document.querySelector('.side .gcard .gtitle') && document.querySelectorAll('.tab').length >= 6, 'item page: the game card and tabs');
+    await visit(`/armory/item/${sod.slug}`, () => !!document.querySelector('.ent .cardcol .gcard .gtitle') && document.querySelectorAll('.ent .tab').length >= 6 && !!document.querySelector('.ent .ehead .sgrid'), 'item page: one panel with its facts, the game card and tabs');
     await visit(`/armory/item/${sod.slug}?tab=drops`, () => document.querySelectorAll('#aview tbody tr').length > 0, 'item page: dropped by');
-    await visit(`/armory`, () => document.querySelectorAll('#aview tbody tr').length === 25, 'items list: a page of 25');
+    await visit(`/armory`, () => document.querySelectorAll('#aview .ktile').length >= 6 && !!document.querySelector('#homesearch .asearch'), 'home page: the kinds and the search');
+    ok((await fetch(`${base}/armory?cat=Weapons`, { redirect: 'manual' })).headers.get('location') === '/armory/items?cat=Weapons', 'the old list address goes to /armory/items');
+    // The monster page: its place row, a chart cut to what it draws; a summon-only monster says so.
+    const rsk = J('index/monsters.json').rows.find(m => m.slug === 'red-skeleton-knight');
+    if (rsk) await visit('/armory/monster/red-skeleton-knight?tab=where', () => document.querySelectorAll('.estrip .chip').length > 1 && !!document.querySelector('.where .chart img'), 'monster page: places and its chart');
+    const summoned = J('index/monsters.json').rows.find(m => m.summoned && !(m.maps || []).length);
+    if (summoned) await visit(`/armory/monster/${summoned.slug}`, () => !!document.querySelector('.callout a[href*="/armory/skill/"]') && /summon/i.test(document.querySelector('.ebody').textContent), 'monster page: a summon-only monster');
+    ok(!J('index/items.json').rows.some(r => r.k === 'Gold01'), 'Zen is not listed as an item');
+    await visit(`/armory/items`, () => document.querySelectorAll('#aview tbody tr').length === 25, 'items list: a page of 25');
     await page.eval(`document.querySelector('.nm[data-card]').dispatchEvent(new MouseEvent('mouseover', { bubbles: true }))`);
     await chrome.sleep(900);
     ok(await page.eval(`!!document.querySelector('.nm[data-card] .pop .gcard')`), 'items list: the hover card is the game\'s');
     await visit(`/armory?cat=Weapons&sub=Swords&sort=lv&dir=-1`, () => [...document.querySelectorAll('#aview tbody tr td:nth-child(3)')].every(td => td.textContent === 'Swords'), 'items list: a category');
     // Following a link stays in the page (no reload) and changes the head's title.
-    await visit('/armory', () => document.querySelectorAll('#aview a.open').length > 0, 'items list again');
+    await visit('/armory/items', () => document.querySelectorAll('#aview a.open').length > 0, 'items list again');
     await page.eval(`window.__kept = 1; document.querySelector('#aview a.open').click()`);
     await chrome.sleep(900);
     ok(await page.eval('window.__kept === 1 && /MU Classic Armory/.test(document.title) && location.pathname.startsWith("/armory/item/")'), 'a link is followed without a reload');
@@ -172,8 +180,9 @@ async function main() {
     if (flag('--shots')) {
       fs.mkdirSync(SHOTS, { recursive: true });
       const mon = J('index/monsters.json').rows.find(m => /red-skeleton-knight/.test(m.slug)) || J('index/monsters.json').rows[0];
-      const pages = [['item', `/armory/item/${sod.slug}?state=${encodeURIComponent('+11 excellent (bits 0 and 3) 3 sockets')}`], ['item-drops', `/armory/item/${sod.slug}?tab=drops`],
-        ['items', '/armory'], ['monster', `/armory/monster/${mon.slug}`], ['talents', '/armory/talents/dk?lv=400&p=aa1a'], ['event', '/armory/event/blood-castle-4'],
+      const pages = [['home', '/armory'], ['item', `/armory/item/${sod.slug}?state=${encodeURIComponent('+11 excellent (bits 0 and 3) 3 sockets')}`], ['item-drops', `/armory/item/${sod.slug}?tab=drops`],
+        ['items', '/armory/items'], ['monster', `/armory/monster/${mon.slug}`], ['monster-where', `/armory/monster/${mon.slug}?tab=where`], ['talents', '/armory/talents/dk?lv=400&p=aa1a'], ['event', '/armory/event/blood-castle-6'],
+        ['event-ds4', '/armory/event/devil-square-4'], ['event-gd', '/armory/event/golden-dragon'], ['box-inside', '/armory/item/box-of-kundun?tab=inside'],
         ['npc', '/armory/npc/' + (J('index/npcs.json').rows.find(n => n.role === 'shop') || J('index/npcs.json').rows[0]).slug]];
       for (const [w, h, tag] of [[1440, 1000, 'desktop'], [390, 844, 'phone']]) {
         const shotPage = await chrome.open({ width: w, height: h, mobile: tag === 'phone', scale: tag === 'phone' ? 2 : 1 });

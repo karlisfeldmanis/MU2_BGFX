@@ -108,6 +108,7 @@ def run(this, previous=None, say=print):
     stamp = {"commit": meta["commit"], "protocol": meta["protocol"]}
     entry_base = {"commit": meta["commit"], "protocol": meta["protocol"], "built": meta.get("built")}
     changed = added = 0
+    things = []  # what this release added or changed, for the Armory's home page
     for (kind, slug), e in now.items():
         before = []
         if prev:
@@ -118,18 +119,20 @@ def run(this, previous=None, say=print):
         if prev and (kind, slug) not in was:
             entry = dict(entry_base, added=True)
             added += 1
+            things.append({"kind": kind, "slug": slug, "name": e.get("name"), "added": True})
         elif prev:
             changes = diff(was[(kind, slug)], e)
             if changes:
                 entry = dict(entry_base, changes=changes)
                 changed += 1
+                things.append({"kind": kind, "slug": slug, "name": e.get("name"), "fields": len(changes)})
         releases = ([entry] if entry else []) + before
         write(this / "history" / kind / f"{slug}.json",
               {"kind": kind, "slug": slug, "name": e.get("name"), "releases": releases}, stamp)
     gone = sorted(f"{k}/{s}" for (k, s) in was if (k, s) not in now)
     rel_before = load(prev_dir / "history" / "releases.json").get("releases", []) if prev and (prev_dir / "history" / "releases.json").exists() else []
     note = NOTES / f"{meta['commit']}.md"
-    this_rel = dict(entry_base, previous=prev, changed=changed, added=added, removed=gone,
+    this_rel = dict(entry_base, previous=prev, changed=changed, added=added, removed=gone, things=things,
                     note=note.read_text().strip() if note.exists() else None)
     write(this / "history" / "releases.json", {"releases": [this_rel] + [r for r in rel_before if r.get("commit") != meta["commit"]]}, stamp)
     say(f"history: {changed} changed, {added} added, {len(gone)} gone since {prev or '(none)'}")

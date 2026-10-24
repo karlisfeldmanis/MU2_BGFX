@@ -224,6 +224,38 @@ def list_fields(x):
     return out
 
 
+def summon_links(skills, skill_slug, powers, item_slug, item_name, mon_by_number, mon_slug, mon_name):
+    """Which summon raises which monster, and the orb plus that teaches it, from the dump alone: a
+    skill's `summons` (the breed raised) and `summonsAs` (the breed whose numbers it fights with,
+    sim/skills.h), and the gear powers' by_plus rows whose `teaches` names the skill (the Orb of
+    Summoning read at its plus, sim/items.cpp asRead). Returns ({monster key: [link]}, {skill key: link})."""
+    taught = {}  # skill number -> (item key, its by_plus row)
+    for k, p in (powers or {}).items():
+        for r in (p.get("by_plus") or []) if isinstance(p, dict) else []:
+            if isinstance(r, dict) and isinstance(r.get("teaches"), int) and k in item_slug:
+                taught.setdefault(r["teaches"], (k, r))
+    by_mon, by_skill = defaultdict(list), {}
+    for x in skills:
+        n, num = x.get("summons"), x.get("number", x.get("id"))
+        if not n or n not in mon_by_number or key_of(x) not in skill_slug:
+            continue
+        mk = mon_by_number[n]
+        link = {"skill": skill_slug[key_of(x)], "skill_name": name_of(x), "number": num, "mana": x.get("mana"),
+                "tells": x.get("tells"), "classes": x.get("classes") or [],
+                "monster": {"slug": mon_slug[mk], "name": mon_name[mk], "number": n}}
+        if num in taught:
+            ik, r = taught[num]
+            link["orb"] = {"slug": item_slug[ik], "name": item_name[ik], "plus": r.get("plus"), "label": r.get("label"),
+                           "energy": r.get("energy"), "level": r.get("level")}
+        look = x.get("summonsAs")
+        if look and look in mon_by_number and look != n:
+            lk = mon_by_number[look]
+            link["fights_as"] = {"slug": mon_slug[lk], "name": mon_name[lk], "number": look}
+        by_mon[mk].append(link)
+        by_skill[key_of(x)] = link
+    return by_mon, by_skill
+
+
 # The events a drop's place can be: Blood Castle and Devil Square by their number, the raids as one.
 EVENT_KINDS = {"castle": "Blood Castle", "square": "Devil Square", "raid": "Golden Dragon"}
 
@@ -269,7 +301,7 @@ def events_from_drops(drops_by_mon, M, mon_slug, I, item_slug, W, world_slug, sl
         drops = sorted(ev["drops"].values(), key=lambda d: -d["chance"])
         levels = [m["level"] for m in mons if m["level"] is not None]
         w = ev["world"]
-        rows.append({"k": k, "slug": sl[k], "n": ev["name"], "type": ev["type"], "number": ev["number"],
+        rows.append({"k": k, "slug": sl[k], "n": ev["name"], "type": ev["type"], "number": ev["number"], "world": w,
                      "levels": [min(levels), max(levels)] if levels else None, "monsters": len(mons),
                      "items": len(drops), "live": is_live(w)})
         ents.append((sl[k], {"kind": "event", "key": k, "slug": sl[k], "name": ev["name"], "type": ev["type"],
@@ -468,6 +500,8 @@ def build(commit=None, out=None, thumbs=True, say=print):
         powers = powers["items"]
     rows, ents = [], []
     for k, it in sorted(I.items(), key=lambda kv: item_slug[kv[0]]):
+        if k == "Gold01":
+            continue  # Zen is money, not an item: boxes and drops say it as Zen
         s = item_slug[k]
         row = content.item_row(it)
         row["slug"] = s
@@ -506,6 +540,13 @@ def build(commit=None, out=None, thumbs=True, say=print):
         search.append({"n": it["name"], "k": "item", "s": s})
     publish("items", rows, ents)
 
+    # ---- the summons: which skill raises which monster, and the orb plus that teaches it
+    sk = [x for x in D.listed("skills") if isinstance(x, dict)] if D.has("skills") else []
+    sl = slugs.assign("skills", [(key_of(x), name_of(x)) for x in sk]) if sk else {}
+    summoned_by, raises = summon_links(sk, sl, powers if isinstance(powers, dict) else {}, item_slug,
+                                       {k: v["name"] for k, v in I.items()}, by_number, mon_slug,
+                                       {k: v["name"] for k, v in M.items()})
+
     # ---- monsters
     rows, ents = [], []
     for k, m in sorted(M.items(), key=lambda kv: mon_slug[kv[0]]):
@@ -513,7 +554,7 @@ def build(commit=None, out=None, thumbs=True, say=print):
         c = m["combat"]
         where = [dict(n, world_slug=world_slug[n["world"]], live=is_live(n["world"])) for n in nests.get(m["number"], [])]
         live = None if live_worlds is None and "drops" in missing else (
-            any(w["live"] for w in where) or bool(drops_by_mon.get(k)))
+            any(w["live"] for w in where) or bool(drops_by_mon.get(k)) or bool(summoned_by.get(k)))
         p = pics(f"monster:{k}")
         row = {"k": k, "slug": s, "n": m["name"], "num": m["number"], "lv": c.get("level"), "hp": c.get("health"),
                "dmg": [c.get("minimum_damage"), c.get("maximum_damage")], "def": c.get("defense"),
@@ -526,6 +567,9 @@ def build(commit=None, out=None, thumbs=True, say=print):
              "resist": m["resist"], "drop_rules": m["drops_rule"], "scale": m["scale"],
              "home": m["world"], "nests": where, "live": live, "thumb": p,
              "elite_thumb": pics(f"elite:monster:{k}"), "drops": drops_by_mon.get(k, [])}
+        if summoned_by.get(k):
+            e["summoned_by"] = summoned_by[k]
+            row["summoned"] = True
         ents.append((s, e))
         search.append({"n": m["name"], "k": "monster", "s": s})
     publish("monsters", rows, ents)
@@ -568,9 +612,7 @@ def build(commit=None, out=None, thumbs=True, say=print):
     publish("worlds", rows, ents)
 
     # ---- the dump's own kinds: skills, talents, and every list in rules (quests, mixes, runes ...)
-    if D.has("skills"):
-        sk = [x for x in D.listed("skills") if isinstance(x, dict)]
-        sl = slugs.assign("skills", [(key_of(x), name_of(x)) for x in sk])
+    if sk:
         rows, ents = [], []
         for x in sk:
             s = sl[key_of(x)]
@@ -578,7 +620,8 @@ def build(commit=None, out=None, thumbs=True, say=print):
             ic = icon["skills"].get(int(sid)) if str(sid if sid is not None else "").isdigit() else None
             rows.append({"k": key_of(x), "slug": s, "n": name_of(x), "icon": f"icons/{ic}.png" if ic else None,
                          **list_fields(x)})
-            ents.append((s, {"kind": "skill", "slug": s, **x, "icon_png": f"icons/{ic}.png" if ic else None}))
+            ents.append((s, {"kind": "skill", "slug": s, **x, "icon_png": f"icons/{ic}.png" if ic else None,
+                             **({"raises": raises[key_of(x)]} if key_of(x) in raises else {})}))
             search.append({"n": name_of(x), "k": "skill", "s": s})
         publish("skills", rows, ents)
     if D.has("talents"):

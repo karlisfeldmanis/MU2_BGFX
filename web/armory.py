@@ -52,6 +52,8 @@ LIST_NAMES = {"items": "Items", "monsters": "Monsters", "npcs": "NPCs", "quests"
 ONE = {"item": "items", "monster": "monsters", "npc": "npcs", "quest": "quests", "event": "events", "rune": "runes",
        "skill": "skills", "talents": "talents", "mix": "mixes", "elite": "elites", "world": "worlds", "box": "boxes"}
 KIND_ONE = {v: k for k, v in ONE.items()}
+# What the items list's address carries (/armory?cat=... before /armory/items).
+LIST_QUERY = {"cat", "sub", "sort", "dir", "page", "cls", "src", "q"}
 STATIC = {"armory.js", "armory.css", "card.js", "card_grain.png"}
 SLUG = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 COMMIT = re.compile(r"^[0-9a-f]{7,40}$")
@@ -214,6 +216,9 @@ class Armory:
         if lang is None and parts == ["sitemap.xml"]:
             return self.sitemap(h)
         r = self.release()
+        # The items list was /armory itself before the home page: a list's old address goes on.
+        if not parts and LIST_QUERY & set(parse_qs(query)):
+            return self.redirect(h, ("" if lang is None else f"/{lang}") + f"/armory/items?{query}")
         route = self.route(r, parts)
         if route is None:
             h.send_error(404)
@@ -262,7 +267,7 @@ class Armory:
     def route(self, r, parts):
         """{view: list|entity, kind, slug?} or None for a page that is not there."""
         if not parts:
-            return {"view": "list", "kind": "items"}
+            return {"view": "home", "kind": "home"}
         if len(parts) == 1:
             kind = "mixes" if parts[0] == "chaos-machine" else parts[0]
             if kind in LISTS and (r is None or kind in r.kinds() or kind in ("items",)):
@@ -360,7 +365,7 @@ class Armory:
                 bits.append(f"dropped by {len({d.get('monster_slug') for d in drops})} monsters"
                             + (f", best 1 in {round(1 / c):,} from {best.get('monster_name')}" if 0 < c < 0.2 else ""))
             if e.get("live") is False:
-                bits.append("not dropping yet")
+                bits.append("coming soon")
         elif kind == "monsters":
             c = e.get("combat") or {}
             bits.append(f"{name}: level {c.get('level')} monster in MU Classic")
@@ -403,7 +408,7 @@ class Armory:
         tr = lambda s: texts.get(i18n.key(s)) or s  # noqa: E731
         kind = route["kind"]
         e, card, row = None, None, None
-        title = LIST_NAMES.get(kind, kind.title())
+        title = "Armory" if kind == "home" else LIST_NAMES.get(kind, kind.title())
         desc = ("Every item, monster, townsperson, quest, event, rune, skill and talent of MU Classic, built from "
                 "the game itself on every release: drop chances, shops, mixes, updates and players' comments.")
         image = None
@@ -415,7 +420,7 @@ class Armory:
             title, desc, image = self.entity_head(r, kind, e, row)
             if kind == "talents":
                 title = f"{title} talents"
-        full = f"{title} — MU Classic Armory"
+        full = "MU Classic Armory" if kind == "home" else f"{title} — MU Classic Armory"
         img_url = f"{SITE}/armory/data/{r.commit}/{image}" if (r and image) else f"{SITE}/og.jpg"
         canonical = SITE + ("" if lang == "en" else f"/{lang}") + rest
         boot = {"commit": r.commit if r else None, "protocol": r.meta.get("protocol") if r else None,
@@ -512,7 +517,13 @@ class Armory:
         kind = route["kind"]
         trail = [f'<li><a class="crumb" href="{pre}/armory">Armory</a></li>']
         out = []
-        if route["view"] == "list":
+        if route["view"] == "home":
+            trail = [f'<li><span class="here">Armory</span></li>']
+            out.append('<h1 class="h1 big">Armory</h1><ul>')
+            for k in r.kinds():
+                out.append(f'<li><a href="{pre}/armory/{k}">{esc(LIST_NAMES.get(k, k))}</a> {len(r.rows(k))}</li>')
+            out.append("</ul>")
+        elif route["view"] == "list":
             trail.append(f'<li><span class="here">{esc(LIST_NAMES.get(kind, kind))}</span></li>')
             one = KIND_ONE.get(kind)
             out.append(f'<h1 class="h1">{esc(LIST_NAMES.get(kind, kind))}</h1><ul>')

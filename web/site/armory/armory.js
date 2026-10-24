@@ -43,7 +43,7 @@
   const ORDER = ['Weapons', 'Armour', 'Shields', 'Wings', 'Jewellery', 'Pets', 'Other'];
   const RARITY_TONE = { common: 'White', rare: 'Rare', epic: 'Epic', legendary: 'RuneLegendary', ancient: 'RuneAncient' };
   const href = (kind, slug) => `${P}/armory/${ONE[kind] || kind}/${slug}`;
-  const listHref = (kind, q) => `${P}/armory${kind === 'items' && !q ? '' : '/' + kind}${q ? '?' + new URLSearchParams(q) : ''}`;
+  const listHref = (kind, q) => `${P}/armory/${kind}${q ? '?' + new URLSearchParams(q) : ''}`;
   const a = (kind, slug, text, cls) => (slug ? `<a class="${cls || 'open'}" href="${href(kind, slug)}">${esc(text)}</a>` : `<span>${esc(text)}</span>`);
   const pretty = (k) => { k = String(k).replace(/_/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase(); return k.charAt(0).toUpperCase() + k.slice(1); };
   const pct = (x) => (x == null ? '—' : (x * 100 >= 10 ? (x * 100).toFixed(0) : (x * 100).toFixed(1)) + '%');
@@ -70,7 +70,7 @@
     if (P && path.startsWith(P + '/')) path = path.slice(P.length);
     const parts = path.split('/').filter(Boolean).slice(1);
     const q = Object.fromEntries(new URLSearchParams(location.search));
-    if (!parts.length) return { view: 'list', kind: 'items', q };
+    if (!parts.length) return { view: 'home', kind: 'home', q };
     if (parts.length === 1) return { view: 'list', kind: parts[0] === 'chaos-machine' ? 'mixes' : parts[0], q };
     return { view: 'entity', kind: KIND_OF[parts[0]] || parts[0], slug: parts[1], q };
   }
@@ -102,6 +102,8 @@
 <label for="aq" class="sr">${esc(t('Search the Armory'))}</label><input id="aq" type="search" autocomplete="off" placeholder="${esc(t('Search items, monsters, NPCs, quests, runes, skills'))}" role="combobox" aria-expanded="false" aria-controls="ahits"><div class="hits" id="ahits" role="listbox" hidden></div></div></div>
 <div id="aview"></div></div>`;
   const VIEW = document.getElementById('aview');
+  const AHEAD = MAIN.querySelector('.ahead');
+  const SEARCH = MAIN.querySelector('.asearch');
   const CRUMBS = document.getElementById('acrumbs');
 
   function crumbs(list) {
@@ -121,10 +123,52 @@
   const listPage = (title, count, body, extra) => `<div class="cols">${rail(extra)}<section class="main">${titled(title, count)}${body}</section></div>`;
   const table = (head, rows, cls) => `<div class="tbox${cls && cls.includes('pops') ? ' pops' : ''}"><table class="tbl ${cls || ''}"><thead><tr>${head.map(h => `<th scope="col" class="plain${h[1] ? ' r' : ''}">${esc(h[0])}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
   const kv = (pairs) => pairs.filter(p => p && p[1] != null && p[1] !== '').map(p => `<div class="kv"><span>${esc(p[0])}</span><b>${p[2] ? p[1] : esc(p[1])}</b></div>`).join('');
-  const facts = (pairs) => `<div class="facts">${pairs.filter(p => p && p[1] != null && p[1] !== '').map(p => `<span class="fact"${p[2] ? ` style="color:${p[2]}"` : ''}>${esc(p[0])} <b>${esc(p[1])}</b></span>`).join('')}</div>`;
-  const more = (shown, total, key) => (shown < total ? `<a class="chip" style="margin-top:12px" data-q href="${esc(qLink({ [key]: 'all' }))}">${esc(t('Show all {n}', { n: total }))}</a>` : '');
-  const shot = (thumb, name) => (thumb && thumb.page ? `<div class="shot"><img src="${pic(thumb.page)}" alt="${esc(t('{name}, as the game draws it', { name }))}" width="300" height="300"></div>` : `<div class="shot none">${esc(t('No picture'))}</div>`);
-  const notLive = (live) => (live === false ? `<span class="kan">${esc(t('Not dropping yet'))}</span>` : '');
+  const showAll = (shown, total, key) => (shown < total ? `<a class="chip" style="margin-top:12px" data-q data-keep href="${esc(qLink({ [key]: 'all' }))}">${esc(t('Show all {n}', { n: total }))}</a>` : '');
+  const notLive = (live) => (live === false ? `<span class="kan">${esc(t('Coming soon'))}</span>` : '');
+  // Zen is money, not an item: the build leaves it out of the list; an older build's row is hidden.
+  const tiles = (n) => (n === 1 ? t('1 tile') : t('{n} tiles', { n }));
+  const isZen = (i) => i && (i.k === 'Gold01' || i.slug === 'zen');
+
+  // ---- one entity, one panel: its head (picture, name, a line under it, the facts strip), a row
+  // of where/which when it has siblings, then its tabs or sections, and a foot.
+  const fact = (label, value, o) => (value == null || value === '' ? null : [label, value, o || {}]);
+  const factsStrip = (cells) => {
+    const c = cells.filter(Boolean);
+    return c.length ? `<dl class="sgrid">${c.map(([l, v, o]) => `<div class="sg"><dt>${esc(l)}</dt><dd${o.tone ? ` style="color:${o.tone}"` : ''}>${o.raw ? v : esc(typeof v === 'number' ? v.toLocaleString('en') : v)}</dd></div>`).join('')}</dl>` : '';
+  };
+  const epic = (thumb, name, under) => `<div class="epicol"><div class="epic">${thumb && thumb.page ? `<img src="${pic(thumb.page)}" alt="${esc(t('{name}, as the game draws it', { name }))}" width="240" height="240">` : `<span class="mute small">${esc(t('No picture'))}</span>`}</div>${under || ''}</div>`;
+  const pickTab = (tabs) => (tabs.some(x => x[0] === R.q.tab) ? R.q.tab : tabs[0][0]);
+  const tabBar = (tabs, cur, label, clear) => `<div class="tabs" role="tablist" aria-label="${esc(label)}">${tabs.map(x =>
+    `<a class="tab${x[2] === 0 ? ' none' : ''}" role="tab" data-q data-keep href="${esc(qLink(Object.assign({ tab: x[0] === tabs[0][0] ? '' : x[0], all: '' }, clear || {})))}" aria-selected="${x[0] === cur ? 'true' : 'false'}"><span class="tw">${esc(x[1])}</span>${x[2] !== '' && x[2] != null ? `<span class="tc">${x[2]}</span>` : ''}</a>`).join('')}</div>`;
+  const frame = (o) => `<article class="ent"><header class="ehead${o.pic ? '' : ' nopic'}">${o.pic || ''}<div class="emeta"><h1 class="h1 big"${o.tone ? ` style="color:${o.tone}"` : ''}>${esc(o.name)}</h1>${o.sub ? `<div class="esub">${o.sub}</div>` : ''}${o.lead ? `<p class="elead">${o.lead}</p>` : ''}${o.facts || ''}${o.more || ''}</div></header>
+${o.strip ? `<div class="estrip">${o.strip}</div>` : ''}${o.tabs ? tabBar(o.tabs, o.tab, o.label || t('About this'), o.clear) : ''}<div class="ebody">${o.body}</div>${o.foot ? `<footer class="efoot">${o.foot}</footer>` : ''}</article>`;
+  const sec = (title, html, aside) => `<section class="esec">${title ? `<div class="ttl"><h2 class="h2">${esc(title)}</h2>${aside ? `<span class="mute">${esc(aside)}</span>` : ''}</div>` : ''}${html}</section>`;
+  const stripRow = (label, html) => `<span class="slabel">${esc(label)}</span><div class="chips">${html}</div>`;
+  const relCard = (url, thumb, name, note) => `<a class="relc" href="${url}"><span class="ico">${thumb ? `<img src="${pic(thumb)}" alt="" loading="lazy" width="40" height="40">` : ''}</span><span class="relt"><span class="reln">${esc(name)}</span>${note ? `<span class="mute small num">${esc(note)}</span>` : ''}</span></a>`;
+  // What a chart actually draws: the box of its pixels off the ground's colour, measured once.
+  const drawn = {};
+  function drawnOf(src) {
+    if (src in drawn) return drawn[src];
+    drawn[src] = null;
+    const im = new Image();
+    im.onload = () => {
+      try {
+        const w = im.naturalWidth, h = im.naturalHeight, c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        const g = c.getContext('2d', { willReadFrequently: true });
+        g.drawImage(im, 0, 0);
+        const d = g.getImageData(0, 0, w, h).data;
+        let x0 = w, y0 = h, x1 = -1, y1 = -1;
+        for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+          const i = (y * w + x) * 4;
+          if (Math.abs(d[i] - d[0]) + Math.abs(d[i + 1] - d[1]) + Math.abs(d[i + 2] - d[2]) > 24) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+        }
+        if (x1 >= 0) { drawn[src] = [x0, y0, x1 + 1, y1 + 1]; draw(); }
+      } catch (x) { /* a chart we cannot read is shown whole */ }
+    };
+    im.src = src;
+    return null;
+  }
 
   // ---- the indexes, by slug and by key
   const byOf = {};
@@ -144,13 +188,58 @@
     return { name: worldName(d.world || d.place) + (d.elite ? '' : ''), href: d.world ? href('worlds', (by('worlds', 'k') || {})[d.world] ? by('worlds', 'k')[d.world].slug : d.world) : '' };
   }
 
+  // ---- the home page: what the Armory holds, from the release's own files
+  function homePage() {
+    CRUMBS.innerHTML = `<li><span class="here" aria-current="page">${esc(t('Armory'))}</span></li>`;
+    const C = B.counts || {};
+    const rows = (k) => rowsOf(k) || [];
+    const I = rows('items'), F = by('npcs', 'npc') || {};
+    const top = (list, key) => list.slice().sort((x, y) => (key(y) || 0) - (key(x) || 0))[0];
+    const img = (p) => (p ? `<img src="${pic(p)}" alt="" loading="lazy" width="72" height="72">` : '');
+    const firstOf = (type) => (rows('events').find(r => r.type === type) || {});
+    const eventWorld = (r) => r.world || (() => { const x = have(`events/${firstOf(r.type).slug}.json`); return x && x.world; })();
+    const mapOf = (w) => (w ? chart(w, [], { square: true }) : '');
+    const pick = {
+      items: img((top(I.filter(i => i.t && i.c === 'Weapons' && i.live !== false), i => i.dl) || {}).t),
+      monsters: img((top(rows('monsters').filter(m => m.t && m.live !== false), m => m.lv) || {}).t),
+      npcs: img((rows('npcs').find(n => n.t && n.role === 'shop') || rows('npcs').find(n => n.t) || {}).t),
+      quests: img(((F[(rows('quests')[0] || {}).giver]) || {}).t),
+      events: rows('events').length ? mapOf(eventWorld(rows('events')[0])) : '',
+      skills: (() => { const x = rows('skills').find(r => r.icon); return x ? `<span class="ticon" style="background-image:url(${pic(x.icon)})"></span>` : ''; })(),
+      mixes: img(((F[(rows('mixes')[0] || {}).npc]) || {}).t),
+      worlds: (() => { const w = rows('worlds').find(r => r.chart && r.live !== false && r.in_release); return w ? mapOf(w.k) : ''; })(),
+      boxes: img(((I.find(i => i.k === (rows('boxes')[0] || {}).item)) || {}).t),
+    };
+    const kinds = ['items', 'monsters', 'npcs', 'quests', 'events', 'runes', 'skills', 'talents', 'mixes', 'elites', 'worlds', 'boxes'].filter(k => (B.kinds || []).includes(k));
+    const count = (k) => (k === 'talents' ? t('{n} classes', { n: C[k] }) : N(C[k]));
+    const tiles = kinds.map(k => `<a class="ktile" href="${listHref(k)}"><span class="kpic">${pick[k] || `<span class="kmark" aria-hidden="true">${esc(LIST[k].charAt(0))}</span>`}</span><span class="ktext"><span class="kname">${esc(LIST[k])}</span><span class="kcount">${count(k)}</span></span></a>`).join('');
+    const cats = ORDER.filter(c => I.some(i => i.c === c)).map(c => `<a class="chip" href="${esc(listHref('items', { cat: c }))}">${esc(t(c))}<span class="cn">${I.filter(i => i.c === c && !isZen(i)).length}</span></a>`).join('');
+    const evs = rows('events').map(r => `<a class="evc" href="${href('events', r.slug)}"><span class="evpic">${mapOf(eventWorld(r))}</span><span class="relt"><span class="reln">${esc(r.n)}</span><span class="mute small">${r.levels ? esc(t('Monsters Lv {a}–{b}', { a: r.levels[0], b: r.levels[1] })) : ''}${r.items ? ' · ' + esc(t('{n} items', { n: r.items })) : ''}</span></span></a>`).join('');
+    // What the latest release added or changed (history/releases.json, the build's diff).
+    const rel = have('history/releases.json');
+    const last = rel && (rel.releases || [])[0];
+    const things = (last && last.things) || [];
+    const IS = by('items', 'slug') || {}, MS = by('monsters', 'slug') || {};
+    const thumbOf = (x) => (x.kind === 'items' ? (IS[x.slug] || {}).t : x.kind === 'monsters' ? (MS[x.slug] || {}).t : null);
+    const all = R.q.all === 'all';
+    const upd = things.length ? sec(t('In this update'), `<div class="rel">${(all ? things : things.slice(0, 24)).map(x => relCard(href(x.kind, x.slug), thumbOf(x), x.name || x.slug,
+      x.added ? t('New') : t('{n} changes', { n: x.fields || 1 }))).join('')}</div>${showAll(all ? things.length : Math.min(24, things.length), things.length, 'all')}`,
+      t('{a} new, {c} changed', { a: last.added || 0, c: last.changed || 0 })) : '';
+    const day = B.built ? new Date(B.built).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }) : '';
+    return `<article class="ent home"><header class="ehead nopic"><div class="emeta"><h1 class="h1 big">${esc(t('Armory'))}</h1>
+<p class="elead">${esc(t('Everything in the live release of MU Classic, read from the game itself: {items} items, {monsters} monsters and what they drop, townsfolk, quests, events, runes and skills.', { items: N(C.items), monsters: N(C.monsters) }))}</p>
+<div class="esub">${esc(t('The update of {day}', { day }))}${B.protocol ? ' · ' + esc(t('protocol {n}', { n: B.protocol })) : ''}</div><div id="homesearch"></div></div></header>
+<div class="ebody">${sec(t('Browse'), `<div class="ktiles">${tiles}</div>`)}${cats ? sec(t('Item categories'), `<div class="chips">${cats}</div>`) : ''}
+${evs ? sec(t('Events'), `<div class="rel evs">${evs}</div>`) : ''}${upd}</div></article>`;
+  }
+
   // ---- items
   function itemsList() {
     const rows = rowsOf('items');
     crumbs([[LIST.items, R.q.cat ? listHref('items') : ''], ...(R.q.cat ? [[R.q.cat, R.q.sub ? listHref('items', { cat: R.q.cat }) : '']] : []), ...(R.q.sub ? [[R.q.sub]] : [])]);
     if (rows === undefined) return listPage(LIST.items, '', ld);
     const q = (R.q.q || '').trim().toLowerCase();
-    const base = rows.filter(i => (!q || i.n.toLowerCase().includes(q)) && (!R.q.cls || (i.cls || []).includes(R.q.cls)) &&
+    const base = rows.filter(i => !isZen(i) && (!q || i.n.toLowerCase().includes(q)) && (!R.q.cls || (i.cls || []).includes(R.q.cls)) &&
       (!R.q.src || (R.q.src === 'none' ? i.live === false : (i.src || '').includes(R.q.src))));
     const cats = ORDER.filter(c => rows.some(i => i.c === c)).concat([...new Set(rows.map(i => i.c))].filter(c => !ORDER.includes(c)));
     const tree = [`<a class="ci" href="${esc(qLink({ cat: '', sub: '', page: '' }))}" data-q aria-current="${!R.q.cat ? 'true' : 'false'}">${esc(t('All items'))}<span>${base.length}</span></a>`];
@@ -165,13 +254,15 @@
     const classes = ['DK', 'DW', 'FE', 'MG'].filter(c => rows.some(i => (i.cls || []).includes(c)));
     const extra = `<div><h2 class="rh">${esc(t('Category'))}</h2>${tree.join('')}</div>
 <div><h2 class="rh">${esc(t('Class'))}</h2><div class="chips">${classes.map(c => chip(esc(c), R.q.cls === c, { cls: R.q.cls === c ? '' : c, page: '' }, ` title="${esc(CLS[c])}"`)).join('')}</div></div>
-<div><h2 class="rh">${esc(t('Source'))}</h2><div class="chips">${Object.keys(SRC).map(s => chip(esc(SRC[s][0]), R.q.src === s, { src: R.q.src === s ? '' : s, page: '' }, ` title="${esc(SRC[s][1])}"`)).join('')}${chip(esc(t('Not dropping yet')), R.q.src === 'none', { src: R.q.src === 'none' ? '' : 'none', page: '' })}</div></div>`;
+<div><h2 class="rh">${esc(t('Source'))}</h2><div class="chips">${Object.keys(SRC).map(s => chip(esc(SRC[s][0]), R.q.src === s, { src: R.q.src === s ? '' : s, page: '' }, ` title="${esc(SRC[s][1])}"`)).join('')}${chip(esc(t('Coming soon')), R.q.src === 'none', { src: R.q.src === 'none' ? '' : 'none', page: '' })}</div></div>`;
     let list = base.filter(i => (!R.q.cat || i.c === R.q.cat) && (!R.q.sub || i.s === R.q.sub));
     const sort = R.q.sort || 'lv', dir = R.q.dir === '-1' ? -1 : 1;
     const need = (i) => i.need || {};
     const KEY = { n: i => i.n, s: i => i.s, lv: i => i.lv || i.dl || 0, st: i => (i.dmg ? i.dmg[1] : i.def || 0), rq: i => (need(i).strength || 0) + (need(i).agility || 0) + (need(i).energy || 0) + (need(i).level || 0), cl: i => (i.cls || []).join('') };
     const key = KEY[sort] || KEY.lv;
-    list = list.slice().sort((x, y) => { const p = key(x), r = key(y); return (p > r ? 1 : p < r ? -1 : x.n > y.n ? 1 : -1) * dir; });
+    // By level, what has no level comes after what has, either way round.
+    const none = (i) => (sort === 'lv' && !(i.lv || i.dl) ? 1 : 0);
+    list = list.slice().sort((x, y) => { const p = key(x), r = key(y); return none(x) - none(y) || (p > r ? 1 : p < r ? -1 : x.n > y.n ? 1 : -1) * dir; });
     const per = 25, pages = Math.max(1, Math.ceil(list.length / per)), page = Math.min(Math.max(1, +R.q.page || 1), pages);
     const cols = [['n', t('Name')], ['s', t('Type')], ['lv', t('Level'), 1], ['st', t('Damage / Def'), 1], ['rq', t('Requires')], ['cl', t('Class')]];
     const head = `<th scope="col" style="width:68px"><span class="sr">${esc(t('Picture'))}</span></th>` + cols.map(c => {
@@ -194,9 +285,10 @@
       `<div class="tbox pops"><table class="tbl"><thead><tr>${head}</tr></thead><tbody>${body.join('')}</tbody></table></div>` +
       (list.length ? '' : `<p class="mute" style="padding:20px 0">${esc(t('No item matches.'))} <a class="crumb" style="text-decoration:underline" href="${listHref('items')}">${esc(t('Clear the filters'))}</a></p>`) +
       `<div class="pager"><span class="mute" style="margin-right:6px">${esc(t('Page {page} of {pages}', { page, pages }))}</span>
-<a class="pb" data-q role="button" aria-label="${esc(t('Previous page'))}" ${page <= 1 ? 'aria-disabled="true" style="pointer-events:none;color:#3A322B"' : ''} href="${esc(qLink({ page: page - 1 }))}">‹</a>
-<a class="pb" data-q role="button" aria-label="${esc(t('Next page'))}" ${page >= pages ? 'aria-disabled="true" style="pointer-events:none;color:#3A322B"' : ''} href="${esc(qLink({ page: page + 1 }))}">›</a></div>`, extra);
+<a class="pb" data-q role="button" aria-label="${esc(t('Previous page'))}" ${page <= 1 ? 'aria-disabled="true"' : ''} href="${esc(qLink({ page: page - 1 }))}">${chev('M15 6l-6 6 6 6')}</a>
+<a class="pb" data-q role="button" aria-label="${esc(t('Next page'))}" ${page >= pages ? 'aria-disabled="true"' : ''} href="${esc(qLink({ page: page + 1 }))}">${chev('M9 6l6 6-6 6')}</a></div>`, extra);
   }
+  const chev = (d) => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"></path></svg>`;
   // The list's own card while the game's loads (and for an item with none).
   function simpleCard(i) {
     const n = i.need || {};
@@ -243,7 +335,7 @@ ${req ? `<span>${esc(t('Requires {what}', { what: req }))}</span>` : ''}<span st
     const tabs = [['stats', t('Stats & scaling'), ''], ...(boxes.length ? [['inside', t("What's inside"), boxes.length]] : []), ['drops', t('Dropped by'), drops.length], ['shops', t('Sold by'), gives('shops').length + gives('npcs').length],
       ['crafts', t('Created by'), gives('mixes').length], ['used', t('Used in'), needs.length], ['rewards', t('Reward from'), gives('quests').length + gives('events').length + gives('boxes').length],
       ['updates', t('Updates'), changes.length], ['comments', t('Comments'), '']];
-    const tab = tabs.some(x => x[0] === R.q.tab) ? R.q.tab : 'stats';
+    const tab = pickTab(tabs);
     // The card, in each state the dump drew it.
     let card = '';
     if (cardFile === undefined) card = ld;
@@ -254,40 +346,41 @@ ${req ? `<span>${esc(t('Requires {what}', { what: req }))}</span>` : ''}<span st
         MUCard.render(cardFile.cards[s].sheet, e.thumb ? pic(e.thumb.card) : '') +
         `<span class="mute small">${esc(t('The card as the game draws it, from its own rows.'))}</span>`;
     } else card = waitDump('cards');
-    const similar = I ? Object.values(I).filter(i => i.s === e.sub && i.slug !== e.slug)
-      .sort((x, y) => Math.abs((x.lv || x.dl || 0) - (st.drop_level || 0)) - Math.abs((y.lv || y.dl || 0) - (st.drop_level || 0))).slice(0, 6) : [];
+    // The head's facts: its row and what it asks at +0, once each.
+    const p = e.powers || {};
+    const need = p.needs || st.requires || {};
+    const req = [['level', t('Lv')], ['strength', t('Str')], ['agility', t('Agi')], ['energy', t('Ene')], ['vitality', t('Vit')]].filter(([k]) => need[k]).map(([k, l]) => `${l} ${need[k]}`).join(' · ');
+    const facts = factsStrip([st.minimum_damage ? fact(t('Damage'), `${st.minimum_damage} ~ ${st.maximum_damage}`) : null, fact(t('Defense'), st.defense || null),
+      fact(t('Defense rate'), st.defense_rate || null), fact(t('Wizardry'), st.magic_power || null), fact(t('Attack speed'), st.attack_speed || null), fact(t('Walk speed'), st.walk_speed || null),
+      fact(t('Requires at +0'), req || null), fact(t('Drop level'), st.drop_level || null), fact(t('Durability'), st.durability || null), fact(t('Size'), st.width ? `${st.width} × ${st.height}` : null)]);
+    const srcTab = { d: 'drops', s: 'shops', c: 'crafts', q: 'rewards', e: 'rewards', b: 'rewards' };
+    const srcs = row && row.src ? row.src.split('').filter(c => SRC[c]) : [];
+    const more = srcs.length || e.live === false ? `<div class="erow">${srcs.length ? `<span class="slabel">${esc(t('From'))}</span>${srcs.map(c => `<a class="chip" data-q data-keep href="${esc(qLink({ tab: srcTab[c], all: '', map: '', box: '' }))}" title="${esc(SRC[c][1])}">${esc(SRC[c][0])}</a>`).join('')}` : ''}${notLive(e.live)}</div>` : '';
     const kind = [e.two_handed ? t('Two-handed') : '', e.sub || e.category].filter(Boolean).join(' ');
-    const top = `<div class="top2"><span class="ico lg">${e.thumb ? `<img src="${pic(e.thumb.card)}" alt="">` : ''}</span><div><h1 class="h1 big">${esc(e.name)}</h1>
-<div class="mute" style="font-size:15px;margin-top:4px">${esc(kind)}${(e.classes || []).length ? ' · ' + esc((e.classes || []).length >= 4 ? t('Every class') : e.classes.map(c => CLS[c] || c).join(', ')) : ''}</div></div>
-${facts([st.drop_level ? [t('Drop level'), st.drop_level] : null, row && row.src ? [t('From'), row.src.split('').filter(c => SRC[c]).map(c => SRC[c][0]).join(' · ')] : null,
-      e.live === false ? [t('Kanturu'), t('not dropping yet'), '#7FD7F0'] : null, changes.length ? [t('Updates'), changes.length, '#F2C14E'] : null])}</div>`;
-    const side = `<aside class="side">${shot(e.thumb, e.name)}${card}
-<div><h2 class="rh" style="padding:0">${esc(t('More {what}', { what: (e.sub || '').toLowerCase() }))}</h2>${similar.map(i => `<a class="sim" href="${href('items', i.slug)}"><span style="flex:1">${esc(i.n)}</span><span class="mute num small">${i.lv ? 'Lv ' + i.lv : i.dl ? t('Drop {n}', { n: i.dl }) : ''}</span></a>`).join('')}</div></aside>`;
+    const sub = esc(kind) + ((e.classes || []).length ? ' · ' + esc((e.classes || []).length >= 4 ? t('Every class') : e.classes.map(c => CLS[c] || c).join(', ')) : '');
     let body = '';
-    if (tab === 'stats') body = itemStats(e, cardFile);
-    else if (tab === 'inside') body = boxes.map(b => { const x = have(`boxes/${b.slug}.json`);
-      return `<section style="margin-bottom:28px">${boxes.length > 1 ? `<h2 class="h3">${a('boxes', b.slug, b.n)}</h2>` : ''}${x ? boxContents(x) : x === null ? '' : ld}</section>`; }).join('');
-    else if (tab === 'drops') body = itemDrops(drops);
+    if (tab === 'stats') body = itemStats(e, cardFile, card);
+    else if (tab === 'inside') {
+      const b = boxes.find(x => x.slug === R.q.box) || boxes[0];
+      const x = have(`boxes/${b.slug}.json`);
+      body = (boxes.length > 1 ? `<div class="chips" style="margin-bottom:16px">${boxes.map(y => chip(esc(y.n), y === b, { box: y === boxes[0] ? '' : y.slug, all: '' })).join('')}</div>` : '') +
+        (x ? boxContents(x) : x === null ? absent(t('Nothing in this release.')) : ld);
+    } else if (tab === 'drops') body = itemDrops(drops);
     else if (tab === 'shops') body = refsTable(gives('shops').concat(gives('npcs')), t('Sold by'), 'shops');
     else if (tab === 'crafts') body = refsTable(gives('mixes'), t('Mix'), 'mixes');
     else if (tab === 'used') body = refsTable(needs, t('Asked by'), 'needs');
     else if (tab === 'rewards') body = refsTable(gives('quests').concat(gives('events'), gives('boxes')), t('Reward from'), 'rewards');
     else if (tab === 'updates') body = updates(hist, 'items', e.slug);
     else body = comments('items', e.slug, releases);
-    return `${top}<div class="split">${side}<div class="body" style="gap:0"><div class="tabs" role="tablist" aria-label="${esc(t('About this item'))}">${tabs.map(x =>
-      `<a class="tab${x[2] === 0 ? ' none' : ''}" role="tab" data-q data-keep href="${esc(qLink({ tab: x[0] === 'stats' ? '' : x[0], all: '', map: '' }))}" aria-selected="${x[0] === tab ? 'true' : 'false'}">${esc(x[1])}${x[2] !== '' && x[2] != null ? `<span>${x[2]}</span>` : ''}</a>`).join('')}</div>${body}</div></div>`;
+    const similar = I ? Object.values(I).filter(i => i.s === e.sub && i.slug !== e.slug && !isZen(i))
+      .sort((x, y) => Math.abs((x.lv || x.dl || 0) - (st.drop_level || 0)) - Math.abs((y.lv || y.dl || 0) - (st.drop_level || 0))).slice(0, 6) : [];
+    const foot = similar.length ? `<h2 class="h3">${esc(t('More {what}', { what: (e.sub || '').toLowerCase() }))}</h2><div class="rel">${similar.map(i => relCard(href('items', i.slug), i.t, i.n, i.lv ? 'Lv ' + i.lv : i.dl ? t('Drop {n}', { n: i.dl }) : '')).join('')}</div>` : '';
+    return frame({ pic: epic(e.thumb, e.name), name: e.name, sub, facts, more, tabs, tab, label: t('About this item'), clear: { map: '', box: '' }, body, foot });
   }
-  function itemStats(e, cardFile) {
-    const st = e.stats || {}, req = st.requires || {};
-    const base = [[t('Damage'), st.minimum_damage ? `${st.minimum_damage} ~ ${st.maximum_damage}` : null], [t('Defense'), st.defense || null], [t('Defense rate'), st.defense_rate || null],
-      [t('Wizardry'), st.magic_power || null], [t('Attack speed'), st.attack_speed || null], [t('Walk speed'), st.walk_speed || null], [t('Durability'), st.durability || null],
-      [t('Drop level'), st.drop_level || null], [t('Size'), st.width ? `${st.width} × ${st.height}` : null], [t('Drops from monsters'), st.drops_from_monsters === false ? t('No') : null]];
-    let out = `<div class="roll" style="margin-bottom:24px"><div class="rbox"><b>${esc(t('Its row'))}</b>${kv(base)}</div>`;
+  function itemStats(e, cardFile, card) {
     const p = e.powers;
-    if (p && p.needs) out += `<div class="rbox"><b>${esc(t('Asks at +0'))}</b>${kv([[t('Level'), p.needs.level || null], [t('Strength'), p.needs.strength || null], [t('Agility'), p.needs.agility || null], [t('Energy'), p.needs.energy || null], [t('Vitality'), p.needs.vitality || null]]) || `<span class="mute">${esc(t('Nothing'))}</span>`}</div>`;
-    else if (req) out += `<div class="rbox"><b>${esc(t('Requires'))}</b>${kv(Object.entries(req).filter(x => x[1]).map(x => [pretty(x[0]), x[1]])) || `<span class="mute">${esc(t('Nothing'))}</span>`}</div>`;
-    if (p && p.tells) out += `<div class="rbox"><b>${esc(t('What it does'))}</b><p style="margin:0">${esc(p.tells)}</p></div>`;
-    out += '</div>';
+    let out = '';
+    if (p && p.tells) out += `<p class="elead" style="margin:0 0 20px">${esc(p.tells)}</p>`;
     // The card's states side by side: what the game's describe() says at each.
     if (cardFile && cardFile.cards) {
       const states = MUCard.states(cardFile.cards);
@@ -296,21 +389,23 @@ ${facts([st.drop_level ? [t('Drop level'), st.drop_level] : null, row && row.src
         [t('Level'), c => c.needs && c.needs.level || null], [t('Strength'), c => c.needs && c.needs.strength || null], [t('Agility'), c => c.needs && c.needs.agility || null],
         [t('Energy'), c => c.needs && c.needs.energy || null], [t('Sells for'), c => c.sells != null ? c.sells.toLocaleString('en') : null]]
         .filter(l => states.some(s => cell(cardFile.cards[s], l[1]) !== '—'));
-      out += `<h2 class="h3">${esc(t('As the game describes it'))}</h2><div class="tbox" style="margin-bottom:24px"><table class="tbl"><thead><tr><th class="plain"></th>${states.map(s => `<th class="plain r">${esc(MUCard.stateLabel(s))}</th>`).join('')}</tr></thead><tbody>${
+      out += `<h2 class="h3">${esc(t('As the game describes it'))}</h2><div class="tbox" style="margin-bottom:24px"><table class="tbl sm"><thead><tr><th class="plain"></th>${states.map(s => `<th class="plain r">${esc(MUCard.stateLabel(s))}</th>`).join('')}</tr></thead><tbody>${
         lines.map(l => `<tr><th scope="row" class="plain rowh">${esc(l[0])}</th>${states.map(s => `<td class="r num">${esc(cell(cardFile.cards[s], l[1]))}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
     }
-    // Any by-plus table the dump gives (wings, jewellery), and the rest of its powers.
+    // Any by-plus table the dump gives (wings, jewellery, the Orb of Summoning's skills).
     if (p) {
       Object.entries(p).forEach(([k, v]) => {
         if (v && typeof v === 'object' && Array.isArray(v.by_plus) && v.by_plus.length && typeof v.by_plus[0] === 'object') {
           const fields = Object.keys(v.by_plus[0]).filter(f => f !== 'plus');
-          out += `<h2 class="h3">${esc(t('{what} by plus', { what: pretty(k) }))}</h2><div class="tbox" style="margin-bottom:24px"><table class="tbl"><thead><tr><th class="plain"></th>${v.by_plus.map(r => `<th class="plain r">+${esc(r.plus)}</th>`).join('')}</tr></thead><tbody>${
-            fields.map(f => `<tr><th scope="row" class="plain rowh">${esc(pretty(f))}</th>${v.by_plus.map(r => `<td class="r num">${esc(r[f])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+          const S = fields.includes('teaches') ? by('skills', 'number') : null;
+          const val = (f, x) => (f === 'teaches' && S && S[x] ? a('skills', S[x].slug, S[x].n) : esc(x));
+          out += `<h2 class="h3">${esc(t('{what} by plus', { what: pretty(k) }))}</h2><div class="tbox" style="margin-bottom:24px"><table class="tbl sm"><thead><tr><th class="plain"></th>${v.by_plus.map(r => `<th class="plain r">+${esc(r.plus)}</th>`).join('')}</tr></thead><tbody>${
+            fields.map(f => `<tr><th scope="row" class="plain rowh">${esc(pretty(f))}</th>${v.by_plus.map(r => `<td class="r num">${val(f, r[f])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
         }
       });
     }
-    if (!cardFile && !p) out += waitDump('gear_powers');
-    return out;
+    if (!out) out = cardFile || p ? absent(t('Its card says it all.')) : waitDump('gear_powers');
+    return `<div class="scale"><div class="cardcol">${card}</div><div class="scalecol">${out}</div></div>`;
   }
   function itemDrops(drops) {
     if (!drops.length) return missing.has('drops') ? waitDump('drops') : absent(t('No monster drops it.'));
@@ -326,7 +421,7 @@ ${facts([st.drop_level ? [t('Drop level'), st.drop_level] : null, row && row.src
       const pl = placeName(d);
       return `<tr><td>${a('monsters', d.monster_slug, d.monster_name)}${d.elite ? ` <span class="sb gold">${esc(t('Elite'))}</span>` : ''}</td><td class="r num">${N(d.level)}</td>
 <td class="mute">${pl.href ? `<a href="${pl.href}">${esc(pl.name)}</a>` : esc(pl.name)}</td><td class="wrap" style="color:${(d.rolls || []).some(r => r.excellent) ? '#7FD66A' : '#C9BFAE'}">${esc(rollWords(d.rolls))}</td><td class="r">${oddsCell(d.chance)}</td></tr>`;
-    }), 'sm') + more(all ? shown.length : Math.min(30, shown.length), shown.length, 'all') +
+    }), 'sm') + showAll(all ? shown.length : Math.min(30, shown.length), shown.length, 'all') +
       `<p class="note">${esc(t('Best chance first. Chances are per kill for one player, before Item Find, talents and party bonuses, as the game works them out.'))}</p>`;
   }
   function refsTable(refs, head, what) {
@@ -403,15 +498,33 @@ ${r.note ? `<p class="mute" style="margin:6px 0 0">${esc(r.note)}</p>` : ''}
       list.map(m => `<tr><td style="width:60px"><span class="ico">${m.t ? `<img src="${pic(m.t)}" alt="" loading="lazy">` : ''}</span></td><td>${a('monsters', m.slug, m.n)}${notLive(m.live)}</td><td class="r num">${N(m.lv)}</td><td class="r num">${N(m.hp)}</td>
 <td class="r num">${m.dmg && m.dmg[0] != null ? `${m.dmg[0]} ~ ${m.dmg[1]}` : '—'}</td><td class="r num">${N(m.def)}</td><td class="mute wrap">${esc((m.maps || []).join(', ') || m.home || '—')}</td></tr>`)), extra);
   }
-  function chart(world, marks) {
+  function chart(world, marks, o) {
     // A world's chart as the minimap bakes it: tile (x, y) at px = (x + 0.5) * 2 on its 512 picture.
+    // Cut to what is drawn on it and to the marks (Blood Castle is a strip down one edge), kept
+    // between 0.7 and 1.6 wide a tall, or square for a head's picture.
     const W = by('worlds', 'k');
     const row = W && W[world];
     if (!row || !row.chart) return '';
-    const size = 512, at = (v) => ((v + 0.5) * 2 / size * 100).toFixed(3) + '%';
-    return `<div class="chart"><img src="${pic(row.chart)}" alt="${esc(t('Map of {map}', { map: row.n }))}" width="512" height="512">${marks.map(m => m.box
-      ? `<span class="box" aria-hidden="true" style="left:${at(m.box[0])};top:${at(m.box[1])};width:${((m.box[2] - m.box[0] + 1) * 2 / size * 100).toFixed(3)}%;height:${((m.box[3] - m.box[1] + 1) * 2 / size * 100).toFixed(3)}%"></span>`
-      : `<span class="dot" aria-hidden="true" style="left:${at(m.x)};top:${at(m.y)}"></span>${m.label ? `<span class="lbl" style="left:${at(m.x)};top:${at(m.y)}">${esc(m.label)}</span>` : ''}`).join('')}</div>`;
+    o = o || {};
+    const S = 512, src = pic(row.chart), b = drawnOf(src);
+    const ext = marks.map(m => (m.box ? [m.box[0] * 2, m.box[1] * 2, (m.box[2] + 1) * 2, (m.box[3] + 1) * 2] : [(m.x + 0.5) * 2 - 8, (m.y + 0.5) * 2 - 8, (m.x + 0.5) * 2 + 8, (m.y + 0.5) * 2 + 8]));
+    let [x0, y0, x1, y1] = [0, 0, S, S];
+    if (b) {
+      [x0, y0, x1, y1] = ext.reduce((r, e) => [Math.min(r[0], e[0]), Math.min(r[1], e[1]), Math.max(r[2], e[2]), Math.max(r[3], e[3])], b);
+      const pad = Math.max(10, 0.06 * Math.max(x1 - x0, y1 - y0));
+      x0 -= pad; y0 -= pad; x1 += pad; y1 += pad;
+      const lo = o.square ? 1 : 0.7, hi = o.square ? 1 : 1.6;
+      const grow = (a0, a1, want) => { const c = (a0 + a1) / 2; want = Math.min(S, want); let n0 = c - want / 2, n1 = c + want / 2; if (n0 < 0) { n1 -= n0; n0 = 0; } if (n1 > S) { n0 -= n1 - S; n1 = S; } return [Math.max(0, n0), Math.min(S, n1)]; };
+      if ((x1 - x0) / (y1 - y0) < lo) [x0, x1] = grow(x0, x1, (y1 - y0) * lo);
+      if ((x1 - x0) / (y1 - y0) > hi) [y0, y1] = grow(y0, y1, (x1 - x0) / hi);
+      [x0, x1] = grow(x0, x1, x1 - x0); [y0, y1] = grow(y0, y1, y1 - y0);
+      if ((x1 - x0) * (y1 - y0) > 0.8 * S * S) [x0, y0, x1, y1] = [0, 0, S, S];
+    }
+    const w = x1 - x0, h = y1 - y0, fx = (v) => ((v - x0) / w * 100).toFixed(3) + '%', fy = (v) => ((v - y0) / h * 100).toFixed(3) + '%';
+    const size = o.square ? '' : `aspect-ratio:${w.toFixed(1)} / ${h.toFixed(1)};width:min(100%, ${Math.round(560 * Math.min(1, w / h))}px)`;
+    return `<div class="chart${o.square ? ' sq' : ''}" style="${size}"><img src="${src}" alt="${esc(t('Map of {map}', { map: row.n }))}" width="512" height="512" style="left:${(-x0 / w * 100).toFixed(3)}%;top:${(-y0 / h * 100).toFixed(3)}%;width:${(S / w * 100).toFixed(3)}%;height:${(S / h * 100).toFixed(3)}%">${marks.map(m => m.box
+      ? `<span class="box" aria-hidden="true" style="left:${fx(m.box[0] * 2)};top:${fy(m.box[1] * 2)};width:${((m.box[2] - m.box[0] + 1) * 2 / w * 100).toFixed(3)}%;height:${((m.box[3] - m.box[1] + 1) * 2 / h * 100).toFixed(3)}%"></span>`
+      : `<span class="dot" aria-hidden="true" style="left:${fx((m.x + 0.5) * 2)};top:${fy((m.y + 0.5) * 2)}"></span>${m.label ? `<span class="lbl" style="left:${fx((m.x + 0.5) * 2)};top:${fy((m.y + 0.5) * 2)}">${esc(m.label)}</span>` : ''}`).join('')}</div>`;
   }
   function monsterPage(e) {
     crumbs([[LIST.monsters, listHref('monsters')], [e.name]]);
@@ -419,48 +532,74 @@ ${r.note ? `<p class="mute" style="margin:6px 0 0">${esc(r.note)}</p>` : ''}
     const I = by('items', 'slug');
     const E = rowsOf('elites');
     const places = e.drops || [];
-    const keys = places.map((p, i) => i);
-    const pick = keys.includes(+R.q.at) ? +R.q.at : (places.length ? 0 : -1);
-    const elite = R.q.elite === '1' && e.elite_thumb;
     const nests = e.nests || [];
-    const kvs = [[t('Level'), c.level], [t('Life'), N(c.health), 1], [t('Damage'), c.minimum_damage != null ? `${c.minimum_damage} ~ ${c.maximum_damage}` : null], [t('Defense'), c.defense],
-      [t('Attack rate'), c.attack_rate], [t('Defense rate'), c.defense_rate], [t('Attack range'), c.attack_range != null ? t('{n} tiles', { n: c.attack_range }) : null],
-      [t('Sees'), c.view_range != null ? t('{n} tiles', { n: c.view_range }) : null], [t('Attacks every'), c.attack_delay ? (c.attack_delay / 1000).toFixed(1) + ' s' : null],
-      [t('Moves every'), c.move_delay ? (c.move_delay / 1000).toFixed(1) + ' s' : null]].concat(Object.entries(e.resist || {}).map(([k, v]) => [t('{what} resistance', { what: pretty(k) }), v]));
+    const pick = places.length ? Math.min(Math.max(0, +R.q.at || 0), places.length - 1) : -1;
+    const pl = pick >= 0 ? places[pick] : null;
+    const elite = R.q.elite === '1' && e.elite_thumb;
+    const summons = e.summoned_by || [];
+    const placeLabel = (p) => placeName(p).name + (p.elite ? ' · ' + t('Elite') : '');
+    // Where it is: its own places switch the page; the same monster at another tier (Blood Castle
+    // 2 to 6, the squares) is a page of its own, linked in the same row.
+    const sibs = (rowsOf('monsters') || []).filter(r => r.n === e.name && r.slug !== e.slug);
+    const opts = places.map((p, i) => ({ lv: p.level, label: placeLabel(p), on: i === pick, url: qLink({ at: i ? String(i) : '', cat: '', all: '' }), q: true }))
+      .concat(sibs.map(r => { const x = have(`monsters/${r.slug}.json`); const d = x && (x.drops || [])[0]; return { lv: r.lv, label: d ? placeLabel(d) : (r.home || r.n), url: href('monsters', r.slug) }; }))
+      .sort((x, y) => (x.lv || 0) - (y.lv || 0));
+    const strip = opts.length > 1 ? stripRow(t('Where'), opts.map(o => `<a class="chip" href="${esc(o.url)}"${o.q ? ' data-q data-keep' : ''} aria-pressed="${o.on ? 'true' : 'false'}">${esc(o.label)}<span class="cn">${esc(t('Lv {n}', { n: o.lv }))}</span></a>`).join('')) : '';
+    const lives = places.length ? [...new Set(places.map(placeLabel))].join(', ') : nests.map(n => n.map).join(', ');
     const eliteMaps = (E || []).filter(x => places.some(p => p.elite && p.world === x.world));
-    const side = `<aside class="side">${shot(elite ? e.elite_thumb : e.thumb, e.name)}${e.elite_thumb ? `<div class="chips">${chip(esc(t('Ordinary')), !elite, { elite: '' })}${chip(esc(t('Elite')), !!elite, { elite: '1' })}</div>` : ''}
-<div class="icard"><div class="t">${esc(e.name)}</div><span class="mute small">${esc(t('Level {n}', { n: c.level }))}</span><div class="c-rule"></div>${kv(kvs)}
-${eliteMaps.length ? `<div class="c-rule"></div><span style="font-size:14px;color:#F2C14E">${esc(t('Rises as an Elite in {maps}: ×{life} life, ×{dmg} damage, ×{def} defense, {up} levels higher.', { maps: eliteMaps.map(x => worldName(x.world)).join(', '), life: eliteMaps.map(x => x.life).join('/'), dmg: eliteMaps[0].damage, def: eliteMaps[0].defense, up: eliteMaps[0].levels_up }))}</span>` : ''}</div>
-<div><h2 class="rh" style="padding:0">${esc(t('Lives in'))}</h2>${nests.map(n => `<a class="sim" href="${href('worlds', n.world_slug)}"><span style="flex:1">${esc(n.map)}</span><span class="mute small">${esc(t('{n} in its nests', { n: n.count }))}</span></a>`).join('') || `<span class="mute">${esc(t('Only in events'))}</span>`}</div>
-${nests.length ? chart(nests[0].world, (nests[0].boxes || []).map(b => ({ box: b }))) : ''}</aside>`;
+    const facts = factsStrip([fact(t('Level'), c.level), fact(t('Life'), c.health), fact(t('Damage'), c.minimum_damage != null ? `${c.minimum_damage} ~ ${c.maximum_damage}` : null), fact(t('Defense'), c.defense),
+      fact(t('Attack rate'), c.attack_rate), fact(t('Defense rate'), c.defense_rate), fact(t('Attack range'), c.attack_range != null ? tiles(c.attack_range) : null),
+      fact(t('Sees'), c.view_range != null ? tiles(c.view_range) : null), fact(t('Attacks every'), c.attack_delay ? (c.attack_delay / 1000).toFixed(1) + ' s' : null),
+      fact(t('Moves every'), c.move_delay ? (c.move_delay / 1000).toFixed(1) + ' s' : null)].concat(Object.entries(e.resist || {}).filter(([, v]) => v).map(([k, v]) => fact(t('{what} resistance', { what: pretty(k) }), v)),
+      [fact(t('Lives in'), lives || (summons.length ? t('Nowhere') : null)), pl && pl.zen ? fact(t('Zen'), t('{pct} of kills', { pct: pct(pl.zen) })) : null]));
+    // Raised by a summon: the skill, the orb and its plus that teach it, what it costs.
+    const summon = summons.map(s => {
+      const who = (s.classes || []).map(x => CLS[x] || x).join(', ') || t('Fairy Elf');
+      const bits = [a('skills', s.skill, s.skill_name, 'open'), s.orb ? `${esc(t('taught by'))} ${a('items', s.orb.slug, `${s.orb.name} +${s.orb.plus}`, 'open')}${s.orb.label ? ` <span class="mute">(${esc(s.orb.label)})</span>` : ''}` : '',
+        s.mana ? esc(t('{n} mana', { n: s.mana })) : '', s.orb && s.orb.energy ? esc(t('{n} energy', { n: s.orb.energy })) : '',
+        s.fights_as ? `${esc(t('fights as'))} ${a('monsters', s.fights_as.slug, s.fights_as.name, 'open')}` : ''].filter(Boolean);
+      return `<div class="callout"><span class="slabel">${esc(t('Summoned by the {cls}', { cls: who }))}</span><div>${bits.join(' <span class="dotsep">·</span> ')}</div>${s.tells ? `<p>${esc(s.tells)}</p>` : ''}</div>`;
+    }).join('');
+    const onlySummon = summons.length && !places.length && !nests.length;
+    const more = (eliteMaps.length ? `<p class="enote">${esc(t('Rises as an Elite in {maps}: ×{life} life, ×{dmg} damage, ×{def} defense, {up} levels higher.', { maps: eliteMaps.map(x => worldName(x.world)).join(', '), life: eliteMaps.map(x => x.life).join('/'), dmg: eliteMaps[0].damage, def: eliteMaps[0].defense, up: eliteMaps[0].levels_up }))}</p>` : '') +
+      summon + (e.live === false ? `<div class="erow">${notLive(e.live)}</div>` : '');
+    const tabs = [['drops', t('Drops'), pl ? (pl.items || []).filter(i => (i.chance || 0) > 0).length : 0], ['where', t('Where it lives'), nests.length ? nests.reduce((s, n) => s + (n.count || 0), 0) : ''], ['comments', t('Comments'), '']];
+    const tab = pickTab(tabs);
+    const nothing = t('Only as the Fairy Elf\'s summon: it lives nowhere and drops nothing.');
     let body;
-    if (!places.length) body = missing.has('drops') ? waitDump('drops') : absent(t('It drops nothing.'));
+    if (tab === 'comments') body = comments('monsters', e.slug, []);
+    else if (tab === 'where') {
+      const nest = pl ? nests.find(n => n.world === pl.world) : nests[0];
+      const world = nest ? nest.world : pl ? pl.world : null;
+      const W = by('worlds', 'k');
+      const map = world ? (W === undefined ? ld : chart(world, nest ? (nest.boxes || []).map(b => ({ box: b })) : [])) : '';
+      const say = nest ? t('{n} in its nests in {map}. The boxes are where they rise.', { n: nest.count, map: nest.map }) : pl ? t('{place}: the event raises it, not nests of its own.', { place: placeLabel(pl) }) : '';
+      body = onlySummon ? absent(nothing) : `<div class="where"><div>${map || absent(t('No chart for this place.'))}${say ? `<p class="note">${esc(say)}</p>` : ''}</div>
+<div>${nests.length ? `<h2 class="h3">${esc(t('Its nests'))}</h2>${nests.map(n => `<a class="sim" href="${href('worlds', n.world_slug)}"${nest === n ? ' aria-current="true"' : ''}><span style="flex:1">${esc(n.map)}</span><span class="mute small">${esc(t('{n} in its nests', { n: n.count }))}</span></a>`).join('')}` : `<span class="mute">${esc(t('Only in events'))}</span>`}</div></div>`;
+    } else if (!places.length) body = onlySummon ? absent(nothing) : missing.has('drops') ? waitDump('drops') : absent(t('It drops nothing.'));
     else {
-      const pl = places[pick];
       const items = (pl.items || []).filter(i => (i.chance || 0) > 0);
       const cats = I ? [...new Set(items.map(i => (I[i.slug] || {}).c).filter(Boolean))] : [];
       const cat = cats.includes(R.q.cat) ? R.q.cat : '';
       const shown = items.filter(i => !cat || (I && I[i.slug] && I[i.slug].c === cat));
       const all = R.q.all === 'all';
-      body = `${places.length > 1 ? `<div class="chips" style="margin-bottom:14px">${places.map((p, i) => chip(esc(placeName(p).name + (p.elite ? ' · ' + t('Elite') : '') + ' · ' + t('Lv {n}', { n: p.level })), i === pick, { at: i ? String(i) : '', cat: '', all: '' })).join('')}</div>` : ''}
-${pl.zen ? `<p class="mute" style="margin:0 0 12px">${esc(t('Pays Zen {pct} of kills.', { pct: pct(pl.zen) }))}</p>` : ''}
-${cats.length > 1 ? `<div class="chips" style="margin-bottom:14px">${chip(esc(t('All · {n}', { n: items.length })), !cat, { cat: '' })}${cats.map(x => chip(esc(t(x)) + ' · ' + items.filter(i => I[i.slug] && I[i.slug].c === x).length, cat === x, { cat: x, all: 'all' })).join('')}</div>` : ''}
+      body = `${cats.length > 1 ? `<div class="chips" style="margin-bottom:14px">${chip(esc(t('All · {n}', { n: items.length })), !cat, { cat: '' })}${cats.map(x => chip(esc(t(x)) + ' · ' + items.filter(i => I[i.slug] && I[i.slug].c === x).length, cat === x, { cat: x, all: 'all' })).join('')}</div>` : ''}
 ${table([[t('Item')], [t('Type')], [t('Drop level'), 1], [t('How')], [t('Chance a kill'), 1]], (all ? shown : shown.slice(0, 30)).map(i => {
         const r = I && I[i.slug];
         return `<tr><td><span class="nm" data-card="${esc(i.slug)}">${a('items', i.slug, i.n)}<span class="pop" role="tooltip">${r ? simpleCard(r) : ''}</span></span></td><td class="mute">${esc(r ? r.s : '')}</td><td class="r num">${N(r && r.dl)}</td>
 <td class="wrap" style="color:${(i.rolls || []).some(x => x.excellent) ? '#7FD66A' : '#C9BFAE'}">${esc(rollWords(i.rolls))}</td><td class="r">${oddsCell(i.chance)}</td></tr>`;
-      }), 'sm pops')}${more(all ? shown.length : Math.min(30, shown.length), shown.length, 'all')}
-${(pl.while_quest || []).length ? `<h2 class="h3" style="margin-top:20px">${esc(t('While a quest asks for it'))}</h2>${table([[t('Item')], [t('Who')], [t('Chance a kill'), 1]], pl.while_quest.map(w => {
+      }), 'sm pops')}${showAll(all ? shown.length : Math.min(30, shown.length), shown.length, 'all')}
+${(pl.while_quest || []).length ? `<h2 class="h3" style="margin-top:24px">${esc(t('While a quest asks for it'))}</h2>${table([[t('Item')], [t('Who')], [t('Chance a kill'), 1]], pl.while_quest.map(w => {
         const r = I && Object.values(I).find(x => x.k === w.item);
-        return `<tr><td>${r ? a('items', r.slug, r.n) : esc(w.item)}</td><td class="mute">${esc((w.classes || []).join(', '))}</td><td class="r">${oddsCell(w.chance)}</td></tr>`;
+        return `<tr><td>${r ? a('items', r.slug, r.n) : esc(w.item)}</td><td class="mute">${esc((w.classes || []).map(x => CLS[x] || x).join(', '))}</td><td class="r">${oddsCell(w.chance)}</td></tr>`;
       }), 'sm')}` : ''}
 <p class="note">${esc(t('Best chance first, per kill for one player before Item Find, talents and party bonuses.'))}</p>`;
     }
-    const n = places.reduce((s, p) => s + (p.items || []).length, 0);
-    return `<div class="top2"><div class="grow"><h1 class="h1 big">${esc(e.name)}</h1><div class="mute" style="font-size:15px;margin-top:4px">${esc(t('Level {n}', { n: c.level }))}${nests.length ? ' · ' + esc(nests.map(x => x.map).join(', ')) : ''}</div></div>
-${facts([[t('Level'), c.level], [t('Life'), (c.health || 0).toLocaleString('en')], places.length ? [t('Drops'), t('{n} items', { n: (places[pick].items || []).length })] : null])}${notLive(e.live)}</div>
-<div class="split">${side}<div class="body"><section><div class="ttl"><h2 class="h2" style="margin:0">${esc(t('Drops'))}</h2><span class="mute">${esc(n ? t('{n} item rows in {p} places', { n, p: places.length }) : '')}</span></div>${body}</section>
-<section><h2 class="h2">${esc(t('Comments'))}</h2>${comments('monsters', e.slug, [])}</section></div></div>`;
+    // Only ever a summon: no drops or nests to tab through, the one line and the talk.
+    if (onlySummon) body = sec('', absent(nothing)) + sec(t('Comments'), comments('monsters', e.slug, []));
+    const under = e.elite_thumb ? `<div class="chips">${chip(esc(t('Ordinary')), !elite, { elite: '' })}${chip(esc(t('Elite')), !!elite, { elite: '1' })}</div>` : '';
+    return frame({ pic: epic(elite ? e.elite_thumb : e.thumb, e.name, under), name: e.name, sub: esc(t('Level {n}', { n: c.level })) + (lives ? ' · ' + esc(pl ? placeLabel(pl) : lives) : ''),
+      facts, more, strip, tabs: onlySummon ? null : tabs, tab, label: t('About this monster'), clear: { cat: '' }, body });
   }
 
   // ---- townsfolk and worlds
@@ -485,22 +624,21 @@ ${facts([[t('Level'), c.level], [t('Life'), (c.health || 0).toLocaleString('en')
     const quests = (Q || []).filter(q => q.giver === e.npc || q.receiver === e.npc);
     const mixes = (M || []).filter(m => m.npc === e.npc && m.listed !== false);
     const shelf = e.shelf || [];
-    const side = `<aside class="side">${shot(e.thumb, e.name)}<div class="icard"><div class="t">${esc(e.name)}</div><span class="mute small">${esc(ROLE(e.role))}</span>
-${(e.services || []).length ? `<div class="c-rule"></div>${e.services.map(s => `<span style="font-size:15px">· ${esc(pretty(s))}</span>`).join('')}` : ''}${e.repairs ? `<span style="font-size:15px">· ${esc(t('Repairs'))}</span>` : ''}</div></aside>`;
     const W = by('worlds', 'k');
-    return `<div class="top2"><div class="grow"><h1 class="h1 big">${esc(e.name)}</h1><div class="mute" style="font-size:15px;margin-top:4px">${esc(ROLE(e.role))}</div></div>${facts([[t('Where'), [...new Set(where.map(x => worldName(x.world)))].join(', ')], shelf.length ? [t('Sells'), shelf.length] : null])}</div>
-<div class="split">${side}<div class="body">
-<section><div class="ttl"><h2 class="h2" style="margin:0">${esc(t('Where to find {name}', { name: e.name }))}</h2><span class="mute">${w ? esc(`${worldName(w.world)} · ${w.x}, ${w.y}`) : ''}</span></div>
-${where.length > 1 ? `<div class="chips" style="margin-bottom:12px">${where.map((x, i) => chip(esc(`${worldName(x.world)} ${x.x}, ${x.y}`), i === ix, { at: i ? String(i) : '' })).join('')}</div>` : ''}
-${w ? (W === undefined ? ld : chart(w.world, [{ x: w.x, y: w.y, label: e.name }])) : absent(t('Not standing anywhere in this release.'))}</section>
-<section><h2 class="h2">${esc(t('Sells'))}</h2>${shelf.length ? (I === undefined ? ld : table([[''], [t('Item')], [t('Type')], [t('Plus'), 1], [t('Price'), 1]], shelf.map(s => {
-      const r = I[s.item];
-      return `<tr><td style="width:56px"><span class="ico">${r && r.t ? `<img src="${pic(r.t)}" alt="" loading="lazy">` : ''}</span></td><td>${r ? `<span class="nm" data-card="${esc(r.slug)}">${a('items', r.slug, r.n)}<span class="pop" role="tooltip">${simpleCard(r)}</span></span>` : esc(s.item)}</td>
+    const services = (e.services || []).map(pretty).concat(e.repairs ? [t('Repairs')] : []);
+    const facts = factsStrip([fact(t('Where'), [...new Set(where.map(x => worldName(x.world)))].join(', ')), fact(t('Does'), services.join(', ') || null), shelf.length ? fact(t('Sells'), shelf.length === 1 ? t('1 item') : t('{n} items', { n: shelf.length })) : null,
+      quests.length ? fact(t('Quests'), quests.length) : null, mixes.length ? fact(t('Mixes'), mixes.length) : null]);
+    const body = sec(t('Where to find {name}', { name: e.name }), `${where.length > 1 ? `<div class="chips" style="margin-bottom:12px">${where.map((x, i) => chip(esc(`${worldName(x.world)} ${x.x}, ${x.y}`), i === ix, { at: i ? String(i) : '' })).join('')}</div>` : ''}
+${w ? (W === undefined ? ld : chart(w.world, [{ x: w.x, y: w.y, label: e.name }])) : absent(t('Not standing anywhere in this release.'))}`, w ? `${worldName(w.world)} · ${w.x}, ${w.y}` : '') +
+      sec(t('Sells'), shelf.length ? (I === undefined ? ld : table([[''], [t('Item')], [t('Type')], [t('Plus'), 1], [t('Price'), 1]], shelf.map(s => {
+        const r = I[s.item];
+        return `<tr><td style="width:56px"><span class="ico">${r && r.t ? `<img src="${pic(r.t)}" alt="" loading="lazy">` : ''}</span></td><td>${r ? `<span class="nm" data-card="${esc(r.slug)}">${a('items', r.slug, r.n)}<span class="pop" role="tooltip">${simpleCard(r)}</span></span>` : esc(s.item)}</td>
 <td class="mute">${esc(r ? r.s : '')}</td><td class="r num">${s.plus ? '+' + s.plus : '—'}</td><td class="r num" style="color:#F2C14E">${N(s.price)} Zen${s.pieces > 1 ? ' ' + esc(t('for {n}', { n: s.pieces })) : ''}</td></tr>`;
-    }), 'sm pops')) : (missing.has('rules') ? waitDump('rules') : absent(t('Sells nothing.')))}</section>
-${quests.length ? `<section><h2 class="h2">${esc(t('Quests'))}</h2>${quests.map(q => `<a class="sim" href="${href('quests', q.slug)}"><span style="flex:1;color:#F3E8D4">${esc(q.n)}</span><span class="mute small">${q.minLevel ? esc(t('Level {n}', { n: q.minLevel })) : ''}</span></a>`).join('')}</section>` : ''}
-${mixes.length ? `<section><h2 class="h2">${esc(t('Mixes'))}</h2>${mixes.map(m => `<a class="sim" href="${href('mixes', m.slug)}"><span style="flex:1;color:#F3E8D4">${esc(m.n)}</span><span class="mute small">${esc(m.success || '')}</span></a>`).join('')}</section>` : ''}
-<section><h2 class="h2">${esc(t('Comments'))}</h2>${comments('npcs', e.slug, [])}</section></div></div>`;
+      }), 'sm pops')) : (missing.has('rules') ? waitDump('rules') : absent(t('Sells nothing.')))) +
+      (quests.length ? sec(t('Quests'), quests.map(q => `<a class="sim" href="${href('quests', q.slug)}"><span style="flex:1;color:#F3E8D4">${esc(q.n)}</span><span class="mute small">${q.minLevel ? esc(t('Level {n}', { n: q.minLevel })) : ''}</span></a>`).join('')) : '') +
+      (mixes.length ? sec(t('Mixes'), mixes.map(m => `<a class="sim" href="${href('mixes', m.slug)}"><span style="flex:1;color:#F3E8D4">${esc(m.n)}</span><span class="mute small">${esc(m.success || '')}</span></a>`).join('')) : '') +
+      sec(t('Comments'), comments('npcs', e.slug, []));
+    return frame({ pic: epic(e.thumb, e.name), name: e.name, sub: esc(ROLE(e.role)), facts, body });
   }
   function worldsList() {
     const rows = rowsOf('worlds');
@@ -513,11 +651,13 @@ ${mixes.length ? `<section><h2 class="h2">${esc(t('Mixes'))}</h2>${mixes.map(m =
     crumbs([[LIST.worlds, listHref('worlds')], [e.name]]);
     const sel = (e.monsters || []).find(m => m.slug === R.q.m);
     const marks = sel ? (sel.boxes || []).map(b => ({ box: b })) : (e.npcs || []).filter(n => n.x != null).map(n => ({ x: n.x, y: n.y }));
-    return `<div class="top2"><div class="grow"><h1 class="h1 big">${esc(e.name)}</h1></div>${facts([[t('Monsters'), (e.monsters || []).length], [t('Townsfolk'), (e.npcs || []).length]])}${notLive(e.live)}</div>
-<div class="split"><aside class="side" style="max-width:560px;flex-basis:480px">${chart(e.key, marks)}<span class="mute small">${esc(sel ? t('Where {name} nests', { name: sel.name }) : t('The dots are its townsfolk'))}</span></aside>
-<div class="body"><section><h2 class="h2">${esc(t('Monsters'))}</h2>${table([[t('Monster')], [t('Level'), 1], [t('In its nests'), 1], ['']], (e.monsters || []).slice().sort((x, y) => (x.level || 0) - (y.level || 0)).map(m =>
-      `<tr><td>${a('monsters', m.slug, m.name)}</td><td class="r num">${N(m.level)}</td><td class="r num">${N(m.count)}</td><td>${chip(esc(t('On the map')), R.q.m === m.slug, { m: R.q.m === m.slug ? '' : m.slug })}</td></tr>`), 'sm')}</section>
-<section><h2 class="h2">${esc(t('Townsfolk'))}</h2>${[...new Map((e.npcs || []).map(n => [n.slug, n])).values()].map(n => `<a class="sim" href="${href('npcs', n.slug)}"><span style="flex:1">${esc(n.name)}</span><span class="mute small">${n.x != null ? `${n.x}, ${n.y}` : ''}</span></a>`).join('')}</section></div></div>`;
+    const folk = [...new Map((e.npcs || []).map(n => [n.slug, n])).values()];
+    const facts = factsStrip([fact(t('Monsters'), (e.monsters || []).length), fact(t('Townsfolk'), folk.length)]);
+    const body = `<div class="where"><div>${chart(e.key, marks)}<p class="note">${esc(sel ? t('Where {name} nests', { name: sel.name }) : t('The dots are its townsfolk'))}</p></div><div>
+${sec(t('Monsters'), table([[t('Monster')], [t('Level'), 1], [t('In its nests'), 1], ['']], (e.monsters || []).slice().sort((x, y) => (x.level || 0) - (y.level || 0)).map(m =>
+      `<tr><td>${a('monsters', m.slug, m.name)}</td><td class="r num">${N(m.level)}</td><td class="r num">${N(m.count)}</td><td>${chip(esc(t('On the map')), R.q.m === m.slug, { m: R.q.m === m.slug ? '' : m.slug })}</td></tr>`), 'sm'))}
+${folk.length ? sec(t('Townsfolk'), folk.map(n => `<a class="sim" href="${href('npcs', n.slug)}"><span style="flex:1">${esc(n.name)}</span><span class="mute small">${n.x != null ? `${n.x}, ${n.y}` : ''}</span></a>`).join('')) : ''}</div></div>`;
+    return frame({ pic: `<div class="epicol"><div class="epic map">${chart(e.key, [], { square: true })}</div></div>`, name: e.name, facts, more: e.live === false ? `<div class="erow">${notLive(e.live)}</div>` : '', body });
   }
 
   // ---- quests
@@ -543,7 +683,7 @@ ${mixes.length ? `<section><h2 class="h2">${esc(t('Mixes'))}</h2>${mixes.map(m =
       const m = M && M[s.target];
       const what = s.kind === 'clear' || s.kind === 'kill' ? `${esc(t('Kill'))} <b class="num">${N(s.count)}</b> ${m ? a('monsters', m.slug, s.line || m.n) : esc(s.line || '')}`
         : s.item && I && I[s.item] ? `${esc(pretty(s.kind))} ${s.count > 1 ? `<b class="num">${N(s.count)}</b> ` : ''}${a('items', I[s.item].slug, I[s.item].n)}` : esc(s.line || pretty(s.kind || ''));
-      return `<div style="display:flex;gap:12px;align-items:center;padding:10px 0;border-top:1px solid #16110E"><span style="width:18px;height:18px;flex:0 0 18px;border:1px solid #6A5426;border-radius:3px"></span><span>${what}</span></div>`;
+      return `<div class="step"><span class="box" aria-hidden="true"></span><span>${what}</span></div>`;
     }).join('');
     const paid = (e.paid || []).map(p => {
       const r = I && I[p.item];
@@ -551,16 +691,15 @@ ${mixes.length ? `<section><h2 class="h2">${esc(t('Mixes'))}</h2>${mixes.map(m =
         p.sockets ? t('{n} sockets', { n: p.sockets }) : '', p.power ? t('with a rune') : ''].filter(Boolean).join(' · ');
       return `<div style="padding:3px 0">${r ? `<span class="nm" data-card="${esc(r.slug)}">${a('items', r.slug, r.n)}<span class="pop" role="tooltip">${simpleCard(r)}</span></span>` : esc(p.item)} <span class="mute small">${esc(meta)}</span></div>`;
     }).join('');
-    const after = (e.afterAny || []).map(k => Q && Q[k] ? `<a class="sim" style="padding-left:0" href="${href('quests', Q[k].slug)}">${esc(Q[k].n)}</a>` : '').join('');
-    return `<div class="top2"><div class="grow"><h1 class="h1 big">${esc(e.title || e.name)}</h1><div class="mute" style="font-size:15px;margin-top:4px">${esc(t('Given by'))} ${g ? a('npcs', g.slug, e.giverName || g.n, 'crumb') : esc(e.giverName || '')}${e.place ? ' · ' + esc(e.place) : ''}</div></div>
-${facts([e.minLevel ? [t('Level'), e.minLevel] : null, [t('Repeats'), repeats(e.repeatSeconds)], (e.natives || []).length ? [t('For'), e.natives.join(', ')] : null])}</div>
-<div class="split"><aside class="side">${g && g.t ? shot({ page: g.t.replace('.96.webp', '.webp') }, g.n) : ''}<div class="icard"><span class="h3" style="margin:0">${esc(t('Requirements'))}</span>${kv([[t('Level'), e.minLevel || t('Any')], [t('Classes'), (e.natives || []).map(c => CLS[c] || c).join(', ') || t('Any')], e.second ? [t('Second class'), t('Yes')] : null])}
-${after ? `<div class="c-rule"></div><span class="mute small">${esc(t('After any of'))}</span>${after}` : ''}${rcv && e.receiver !== e.giver ? `<div class="c-rule"></div><span class="mute small">${esc(t('Hand it in to'))}</span>${a('npcs', rcv.slug, e.receiverName || rcv.n, 'crumb')}` : ''}</div></aside>
-<div class="body">${quote(e.offer)}<section><h2 class="h2">${esc(t('Objectives'))}</h2>${steps || absent(t('No steps in this release\'s data.'))}</section>
-<section><h2 class="h2">${esc(t('Rewards'))}</h2><div class="pay">${e.experience ? `<div><div class="k">${esc(t('Experience'))}</div><div class="v" style="color:#B9A2F2">${N(e.experience)}</div>${e.firstExperience ? `<div class="mute small">${esc(t('first time {n}', { n: e.firstExperience.toLocaleString('en') }))}</div>` : ''}</div>` : ''}
-${e.zen ? `<div><div class="k">Zen</div><div class="v" style="color:#F2C14E">${N(e.zen)}</div></div>` : ''}</div>${paid ? `<div class="rbox"><b>${esc(t('Items'))}</b>${paid}</div>` : ''}${e.boon ? `<p>${esc(e.boon)}</p>` : ''}</section>
-${(e.handIn || []).length ? `<section><h2 class="h3">${esc(t('When you return'))}</h2>${quote(e.handIn)}</section>` : ''}${e.next ? `<p class="mute">${esc(e.next)}</p>` : ''}
-<section><h2 class="h2">${esc(t('Comments'))}</h2>${comments('quests', e.slug, [])}</section></div></div>`;
+    const after = (e.afterAny || []).map(k => Q && Q[k] ? a('quests', Q[k].slug, Q[k].n, 'open') : '').filter(Boolean).join(', ');
+    const facts = factsStrip([fact(t('Level'), e.minLevel || t('Any')), fact(t('For'), (e.natives || []).map(c => CLS[c] || c).join(', ') || t('Any class')), e.second ? fact(t('Second class'), t('Yes')) : null,
+      fact(t('Repeats'), repeats(e.repeatSeconds)), e.experience ? fact(t('Experience'), e.experience, { tone: '#B9A2F2' }) : null, e.zen ? fact('Zen', e.zen, { tone: '#F2C14E' }) : null,
+      rcv && e.receiver !== e.giver ? fact(t('Hand it in to'), a('npcs', rcv.slug, e.receiverName || rcv.n, 'open'), { raw: 1 }) : null, after ? fact(t('After any of'), after, { raw: 1 }) : null]);
+    const sub = `${esc(t('Given by'))} ${g ? a('npcs', g.slug, e.giverName || g.n, 'open') : esc(e.giverName || '')}${e.place ? ' · ' + esc(e.place) : ''}`;
+    const body = (e.offer ? sec('', quote(e.offer)) : '') + sec(t('Objectives'), steps || absent(t('No steps in this release\'s data.'))) +
+      sec(t('Rewards'), `${e.firstExperience ? `<p class="mute" style="margin:0 0 10px">${esc(t('Experience the first time: {n}', { n: e.firstExperience.toLocaleString('en') }))}</p>` : ''}${paid ? `<div class="rbox"><b>${esc(t('Items'))}</b>${paid}</div>` : ''}${e.boon ? `<p>${esc(e.boon)}</p>` : ''}${!paid && !e.boon && !e.firstExperience ? `<p class="mute" style="margin:0">${esc(t('Experience and Zen, above.'))}</p>` : ''}`) +
+      ((e.handIn || []).length || e.next ? sec(t('When you return'), quote(e.handIn) + (e.next ? `<p class="mute" style="margin:12px 0 0">${esc(e.next)}</p>` : '')) : '') + sec(t('Comments'), comments('quests', e.slug, []));
+    return frame({ pic: g && g.t ? epic({ page: g.t.replace('.96.webp', '.webp') }, g.n) : '', name: e.title || e.name, sub, facts, body });
   }
 
   // ---- events
@@ -575,23 +714,27 @@ ${(e.handIn || []).length ? `<section><h2 class="h3">${esc(t('When you return'))
   function eventPage(e) {
     crumbs([[LIST.events, listHref('events')], [e.name]]);
     const rows = rowsOf('events') || [];
+    const MI = by('monsters', 'slug');
     const sib = rows.filter(r => r.type === e.type);
     const cats = [...new Set((e.drops || []).map(d => d.cat).filter(Boolean))];
     const cat = cats.includes(R.q.cat) ? R.q.cat : '';
     const shown = (e.drops || []).filter(d => !cat || d.cat === cat);
     const all = R.q.all === 'all';
     const levels = (e.monsters || []).map(m => m.level).filter(x => x != null);
-    return `<div class="top2"><div class="grow"><h1 class="h1 big"${e.type === 'raid' ? ' style="color:#F2C14E"' : ''}>${esc(e.name)}</h1>${(e.towns || []).length ? `<div class="mute" style="font-size:15px;margin-top:4px">${esc(t('Lands in {towns}', { towns: e.towns.map(x => x.name).join(', ') }))}</div>` : ''}</div>
-${facts([levels.length ? [t('Monster levels'), `${Math.min(...levels)}–${Math.max(...levels)}`] : null, [t('Monsters'), (e.monsters || []).length], [t('Items drop'), (e.drops || []).length]])}${notLive(e.live)}</div>
-${sib.length > 1 ? `<div class="chips" style="margin-bottom:32px">${sib.map(r => `<a class="chip" href="${href('events', r.slug)}" aria-pressed="${r.slug === e.slug ? 'true' : 'false'}">${esc(r.n)}</a>`).join('')}</div>` : ''}
-<div class="split"><aside class="side"><section><h2 class="h2">${esc(t('Monsters'))}</h2>${(e.monsters || []).map(m => `<a class="sim" href="${href('monsters', m.slug)}"><span style="flex:1;color:#F3E8D4">${esc(m.name)}</span><span class="mute num small">${esc(t('Lv {n}', { n: m.level }))} · ${esc(t('{n} items', { n: m.items }))}</span></a>`).join('')}</section>
-${(e.towns || []).length ? `<section><h2 class="h2">${esc(t('Where it lands'))}</h2>${e.towns.map(x => `<a class="sim" href="${href('worlds', x.world_slug)}">${esc(x.name)}</a>`).join('')}</section>` : ''}</aside>
-<section class="body" style="gap:0"><div class="ttl"><h2 class="h2" style="margin:0">${esc(t('Drops here'))}</h2><span class="mute">${esc(t('{n} items', { n: shown.length }))}</span></div>
-${cats.length > 1 ? `<div class="chips" style="margin-bottom:16px">${chip(esc(t('All · {n}', { n: (e.drops || []).length })), !cat, { cat: '' })}${cats.map(x => chip(esc(t(x)), cat === x, { cat: x, all: 'all' })).join('')}</div>` : ''}
+    const what = { castle: t('Blood Castle'), square: t('Devil Square'), raid: t('Raid') }[e.type] || pretty(e.type || '');
+    const towns = (e.towns || []).map(x => x.name);
+    const facts = factsStrip([levels.length ? fact(t('Monster levels'), `${Math.min(...levels)}–${Math.max(...levels)}`) : null, fact(t('Monsters'), (e.monsters || []).length), fact(t('Items drop'), (e.drops || []).length),
+      e.world_slug ? fact(t('Map'), a('worlds', e.world_slug, worldName(e.world), 'open'), { raw: 1 }) : null, ]);
+    const sub = esc(what) + (e.number && sib.length > 1 ? ' · ' + esc(t('{n} of {m}', { n: e.number, m: sib.length })) : '') + (towns.length ? ' · ' + esc(t('lands in {towns}', { towns: towns.join(', ') })) : '');
+    const strip = sib.length > 1 ? stripRow(what, sib.map(r => `<a class="chip" href="${href('events', r.slug)}" aria-pressed="${r.slug === e.slug ? 'true' : 'false'}">${esc(r.n)}</a>`).join('')) : '';
+    const body = sec(t('Monsters'), `<div class="rel">${(e.monsters || []).map(m => relCard(href('monsters', m.slug), MI && MI[m.slug] && MI[m.slug].t, m.name, `${t('Lv {n}', { n: m.level })} · ${t('{n} items', { n: m.items })}`)).join('')}</div>`) +
+      sec(t('Drops here'), `${cats.length > 1 ? `<div class="chips" style="margin-bottom:16px">${chip(esc(t('All · {n}', { n: (e.drops || []).length })), !cat, { cat: '' })}${cats.map(x => chip(esc(t(x)), cat === x, { cat: x, all: 'all' })).join('')}</div>` : ''}
 ${table([[t('Item')], [t('Type')], [t('Best from')], [t('Chance a kill'), 1]], (all ? shown : shown.slice(0, 30)).map(d => `<tr><td><span class="nm" data-card="${esc(d.slug)}">${a('items', d.slug, d.n)}<span class="pop" role="tooltip"></span></span>${d.excellent ? `<span class="sub2" style="color:#7FD66A">${esc(t('can be excellent'))}</span>` : ''}</td>
-<td class="mute">${esc(d.sub || '')}</td><td>${a('monsters', d.from_slug, d.from_name, 'crumb')}</td><td class="r">${oddsCell(d.chance)}</td></tr>`), 'sm pops')}${more(all ? shown.length : Math.min(30, shown.length), shown.length, 'all')}
-<p class="note">${esc(t('Chances are per kill of the monster named, for one player, before Item Find, talents and party bonuses.'))}</p>
-<section style="margin-top:28px"><h2 class="h2">${esc(t('Comments'))}</h2>${comments('events', e.slug, [])}</section></section></div>`;
+<td class="mute">${esc(d.sub || '')}</td><td>${a('monsters', d.from_slug, d.from_name, 'crumb')}</td><td class="r">${oddsCell(d.chance)}</td></tr>`), 'sm pops')}${showAll(all ? shown.length : Math.min(30, shown.length), shown.length, 'all')}
+<p class="note">${esc(t('Chances are per kill of the monster named, for one player, before Item Find, talents and party bonuses.'))}</p>`, t('{n} items', { n: shown.length })) +
+      sec(t('Comments'), comments('events', e.slug, []));
+    return frame({ pic: e.world ? `<div class="epicol"><div class="epic map">${chart(e.world, [], { square: true }) || ''}</div></div>` : '', name: e.name, tone: e.type === 'raid' ? '#F2C14E' : '', sub, facts,
+      more: e.live === false ? `<div class="erow">${notLive(e.live)}</div>` : '', strip, body });
   }
 
   // ---- runes
@@ -613,12 +756,12 @@ ${table([[t('Item')], [t('Type')], [t('Best from')], [t('Chance a kill'), 1]], (
     const who = Object.keys(ch);
     const levels = [...new Set(who.flatMap(c => Object.keys(ch[c])))].sort((x, y) => x - y);
     const label = (c) => (c.endsWith('2') ? t('{cls}, second class', { cls: c.slice(0, -1) }) : c);
-    return `<div class="split"><aside class="side"><div class="icard" style="border-color:${tone}"><h1 style="margin:0;font:700 24px/1.2 Cinzel,serif;color:${tone}">${esc(e.name)}</h1><span style="font-size:15px;color:${tone}">${esc(t('{rarity} rune', { rarity: e.rarity_name || '' }))}</span>
-<div class="c-rule"></div><span style="font-size:17px;color:#E8A15A">${esc(e.tells || '')}</span><div class="c-rule"></div>${kv([[t('Hero level'), e.hero_level], [t('Drops from monster level'), e.from_level], [t('Classes'), (e.classes || []).join(', ')], [t('Fits'), (e.slots || []).join(', ')],
-      [t('Stacks'), e.stacking && e.stacking.says ? e.stacking.says : null], [t('Sells for'), e.sale != null ? pct(e.sale) + ' ' + t('of its item') : null]])}
-${e.live === false ? `<div class="c-rule"></div><span style="color:#7FD7F0">${esc(t('Not dropping yet.'))}</span>` : ''}</div></aside>
-<div class="body"><section><h2 class="h2">${esc(t('Where it comes from'))}</h2>${who.length ? `<p class="mute" style="margin:0 0 12px">${esc(e.chance_note || '')}</p>${table([[t('Kill level from')]].concat(who.map(c => [label(c), 1])), levels.map(l => `<tr><td class="num">${esc(l)}</td>${who.map(c => `<td class="r">${oddsCell(ch[c][l])}</td>`).join('')}</tr>`), 'sm')}` : absent(t('It does not drop from monsters.'))}</section>
-<section><h2 class="h2">${esc(t('Comments'))}</h2>${comments('runes', e.slug, [])}</section></div></div>`;
+    const facts = factsStrip([fact(t('Hero level'), e.hero_level), fact(t('Drops from monster level'), e.from_level), fact(t('Classes'), (e.classes || []).join(', ')), fact(t('Fits'), (e.slots || []).join(', ')),
+      fact(t('Stacks'), e.stacking && e.stacking.says ? e.stacking.says : null), fact(t('Sells for'), e.sale != null ? pct(e.sale) + ' ' + t('of its item') : null)]);
+    const body = sec(t('Where it comes from'), who.length ? `<p class="mute" style="margin:0 0 12px">${esc(e.chance_note || '')}</p>${table([[t('Kill level from')]].concat(who.map(c => [label(c), 1])), levels.map(l => `<tr><td class="num">${esc(l)}</td>${who.map(c => `<td class="r">${oddsCell(ch[c][l])}</td>`).join('')}</tr>`), 'sm')}` : absent(t('It does not drop from monsters.'))) +
+      sec(t('Comments'), comments('runes', e.slug, []));
+    return frame({ name: e.name, tone, sub: `<span style="color:${tone}">${esc(t('{rarity} rune', { rarity: e.rarity_name || '' }))}</span>`, lead: e.tells ? `<span style="color:#E8A15A">${esc(e.tells)}</span>` : '', facts,
+      more: e.live === false ? `<div class="erow">${notLive(e.live)}</div>` : '', body });
   }
 
   // ---- skills
@@ -637,15 +780,15 @@ ${e.live === false ? `<div class="c-rule"></div><span style="color:#7FD7F0">${es
     const trees = (e.classes || []).map(c => [c, have(`talents/${String(c).toLowerCase()}.json`)]);
     const feeds = [];
     trees.forEach(([c, tr]) => { const cols = tr && (tr.columns || tr.tree || tr.trees || tr); (Array.isArray(cols) ? cols : []).forEach(col => { if ((col.feeds || []).includes(e.number)) feeds.push(`${CLS[c] || c}: ${col.name}`); }); });
-    const NUM = [['needLevel', t('Level')], ['mana', t('Mana')], ['damage', t('Damage')], ['reach', t('Reach')], ['spread', t('Shape')], ['coolTicks', t('Cooldown (ticks)')],
-      ['boonTicks', t('Lasts (ticks)')], ['splash', t('Splash')], ['summons', t('Summons')], ['force', t('Force')]];
-    const rest = Object.entries(e).filter(([k, v]) => !['kind', 'slug', 'commit', 'protocol', 'name', 'tells', 'icon_png', 'classes'].includes(k) && (typeof v !== 'object' || v === null));
-    return `<div class="split"><aside class="side"><div class="icard"><div style="display:flex;gap:16px;align-items:center">${e.icon_png ? `<span class="ticon" style="width:46px;height:64px;border-color:#6A5426;background-image:url(${pic(e.icon_png)})"></span>` : ''}
-<div><h1 style="margin:0;font:700 24px/1.2 Cinzel,serif;color:#F3E8D4">${esc(e.name)}</h1><span class="mute">${esc((e.classes || []).map(c => CLS[c] || c).join(', '))}</span></div></div><div class="c-rule"></div><span>${esc(e.tells || '')}</span></div>
-${feeds.length ? `<section class="rbox"><b>${esc(t('Talent columns that feed it'))}</b>${feeds.map(f => `<div>· ${esc(f)}</div>`).join('')}<a class="crumb" style="text-decoration:underline" href="${listHref('talents')}">${esc(t('Open the talent calculator'))}</a></section>` : ''}</aside>
-<div class="body"><section><h2 class="h2">${esc(t('Numbers'))}</h2><div class="tbox"><table class="tbl sm wrapc"><tbody>${NUM.filter(([k]) => e[k] != null && e[k] !== 0 && e[k] !== '').map(([k, l]) => `<tr><th scope="row" class="plain rowh">${esc(l)}</th><td>${esc(e[k])}</td></tr>`).join('')}</tbody></table></div></section>
-<details class="rbox"><summary style="cursor:pointer">${esc(t('Every number the game has for it'))}</summary><div class="tbox" style="margin-top:12px"><table class="tbl sm"><tbody>${rest.map(([k, v]) => `<tr><th scope="row" class="plain rowh">${esc(k)}</th><td class="num">${esc(v)}</td></tr>`).join('')}</tbody></table></div></details>
-<section><h2 class="h2">${esc(t('Comments'))}</h2>${comments('skills', e.slug, [])}</section></div></div>`;
+    const ticks = (n) => (n ? t('{n} s', { n: +(n / 20).toFixed(1) }) : null);
+    const facts = factsStrip([fact(t('Level'), e.needLevel || null), fact(t('Mana'), e.mana || null), fact(t('Damage'), e.damage || null), fact(t('Reach'), e.reach ? tiles(e.reach) : null),
+      fact(t('Shape'), e.spread && e.spread !== 'one' ? pretty(e.spread) : null), fact(t('Cooldown'), ticks(e.coolTicks)), fact(t('Lasts'), ticks(e.boonTicks)), fact(t('Splash'), e.splash || null)]);
+    const r = e.raises;
+    const raises = r ? sec(t('What it raises'), `<div class="callout"><span class="slabel">${esc(t('Raises'))}</span><div>${a('monsters', r.monster.slug, r.monster.name, 'open')}${r.fights_as ? ` <span class="dotsep">·</span> ${esc(t('fights as'))} ${a('monsters', r.fights_as.slug, r.fights_as.name, 'open')}` : ''}${r.orb ? ` <span class="dotsep">·</span> ${esc(t('taught by'))} ${a('items', r.orb.slug, `${r.orb.name} +${r.orb.plus}`, 'open')}${r.orb.energy ? ` <span class="dotsep">·</span> ${esc(t('{n} energy', { n: r.orb.energy }))}` : ''}` : ''}</div></div>`) : '';
+    const body = raises + (feeds.length ? sec(t('Talent columns that feed it'), `${feeds.map(f => `<div>· ${esc(f)}</div>`).join('')}<p style="margin:12px 0 0"><a class="crumb" style="text-decoration:underline" href="${listHref('talents')}">${esc(t('Open the talent calculator'))}</a></p>`) : '') +
+      sec(t('Comments'), comments('skills', e.slug, []));
+    return frame({ pic: e.icon_png ? `<div class="epicol"><div class="epic sm"><span class="ticon" style="width:46px;height:64px;border-color:#6A5426;background-image:url(${pic(e.icon_png)})"></span></div></div>` : '', name: e.name,
+      sub: esc((e.classes || []).map(c => CLS[c] || c).join(', ')), lead: esc(e.tells || ''), facts, body });
   }
 
   // ---- the talent calculator: the game's tree (sim/talents_table.inc via the dump), its rules mirrored
@@ -708,11 +851,12 @@ ${feeds.length ? `<section class="rbox"><b>${esc(t('Talent columns that feed it'
     const npc = F && F[m.npc];
     const asks = (m.asks || []).map(x => `<div style="padding:2px 0"><span style="color:#F3E8D4">${esc(x.name)}</span> <span class="mute">${x.need ? (x.at_least ? t('{n} or more', { n: x.need }) : '×' + x.need) : t('optional')}</span></div>`).join('');
     const res = (m.result || []).map(r => { const it = I && I[r.item]; return `<div style="padding:2px 0">${it ? a('items', it.slug, r.name || it.n) : esc(r.name || r.item)} <span class="mute">${esc(r.class ? CLS[r.class] || r.class : '')}</span></div>`; }).join('');
-    return `<article class="rbox" style="padding:20px 24px;margin-bottom:16px"><div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 16px;align-items:baseline;margin-bottom:12px">
-<h2 style="margin:0;font:700 22px/1.2 Cinzel,serif">${full ? esc(m.name || m.n) : a('mixes', m.slug, m.name || m.n, 'open')}</h2>${npc ? a('npcs', npc.slug, npc.n, 'crumb') : ''}</div>
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px 28px"><div><div class="h3" style="margin-bottom:8px">${esc(t('Put in'))}</div>${asks || `<span class="mute">${esc(m.title || '')}</span>`}</div>
+    const grid = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px 28px"><div><div class="h3" style="margin-bottom:8px">${esc(t('Put in'))}</div>${asks || `<span class="mute">${esc(m.title || '')}</span>`}</div>
 <div><div class="h3" style="margin-bottom:8px">${esc(t('Success'))}</div>${kv([[t('Chance'), m.rate ? m.rate + '%' : t('by what you put in')], m.zen ? [t('Zen'), N(m.zen), 1] : null])}</div>
-<div><div class="h3" style="margin-bottom:8px">${esc(t('You get'))}</div>${res || `<span>${esc(m.success || '')}</span>`}${m.failure ? `<div style="margin-top:8px;color:#E8A15A;font-size:15px">${esc(t('On failure: {what}', { what: m.failure }))}</div>` : ''}</div></div></article>`;
+<div><div class="h3" style="margin-bottom:8px">${esc(t('You get'))}</div>${res || `<span>${esc(m.success || '')}</span>`}${m.failure ? `<div style="margin-top:8px;color:#E8A15A;font-size:15px">${esc(t('On failure: {what}', { what: m.failure }))}</div>` : ''}</div></div>`;
+    if (full) return grid;
+    return `<article class="rbox" style="padding:20px 24px;margin-bottom:16px"><div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 16px;align-items:baseline;margin-bottom:12px">
+<h2 style="margin:0;font:700 22px/1.2 Cinzel,serif">${a('mixes', m.slug, m.name || m.n, 'open')}</h2>${npc ? a('npcs', npc.slug, npc.n, 'crumb') : ''}</div>${grid}</article>`;
   }
   function mixesList() {
     const rows = rowsOf('mixes');
@@ -738,20 +882,37 @@ ${feeds.length ? `<section class="rbox"><b>${esc(t('Talent columns that feed it'
     const res = (e.result || []).slice().sort((x, y) => (y.chance || 0) - (x.chance || 0));
     const zen = e.zen_amount ? N(e.zen_amount) : e.zen_range ? `${N(e.zen_range[0])} – ${N(e.zen_range[1])}` : '';
     const plusOf = (r) => (Array.isArray(r.plus) ? `+${r.plus[0]} – +${r.plus[1]}` : r.plus ? `+${r.plus}` : '');
-    return table([[t('Item')], [t('How')], [t('Chance a box'), 1]],
-      (e.zen ? [`<tr><td style="color:#F2C14E">Zen${zen ? ` <span class="num">${zen}</span>` : ''}</td><td></td><td class="r">${oddsCell(e.zen)}</td></tr>`] : []).concat(res.map(r => { const it = I && I[r.item]; return `<tr><td>${it ? `<span class="nm" data-card="${esc(it.slug)}">${a('items', it.slug, it.n)}<span class="pop" role="tooltip">${simpleCard(it)}</span></span>` : esc(r.item)}</td><td style="color:${r.excellent ? '#7FD66A' : '#C9BFAE'}">${esc([ROLL[r.roll] || pretty(r.roll || ''), plusOf(r)].filter(Boolean).join(' '))}</td><td class="r">${oddsCell(r.chance)}</td></tr>`; })), 'sm pops');
+    const all = R.q.all === 'all', per = 25;
+    const rows = (e.zen ? [`<tr><td style="color:#F2C14E">Zen${zen ? ` <span class="num">${zen}</span>` : ''}</td><td></td><td class="r">${oddsCell(e.zen)}</td></tr>`] : []).concat(res.map(r => { const it = I && I[r.item]; return `<tr><td>${it ? `<span class="nm" data-card="${esc(it.slug)}">${a('items', it.slug, it.n)}<span class="pop" role="tooltip">${simpleCard(it)}</span></span>` : esc(r.item)}</td><td style="color:${r.excellent ? '#7FD66A' : '#C9BFAE'}">${esc([ROLL[r.roll] || pretty(r.roll || ''), plusOf(r)].filter(Boolean).join(' '))}</td><td class="r">${oddsCell(r.chance)}</td></tr>`; }));
+    return table([[t('Item')], [t('How')], [t('Chance a box'), 1]], all ? rows : rows.slice(0, per), 'sm pops') + showAll(all ? rows.length : Math.min(per, rows.length), rows.length, 'all') +
+      `<p class="note">${esc(t('One roll a box: Zen or one of these, the chances together one.'))}</p>`;
   }
   function genericPage(kind, e) {
     crumbs([[LIST[kind] || kind, listHref(kind)], [e.name || e.title || e.slug]]);
-    let body = '';
-    if (kind === 'mixes') body = mixCard(e, true);
-    else if (kind === 'boxes') body = boxContents(e);
-    else {
-      const rest = Object.entries(e).filter(([k]) => !['kind', 'slug', 'commit', 'protocol', 'key'].includes(k));
-      body = `<div class="tbox"><table class="tbl sm wrapc"><tbody>${rest.map(([k, v]) => `<tr><th scope="row" class="plain rowh">${esc(pretty(k))}</th><td>${esc(Array.isArray(v) ? v.map(x => (typeof x === 'object' ? JSON.stringify(x) : x)).join(', ') : typeof v === 'object' && v ? JSON.stringify(v) : v)}</td></tr>`).join('')}</tbody></table></div>`;
-      if (kind === 'elites') body = `<div class="roll" style="margin-bottom:20px"><div class="rbox"><b>${esc(worldName(e.world))}</b>${kv([[t('At once'), e.count], [t('Life'), '×' + e.life], [t('Damage'), '×' + e.damage], [t('Defense'), '×' + e.defense], [t('Levels higher'), e.levels_up]])}</div></div>` + body;
+    let o = { name: e.name || e.title || e.slug, body: '' };
+    if (kind === 'mixes') {
+      const F = by('npcs', 'npc'), npc = F && F[e.npc];
+      o.sub = npc ? `${esc(t('At'))} ${a('npcs', npc.slug, npc.n, 'open')}` : esc(t('Chaos Machine'));
+      o.facts = factsStrip([fact(t('Chance'), e.rate ? e.rate + '%' : t('by what you put in')), e.zen ? fact('Zen', e.zen, { tone: '#F2C14E' }) : null]);
+      o.body = sec('', mixCard(e, true));
+    } else if (kind === 'boxes') {
+      const I = by('items', 'k'), it = I && I[e.item];
+      const sibs = (rowsOf('boxes') || []).filter(b => b.item === e.item);
+      if (it) { o.pic = epic(it.t ? { page: it.t.replace('.96.webp', '.webp') } : null, it.n); o.sub = `${esc(t('What the box gives'))} · ${a('items', it.slug, it.n, 'open')}`; }
+      o.facts = factsStrip([fact(t('Zen'), e.zen != null ? pct(e.zen) + ' ' + t('of boxes') : null), fact(t('Zen it gives'), e.zen_amount || (e.zen_range ? `${N(e.zen_range[0])} – ${N(e.zen_range[1])}` : null)), fact(t('Items it can give'), (e.result || []).length)]);
+      if (sibs.length > 1) o.strip = stripRow(t('Level'), sibs.map(b => `<a class="chip" href="${href('boxes', b.slug)}" aria-pressed="${b.slug === e.slug ? 'true' : 'false'}">${esc(b.n)}</a>`).join(''));
+      o.body = sec('', boxContents(e));
+    } else if (kind === 'elites') {
+      o.name = t('Elites of {map}', { map: worldName(e.world) });
+      o.sub = a('worlds', (by('worlds', 'k') || {})[e.world] ? by('worlds', 'k')[e.world].slug : e.world, worldName(e.world), 'open');
+      o.facts = factsStrip([fact(t('At once'), e.count), fact(t('Life'), '×' + e.life), fact(t('Damage'), '×' + e.damage), fact(t('Defense'), '×' + e.defense), fact(t('Levels higher'), e.levels_up),
+        fact(t('Experience'), e.experience != null ? '×' + e.experience : null), fact('Zen', e.zen_times != null ? '×' + e.zen_times : null), fact(t('Rises every'), e.rise_seconds ? t('{a}–{b} min', { a: e.rise_seconds[0] / 60, b: e.rise_seconds[1] / 60 }) : null)]);
+      o.body = sec(t('Their spoils'), `<div class="tbox"><table class="tbl sm"><tbody>${[[t('Pieces'), e.pieces ? e.pieces.join('–') : null], [t('A jewel'), e.jewel_in_100 != null ? e.jewel_in_100 + '%' : null], [t('A second jewel'), e.second_jewel_in_100 != null ? e.second_jewel_in_100 + '%' : null],
+        [t('A second excellent'), e.second_excellent_in_100 != null ? e.second_excellent_in_100 + '%' : null], [t('Luck'), e.luck_in_100 != null ? e.luck_in_100 + '%' : null]].filter(x => x[1] != null).map(x => `<tr><th scope="row" class="plain rowh">${esc(x[0])}</th><td class="num">${esc(x[1])}</td></tr>`).join('')}</tbody></table></div>`);
     }
-    return `<div class="top2"><div class="grow"><h1 class="h1 big">${esc(e.name || e.title || e.slug)}</h1></div>${notLive(e.live)}</div><div class="body">${body}<section><h2 class="h2">${esc(t('Comments'))}</h2>${comments(kind, e.slug, [])}</section></div>`;
+    if (e.live === false) o.more = `<div class="erow">${notLive(e.live)}</div>`;
+    o.body += sec(t('Comments'), comments(kind, e.slug, []));
+    return frame(o);
   }
   function genericList(kind) {
     const rows = rowsOf(kind);
@@ -763,6 +924,7 @@ ${feeds.length ? `<section class="rbox"><b>${esc(t('Talent columns that feed it'
   // ---- drawing
   function view() {
     if (!B.data) return absent(t('The Armory has not been built yet.'));
+    if (R.view === 'home') return homePage();
     if (R.view === 'list') {
       const L = { items: itemsList, monsters: monstersList, npcs: npcsList, quests: questsList, events: eventsList, runes: runesList, skills: skillsList,
         talents: () => talentsPage(''), mixes: mixesList, elites: elitesList, worlds: worldsList };
@@ -776,10 +938,11 @@ ${feeds.length ? `<section class="rbox"><b>${esc(t('Talent columns that feed it'
     return (pages[R.kind] || ((x) => genericPage(R.kind, x)))(e);
   }
   // Every page's indexes, asked up front so they come together.
-  const NEEDS = { items: ['items', 'boxes'], monsters: ['items', 'worlds', 'events', 'elites'], npcs: ['items', 'worlds', 'quests', 'mixes'], worlds: ['worlds'], quests: ['npcs', 'items', 'monsters', 'quests'],
-    events: ['events'], runes: [], skills: [], mixes: ['npcs', 'items'], elites: ['worlds'], boxes: ['items'], talents: ['talents'] };
+  const NEEDS = { home: ['items', 'monsters', 'npcs', 'quests', 'events', 'skills', 'mixes', 'worlds', 'boxes'], items: ['items', 'boxes'], monsters: ['items', 'worlds', 'events', 'elites', 'monsters'], npcs: ['items', 'worlds', 'quests', 'mixes'], worlds: ['worlds'], quests: ['npcs', 'items', 'monsters', 'quests'],
+    events: ['events', 'worlds', 'monsters'], runes: [], skills: [], mixes: ['npcs', 'items'], elites: ['worlds'], boxes: ['items', 'boxes'], talents: ['talents'] };
   function titleOf() {
     const e = R.view === 'entity' ? files[`${R.kind}/${R.slug}.json`] : null;
+    if (R.view === 'home') return 'MU Classic Armory';
     const name = e ? (e.name || e.title || e.class) : (LIST[R.kind] || '');
     return `${name || t('Armory')} — MU Classic Armory`;
   }
@@ -792,7 +955,12 @@ ${feeds.length ? `<section class="rbox"><b>${esc(t('Talent columns that feed it'
       (NEEDS[R.kind] || []).concat(R.view === 'list' ? [R.kind] : []).forEach(k => { if ((B.kinds || []).includes(k)) have(`index/${k}.json`); });
       const keepDraft = document.getElementById('cmt');
       if (keepDraft) draft = keepDraft.value;
+      // The search box stands in the home page's band, and in the trail's row everywhere else.
+      if (VIEW.contains(SEARCH)) AHEAD.appendChild(SEARCH);
       VIEW.innerHTML = view();
+      const spot = document.getElementById('homesearch');
+      if (spot) spot.appendChild(SEARCH);
+      SEARCH.classList.toggle('big', !!spot);
       document.title = titleOf();
     });
   }
@@ -846,7 +1014,7 @@ ${feeds.length ? `<section class="rbox"><b>${esc(t('Talent columns that feed it'
     const q = input.value.trim().toLowerCase();
     if (!q) return hideHits();
     if (!s) { hits.innerHTML = `<p>${esc(t('Loading…'))}</p>`; hits.hidden = false; return; }
-    const all = (s.rows || []).filter(r => r.n.toLowerCase().includes(q));
+    const all = (s.rows || []).filter(r => r.n.toLowerCase().includes(q) && !(r.k === 'item' && r.s === 'zen'));
     all.sort((x, y) => (x.n.toLowerCase().startsWith(q) ? 0 : 1) - (y.n.toLowerCase().startsWith(q) ? 0 : 1) || x.n.length - y.n.length);
     const top = all.slice(0, 12);
     hits.innerHTML = (top.length ? top.map((r, i) => `<a href="${P}/armory/${r.k === 'talent' ? 'talents' : r.k}/${r.s}" role="option" aria-selected="${i === sel ? 'true' : 'false'}">${esc(r.n)}<span>${esc(KIND_NAME[r.k] || r.k)}</span></a>`).join('')
