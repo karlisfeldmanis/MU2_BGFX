@@ -816,6 +816,25 @@ void Helper::keys(Play& play, const HelperSettings& settings, uint32_t target) {
     for (const sim::Body& body : realm.bodies()) {
         if (body.monster() && body.alive() && !body.gone && tilesApart(at->x, at->y, body.x, body.y) <= kCrowd) ++crowd;
     }
+    // **A key is thrown from within its own reach** (Piddy on Discord: "Twisting Slash doesn't
+    // take you in range of the mob when not assigned to the right click button"; and "power wave
+    // and other aiming spells auto-play is missing the monsters"): a press is thrown from where he
+    // stands (Realm::press), so pressed while the order still walked him in, Twisting Slash spun
+    // on air (tests/helper_test.cpp: two of four from 5.2 tiles), and Power Wave could go off from
+    // as far as Energy Ball's nine with its six. The realm's own measure, as its order's
+    // (Realm::press: reach plus the breed's bulk).
+    const content::Tables& tables = *realm.tables();
+    const int bulk = at->kind >= 0 && size_t(at->kind) < tables.kinds.size()
+                         ? sim::bulkOf(tables.kinds[size_t(at->kind)].number)
+                         : 0;
+    const sim::Request& order = realm.order();
+    // A key lent to the order to walk him in goes back to the right button's own once thrown.
+    const int32_t striking = striker(play, settings);
+    const int32_t own = striking >= 0 ? striking : play.quickSkill();
+    if (order.skill != own && order.skill > 0 && realm.cooling(order.skill) > 0) {
+        play.fight(target, striking);
+        return;
+    }
     // An attack asks the hand that swings it, a boon the arm (Desk's plate: SkillRow::suits).
     const uint32_t hand = realm.wearer().hand;
     const int keys = std::min(barCount_, 5);  // the five keys; the right button's slot fights already
@@ -832,6 +851,12 @@ void Helper::keys(Play& play, const HelperSettings& settings, uint32_t target) {
         const int32_t cost = sim::manaCostOf(hero, *row);  // as the realm charges it, talents and all
         const int32_t price = row->chargeTicks > 0 ? cost * row->chargeStages : cost;
         if (!now || hero.mana < price || !row->suits(hand)) continue;
+        if (!sim::within(hero, *at, row->reach + float(bulk))) {
+            // Out of it: the order walks him to it with this key, as the right button's does,
+            // and throws it there (Realm::press, the quick slot).
+            if (order.skill != skill) play.fight(target, skill);
+            return;
+        }
         if (const auto tried = tried_.find(skill); tried != tried_.end() && tried->second > clock_) continue;
         tried_[skill] = clock_ + kSkillRetry;
         core::logf("helper: %s at %u, %d about it", row->name, unsigned(target), crowd);

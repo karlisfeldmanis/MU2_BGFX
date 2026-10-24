@@ -1069,6 +1069,16 @@ target_link_libraries(stage_test PRIVATE mu_game)
 target_include_directories(stage_test PRIVATE src)
 target_compile_options(stage_test PRIVATE ${MU_WARNINGS})
 
+# The helper's keys without a window (tests/helper_test.cpp): a Play on the cooked Lorencia with
+# no figures, a monster rooted out of reach, and how far off each key's skill was thrown.
+add_executable(helper_test EXCLUDE_FROM_ALL
+  tests/helper_test.cpp
+)
+target_link_libraries(helper_test PRIVATE mu_game)
+target_include_directories(helper_test PRIVATE src)
+target_compile_definitions(helper_test PRIVATE MU2_ASSET_DIR="${MU_ASSETS}")
+target_compile_options(helper_test PRIVATE ${MU_WARNINGS})
+
 # The Lorencia bot: a character played from level one with no window -- hunting, potions,
 # loot, gear and the town's counters -- and what happened, when (tools/bot/bot.cpp).
 add_executable(bot EXCLUDE_FROM_ALL
