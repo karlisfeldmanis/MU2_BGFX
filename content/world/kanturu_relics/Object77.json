@@ -1,0 +1,435 @@
+{
+  "item": "Object77",
+  "mu_name": "Object77",
+  "mu_name_from": "kanturu_relics's object slot: type N is Object{N+1}.bmd, from Data/Object39.",
+  "world": "kanturu_relics",
+  "object_type": 76,
+  "placements": 69,
+  "profile": "world",
+  "sheets": {
+    "songk3crystal_R": "kr_songk3crystal_r.png"
+  },
+  "sheet_from": "Data/Object39/, decoded under the kl_ prefix by `mu new`.",
+  "sheet_materials": {
+    "songk3crystal_R": "lamplight"
+  },
+  "material_note": "songk3crystal_R: pink crystal, MU's bright sheet, the Ruins' own (kr_songk3crystal_r.png, byte-identical): lamplight, drawn added.",
+  "why_this_one": "A pink crystal cluster rising out of the void round the whole maze, 69 of them. MU places 5 by the safe hall at floor height (three on the strips the Relics no longer draw, 95e5d554). Ours: all sunk to -7 m so the bases vanish in the abyss's dark and the tips show 4.6 m under the floor, below the void clouds (the user, 2026-10-24: \"they have to be lower and bottom part is almost invissible like they are coming from voide\", \"more lower ... also we need smoke layer coming above crystals levels\"), and 64 more laid round the maze 3-6 tiles off its edge, 10 tiles apart, turned and sized 0.6-0.9 at random (\"lets put more crystals around whole platform\"). Its geometry is the Ruins' Object96, vertex for vertex. Batch 8 of the Relics. docs/worlds/kanturu-port.md Part B 8.1.",
+  "additive": [
+    "songk3crystal_R"
+  ],
+  "additive_from": "An _R sheet: MU's TextureScript marks it bright (TextureScript.cpp:16-58), so it is drawn added. Its chrome pass and its ten blue sparks: glow_from and emitters_from.",
+  "emitters": [
+    {
+      "kind": "spark",
+      "colour": [
+        0.1,
+        0.1,
+        0.3
+      ],
+      "low": 7.5,
+      "high": 7.5,
+      "range_tiles": 0,
+      "at": [
+        38.2,
+        302.2,
+        146.8
+      ]
+    },
+    {
+      "kind": "spark",
+      "colour": [
+        0.1,
+        0.1,
+        0.3
+      ],
+      "low": 7.5,
+      "high": 7.5,
+      "range_tiles": 0,
+      "at": [
+        108.1,
+        96.2,
+        280.1
+      ]
+    },
+    {
+      "kind": "spark",
+      "colour": [
+        0.1,
+        0.1,
+        0.3
+      ],
+      "low": 7.5,
+      "high": 7.5,
+      "range_tiles": 0,
+      "at": [
+        26.6,
+        150.7,
+        146.8
+      ]
+    },
+    {
+      "kind": "spark",
+      "colour": [
+        0.1,
+        0.1,
+        0.3
+      ],
+      "low": 7.5,
+      "high": 7.5,
+      "range_tiles": 0,
+      "at": [
+        64.7,
+        53.2,
+        129.7
+      ]
+    },
+    {
+      "kind": "spark",
+      "colour": [
+        0.1,
+        0.1,
+        0.3
+      ],
+      "low": 7.5,
+      "high": 7.5,
+      "range_tiles": 0,
+      "at": [
+        -33.4,
+        0.9,
+        32.7
+      ]
+    },
+    {
+      "kind": "spark",
+      "colour": [
+        0.1,
+        0.1,
+        0.3
+      ],
+      "low": 7.5,
+      "high": 7.5,
+      "range_tiles": 0,
+      "at": [
+        213.1,
+        -31.2,
+        173.2
+      ]
+    },
+    {
+      "kind": "spark",
+      "colour": [
+        0.1,
+        0.1,
+        0.3
+      ],
+      "low": 7.5,
+      "high": 7.5,
+      "range_tiles": 0,
+      "at": [
+        213.1,
+        -31.2,
+        173.2
+      ]
+    },
+    {
+      "kind": "spark",
+      "colour": [
+        0.1,
+        0.1,
+        0.3
+      ],
+      "low": 7.5,
+      "high": 7.5,
+      "range_tiles": 0,
+      "at": [
+        76.1,
+        -41.4,
+        145.0
+      ]
+    },
+    {
+      "kind": "spark",
+      "colour": [
+        0.1,
+        0.1,
+        0.3
+      ],
+      "low": 7.5,
+      "high": 7.5,
+      "range_tiles": 0,
+      "at": [
+        76.1,
+        -41.4,
+        145.0
+      ]
+    },
+    {
+      "kind": "spark",
+      "colour": [
+        0.1,
+        0.1,
+        0.3
+      ],
+      "low": 7.5,
+      "high": 7.5,
+      "range_tiles": 0,
+      "at": [
+        43.2,
+        -5.6,
+        75.7
+      ]
+    },
+    {
+      "kind": "lamp",
+      "at": [
+        40,
+        160,
+        150
+      ],
+      "colour": [
+        1.0,
+        0.7,
+        0.78
+      ],
+      "low": 2.2,
+      "high": 2.8,
+      "range_tiles": 4,
+      "flicker_hz": 0.25,
+      "smooth_seconds": 2.0,
+      "wrap": 0.5
+    }
+  ],
+  "emitters_from": "Render_Kanturu2nd_AfterObjectMesh type 76 (GM_Kanturu_2nd.cpp:653-672) is the Ruins' type 95: a BITMAP_SPARK+1 at each of bones 0-9, Scale 7.5, light (0.1, 0.1, 0.3), added. The geometry is the Ruins' Object96's, so its sparks (snapped onto the shards) and its pink light are the Ruins' recipe's, copied. Its RENDER_CHROME7 | RENDER_DARK pass is not carried.",
+  "emitters_snapped": "Ours: each spark moved from its bone (MuExtract rest position, up to 1.9 m off the shards) to the nearest point of the crystal's own triangles, 20% in towards that triangle's middle, so it lies on a shard (the user, 2026-10-23: \"those blue crystal effect has to be always be on crystal meshes non somewhere else\").",
+  "glow": {
+    "songk3crystal_R": {
+      "low": 0.4,
+      "high": 0.4
+    }
+  },
+  "glow_from": "Render_Kanturu2nd_AfterObjectMesh type 76 sets BodyLight to 0.4 before mesh 0 RENDER_TEXTURE|RENDER_BRIGHT (GM_Kanturu_2nd.cpp:657-661): a steady 0.4, where the Ruins' crystal takes about 0.5 off the ground under it.",
+  "lamp_from": "Ours: each crystal a pink light, its sheet songk3crystal_R's own colour (the bright texels average 1.0, 0.7, 0.72), over 3 tiles, breathing slowly 0.85-1.15, so a hero near one is lit by it. MU lights nothing from them. The user, 2026-10-23: \"we need that crystal is real light emiters, so when char is near them we can feel that\", \"light color has to match the crystals\".",
+  "islands": [
+    {
+      "island": 0,
+      "material": "lamplight",
+      "triangles": 18,
+      "area": 42326.5,
+      "along": [
+        118.3,
+        171.7
+      ],
+      "mu_uv": [
+        0.083,
+        -0.046,
+        1.801,
+        0.97
+      ],
+      "bake_uv": [
+        0.01,
+        0.132,
+        0.239,
+        0.891
+      ]
+    },
+    {
+      "island": 1,
+      "material": "lamplight",
+      "triangles": 18,
+      "area": 94406.0,
+      "along": [
+        -177.5,
+        -79.1
+      ],
+      "mu_uv": [
+        -0.314,
+        0.137,
+        0.913,
+        0.87
+      ],
+      "bake_uv": [
+        0.202,
+        0.415,
+        0.764,
+        0.816
+      ]
+    },
+    {
+      "island": 2,
+      "material": "lamplight",
+      "triangles": 15,
+      "area": 103866.5,
+      "along": [
+        -244.7,
+        -23.3
+      ],
+      "mu_uv": [
+        -0.897,
+        -0.773,
+        1.008,
+        0.877
+      ],
+      "bake_uv": [
+        0.01,
+        0.011,
+        0.911,
+        0.907
+      ]
+    },
+    {
+      "island": 3,
+      "material": "lamplight",
+      "triangles": 18,
+      "area": 58345.6,
+      "along": [
+        -361.7,
+        -165.6
+      ],
+      "mu_uv": [
+        0.031,
+        0.316,
+        1.507,
+        0.976
+      ],
+      "bake_uv": [
+        0.424,
+        0.01,
+        0.702,
+        0.35
+      ]
+    },
+    {
+      "island": 4,
+      "material": "lamplight",
+      "triangles": 18,
+      "area": 40394.9,
+      "along": [
+        -38.2,
+        46.9
+      ],
+      "mu_uv": [
+        0.208,
+        0.022,
+        1.636,
+        0.953
+      ],
+      "bake_uv": [
+        0.741,
+        0.158,
+        0.915,
+        0.51
+      ]
+    },
+    {
+      "island": 5,
+      "material": "lamplight",
+      "triangles": 20,
+      "area": 64488.9,
+      "along": [
+        128.1,
+        218.4
+      ],
+      "mu_uv": [
+        -0.736,
+        0.266,
+        0.799,
+        0.851
+      ],
+      "bake_uv": [
+        0.309,
+        0.497,
+        0.733,
+        0.915
+      ]
+    },
+    {
+      "island": 6,
+      "material": "lamplight",
+      "triangles": 10,
+      "area": 26090.6,
+      "along": [
+        -82.6,
+        -27.4
+      ],
+      "mu_uv": [
+        -0.614,
+        0.246,
+        1.789,
+        1.005
+      ],
+      "bake_uv": [
+        0.064,
+        0.05,
+        0.949,
+        0.932
+      ]
+    },
+    {
+      "island": 7,
+      "material": "lamplight",
+      "triangles": 18,
+      "area": 42706.9,
+      "along": [
+        66.1,
+        162.5
+      ],
+      "mu_uv": [
+        -0.917,
+        0.341,
+        1.454,
+        1.001
+      ],
+      "bake_uv": [
+        0.201,
+        0.124,
+        0.775,
+        0.808
+      ]
+    },
+    {
+      "island": 8,
+      "material": "lamplight",
+      "triangles": 13,
+      "area": 40393.9,
+      "along": [
+        -59.5,
+        86.4
+      ],
+      "mu_uv": [
+        -0.811,
+        -0.59,
+        0.998,
+        0.83
+      ],
+      "bake_uv": [
+        0.01,
+        0.103,
+        0.953,
+        0.99
+      ]
+    },
+    {
+      "island": 9,
+      "material": "lamplight",
+      "triangles": 13,
+      "area": 59874.9,
+      "along": [
+        123.9,
+        313.0
+      ],
+      "mu_uv": [
+        -0.811,
+        -0.59,
+        0.998,
+        0.83
+      ],
+      "bake_uv": [
+        0.3,
+        0.01,
+        0.969,
+        0.978
+      ]
+    }
+  ]
+}

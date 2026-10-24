@@ -102,11 +102,11 @@
   "show": {
     "void_clouds": {
       "colour": [
-        0.3,
-        0.32,
-        0.38
+        0.55,
+        0.58,
+        0.66
       ],
-      "note": "Big slow clouds drifting through the void round the maze, in Blood Castle's cold grey, which suits the Relics' lab light (game/world/void_clouds.h). In place of cliffs (the user, 2026-10-23: \"lets not use cliffs at all, but use clouds which we used for other maps to fill balck voids\")."
+      "note": "Big slow clouds drifting through the void round the maze (game/world/void_clouds.h), in place of cliffs (the user, 2026-10-23: \"lets not use cliffs at all, but use clouds which we used for other maps to fill balck voids\"). Blood Castle's cold grey at 1.8 times, so the top deck (0.3-1.6 m under the floor) reads as a smoke layer over the sunk crystals (the user, 2026-10-24: \"we need smoke layer coming above crystals levels\")."
     },
     "boids": {
       "model": "Crow01",
