@@ -323,7 +323,7 @@ bool Chat::covers(float x, float y) const {
 }
 
 bool Chat::over(float x, float y) const {
-    return (showing_ && (frame_.has(x, y) ||
+    return (showing_ && (frame_.has(x, y) || (!locked_ && grip_.has(x, y)) ||
                          (menu_ != Menu::None && menuBox_.has(x, y)) ||
                          (open_ && !suggestions_.empty() && suggestBox_.has(x, y)))) ||
            (inviting_ && inviteCard_.has(x, y));
@@ -1214,7 +1214,9 @@ void Chat::place(float u, float width, float height) {
     const float rowH = rowTall() * u;
     const float logTall = std::max(rowH, std::floor((input_.y - kInputGap * u - logTop) / rowH) * rowH);
     logBox_ = {panel_.x + kPadSide * u, input_.y - kInputGap * u - logTall, panel_.w - 2.0f * kPadSide * u, logTall};
-    grip_ = {panel_.right() - 18.0f * u, panel_.y + 2.0f * u, 16.0f * u, 16.0f * u};
+    // The grip just off the frame's top right corner, clear of the gear and the settings' cross
+    // (the user, 2026-10-24: "resize helper has to be outside that chat container on corner").
+    grip_ = {frame_.right() + 2.0f * u, frame_.y - 18.0f * u, 16.0f * u, 16.0f * u};
     gear_ = {row_.right() - 30.0f * u, row_.y, 30.0f * u, row_.h};
     chip_ = {input_.x, input_.y, wordWidth(kWord * u, channelWord()) + 28.0f * u, input_.h};
 }
@@ -1647,7 +1649,7 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
             break;
         }
     }
-    if (showing_ && pointer.pressed && !taken && frame_.has(pointer.x, pointer.y)) {
+    if (showing_ && pointer.pressed && !taken && (frame_.has(pointer.x, pointer.y) || (!locked_ && grip_.has(pointer.x, pointer.y)))) {
         if (gear_.has(pointer.x, pointer.y)) {
             settingsOpen_ = !settingsOpen_;
             if (settingsOpen_) open_ = false;  // the draft kept
