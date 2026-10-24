@@ -1,0 +1,58 @@
+{
+ "ref": "ringwisdom_plus9_three_powers.png",
+ "note": "The dump's RingWisdom '+4 three powers' sheet with the reference's +9 powers, its Luck row alone, as drawn.",
+ "sheet": {
+  "artScale": 0.42,
+  "base": "Ring",
+  "item": true,
+  "name": "Ring of Wisdom +9",
+  "nameTone": "Epic",
+  "sections": [
+   {
+    "rows": [
+     {
+      "free": "Experience from kills",
+      "freeTone": "White",
+      "tail": "+5%"
+     },
+     {
+      "free": "Zen from kills",
+      "freeTone": "Epic",
+      "tail": "+7%"
+     },
+     {
+      "free": "Ice resistance",
+      "freeTone": "Epic",
+      "tail": "+3"
+     },
+     {
+      "free": "turns aside 3 in 4 chills",
+      "freeTone": "Gray"
+     }
+    ]
+   },
+   {
+    "rows": [
+     {
+      "free": "+5% critical, Jewel of Soul always succeeds",
+      "freeTone": "Blue",
+      "keyword": "Luck",
+      "mark": "Diamond",
+      "markTone": "Blue"
+     }
+    ]
+   }
+  ],
+  "sell": "44,200",
+  "wear": "Durability: 100%",
+  "wearTone": "White",
+  "who": [
+   {
+    "quiet": true,
+    "text": "Level 24",
+    "tone": "White"
+   }
+  ],
+  "worn": 1
+ }
+}

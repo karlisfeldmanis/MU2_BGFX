@@ -11,12 +11,34 @@ Design: the "MU2 Launcher" canvas, Website page.
 | `i18n.py`, `i18n/` | the site in Portuguese, Spanish, Russian, Vietnamese and Polish under `/pt/`, `/es/`, `/ru/`, `/vi/`, `/pl/`: the English pages are the source, each language's words are kept in the database (`texts`) and edited by admins on `/translate` (`site/translate.html`); `i18n/<lang>.json` are the first words of each, put in at start wherever a line has none. A script's words go through `MU.t('...')` (`site.js`) |
 | `Caddyfile` | HTTPS on mu-classic.com (and still on 37.27.158.226 for launchers already out), installers from disk, the rest to server.py |
 | `mu2-web.service` | the systemd unit; accounts in `/var/lib/mu2-web/accounts.db` |
-| `deploy.sh` | HEAD's `web/` to `/opt/mu2-web`, Caddy installed if missing, both restarted |
+| `deploy.sh` | HEAD's `web/` to `/opt/mu2-web`, the newest built Armory to `/srv/mu2-web/armory/`, Caddy installed if missing, both restarted |
+| `armory.py`, `site/armory/` | the Armory (below) |
 
 ## Run it here
 
     python3 -I web/server.py --db out/web/accounts.db --port 8093
     open http://127.0.0.1:8093/
+
+## The Armory
+
+`armory.py` (routes asked by server.py first) and `site/armory/` (`armory.js` draws every page,
+`card.js` the game's item card, `armory.css`): the item, monster, NPC, quest, event, rune, skill,
+talent, mix and Elite database at `/armory`, read from a built release (`./mu armory build`,
+docs/plans/armory.md). Each entity has its own URL (`/armory/item/<slug>`, `/armory/monster/<slug>`, ...),
+served with its own head (title, description, og:image its thumbnail), a plain body and its JSON
+inline; a page fetches only its own file and the small indexes, from `/armory/data/<commit>/`
+(immutable). Comments are the accounts' (`armory_comments`, `armory_votes`, `armory_reports` in the
+same database), with upvotes, reports, a rate limit and delete by the writer or an admin; an
+admin reads the reports at `GET /api/armory/reports`. Its words are a group of `/translate`.
+
+    python3 -I web/server.py --db out/web/accounts.db --port 8091 --armory out/armory/5d7ddebc
+    open http://127.0.0.1:8091/armory
+
+`--armory` takes a release (a folder with meta.json) or a folder of them, serving `current` or the
+newest; locally it defaults to out/armory/. `web/deploy.sh` uploads the newest built release (or
+`ARMORY=<commit>`) to `/srv/mu2-web/armory/<commit>/` and moves `current`; Caddy serves
+`/armory/data/*` from there. `./mu armory test` checks the output, the card against the game's
+renders (tools/armory/tests/card_check.js) and the pages in headless Chrome (site_test.js).
 
 ## The accounts
 

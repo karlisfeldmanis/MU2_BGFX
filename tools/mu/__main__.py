@@ -43,7 +43,7 @@
     ./mu ship translate [--dry]              the site's untranslated lines, translated by claude -p
     ./mu ship app                            the Ship window (tools/ship/ship.cpp), built first
     ./mu armory build [--commit REF]         the Armory's data, out/armory/<commit>/, from the live release
-    ./mu armory test [DIR]                   its headless test against the built output
+    ./mu armory test [DIR]                   its headless tests: the output, the card against the game, the site's pages
 
 Every command takes --json and then prints one JSON object as its last line, for a script or
 an agent to read instead of the prose. Every step runs niced and held to `mu cores` (60% of
@@ -361,11 +361,17 @@ def dispatch(args, say):
     if args.command == "armory":
         if args.action == "test":
             import subprocess
-            test = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "armory", "tests", "armory_test.js")
-            done = subprocess.run(["node", test] + ([args.dir] if args.dir else []), capture_output=True, text=True)
-            for line in done.stdout.splitlines():
-                say(line)
-            return done.returncode == 0, {"output": done.stdout.splitlines()[-1:]}
+            tests = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "armory", "tests")
+            # The output's contract, the site's card against the game's renders, and the pages in Chrome.
+            passed, last = True, []
+            for script in ("armory_test.js", "card_check.js", "site_test.js"):
+                extra = [] if script == "card_check.js" else ([args.dir] if args.dir else [])
+                done = subprocess.run(["node", os.path.join(tests, script)] + extra, capture_output=True, text=True)
+                for line in done.stdout.splitlines():
+                    say(line)
+                passed = passed and done.returncode == 0
+                last += done.stdout.splitlines()[-1:]
+            return passed, {"output": last}
         sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "armory"))
         import build as armory_build
         argv = (["--commit", args.commit] if args.commit else []) + (["--out", args.out] if args.out else []) \

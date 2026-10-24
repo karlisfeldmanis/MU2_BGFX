@@ -39,6 +39,7 @@ The routes:
     GET  /api/comments?post=ID                      -> 200 {comments: [{name, text, at}]}
     POST /api/comments   Bearer T {post, text}      -> 201 {ok} | 400 {error} | 401 | 429
          on the posts of site/posts.json, under the account's name.
+    GET  /armory/..., /api/armory/...               the Armory's pages, its release's files and its comments (web/armory.py)
     GET  /api/downloads                             -> 200 {windows: {file, bytes, sha256} | null, macos: ...}
     POST /api/bug        {text, platform?, build?, renderer?, gpu?, world?, x?, y?, character?, class?,
                           level?, server?}  [Bearer T]  -> 200 {ok, id} | 400 {error} | 413 | 429 {error: "later"}
@@ -150,6 +151,7 @@ from urllib.parse import parse_qs, urlparse
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import i18n  # noqa: E402
+import armory  # noqa: E402
 
 SESSION_DAYS = 90
 # The plays an account page lists, and how long each is kept.
@@ -1401,6 +1403,13 @@ def site_units(site: Path, store: "Store") -> list:
         if k not in seen:
             seen.add(k)
             out.append({"group": "js", "source": k, "path": "/"})
+    # The Armory's words: what its script says through t(), and its pages' own few (web/armory.py).
+    script = site / "armory" / "armory.js"
+    for source in (i18n.script_units(script.read_text()) if script.is_file() else []) + list(armory.PAGE_WORDS):
+        k = i18n.key(source)
+        if k not in seen:
+            seen.add(k)
+            out.append({"group": "armory", "source": k, "path": "/armory"})
     return out
 
 
@@ -1661,6 +1670,7 @@ class Handler(BaseHTTPRequestHandler):
     store: Store = None
     site: Path = None
     downloads: Path = None
+    armory: "armory.Armory" = None
 
     def finish(self):
         try:
@@ -1718,6 +1728,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         path = urlparse(self.path).path
+        if path.startswith("/api/armory/") and self.armory.post(self, path):
+            return
         if path == "/api/register":
             return self.register()
         if path == "/api/login":
@@ -2029,13 +2041,13 @@ class Handler(BaseHTTPRequestHandler):
         """Every unit of the site, grouped as the /translate page shows them, each once (where it
         first stands), and each language's translations."""
         groups = {}
-        names = {"index.html": "Front page", "updates": "Latest updates", "js": "Messages"}
+        names = {"index.html": "Front page", "updates": "Latest updates", "js": "Messages", "armory": "Armory"}
         for file, (path, name) in i18n.PAGES.items():
             names.setdefault(file, name)
         for unit in site_units(self.site, self.store):
             groups.setdefault(unit["group"], []).append({"source": unit["source"], "tags": i18n.has_tags(unit["source"]),
                                                         "path": unit["path"]})
-        order = ["index.html", "updates", "account.html", "privacy.html", "contact.html", "mac.html", "linux.html", "js"]
+        order = ["index.html", "updates", "account.html", "privacy.html", "contact.html", "mac.html", "linux.html", "js", "armory"]
         return {"langs": {code: v[0] for code, v in i18n.LANGS.items()},
                 "groups": [{"id": g, "name": names[g], "units": groups[g]} for g in order if g in groups],
                 "texts": self.store.texts()}
@@ -2287,6 +2299,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         url = urlparse(self.path)
+        # The Armory's pages, its release's files and its comments (web/armory.py).
+        if self.armory.get(self, url.path, url.query):
+            return
         if url.path == "/api/me":
             if self.old_launcher():
                 return self.reply(401, {"error": OLD_LAUNCHER})
@@ -2483,6 +2498,8 @@ def main():
     ap.add_argument("--port", type=int, default=8080)
     ap.add_argument("--site", default=str(here / "site"))
     ap.add_argument("--downloads", default=str(here / "downloads"))
+    ap.add_argument("--armory", default=str(armory.default_root(here)),
+                    help="the Armory's built release, or a folder of them (current, else the newest)")
     ap.add_argument("--discord-quiet", type=int, default=DISCORD_QUIET,
                     help="seconds a day's lines are left alone before #updates is told")
     args = ap.parse_args()
@@ -2495,6 +2512,10 @@ def main():
         print(f"{seeded} translations put in from web/i18n/", flush=True)
     Handler.site = Path(args.site)
     Handler.downloads = Path(args.downloads)
+    Handler.armory = armory.Armory(Path(args.armory), Handler.site)
+    # A page asks its pictures many at once (the Armory's thumbnails); the default backlog of 5
+    # resets the rest when Caddy is not in front (local runs).
+    ThreadingHTTPServer.request_queue_size = 128
     httpd = ThreadingHTTPServer((args.host, args.port), Handler)
     print(f"mu2-web on http://{args.host}:{args.port}, accounts in {args.db}", flush=True)
     httpd.serve_forever()

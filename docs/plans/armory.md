@@ -32,7 +32,7 @@ The release players have, never HEAD:
 | Build | `tools/armory/build.py`, `./mu armory build` | `out/armory/<commit>/`: per-kind indexes and per-entity files, each stamped with commit and protocol. Also a lane of `./mu ship prepare`, after the macOS dist |
 | History | `tools/armory/history.py` (run by the build) | The diff of one release's output against the previous release's, per entity: was/now. Optional per-release note in `tools/armory/notes/<commit>.md` |
 | Test | `tools/armory/tests/armory_test.js`, `./mu armory test` | The output's contract, the design's page logic on the built rows, the spot checks below |
-| Site | `web/armory/` (server routes) and `web/site/armory/` (client) | Stable URLs per entity, server-rendered head for links and search, thumbnails, comments |
+| Site | `web/armory.py` (server routes) and `web/site/armory/` (client: `armory.js`, `card.js`, `armory.css`) | Stable URLs per entity, server-rendered head for links and search, thumbnails, comments; `tests/card_check.js` holds the card to the game's renders, `tests/site_test.js` the pages |
 
 The drop odds: a kill's outcome is several independent dice and pools drawn inside
 `Realm::leave`. The dump computes each item's per-kill chance analytically in C++, from the
