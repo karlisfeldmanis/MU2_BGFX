@@ -57,6 +57,22 @@
     "airs_from": {
       "value": "bloodcastle",
       "note": "The crows (show.boids) are Blood Castle's Crow01, built in its folder (the user, 2026-10-23: \"also maybe same birds which we had on BC\")."
+    },
+    "perches": {
+      "value": {
+        "3": {
+          "pose": 2,
+          "turns": false,
+          "leans": false,
+          "tall": false,
+          "model": "Object04, the stone chair"
+        }
+      },
+      "note": "The Relics: MOVEMENT_OPERATE's Is_Kanturu2nd arm, `TargetType == 3: Sit = true` with no turn (ZzzInterface.cpp:1766-1772); CreateOperate (GM_Kanturu_2nd.cpp:41-44). The nine stone chairs, eight in the safe hall (73-82, 103 and 108) and one at 86,120 (the user, 2026-10-24: \"next\")."
+    },
+    "void_islands": {
+      "value": true,
+      "note": "Every drawn tile no walk from void_fill's seed touches becomes void: MU's ring of NoMove floor round the maze and the two strips five tiles off the safe hall (rows 75-95 and 116-127), which ended on hard tile edges. The void has clouds instead (the user, 2026-10-24: \"still see some ground outside the platform, we are using void with clouds now\"). Ours, marked; pipeline/terrain.py VOID_ISLANDS."
     }
   },
   "npcs": [

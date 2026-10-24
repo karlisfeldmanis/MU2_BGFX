@@ -1,0 +1,42 @@
+{
+  "item": "Object05",
+  "mu_name": "Object05",
+  "mu_name_from": "kanturu_relics's object slot: type N is Object{N+1}.bmd, from Data/Object39.",
+  "world": "kanturu_relics",
+  "object_type": 4,
+  "placements": 21,
+  "profile": "world",
+  "sheets": {
+    "cho_scarp_01": "kl_cho_scarp_01.png"
+  },
+  "sheet_from": "Data/Object39/, decoded under the kl_ prefix by `mu new`.",
+  "sheet_materials": {
+    "cho_scarp_01": "flagstone"
+  },
+  "material_note": "cho_scarp_01: grey cut-stone panels scored with tech lines: flagstone.",
+  "why_this_one": "A thin 2.5 m stone pole, 21 of them. MU hangs a pulsing blue light and two KANTURU_2ND_EFFECT1 sprites on its bone 1 (RenderKanturu2ndObjectVisual type 4, GM_Kanturu_2nd.cpp:338-348): the effects batch. MU's model is still (no moving bone). Batch 7 of the Relics (the user, 2026-10-24: \"next\"). docs/worlds/kanturu-port.md Part B 8.1.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "flagstone",
+      "triangles": 34,
+      "area": 5976.2,
+      "along": [
+        -18.0,
+        18.0
+      ],
+      "mu_uv": [
+        0.673,
+        0.023,
+        0.992,
+        0.991
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.597,
+        0.997
+      ]
+    }
+  ]
+}

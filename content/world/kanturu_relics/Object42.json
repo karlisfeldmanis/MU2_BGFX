@@ -1,0 +1,372 @@
+{
+  "item": "Object42",
+  "mu_name": "Object42",
+  "mu_name_from": "kanturu_relics's object slot: type N is Object{N+1}.bmd, from Data/Object39.",
+  "world": "kanturu_relics",
+  "object_type": 41,
+  "placements": 17,
+  "profile": "world",
+  "sheets": {
+    "han_x2": "kl_han_x2.png"
+  },
+  "sheet_from": "Data/Object39/, decoded under the kl_ prefix by `mu new`.",
+  "sheet_materials": {
+    "han_x2": "plate_steel"
+  },
+  "material_note": "han_x2: grey steel machinery with green glowing runes: plate_steel.",
+  "why_this_one": "A 7.5 m flat steel floor plate with runes, 17 of them. MU's model is still (no moving bone). Batch 7 of the Relics (the user, 2026-10-24: \"next\"). docs/worlds/kanturu-port.md Part B 8.1.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 16,
+      "area": 49244.3,
+      "along": [
+        -261.0,
+        4.1
+      ],
+      "mu_uv": [
+        0.124,
+        0.362,
+        0.943,
+        0.988
+      ],
+      "bake_uv": [
+        0.012,
+        0.217,
+        0.87,
+        0.861
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 16,
+      "area": 19182.9,
+      "along": [
+        -4.5,
+        10.2
+      ],
+      "mu_uv": [
+        0.702,
+        -0.045,
+        1.211,
+        0.917
+      ],
+      "bake_uv": [
+        0.012,
+        0.012,
+        0.932,
+        0.963
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plate_steel",
+      "triangles": 16,
+      "area": 49244.3,
+      "along": [
+        0.5,
+        265.7
+      ],
+      "mu_uv": [
+        0.124,
+        0.362,
+        0.943,
+        0.988
+      ],
+      "bake_uv": [
+        0.124,
+        0.319,
+        0.787,
+        0.878
+      ]
+    },
+    {
+      "island": 3,
+      "material": "plate_steel",
+      "triangles": 16,
+      "area": 19182.9,
+      "along": [
+        100.5,
+        274.3
+      ],
+      "mu_uv": [
+        0.702,
+        -0.045,
+        1.211,
+        0.917
+      ],
+      "bake_uv": [
+        0.096,
+        0.012,
+        0.932,
+        0.964
+      ]
+    },
+    {
+      "island": 4,
+      "material": "plate_steel",
+      "triangles": 16,
+      "area": 49244.3,
+      "along": [
+        112.1,
+        372.2
+      ],
+      "mu_uv": [
+        0.124,
+        0.362,
+        0.943,
+        0.988
+      ],
+      "bake_uv": [
+        0.212,
+        0.422,
+        0.77,
+        0.926
+      ]
+    },
+    {
+      "island": 5,
+      "material": "plate_steel",
+      "triangles": 16,
+      "area": 19182.9,
+      "along": [
+        146.5,
+        377.8
+      ],
+      "mu_uv": [
+        0.702,
+        -0.045,
+        1.211,
+        0.917
+      ],
+      "bake_uv": [
+        0.18,
+        0.012,
+        0.964,
+        0.963
+      ]
+    },
+    {
+      "island": 6,
+      "material": "plate_steel",
+      "triangles": 16,
+      "area": 49244.3,
+      "along": [
+        112.7,
+        374.1
+      ],
+      "mu_uv": [
+        0.124,
+        0.362,
+        0.943,
+        0.988
+      ],
+      "bake_uv": [
+        0.012,
+        0.012,
+        0.886,
+        0.943
+      ]
+    },
+    {
+      "island": 7,
+      "material": "plate_steel",
+      "triangles": 16,
+      "area": 19182.9,
+      "along": [
+        96.4,
+        270.3
+      ],
+      "mu_uv": [
+        0.702,
+        -0.045,
+        1.211,
+        0.917
+      ],
+      "bake_uv": [
+        0.264,
+        0.012,
+        0.964,
+        0.98
+      ]
+    },
+    {
+      "island": 8,
+      "material": "plate_steel",
+      "triangles": 16,
+      "area": 49244.3,
+      "along": [
+        -4.1,
+        261.0
+      ],
+      "mu_uv": [
+        0.124,
+        0.362,
+        0.943,
+        0.988
+      ],
+      "bake_uv": [
+        0.124,
+        0.108,
+        0.897,
+        0.95
+      ]
+    },
+    {
+      "island": 9,
+      "material": "plate_steel",
+      "triangles": 16,
+      "area": 19182.9,
+      "along": [
+        -10.2,
+        4.5
+      ],
+      "mu_uv": [
+        0.702,
+        -0.045,
+        1.211,
+        0.917
+      ],
+      "bake_uv": [
+        0.348,
+        0.012,
+        0.964,
+        0.98
+      ]
+    },
+    {
+      "island": 10,
+      "material": "plate_steel",
+      "triangles": 16,
+      "area": 49244.3,
+      "along": [
+        -265.7,
+        -0.5
+      ],
+      "mu_uv": [
+        0.124,
+        0.362,
+        0.943,
+        0.988
+      ],
+      "bake_uv": [
+        0.012,
+        0.012,
+        0.975,
+        0.957
+      ]
+    },
+    {
+      "island": 11,
+      "material": "plate_steel",
+      "triangles": 16,
+      "area": 19182.9,
+      "along": [
+        -274.3,
+        -100.5
+      ],
+      "mu_uv": [
+        0.702,
+        -0.045,
+        1.211,
+        0.917
+      ],
+      "bake_uv": [
+        0.431,
+        0.012,
+        0.964,
+        0.987
+      ]
+    },
+    {
+      "island": 12,
+      "material": "plate_steel",
+      "triangles": 16,
+      "area": 49244.3,
+      "along": [
+        -372.2,
+        -112.1
+      ],
+      "mu_uv": [
+        0.124,
+        0.362,
+        0.943,
+        0.988
+      ],
+      "bake_uv": [
+        0.012,
+        0.012,
+        0.975,
+        0.891
+      ]
+    },
+    {
+      "island": 13,
+      "material": "plate_steel",
+      "triangles": 16,
+      "area": 19182.9,
+      "along": [
+        -377.8,
+        -146.5
+      ],
+      "mu_uv": [
+        0.702,
+        -0.045,
+        1.211,
+        0.917
+      ],
+      "bake_uv": [
+        0.515,
+        0.012,
+        0.988,
+        0.914
+      ]
+    },
+    {
+      "island": 14,
+      "material": "plate_steel",
+      "triangles": 16,
+      "area": 49244.3,
+      "along": [
+        -374.1,
+        -112.7
+      ],
+      "mu_uv": [
+        0.124,
+        0.362,
+        0.943,
+        0.988
+      ],
+      "bake_uv": [
+        0.112,
+        0.115,
+        0.975,
+        0.891
+      ]
+    },
+    {
+      "island": 15,
+      "material": "plate_steel",
+      "triangles": 16,
+      "area": 19182.9,
+      "along": [
+        -270.3,
+        -96.4
+      ],
+      "mu_uv": [
+        0.702,
+        -0.045,
+        1.211,
+        0.917
+      ],
+      "bake_uv": [
+        0.012,
+        0.314,
+        0.988,
+        0.905
+      ]
+    }
+  ]
+}

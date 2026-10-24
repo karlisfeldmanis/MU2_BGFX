@@ -1,0 +1,206 @@
+{
+  "item": "Object60",
+  "mu_name": "Object60",
+  "mu_name_from": "kanturu_relics's object slot: type N is Object{N+1}.bmd, from Data/Object39.",
+  "world": "kanturu_relics",
+  "object_type": 59,
+  "placements": 29,
+  "profile": "world",
+  "sheets": {
+    "pipe01": "kl_pipe01.png",
+    "pipe02": "kl_pipe02.png",
+    "pipe04": "kl_pipe04.png",
+    "songk3mmater0302_R": "kr_songk3mmater0302_r.png"
+  },
+  "sheet_from": "Data/Object39/, decoded under the kl_ prefix by `mu new`.",
+  "sheet_materials": {
+    "pipe01": "plate_steel",
+    "pipe02": "plate_steel",
+    "pipe04": "plate_steel",
+    "songk3mmater0302_R": "lamplight"
+  },
+  "material_note": "pipe01: riveted grey plating with a dark cable channel: plate_steel; pipe02: a riveted octagonal flange round a dark bore: plate_steel; pipe04: a ribbed elbow and an octagonal hatch over a vent grille: plate_steel; songk3mmater0302_R: the tanks' blue liquid, MU's bright sheet, the Ruins' own (kr_songk3mmater0302_r.png): lamplight.",
+  "why_this_one": "A 2 m pipe valve with a window of the tanks' blue liquid, 29 of them on the pipework in the void (type 59 is drawn after the characters, GM_Kanturu_2nd.cpp:604-616). MU's model is still (no moving bone). Batch 7 of the Relics (the user, 2026-10-24: \"next\"). docs/worlds/kanturu-port.md Part B 8.1.",
+  "additive": [
+    "songk3mmater0302_R"
+  ],
+  "additive_from": "songk3mmater0302_R is an _R sheet, drawn RENDER_BRIGHT, added (TextureScript.cpp:16-58).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 12,
+      "area": 6670.4,
+      "along": [
+        57.2,
+        96.3
+      ],
+      "mu_uv": [
+        -0.001,
+        0.214,
+        1.005,
+        0.705
+      ],
+      "bake_uv": [
+        0.28,
+        0.475,
+        0.885,
+        0.839
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 24,
+      "area": 12319.7,
+      "along": [
+        44.6,
+        58.6
+      ],
+      "mu_uv": [
+        -0.911,
+        0.024,
+        0.998,
+        0.917
+      ],
+      "bake_uv": [
+        0.008,
+        0.194,
+        0.909,
+        0.979
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plate_steel",
+      "triangles": 12,
+      "area": 6670.4,
+      "along": [
+        -96.3,
+        -57.2
+      ],
+      "mu_uv": [
+        -0.001,
+        0.214,
+        1.005,
+        0.705
+      ],
+      "bake_uv": [
+        0.635,
+        0.009,
+        0.978,
+        0.843
+      ]
+    },
+    {
+      "island": 3,
+      "material": "plate_steel",
+      "triangles": 24,
+      "area": 12319.7,
+      "along": [
+        -58.6,
+        -44.6
+      ],
+      "mu_uv": [
+        -0.911,
+        0.024,
+        0.998,
+        0.917
+      ],
+      "bake_uv": [
+        0.366,
+        0.01,
+        0.992,
+        0.97
+      ]
+    },
+    {
+      "island": 4,
+      "material": "plate_steel",
+      "triangles": 24,
+      "area": 11421.3,
+      "along": [
+        -103.3,
+        -94.1
+      ],
+      "mu_uv": [
+        -0.911,
+        0.024,
+        0.998,
+        0.917
+      ],
+      "bake_uv": [
+        0.01,
+        0.009,
+        0.992,
+        0.979
+      ]
+    },
+    {
+      "island": 5,
+      "material": "plate_steel",
+      "triangles": 18,
+      "area": 6018.6,
+      "along": [
+        1.4,
+        45.1
+      ],
+      "mu_uv": [
+        0.566,
+        0.052,
+        0.999,
+        0.991
+      ],
+      "bake_uv": [
+        0.366,
+        0.211,
+        0.814,
+        0.967
+      ]
+    },
+    {
+      "island": 6,
+      "material": "plate_steel",
+      "triangles": 24,
+      "area": 4269.6,
+      "along": [
+        -112.5,
+        -101.3
+      ],
+      "mu_uv": [
+        0.607,
+        0.092,
+        0.996,
+        0.987
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.976,
+        0.627
+      ]
+    },
+    {
+      "island": 7,
+      "material": "lamplight",
+      "triangles": 16,
+      "area": 19329.9,
+      "along": [
+        -47.6,
+        44.6
+      ],
+      "mu_uv": [
+        -0.0,
+        0.001,
+        1.0,
+        0.999
+      ],
+      "bake_uv": [
+        0.008,
+        0.009,
+        0.349,
+        0.349
+      ]
+    }
+  ]
+}
