@@ -1,0 +1,248 @@
+{
+  "item": "Object06",
+  "mu_name": "Object06",
+  "mu_name_from": "kanturu_relics's object slot: type N is Object{N+1}.bmd, from Data/Object39.",
+  "world": "kanturu_relics",
+  "object_type": 5,
+  "placements": 10,
+  "profile": "world",
+  "sheets": {
+    "han_prsonas": "kl_han_prsonas.png",
+    "hanprsona_02": "kl_hanprsona_02.png"
+  },
+  "sheet_from": "Data/Object39/, decoded under the kl_ prefix by `mu new`.",
+  "sheet_materials": {
+    "han_prsonas": "cloth",
+    "hanprsona_02": "plate_steel"
+  },
+  "material_note": "han_prsonas: the Persona's white hair, cloth and carved trim, the hair cut out: cloth; hanprsona_02: the Persona's dark armour: plate_steel.",
+  "cutout": [
+    "han_prsonas"
+  ],
+  "cutout_from": "decode_texture found a real alpha channel cutting the sheet.",
+  "play_speed": 0.16,
+  "play_speed_from": "Every object's flat Velocity 0.16 until the map's Move code says otherwise: 76 of its 76 bones move over 8 keys (Object06.rig.json, MuExtract export-rig --actions=all; 939 vertices, as the .obj). Checked: MoveKanturu2ndObject has no case for its type (GM_Kanturu_2nd.cpp:218-270).",
+  "why_this_one": "A 1 m Persona figure, moving. 10 placed. Batch 5 of the Relics (the user, 2026-10-24: \"next\"). docs/worlds/kanturu-port.md Part B 8.1.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 953,
+      "area": 19575.1,
+      "along": [
+        -74.4,
+        31.7
+      ],
+      "mu_uv": [
+        0.008,
+        0.01,
+        0.98,
+        0.993
+      ],
+      "bake_uv": [
+        0.01,
+        0.01,
+        0.942,
+        0.991
+      ]
+    },
+    {
+      "island": 1,
+      "material": "cloth",
+      "triangles": 21,
+      "area": 888.4,
+      "along": [
+        -54.1,
+        -6.6
+      ],
+      "mu_uv": [
+        0.821,
+        0.491,
+        0.991,
+        0.969
+      ],
+      "bake_uv": [
+        0.789,
+        0.246,
+        0.862,
+        0.452
+      ]
+    },
+    {
+      "island": 2,
+      "material": "cloth",
+      "triangles": 21,
+      "area": 884.8,
+      "along": [
+        -54.1,
+        -6.6
+      ],
+      "mu_uv": [
+        0.821,
+        0.491,
+        0.991,
+        0.969
+      ],
+      "bake_uv": [
+        0.736,
+        0.525,
+        0.81,
+        0.731
+      ]
+    },
+    {
+      "island": 3,
+      "material": "cloth",
+      "triangles": 6,
+      "area": 427.0,
+      "along": [
+        -1.9,
+        28.2
+      ],
+      "mu_uv": [
+        0.288,
+        0.427,
+        0.645,
+        0.686
+      ],
+      "bake_uv": [
+        0.185,
+        0.713,
+        0.339,
+        0.825
+      ]
+    },
+    {
+      "island": 4,
+      "material": "cloth",
+      "triangles": 6,
+      "area": 442.9,
+      "along": [
+        -1.8,
+        28.2
+      ],
+      "mu_uv": [
+        0.288,
+        0.427,
+        0.645,
+        0.686
+      ],
+      "bake_uv": [
+        0.39,
+        0.679,
+        0.544,
+        0.791
+      ]
+    },
+    {
+      "island": 5,
+      "material": "cloth",
+      "triangles": 44,
+      "area": 601.3,
+      "along": [
+        -6.2,
+        14.2
+      ],
+      "mu_uv": [
+        0.596,
+        0.325,
+        0.821,
+        0.627
+      ],
+      "bake_uv": [
+        0.568,
+        0.717,
+        0.849,
+        0.851
+      ]
+    },
+    {
+      "island": 6,
+      "material": "cloth",
+      "triangles": 44,
+      "area": 961.3,
+      "along": [
+        -3.6,
+        18.7
+      ],
+      "mu_uv": [
+        0.596,
+        0.325,
+        0.821,
+        0.627
+      ],
+      "bake_uv": [
+        0.08,
+        0.461,
+        0.889,
+        0.855
+      ]
+    },
+    {
+      "island": 7,
+      "material": "cloth",
+      "triangles": 44,
+      "area": 944.6,
+      "along": [
+        -6.3,
+        16.6
+      ],
+      "mu_uv": [
+        0.596,
+        0.325,
+        0.821,
+        0.627
+      ],
+      "bake_uv": [
+        0.33,
+        0.011,
+        0.908,
+        0.927
+      ]
+    },
+    {
+      "island": 8,
+      "material": "cloth",
+      "triangles": 44,
+      "area": 601.3,
+      "along": [
+        -9.3,
+        11.6
+      ],
+      "mu_uv": [
+        0.596,
+        0.325,
+        0.821,
+        0.627
+      ],
+      "bake_uv": [
+        0.472,
+        0.804,
+        0.755,
+        0.934
+      ]
+    },
+    {
+      "island": 9,
+      "material": "plate_steel",
+      "triangles": 1,
+      "area": 10.1,
+      "along": [
+        10.6,
+        16.5
+      ],
+      "mu_uv": [
+        0.133,
+        0.885,
+        0.15,
+        0.896
+      ],
+      "bake_uv": [
+        0.181,
+        0.058,
+        0.188,
+        0.062
+      ]
+    }
+  ]
+}
