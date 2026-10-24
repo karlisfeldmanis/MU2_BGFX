@@ -400,6 +400,7 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
                         core::logError("--kit: %s not given", stem.c_str());
                     }
                 }
+                for (int skill : g_kitTeach) scratch.learn(skill);  // --kit-teach
                 kept = scratch.keptOf(scratch.hero().id);
                 for (int q : g_kitDone) {  // --kit-done: handed in once, resting
                     kept.hero.quests[size_t(q)] = sim::QuestProgress{};

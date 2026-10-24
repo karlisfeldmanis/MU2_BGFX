@@ -306,12 +306,21 @@ int main(int argc, char** argv) {
                 if (q >= 0 && q < sim::kQuests) g_kitDone.push_back(q);
                 at = comma + 1;
             }
+        } else if (a == "--kit-teach" && i + 1 < argc) {
+            const std::string taught = argv[++i];
+            for (size_t at = 0; at < taught.size();) {
+                size_t comma = taught.find(',', at);
+                if (comma == std::string::npos) comma = taught.size();
+                const int skill = std::atoi(taught.c_str() + at);
+                if (sim::skillIndexOf(skill) >= 0) g_kitTeach.push_back(skill);
+                at = comma + 1;
+            }
         } else if (a == "--square-period" && i + 1 < argc) {
             // Charon's gate every S seconds for S/2, not two-hourly (a test).
             const int s = std::max(2, std::atoi(argv[++i]));
             config.square = {s, s / 2, s / 2};
         } else {
-            std::fprintf(stderr, "usage: mu2_server [--port N] [--assets DIR] [--store FILE] [--accounts HOST:PORT] [--launcher-only] [--region NAME] [--castle-period S] [--square-period S] [--kit LEVEL:STEM+N,...] [--kit-done Q,...] [--storm] [--invasion] [--map-cap N] [--speed N] [--market-serve PORT | --market-at HOST:PORT] [--market-key HEX]\n");
+            std::fprintf(stderr, "usage: mu2_server [--port N] [--assets DIR] [--store FILE] [--accounts HOST:PORT] [--launcher-only] [--region NAME] [--castle-period S] [--square-period S] [--kit LEVEL:STEM+N,...] [--kit-done Q,...] [--kit-teach SKILL,...] [--storm] [--invasion] [--map-cap N] [--speed N] [--market-serve PORT | --market-at HOST:PORT] [--market-key HEX]\n");
             return 2;
         }
     }

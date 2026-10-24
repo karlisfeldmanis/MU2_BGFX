@@ -157,6 +157,9 @@ inline std::vector<std::pair<std::string, int>> g_kitItems;  // stem, plus
 // client's --quests-done does locally, so a chain's later link is offered on a server at once
 // (2026-10-16, Aida's: Peia's Sealed Wood waits on Noria's Song).
 inline std::vector<int> g_kitDone;
+// --kit-teach: the skills a kit character is born knowing (a test: a Dark Lord's spells before
+// their scrolls are made).
+inline std::vector<int> g_kitTeach;
 // The most players in one copy of a map before the next is opened (`--map-cap N`): where the
 // client's own cost tells -- every client steps the whole map -- about 100 by the measurement of
 // 2026-10-08 (docs/sprints/24-the-quiet-line.md).
