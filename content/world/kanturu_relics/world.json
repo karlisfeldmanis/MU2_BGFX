@@ -177,6 +177,12 @@
         "reach": 12
       }
     ],
-    "object_loops_note": "MU plays its gear and incubator sounds flat while any gear (type 9, Object10, 6) or incubator tank (types 31, 35-37: Object32, 36, 37, 38, 37 in all) is moved, which is the ones near the camera (GM_Kanturu_2nd.cpp:198-208). Ours, marked, as the Ruins: each from its nearest one, full to `full` metres and gone at `reach` (Play::hearWorld; the four tank models share one loop). Not built: kan_relic_hole.wav, which MU plays while the Gateway Machine opens (:1089-1093), an event not built yet. First distances, for the user to judge."
+    "object_loops_note": "MU plays its gear and incubator sounds flat while any gear (type 9, Object10, 6) or incubator tank (types 31, 35-37: Object32, 36, 37, 38, 37 in all) is moved, which is the ones near the camera (GM_Kanturu_2nd.cpp:198-208). Ours, marked, as the Ruins: each from its nearest one, full to `full` metres and gone at `reach` (Play::hearWorld; the four tank models share one loop). Not built: kan_relic_hole.wav, which MU plays while the Gateway Machine opens (:1089-1093), an event not built yet. First distances, for the user to judge.",
+    "music": {
+      "track": "/music/kanturu_relics.mp3",
+      "where": "everywhere",
+      "loops": true,
+      "note": "Ours, not WebZen's kanturu_2nd (which M38Kanturu2nd::PlayBGM plays the whole time, GM_Kanturu_2nd.cpp:1350-1360): freesound_community ambient-creepy-soundscape-52699 (6:44), copied to content/music/kanturu_relics.mp3 (the user, 2026-10-24: \"use ... freesound_community-ambient-creepy-soundscape-52699.mp3 for relics music\"). Everywhere and looped, as MU's, not the house rule's safe zone only (the user, 2026-10-24: \"lets play kanturu_2nd.mp3 on relics\")."
+    }
   }
 }
