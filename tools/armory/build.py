@@ -71,6 +71,9 @@ sys.path.append(str(common.ROOT / "tools" / "mu"))
 import settings  # noqa: E402
 
 DUMP_FILES = ("cards", "skills", "talents", "gear_powers", "drops", "rules")
+# What an item's page keeps of each drop: of the dump's item entry, and of the place it drops in.
+DROP_ROW = ("chance", "rolls", "excellent")
+DROP_PLACE = ("place", "kind", "world", "level", "elite", "castle", "square")
 
 
 # ---------------------------------------------------------------- the dump
@@ -180,6 +183,28 @@ def item_refs(tree, items, path=""):
     return found
 
 
+def made_by_words(success, items):
+    """The items a mix makes, from the words it says it makes when it names no item key (the Chaos
+    Machine's Dinorant, Invisibility Cloak, Devil's Invitation and Chaos Weapon recipes): each
+    part of "X, Y or Z" without its "A " and its " +0 to +4" is an item's own name, or "<Word>
+    weapon", every weapon whose name starts with that word. A stopgap until the dump says the keys."""
+    import re
+    out = []
+    for part in re.split(r",\s*|\s+or\s+", str(success or "")):
+        part = re.sub(r"^(an?|the)\s+", "", part.strip(), flags=re.I)
+        part = re.sub(r"\s*\+\d+(\s+to\s+\+\d+)?$", "", part).strip()
+        if not part:
+            continue
+        named = [k for k, v in items.items() if v["name"].lower() == part.lower()]
+        if not named:
+            m = re.fullmatch(r"(\w+) weapon", part, re.I)
+            if m:
+                named = [k for k, v in items.items() if v.get("cat") == "Weapons"
+                         and v["name"].lower().startswith(m.group(1).lower() + " ")]
+        out += named
+    return out
+
+
 GIVES = ("reward", "paid", "result", "sell", "shelf", "stock", "gives", "win", "hoard", "out")
 
 
@@ -274,9 +299,11 @@ def build(commit=None, out=None, thumbs=True, say=print):
                     continue
                 row = {**it, "item": ik, "slug": item_slug[ik], "n": I[ik]["name"]}
                 rows.append(row)
-                drops_by_item[ik].append({**{k: v for k, v in it.items() if k not in ("item", "k", "key")},
-                                          "monster": mk, "monster_slug": mon_slug[mk], "monster_name": M[mk]["name"],
-                                          **place})
+                # An item's page shows who drops it, where and how often: the place's own details
+                # (its rules, notes, money, quest treasure) are the monster's and the event's page's.
+                drops_by_item[ik].append({**{k: it[k] for k in DROP_ROW if k in it},
+                                          "monster_slug": mon_slug[mk], "monster_name": M[mk]["name"],
+                                          **{k: place[k] for k in DROP_PLACE if k in place}})
             drops_by_mon[mk].append({**place, "items": sorted(rows, key=lambda r: -(r.get("chance") or 0))})
 
     # ---- the rules' kinds published as their own pages, and their item references inverted
@@ -300,7 +327,10 @@ def build(commit=None, out=None, thumbs=True, say=print):
             sl = slugs.assign(kind, [(key_of(x), name_of(x)) for x in entries])
             kinds[kind] = {key_of(x): (sl[key_of(x)], x) for x in entries}
             for k, (s, x) in kinds[kind].items():
-                for ik, path in item_refs(x, I):
+                found = item_refs(x, I)
+                if kind == "mixes" and not any(role(p) == "gives" for _, p in found):
+                    found += [(ik, "result") for ik in made_by_words(x.get("success"), I)]
+                for ik, path in found:
                     r = {"kind": kind, "slug": s, "name": name_of(x), "role": role(path)}
                     if r not in refs[ik][kind]:
                         refs[ik][kind].append(r)
@@ -363,15 +393,19 @@ def build(commit=None, out=None, thumbs=True, say=print):
         if p:
             row["t"] = p["card"]
         src_flags = ""
-        for flag, have in (("d", drops_by_item.get(k)), ("s", refs[k].get("shops")),
-                           ("c", refs[k].get("mixes")), ("q", refs[k].get("quests")),
-                           ("e", refs[k].get("events"))):
+        gives = {kind: [r for r in v if r["role"] == "gives"] for kind, v in refs[k].items()}
+        for flag, have in (("d", [d for d in drops_by_item.get(k, []) if (d.get("chance") or 0) > 0]),
+                           ("s", gives.get("shops")), ("c", gives.get("mixes")), ("q", gives.get("quests")),
+                           ("e", gives.get("events")), ("b", gives.get("boxes"))):
             if have:
                 src_flags += flag
         row["src"] = src_flags
         live = None
         if not missing or ("drops" not in missing and "rules" not in missing):
-            live = bool(src_flags) or any(refs[k].values())
+            # Live when anything in the release makes it: a drop that can happen, a shelf, a mix's
+            # result, a box, a quest's or an event's reward. Being asked for makes nothing.
+            live = (any((d.get("chance") or 0) > 0 for d in drops_by_item.get(k, []))
+                    or any(r["role"] == "gives" for v in refs[k].values() for r in v))
         row["live"] = live
         rows.append(row)
         e = {"kind": "item", "key": k, "slug": s, "name": it["name"], "category": it["cat"], "sub": it["sub"],
