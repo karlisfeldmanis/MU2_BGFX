@@ -73,7 +73,11 @@ async function main() {
     ok(html.includes('"route":{"view":"entity","kind":"items"'), 'item page: its entity inlined');
     ok((await fetch(`${base}/armory/item/no-such-thing`)).status === 404, 'a missing entity is 404');
     const data = await fetch(`${base}/armory/data/${meta.commit}/index/items.json`);
-    ok(data.ok && /immutable/.test(data.headers.get('cache-control') || ''), 'release files are immutable');
+    // A rebuild of the same commit rewrites its JSON at the same URLs: only hashed pictures are kept forever.
+    ok(data.ok && /no-cache/.test(data.headers.get('cache-control') || '') && !!data.headers.get('etag'), 'release JSON is revalidated, not kept', data.headers.get('cache-control'));
+    const again = await fetch(`${base}/armory/data/${meta.commit}/index/items.json`, { headers: { 'If-None-Match': data.headers.get('etag') || '' } });
+    ok(again.status === 304, 'release JSON unchanged answers 304', again.status);
+    if (sod.t) { const th = await fetch(`${base}/armory/data/${meta.commit}/${sod.t}`); ok(th.ok && /immutable/.test(th.headers.get('cache-control') || ''), 'hashed thumbnails are immutable'); }
     ok((await fetch(`${base}/armory/data/${meta.commit}/../meta.json`)).status === 404, 'no path out of the release');
     const sm = await (await fetch(`${base}/armory/sitemap.xml`)).text();
     ok(sm.includes(`/armory/item/${sod.slug}<`), 'the sitemap lists the item');
@@ -106,7 +110,7 @@ async function main() {
     ok((await fetch(`${base}/armory?cat=Weapons`, { redirect: 'manual' })).headers.get('location') === '/armory/items?cat=Weapons', 'the old list address goes to /armory/items');
     // The monster page: its place row, a chart cut to what it draws; a summon-only monster says so.
     const rsk = J('index/monsters.json').rows.find(m => m.slug === 'red-skeleton-knight');
-    if (rsk) await visit('/armory/monster/red-skeleton-knight?tab=where', () => document.querySelectorAll('.estrip .chip').length > 1 && !!document.querySelector('.where .chart img'), 'monster page: places and its chart');
+    if (rsk) await visit('/armory/monster/red-skeleton-knight?tab=where', () => document.querySelectorAll('.estrip .chip').length > 1 && !!document.querySelector('.ebody .chart image, .ebody .tierc'), 'monster page: places and its chart');
     const summoned = J('index/monsters.json').rows.find(m => m.summoned && !(m.maps || []).length);
     if (summoned) await visit(`/armory/monster/${summoned.slug}`, () => !!document.querySelector('.callout a[href*="/armory/skill/"]') && /summon/i.test(document.querySelector('.ebody').textContent), 'monster page: a summon-only monster');
     ok(!J('index/items.json').rows.some(r => r.k === 'Gold01'), 'Zen is not listed as an item');

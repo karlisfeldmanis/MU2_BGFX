@@ -48,11 +48,16 @@
 	@discord path /discord /discord/ /*/discord /*/discord/
 	redir @discord https://discord.gg/frqaT5k3EF 302
 
-	# The Armory's release files (web/deploy.sh puts them in /srv/mu2-web/armory/<commit>/): named by
-	# commit, so kept forever by anyone; web/server.py serves the same for local runs.
+	# The Armory's release files (web/deploy.sh puts them in /srv/mu2-web/armory/<commit>/). Only
+	# the content-addressed thumbs/<hash> and icons/<hash> are kept forever: a rebuild of the same
+	# commit rewrites the JSON and the charts at the same URLs, so those are revalidated every time
+	# (file_server's ETag and Last-Modified make that a 304). web/server.py serves the same locally.
 	handle_path /armory/data/* {
 		root * /srv/mu2-web/armory
-		header Cache-Control "public, max-age=31536000, immutable"
+		@hashed path_regexp ^/[0-9a-f]+/(thumbs|icons)/[0-9a-f]+
+		@rest not path_regexp ^/[0-9a-f]+/(thumbs|icons)/[0-9a-f]+
+		header @hashed Cache-Control "public, max-age=31536000, immutable"
+		header @rest Cache-Control "no-cache"
 		file_server
 	}
 

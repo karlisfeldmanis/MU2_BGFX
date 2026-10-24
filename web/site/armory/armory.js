@@ -58,7 +58,7 @@
   const oddsCell = (c) => { const o = odds(c); return `<b class="num" style="font-weight:500">${esc(o.one)}</b>${o.pct ? `<span class="sub2">${esc(o.pct)}</span>` : ''}`; };
   const ROLL = { item: t('Plain'), excellent: t('Excellent'), elite_piece: t('Elite spoils'), elite_excellent: t('Elite spoils, excellent'), rune: t('Rune'),
     jewel: t('Jewel'), jewel_group: t('Jewel'), first_wings: t('Your class only'), scroll: t('Ticket'), bone: t('Ticket'), eye: t('Ticket'), key: t('Ticket'),
-    hoard: t('Hoard'), minion: t('Spoils'), while_quest: t('While its quest asks') };
+    hoard: t('Hoard'), statue_broken: t('When it breaks'), minion: t('Spoils'), while_quest: t('While its quest asks') };
   const rollWords = (rolls) => [...new Set((rolls || []).map(r => ROLL[r.roll] || pretty(r.roll || '')))].filter(Boolean).join(' · ');
   const absent = (what) => `<div class="absent">${esc(what)}</div>`;
   const waitDump = (name) => absent(missing.has(name) ? t('Waiting on the game\'s data for this release.') : t('Nothing here in this release.'));
@@ -126,6 +126,11 @@
   const showAll = (shown, total, key) => (shown < total ? `<a class="chip" style="margin-top:12px" data-q data-keep href="${esc(qLink({ [key]: 'all' }))}">${esc(t('Show all {n}', { n: total }))}</a>` : '');
   const notLive = (live) => (live === false ? `<span class="kan">${esc(t('Coming soon'))}</span>` : '');
   // Zen is money, not an item: the build leaves it out of the list; an older build's row is hidden.
+  // A line the data says, as a sentence: capitalised, without a trailing note on the code it comes from.
+  const sentence = (s) => { s = String(s || '').replace(/\s*\([A-Za-z_:]+(::[A-Za-z_]+)*\)\s*$/, '').trim(); return s ? s.charAt(0).toUpperCase() + s.slice(1) + (/[.!?]$/.test(s) ? '' : '.') : ''; };
+  // A list row's number over the places it is met: one, or [lowest, highest]; none (0) is "—".
+  const rng = (v) => (Array.isArray(v) ? `${N(v[0])} – ${N(v[1])}` : v ? N(v) : '—');
+  const low = (v) => (Array.isArray(v) ? v[0] : v || 0);
   const tiles = (n) => (n === 1 ? t('1 tile') : t('{n} tiles', { n }));
   const isZen = (i) => i && (i.k === 'Gold01' || i.slug === 'zen');
 
@@ -163,7 +168,7 @@ ${o.strip ? `<div class="estrip">${o.strip}</div>` : ''}${o.tabs ? tabBar(o.tabs
           const i = (y * w + x) * 4;
           if (Math.abs(d[i] - d[0]) + Math.abs(d[i + 1] - d[1]) + Math.abs(d[i + 2] - d[2]) > 24) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
         }
-        if (x1 >= 0) { drawn[src] = [x0, y0, x1 + 1, y1 + 1]; draw(); }
+        if (x1 >= 0) { drawn[src] = { box: [x0, y0, x1 + 1, y1 + 1], bg: `rgb(${d[0]},${d[1]},${d[2]})` }; draw(); }
       } catch (x) { /* a chart we cannot read is shown whole */ }
     };
     im.src = src;
@@ -495,41 +500,52 @@ ${r.note ? `<p class="mute" style="margin:6px 0 0">${esc(r.note)}</p>` : ''}
     const maps = {};
     rows.forEach(m => (m.maps || []).forEach(x => { maps[x] = (maps[x] || 0) + 1; }));
     const list = rows.filter(m => (!R.q.map || (m.maps || []).includes(R.q.map) || (!(m.maps || []).length && m.home === R.q.map)) && (!q || m.n.toLowerCase().includes(q)))
-      .sort((x, y) => (x.lv || 0) - (y.lv || 0) || (x.n > y.n ? 1 : -1));
+      .sort((x, y) => low(x.lv) - low(y.lv) || (x.n > y.n ? 1 : -1));
     const extra = `<div><h2 class="rh">${esc(t('Map'))}</h2><a class="ci" data-q href="${esc(qLink({ map: '' }))}" aria-current="${!R.q.map ? 'true' : 'false'}">${esc(t('Every map'))}<span>${rows.length}</span></a>${Object.keys(maps).sort().map(x =>
       `<a class="ci" data-q href="${esc(qLink({ map: x }))}" aria-current="${R.q.map === x ? 'true' : 'false'}">${esc(x)}<span>${maps[x]}</span></a>`).join('')}</div>`;
     return listPage(R.q.map ? t('Monsters in {map}', { map: R.q.map }) : LIST.monsters, t('{n} monsters', { n: list.length }), table(
       [[''], [t('Monster')], [t('Level'), 1], [t('Life'), 1], [t('Damage'), 1], [t('Defense'), 1], [t('Lives in')]],
-      list.map(m => `<tr><td style="width:60px"><span class="ico">${m.t ? `<img src="${pic(m.t)}" alt="" loading="lazy">` : ''}</span></td><td>${a('monsters', m.slug, m.n)}${notLive(m.live)}</td><td class="r num">${N(m.lv)}</td><td class="r num">${N(m.hp)}</td>
-<td class="r num">${m.dmg && m.dmg[0] != null ? `${m.dmg[0]} ~ ${m.dmg[1]}` : '—'}</td><td class="r num">${N(m.def)}</td><td class="mute wrap">${esc((m.maps || []).join(', ') || m.home || '—')}</td></tr>`)), extra);
+      list.map(m => `<tr><td style="width:60px"><span class="ico">${m.t ? `<img src="${pic(m.t)}" alt="" loading="lazy">` : ''}</span></td><td>${a('monsters', m.slug, m.n)}${notLive(m.live)}</td><td class="r num">${rng(m.lv)}</td><td class="r num">${rng(m.hp)}</td>
+<td class="r num">${m.dmg && m.dmg[1] ? `${N(m.dmg[0])} ~ ${N(m.dmg[1])}` : '—'}</td><td class="r num">${rng(m.def)}</td><td class="mute wrap">${esc((m.maps || []).join(', ') || m.home || '—')}</td></tr>`)), extra);
   }
   function chart(world, marks, o) {
-    // A world's chart as the minimap bakes it: tile (x, y) at px = (x + 0.5) * 2 on its 512 picture.
-    // Cut to what is drawn on it and to the marks (Blood Castle is a strip down one edge), kept
-    // between 0.7 and 1.6 wide a tall, or square for a head's picture.
+    // A world's chart as the game's minimap shows it: the tile grid (tile (x, y) at px = (x + 0.5) * 2
+    // on its 512 picture, column across, row down) turned as the played camera turns it (the world
+    // row's `turn`, maps.py camera_turn() from world.cpp's kYawDegrees), the marks turned with it and
+    // their labels upright. Cut to what the chart draws and to the marks, kept between 0.7 and 1.6
+    // wide a tall, or square for a head's picture.
     const W = by('worlds', 'k');
     const row = W && W[world];
     if (!row || !row.chart) return '';
     o = o || {};
-    const S = 512, src = pic(row.chart), b = drawnOf(src);
-    const ext = marks.map(m => (m.box ? [m.box[0] * 2, m.box[1] * 2, (m.box[2] + 1) * 2, (m.box[3] + 1) * 2] : [(m.x + 0.5) * 2 - 8, (m.y + 0.5) * 2 - 8, (m.x + 0.5) * 2 + 8, (m.y + 0.5) * 2 + 8]));
-    let [x0, y0, x1, y1] = [0, 0, S, S];
-    if (b) {
-      [x0, y0, x1, y1] = ext.reduce((r, e) => [Math.min(r[0], e[0]), Math.min(r[1], e[1]), Math.max(r[2], e[2]), Math.max(r[3], e[3])], b);
-      const pad = Math.max(10, 0.06 * Math.max(x1 - x0, y1 - y0));
-      x0 -= pad; y0 -= pad; x1 += pad; y1 += pad;
-      const lo = o.square ? 1 : 0.7, hi = o.square ? 1 : 1.6;
-      const grow = (a0, a1, want) => { const c = (a0 + a1) / 2; want = Math.min(S, want); let n0 = c - want / 2, n1 = c + want / 2; if (n0 < 0) { n1 -= n0; n0 = 0; } if (n1 > S) { n0 -= n1 - S; n1 = S; } return [Math.max(0, n0), Math.min(S, n1)]; };
-      if ((x1 - x0) / (y1 - y0) < lo) [x0, x1] = grow(x0, x1, (y1 - y0) * lo);
-      if ((x1 - x0) / (y1 - y0) > hi) [y0, y1] = grow(y0, y1, (x1 - x0) / hi);
-      [x0, x1] = grow(x0, x1, x1 - x0); [y0, y1] = grow(y0, y1, y1 - y0);
-      if ((x1 - x0) * (y1 - y0) > 0.8 * S * S) [x0, y0, x1, y1] = [0, 0, S, S];
-    }
-    const w = x1 - x0, h = y1 - y0, fx = (v) => ((v - x0) / w * 100).toFixed(3) + '%', fy = (v) => ((v - y0) / h * 100).toFixed(3) + '%';
-    const size = o.square ? '' : `aspect-ratio:${w.toFixed(1)} / ${h.toFixed(1)};width:min(100%, ${Math.round(Math.min(560, 440 * w / h))}px)`;
-    return `<div class="chart${o.square ? ' sq' : ''}" style="${size}"><img src="${src}" alt="${esc(t('Map of {map}', { map: row.n }))}" width="512" height="512" style="left:${(-x0 / w * 100).toFixed(3)}%;top:${(-y0 / h * 100).toFixed(3)}%;width:${(S / w * 100).toFixed(3)}%;height:${(S / h * 100).toFixed(3)}%">${marks.map(m => m.box
-      ? `<span class="box" aria-hidden="true" style="left:${fx(m.box[0] * 2)};top:${fy(m.box[1] * 2)};width:${((m.box[2] - m.box[0] + 1) * 2 / w * 100).toFixed(3)}%;height:${((m.box[3] - m.box[1] + 1) * 2 / h * 100).toFixed(3)}%"></span>`
-      : `<span class="dot" aria-hidden="true" style="left:${fx((m.x + 0.5) * 2)};top:${fy((m.y + 0.5) * 2)}"></span>${m.label ? `<span class="lbl" style="left:${fx((m.x + 0.5) * 2)};top:${fy((m.y + 0.5) * 2)}">${esc(m.label)}</span>` : ''}`).join('')}</div>`;
+    const S = 512, c = S / 2, src = pic(row.chart), d = drawnOf(src), turn = +row.turn || 0;
+    const ang = turn * Math.PI / 180, ca = Math.cos(ang), sa = Math.sin(ang);
+    const rot = (x, y) => [c + (x - c) * ca - (y - c) * sa, c + (x - c) * sa + (y - c) * ca];
+    const at = (v) => (v + 0.5) * 2;
+    const pts = [];
+    const b = d ? d.box : [0, 0, S, S];
+    [[b[0], b[1]], [b[2], b[1]], [b[2], b[3]], [b[0], b[3]]].forEach(p => pts.push(rot(p[0], p[1])));
+    marks.forEach(m => {
+      if (m.box) [[m.box[0] * 2, m.box[1] * 2], [(m.box[2] + 1) * 2, m.box[1] * 2], [(m.box[2] + 1) * 2, (m.box[3] + 1) * 2], [m.box[0] * 2, (m.box[3] + 1) * 2]].forEach(p => pts.push(rot(p[0], p[1])));
+      else pts.push(rot(at(m.x), at(m.y)));
+    });
+    let x0 = Math.min(...pts.map(p => p[0])), x1 = Math.max(...pts.map(p => p[0])), y0 = Math.min(...pts.map(p => p[1])), y1 = Math.max(...pts.map(p => p[1]));
+    const pad = Math.max(10, 0.06 * Math.max(x1 - x0, y1 - y0));
+    x0 -= pad; y0 -= pad; x1 += pad; y1 += pad;
+    const lo = o.square ? 1 : 0.7, hi = o.square ? 1 : 1.6;
+    if ((x1 - x0) / (y1 - y0) < lo) { const g = ((y1 - y0) * lo - (x1 - x0)) / 2; x0 -= g; x1 += g; }
+    if ((x1 - x0) / (y1 - y0) > hi) { const g = ((x1 - x0) / hi - (y1 - y0)) / 2; y0 -= g; y1 += g; }
+    const w = x1 - x0, h = y1 - y0, u = Math.max(w, h) / 100;  // a mark keeps its size on screen as the cut zooms
+    const f = (v) => v.toFixed(2);
+    const size = o.square ? '' : `aspect-ratio:${f(w)} / ${f(h)};width:min(100%, ${Math.round(Math.min(560, 440 * w / h))}px);`;
+    const inMap = marks.map(m => {
+      if (!m.box) return `<circle class="dot" cx="${f(at(m.x))}" cy="${f(at(m.y))}" r="${f(1.3 * u)}"></circle>`;
+      const bw = Math.max((m.box[2] - m.box[0] + 1) * 2, 1.1 * u), bh = Math.max((m.box[3] - m.box[1] + 1) * 2, 1.1 * u);
+      const mx = (m.box[0] + m.box[2] + 1), my = (m.box[1] + m.box[3] + 1);
+      return `<rect class="box" x="${f(mx - bw / 2)}" y="${f(my - bh / 2)}" width="${f(bw)}" height="${f(bh)}"></rect>`;
+    }).join('');
+    const labels = marks.filter(m => m.label).map(m => { const p = rot(at(m.x), at(m.y)); return `<text x="${f(p[0])}" y="${f(p[1] - 2.8 * u)}" font-size="${f(3 * u)}" text-anchor="middle">${esc(m.label)}</text>`; }).join('');
+    return `<div class="chart${o.square ? ' sq' : ''}" style="${size}background:${d ? d.bg : '#0D0B0A'}"><svg viewBox="${f(x0)} ${f(y0)} ${f(w)} ${f(h)}" role="img" aria-label="${esc(t('Map of {map}', { map: row.n }))}"><g transform="rotate(${turn} ${c} ${c})"><image href="${src}" width="${S}" height="${S}"></image>${inMap}</g>${labels}</svg></div>`;
   }
   function monsterPage(e) {
     crumbs([[LIST.monsters, listHref('monsters')], [e.name]]);
@@ -538,24 +554,33 @@ ${r.note ? `<p class="mute" style="margin:6px 0 0">${esc(r.note)}</p>` : ''}
     const E = rowsOf('elites');
     const places = e.drops || [];
     const nests = e.nests || [];
-    const pick = places.length ? Math.min(Math.max(0, +R.q.at || 0), places.length - 1) : -1;
+    // The place shown: the address's, else the first that is not an Elite's.
+    const plain = Math.max(0, places.findIndex(p => !p.elite));
+    const pick = places.length ? (R.q.at != null && R.q.at !== '' ? Math.min(Math.max(0, +R.q.at || 0), places.length - 1) : plain) : -1;
     const pl = pick >= 0 ? places[pick] : null;
+    // Its numbers as the realm spawns it there (the dump's `spawned`, one a place, Elites and raids
+    // included); the content row is only the breed's start, never shown as what it fights with.
+    const spawned = e.spawned || [];
+    const sp = (pl && spawned.find(s => s.place === pl.place && !!s.elite === !!pl.elite)) || spawned.find(s => !s.elite) || null;
+    const secs = (ticks) => (ticks ? +(ticks / 20).toFixed(2) + ' s' : null);
     const elite = R.q.elite === '1' && e.elite_thumb;
     const summons = e.summoned_by || [];
     const placeLabel = (p) => placeName(p).name + (p.elite ? ' · ' + t('Elite') : '');
     // Where it is: its own places switch the page; the same monster at another tier (Blood Castle
     // 2 to 6, the squares) is a page of its own, linked in the same row.
     const sibs = (rowsOf('monsters') || []).filter(r => r.n === e.name && r.slug !== e.slug);
-    const opts = places.map((p, i) => ({ lv: p.level, label: placeLabel(p), on: i === pick, url: qLink({ at: i ? String(i) : '', cat: '', all: '' }), q: true }))
-      .concat(sibs.map(r => { const x = have(`monsters/${r.slug}.json`); const d = x && (x.drops || [])[0]; return { lv: r.lv, label: d ? placeLabel(d) : (r.home || r.n), url: href('monsters', r.slug) }; }))
+    const opts = places.map((p, i) => ({ lv: p.level, life: (spawned.find(s => s.place === p.place && !!s.elite === !!p.elite) || {}).life, label: placeLabel(p), on: i === pick, url: qLink({ at: i === plain ? '' : String(i), cat: '', all: '' }), q: true }))
+      .concat(sibs.map(r => { const x = have(`monsters/${r.slug}.json`); const d = x && (x.drops || [])[0]; return { lv: low(r.lv), label: d ? placeLabel(d) : (r.home || r.n), url: href('monsters', r.slug) }; }))
       .sort((x, y) => (x.lv || 0) - (y.lv || 0));
-    const strip = opts.length > 1 ? stripRow(t('Where'), opts.map(o => `<a class="chip" href="${esc(o.url)}"${o.q ? ' data-q data-keep' : ''} aria-pressed="${o.on ? 'true' : 'false'}">${esc(o.label)}<span class="cn">${esc(t('Lv {n}', { n: o.lv }))}</span></a>`).join('')) : '';
-    const lives = places.length ? [...new Set(places.map(placeLabel))].join(', ') : nests.map(n => n.map).join(', ');
+    const strip = opts.length > 1 ? stripRow(t('Where'), opts.map(o => `<a class="chip" href="${esc(o.url)}"${o.q ? ' data-q data-keep' : ''} aria-pressed="${o.on ? 'true' : 'false'}">${esc(o.label)}${o.lv ? `<span class="cn">${esc(t('Lv {n}', { n: o.lv }))}</span>` : o.life ? `<span class="cn">${esc(t('Life {n}', { n: N(o.life) }))}</span>` : ''}</a>`).join('')) : '';
+    const lives = (e.met_in || []).length ? e.met_in.map(worldName).join(', ') : places.length ? [...new Set(places.map(p => placeName(p).name))].join(', ') : nests.map(n => n.map).join(', ');
     const eliteMaps = (E || []).filter(x => places.some(p => p.elite && p.world === x.world));
-    const facts = factsStrip([fact(t('Level'), c.level), fact(t('Life'), c.health), fact(t('Damage'), c.minimum_damage != null ? `${c.minimum_damage} ~ ${c.maximum_damage}` : null), fact(t('Defense'), c.defense),
-      fact(t('Attack rate'), c.attack_rate), fact(t('Defense rate'), c.defense_rate), fact(t('Attack range'), c.attack_range != null ? tiles(c.attack_range) : null),
-      fact(t('Sees'), c.view_range != null ? tiles(c.view_range) : null), fact(t('Attacks every'), c.attack_delay ? (c.attack_delay / 1000).toFixed(1) + ' s' : null),
-      fact(t('Moves every'), c.move_delay ? (c.move_delay / 1000).toFixed(1) + ' s' : null)].concat(Object.entries(e.resist || {}).filter(([, v]) => v).map(([k, v]) => fact(t('{what} resistance', { what: pretty(k) }), v)),
+    // Something that does not fight (the Statue of Saint) shows its life, not a row of noughts.
+    const fights = !sp || (sp.damage && sp.damage[1] > 0);
+    const nz = (v) => (fights || v ? v : null);
+    const facts = factsStrip((sp ? [fact(t('Level'), nz(sp.level)), fact(t('Life'), sp.life), fact(t('Damage'), fights && sp.damage ? `${N(sp.damage[0])} ~ ${N(sp.damage[1])}` : null), fact(t('Defense'), nz(sp.defense)),
+      fact(t('Attack rate'), nz(sp.attack_rate)), fact(t('Defense rate'), nz(sp.defense_rate))] : []).concat(fights ? [fact(t('Attack range'), c.attack_range != null ? tiles(c.attack_range) : null),
+      fact(t('Sees'), c.view_range != null ? tiles(c.view_range) : null)] : [], sp ? [fights ? fact(t('Attacks every'), secs(sp.swing_ticks)) : null, fights ? fact(t('Moves every'), secs(sp.move_ticks)) : null, sp.bodies ? fact(t('Standing'), '×' + sp.bodies) : null] : []).concat(Object.entries(e.resist || {}).filter(([, v]) => v).map(([k, v]) => fact(t('{what} resistance', { what: pretty(k) }), v)),
       [fact(t('Lives in'), lives || (summons.length ? t('Nowhere') : null)), pl && pl.zen ? fact(t('Zen'), t('{pct} of kills', { pct: pct(pl.zen) })) : null]));
     // Raised by a summon: the skill, the orb and its plus that teach it, what it costs.
     const summon = summons.map(s => {
@@ -566,7 +591,11 @@ ${r.note ? `<p class="mute" style="margin:6px 0 0">${esc(r.note)}</p>` : ''}
       return `<div class="callout"><span class="slabel">${esc(t('Summoned by the {cls}', { cls: who }))}</span><div>${bits.join(' <span class="dotsep">·</span> ')}</div>${s.tells ? `<p>${esc(s.tells)}</p>` : ''}</div>`;
     }).join('');
     const onlySummon = summons.length && !places.length && !nests.length;
-    const more = (eliteMaps.length ? `<p class="enote">${esc(t('Rises as an Elite in {maps}: ×{life} life, ×{dmg} damage, ×{def} defense, {up} levels higher.', { maps: eliteMaps.map(x => worldName(x.world)).join(', '), life: eliteMaps.map(x => x.life).join('/'), dmg: eliteMaps[0].damage, def: eliteMaps[0].defense, up: eliteMaps[0].levels_up }))}</p>` : '') +
+    // One monster in several looks (the Statue of Saint): each look, and the weapon it leaves.
+    const IK = by('items', 'k') || {};
+    const looks = (e.looks || []).length > 1 ? `<div class="looks">${e.looks.map(l => { const it = IK[l.leaves]; return `<div class="look"><span class="kpic">${l.thumb ? `<img src="${pic(l.thumb.card)}" alt="${esc(l.name)}" width="64" height="64">` : ''}</span><span class="small">${it ? `${esc(t('leaves'))} ${a('items', it.slug, it.n, 'open')}` : ''}${l.live === false ? notLive(false) : ''}</span></div>`; }).join('')}</div>${e.one_of ? `<p class="enote" style="color:#C9BFAE">${esc(sentence(e.one_of))}</p>` : ''}` : '';
+    const brk = pl && pl.breaking ? `<div class="callout gold"><span class="slabel">${esc(t('Breaking it'))}</span><div>${pl.breaking.experience ? esc(t('{n} bonus experience', { n: N(pl.breaking.experience) })) : ''}</div>${pl.breaking.note ? `<p>${esc(sentence(pl.breaking.note))}</p>` : ''}</div>` : '';
+    const more = looks + brk + (eliteMaps.length ? `<p class="enote">${esc(t('Rises as an Elite in {maps}: ×{life} life, ×{dmg} damage, ×{def} defense, {up} levels higher.', { maps: eliteMaps.map(x => worldName(x.world)).join(', '), life: eliteMaps.map(x => x.life).join('/'), dmg: eliteMaps[0].damage, def: eliteMaps[0].defense, up: eliteMaps[0].levels_up }))}</p>` : '') +
       summon + (e.live === false ? `<div class="erow">${notLive(e.live)}</div>` : '');
     const tabs = [['drops', t('Drops'), pl ? (pl.items || []).filter(i => (i.chance || 0) > 0).length : 0], ['where', t('Where it lives'), nests.length ? nests.reduce((s, n) => s + (n.count || 0), 0) : ''], ['comments', t('Comments'), '']];
     const tab = pickTab(tabs);
@@ -580,14 +609,14 @@ ${r.note ? `<p class="mute" style="margin:6px 0 0">${esc(r.note)}</p>` : ''}
       const map = nest ? (W === undefined ? ld : chart(nest.world, (nest.boxes || []).map(b => ({ box: b })))) : '';
       const EV = by('events', 'slug') || {};
       const evOf = (p) => { const n = placeName(p); const slug = n.href && n.href.includes('/armory/event/') ? n.href.split('/').pop() : null; return { n, row: slug ? EV[slug] : null }; };
-      const tiers = places.map((p, i) => ({ p, lv: p.level, hp: c.health, here: i === pick, at: i }))
-        .concat(sibs.map(r => { const x = have(`monsters/${r.slug}.json`); const d = x && (x.drops || [])[0]; return d ? { p: d, lv: r.lv, hp: r.hp, slug: r.slug } : null; }).filter(Boolean))
+      const tiers = places.map((p, i) => ({ p, lv: p.level, hp: (spawned.find(s => s.place === p.place && !!s.elite === !!p.elite) || {}).life, here: i === pick, at: i }))
+        .concat(sibs.map(r => { const x = have(`monsters/${r.slug}.json`); const d = x && (x.drops || [])[0]; return d ? { p: d, lv: low(r.lv), hp: r.hp, slug: r.slug } : null; }).filter(Boolean))
         .filter(x => ['castle', 'square', 'raid'].includes(x.p.kind)).sort((x, y) => (x.lv || 0) - (y.lv || 0));
       const cards = tiers.map(x => {
         const ev = evOf(x.p);
         const mine = x.slug ? href('monsters', x.slug) : qLink({ at: x.at ? String(x.at) : '', tab: 'where' });
         return `<div class="tierc"${x.here ? ' aria-current="true"' : ''}><a class="reln" href="${esc(mine)}"${x.slug ? '' : ' data-q data-keep'}>${esc(placeLabel(x.p))}</a>
-<span class="mute small">${esc(t('Lv {n}', { n: x.lv }))} · ${esc(t('Life {n}', { n: N(x.hp) }))}</span>${ev.row && ev.row.levels ? `<span class="mute small">${esc(t('Its monsters Lv {a}–{b}', { a: ev.row.levels[0], b: ev.row.levels[1] }))}</span>` : ''}
+<span class="mute small">${[x.lv ? t('Lv {n}', { n: x.lv }) : '', t('Life {n}', { n: rng(x.hp) })].filter(Boolean).map(esc).join(' · ')}</span>${ev.row && ev.row.levels ? `<span class="mute small">${esc(t('Its monsters Lv {a}–{b}', { a: ev.row.levels[0], b: ev.row.levels[1] }))}</span>` : ''}
 ${ev.n.href ? `<a class="crumb small" href="${ev.n.href}">${esc(t('The event'))} ›</a>` : ''}</div>`;
       }).join('');
       const nestList = nests.length ? `<h2 class="h3">${esc(t('Its nests'))}</h2>${nests.map(n => `<a class="sim" href="${href('worlds', n.world_slug)}"${nest === n ? ' aria-current="true"' : ''}><span style="flex:1">${esc(n.map)}</span><span class="mute small">${esc(t('{n} in its nests', { n: n.count }))}</span></a>`).join('')}` : '';
@@ -617,7 +646,7 @@ ${(pl.while_quest || []).length ? `<h2 class="h3" style="margin-top:24px">${esc(
     // Only ever a summon: no drops or nests to tab through, the one line and the talk.
     if (onlySummon) body = sec('', absent(nothing)) + sec(t('Comments'), comments('monsters', e.slug, []));
     const under = e.elite_thumb ? `<div class="chips">${chip(esc(t('Ordinary')), !elite, { elite: '' })}${chip(esc(t('Elite')), !!elite, { elite: '1' })}</div>` : '';
-    return frame({ pic: epic(elite ? e.elite_thumb : e.thumb, e.name, under), name: e.name, sub: esc(t('Level {n}', { n: c.level })) + (lives ? ' · ' + esc(pl ? placeLabel(pl) : lives) : ''),
+    return frame({ pic: epic(elite ? e.elite_thumb : e.thumb, e.name, under), name: e.name, sub: [sp && sp.level ? esc(t('Level {n}', { n: sp.level })) : '', lives ? esc(pl && !(e.met_in || []).length ? placeLabel(pl) : lives) : ''].filter(Boolean).join(' · '),
       facts, more, strip, tabs: onlySummon ? null : tabs, tab, label: t('About this monster'), clear: { cat: '' }, body });
   }
 
@@ -645,8 +674,14 @@ ${(pl.while_quest || []).length ? `<h2 class="h3" style="margin-top:24px">${esc(
     const shelf = e.shelf || [];
     const W = by('worlds', 'k');
     const services = (e.services || []).map(pretty).concat(e.repairs ? [t('Repairs')] : []);
-    const facts = factsStrip([fact(t('Where'), [...new Set(where.map(x => worldName(x.world)))].join(', ')), fact(t('Does'), services.join(', ') || null), shelf.length ? fact(t('Sells'), shelf.length === 1 ? t('1 item') : t('{n} items', { n: shelf.length })) : null,
-      quests.length ? fact(t('Quests'), quests.length) : null, mixes.length ? fact(t('Mixes'), mixes.length) : null]);
+    const worlds = [...new Set(where.map(x => worldName(x.world)))].join(', ');
+    // A guard's own numbers (the dump's `guard`), as it fights.
+    const gd = e.guard;
+    const guardFacts = gd ? [fact(t('Level'), gd.level), fact(t('Life'), gd.life), fact(t('Damage'), gd.damage ? `${N(gd.damage[0])} ~ ${N(gd.damage[1])}` : null), fact(t('Defense'), gd.defense),
+      fact(t('Attack range'), gd.attack_range != null ? tiles(gd.attack_range) : null), fact(t('Sees'), gd.view_range != null ? tiles(gd.view_range) : null),
+      gd.leash > 0 ? fact(t('Chases up to'), tiles(gd.leash)) : null] : [];
+    const facts = factsStrip(guardFacts.concat([fact(t('Where'), worlds), gd ? null : fact(t('Does'), services.join(', ') || null), shelf.length ? fact(t('Sells'), shelf.length === 1 ? t('1 item') : t('{n} items', { n: shelf.length })) : null,
+      quests.length ? fact(t('Quests'), quests.length) : null, mixes.length ? fact(t('Mixes'), mixes.length) : null]));
     const body = sec(t('Where to find {name}', { name: e.name }), `${where.length > 1 ? `<div class="chips" style="margin-bottom:12px">${where.map((x, i) => chip(esc(`${worldName(x.world)} ${x.x}, ${x.y}`), i === ix, { at: i ? String(i) : '' })).join('')}</div>` : ''}
 ${w ? (W === undefined ? ld : chart(w.world, [{ x: w.x, y: w.y, label: e.name }])) : absent(t('Not standing anywhere in this release.'))}`, w ? `${worldName(w.world)} · ${w.x}, ${w.y}` : '') +
       sec(t('Sells'), shelf.length ? (I === undefined ? ld : table([[''], [t('Item')], [t('Type')], [t('Plus'), 1], [t('Price'), 1]], shelf.map(s => {
@@ -657,7 +692,8 @@ ${w ? (W === undefined ? ld : chart(w.world, [{ x: w.x, y: w.y, label: e.name }]
       (quests.length ? sec(t('Quests'), quests.map(q => `<a class="sim" href="${href('quests', q.slug)}"><span style="flex:1;color:#F3E8D4">${esc(q.n)}</span><span class="mute small">${q.minLevel ? esc(t('Level {n}', { n: q.minLevel })) : ''}</span></a>`).join('')) : '') +
       (mixes.length ? sec(t('Mixes'), mixes.map(m => `<a class="sim" href="${href('mixes', m.slug)}"><span style="flex:1;color:#F3E8D4">${esc(m.n)}</span><span class="mute small">${esc(m.success || '')}</span></a>`).join('')) : '') +
       sec(t('Comments'), comments('npcs', e.slug, []));
-    return frame({ pic: epic(e.thumb, e.name), name: e.name, sub: esc(ROLE(e.role)), facts, body });
+    const sub = e.role === 'guard' && worlds ? t('Stands guard in {where}', { where: worlds }) : ROLE(e.role);
+    return frame({ pic: epic(e.thumb, e.name), name: e.name, sub: esc(sub), facts, body });
   }
   function worldsList() {
     const rows = rowsOf('worlds');
@@ -976,11 +1012,14 @@ ${table([[t('Item')], [t('Type')], [t('Best from')], [t('Chance a kill'), 1]], (
       const keepDraft = document.getElementById('cmt');
       if (keepDraft) draft = keepDraft.value;
       // The search box stands in the home page's band, and in the trail's row everywhere else.
+      // Moving it would drop its focus and the hits under it: kept, and given back after.
+      const typing = document.activeElement === input, at = typing ? [input.selectionStart, input.selectionEnd] : null, open = !hits.hidden;
       if (VIEW.contains(SEARCH)) AHEAD.appendChild(SEARCH);
       VIEW.innerHTML = view();
       const spot = document.getElementById('homesearch');
       if (spot) spot.appendChild(SEARCH);
       SEARCH.classList.toggle('big', !!spot);
+      if (typing && document.activeElement !== input) { input.focus(); try { input.setSelectionRange(at[0], at[1]); } catch (x) { /* a search field may not take it */ } if (open) showHits(); }
       document.title = titleOf();
     });
   }

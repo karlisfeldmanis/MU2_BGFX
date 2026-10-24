@@ -56,6 +56,8 @@ KIND_ONE = {v: k for k, v in ONE.items()}
 LIST_QUERY = {"cat", "sub", "sort", "dir", "page", "cls", "src", "q"}
 STATIC = {"armory.js", "armory.css", "card.js", "card_grain.png"}
 SLUG = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+# A release's files named by their content (build.py's thumbs and icons): the only ones kept forever.
+HASHED = re.compile(r"^(thumbs|icons)/[0-9a-f]{8,}(\.\d+)?\.(webp|png)$")
 COMMIT = re.compile(r"^[0-9a-f]{7,40}$")
 MOST_TEXT = 1000
 # The words the pages say themselves, beside what armory.js says through t(): units of /translate.
@@ -297,8 +299,10 @@ class Armory:
         return True
 
     def data(self, h, commit, rel):
-        """A release's file, by its commit: kept forever by anyone (a new release is a new URL).
-        Caddy serves the same from disk on the box (web/Caddyfile); this answers for local runs."""
+        """A release's file, by its commit. Only the content-addressed ones (thumbs/<hash>, icons/<hash>)
+        are kept forever: a rebuild of the same commit rewrites the JSON and the charts at the same
+        URLs, so those are revalidated every time (no-cache, an ETag, 304 when unchanged). Caddy
+        serves the same from disk on the box (web/Caddyfile); this answers for local runs."""
         r = self.release()
         base = None
         if r is not None and commit == r.commit:
@@ -312,12 +316,26 @@ class Armory:
         if base.resolve() not in target.parents or not target.is_file():
             h.send_error(404)
             return True
+        st = target.stat()
+        tag = f'"{st.st_mtime_ns:x}-{st.st_size:x}"'
+        hashed = HASHED.match(rel) is not None
+        if not hashed and tag in [t.strip() for t in (h.headers.get("If-None-Match") or "").split(",")]:
+            h.send_response(304)
+            h.send_header("ETag", tag)
+            h.send_header("Cache-Control", "no-cache")
+            h.end_headers()
+            return True
         data = target.read_bytes()
         h.send_response(200)
         h.send_header("Content-Type", {".json": "application/json", ".webp": "image/webp", ".png": "image/png"}.get(
             target.suffix, "application/octet-stream"))
         h.send_header("Content-Length", str(len(data)))
-        h.send_header("Cache-Control", "public, max-age=31536000, immutable")
+        if hashed:
+            h.send_header("Cache-Control", "public, max-age=31536000, immutable")
+        else:
+            h.send_header("Cache-Control", "no-cache")
+            h.send_header("ETag", tag)
+            h.send_header("Last-Modified", time.strftime("%a, %d %b %Y %H:%M:%S GMT", time.gmtime(st.st_mtime)))
         h.send_header("Access-Control-Allow-Origin", "*")
         h.end_headers()
         h.wfile.write(data)
@@ -367,11 +385,12 @@ class Armory:
             if e.get("live") is False:
                 bits.append("coming soon")
         elif kind == "monsters":
-            c = e.get("combat") or {}
-            bits.append(f"{name}: level {c.get('level')} monster in MU Classic")
-            if c.get("health"):
-                bits.append(f"life {c['health']:,}")
-            homes = sorted({n.get("map") for n in e.get("nests") or [] if n.get("map")})
+            # As the realm spawns it (the dump's `spawned`), never the content row.
+            sp = next((s for s in e.get("spawned") or [] if not s.get("elite")), None) or {}
+            bits.append(f"{name}: level {sp.get('level')} monster in MU Classic" if sp.get("level") else f"{name}, a monster of MU Classic")
+            if sp.get("life"):
+                bits.append(f"life {sp['life']:,}")
+            homes = sorted({n.get("map") for n in e.get("nests") or [] if n.get("map")}) or [w.title() for w in e.get("met_in") or []]
             if homes:
                 bits.append("lives in " + ", ".join(homes))
             n = sum(len(p.get("items") or []) for p in e.get("drops") or [])
@@ -536,11 +555,15 @@ class Armory:
             trail.append(f'<li><span class="here">{esc(name)}</span></li>')
             out.append(f'<h1 class="h1 big">{esc(name)}</h1>')
             facts = []
-            for k, v in (e.get("stats") or e.get("combat") or {}).items():
+            # A monster's numbers as the realm spawns it, never its content row.
+            sp = next((x for x in e.get("spawned") or [] if not x.get("elite")), None)
+            shown = ({"level": sp.get("level"), "life": sp.get("life"), "defense": sp.get("defense")} if sp
+                     else {} if kind == "monsters" else (e.get("stats") or e.get("guard") or {}))
+            for k, v in shown.items():
                 if isinstance(v, (int, float, str)) and not isinstance(v, bool) and v not in ("", None):
                     facts.append(f"<li>{esc(k.replace('_', ' '))}: {esc(v)}</li>")
             for k in ("tells", "giverName", "rarity_name", "role"):
-                if isinstance(e.get(k), str) and e[k]:
+                if isinstance(e.get(k), str) and e[k] and e[k].lower() not in ("none", "null"):
                     facts.append(f"<li>{esc(e[k])}</li>")
             if facts:
                 out.append("<ul>" + "".join(facts[:24]) + "</ul>")

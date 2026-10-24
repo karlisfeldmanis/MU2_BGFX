@@ -52,6 +52,19 @@ def chart_constants(src):
     return int(got["kChartTexels"]), got["kShoreTexels"], got["kHaloTexels"]
 
 
+def camera_turn(src):
+    """How far the game's minimap turns the chart, degrees clockwise on screen: Minimap::setView
+    lays a tile column along the camera's flattened right and a row along its flattened forward,
+    and the played camera (src/game/world/world.cpp) looks down at kYawDegrees, the same in every
+    world. Right is (-cos yaw, -sin yaw) in tiles and forward (-sin yaw, cos yaw), so a column
+    goes to the screen's (-cos yaw, sin yaw): a turn of 180 - yaw."""
+    text = (src / "src/game/world/world.cpp").read_text()
+    m = re.search(r"constexpr float kYawDegrees = (-?[\d.]+)f?;", text)
+    if not m:
+        raise RuntimeError("world.cpp no longer says kYawDegrees: maps.py must follow the camera")
+    return round(180.0 - float(m.group(1)), 3)
+
+
 def soften(a):
     k = np.array([1, 2, 1], dtype=np.float32)
     p = np.pad(a, 1, mode="edge")
@@ -124,6 +137,7 @@ def chart(wdir, world, consts):
 def build(src, worlds, out_dir, say):
     """maps/<world>.png for every world with a ground; returns world -> chart facts."""
     consts = chart_constants(src)
+    turn = camera_turn(src)
     me = source_hash("maps.py")
     cache = CACHE / "maps"
     cache.mkdir(parents=True, exist_ok=True)
@@ -147,7 +161,7 @@ def build(src, worlds, out_dir, say):
         tiles = json.loads(tiles_meta.read_text())["tiles"]
         place(cached, Path(out_dir) / "maps" / f"{w}.png")
         k = OUT_SIZE / tiles
-        facts[w] = {"png": f"maps/{w}.png", "size": OUT_SIZE, "tiles": tiles, "px_per_tile": k,
+        facts[w] = {"png": f"maps/{w}.png", "size": OUT_SIZE, "tiles": tiles, "px_per_tile": k, "turn": turn,
                     "transform": f"px = (x + 0.5) * {k:g}, py = (y + 0.5) * {k:g} (x column, y row, no flip)"}
     say(f"maps: {len(facts)} charts ({made} drawn, {len(facts) - made} from the cache)")
     return facts

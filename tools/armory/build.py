@@ -256,6 +256,21 @@ def summon_links(skills, skill_slug, powers, item_slug, item_name, mon_by_number
     return by_mon, by_skill
 
 
+def spawn_ranges(met):
+    """A monster list row's level, life, damage and defense over the places it is met (the dump's
+    `spawned`, Elites aside unless it is only an Elite): a number where every place agrees, else
+    [lowest, highest]; damage is always [lowest minimum, highest maximum]."""
+    plain = [x for x in met if not x.get("elite")] or met
+    def span(field):
+        vals = [x.get(field) for x in plain if isinstance(x.get(field), (int, float))]
+        if not vals:
+            return None
+        return vals[0] if min(vals) == max(vals) else [min(vals), max(vals)]
+    dmg = [x.get("damage") for x in plain if isinstance(x.get("damage"), list) and len(x["damage"]) == 2]
+    return {"lv": span("level"), "hp": span("life"), "def": span("defense"),
+            "dmg": [min(d[0] for d in dmg), max(d[1] for d in dmg)] if dmg else None}
+
+
 # The events a drop's place can be: Blood Castle and Devil Square by their number, the raids as one.
 EVENT_KINDS = {"castle": "Blood Castle", "square": "Devil Square", "raid": "Golden Dragon"}
 
@@ -590,8 +605,7 @@ def build(commit=None, out=None, thumbs=True, say=print):
                for d in drops_by_mon.get(k, []) if isinstance(d.get("spawned"), dict)]
         if met:
             e["spawned"] = met
-            one = next((x for x in met if not x["elite"]), met[0])
-            row.update({"lv": one.get("level"), "hp": one.get("life"), "dmg": one.get("damage"), "def": one.get("defense")})
+            row.update(spawn_ranges(met))
             if not where:
                 towns = sorted({x["world"] for x in met if x.get("world")})
                 e["met_in"] = towns
@@ -635,7 +649,8 @@ def build(commit=None, out=None, thumbs=True, say=print):
         folk = [{"slug": npc_slug[n["name"]], "name": n["name"], "x": (n.get("at") or [None])[0],
                  "y": (n.get("at") or [None, None])[1]} for n in wd["npcs"]]
         rows.append({"k": w, "slug": s, "n": wd["name"], "map": wd["map"], "in_release": wd["in_release"],
-                     "live": is_live(w), "chart": (charts.get(w) or {}).get("png"), "monsters": len(mons)})
+                     "live": is_live(w), "chart": (charts.get(w) or {}).get("png"), "turn": (charts.get(w) or {}).get("turn"),
+                     "monsters": len(mons)})
         ents.append((s, {"kind": "world", "key": w, "slug": s, "name": wd["name"], "map": wd["map"],
                          "in_release": wd["in_release"], "live": is_live(w), "rules": wd["rules"],
                          "chart": charts.get(w), "monsters": mons, "npcs": folk}))
