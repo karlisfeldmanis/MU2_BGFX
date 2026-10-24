@@ -64,6 +64,10 @@ public:
         if (code < kFirstCode || code > kLastCode) return nullptr;
         return &glyphs_[size_t(code - kFirstCode)];
     }
+    // A letter by its code point: the baked one, or else the glyph cache's from this face's own
+    // file or a fallback (gfx/glyphs.h), in this face's baked pixels, `cached` saying it is on
+    // the cache's texture. A blurred face has only what it baked: the cache draws no halo.
+    bool look(uint32_t code, FaceGlyph* out, bool* cached) const;
 
     // Where the solid texel is, in uv: a filled rectangle is a quad sampling it, so a panel and
     // a letter are the same draw against the same texture.
@@ -88,6 +92,7 @@ private:
     bool bakeNew(const std::string& path, float pixels, int size, int padding, int oversample,
                  int margin);
     std::string key_;   // what the memo (face.cpp) knows this bake by; empty when not baked
+    std::string path_;  // the file, for the letters the bake has not
     std::vector<FaceGlyph> glyphs_;
     std::vector<uint8_t> pixels_;
     int size_ = 0;

@@ -486,6 +486,7 @@ add_library(mu_gfx STATIC
   src/gfx/renderer_lights.cpp
   src/gfx/effects.cpp
   src/gfx/face.cpp
+  src/gfx/glyphs.cpp
   src/gfx/overlay.cpp
   src/gfx/readout.cpp
   src/gfx/interface.cpp

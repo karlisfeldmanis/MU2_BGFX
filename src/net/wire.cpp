@@ -6,6 +6,7 @@
 
 #include <zlib.h>
 
+#include "core/utf8.h"
 #include "net/rules_print.h"
 #include "sim/realm.h"
 
@@ -480,11 +481,31 @@ std::string newcomerLine(const std::string& name, const std::string& kind, const
 }
 
 std::string saidText(const std::string& text) {
+    // Any script's letters, as good UTF-8 only. Controls are spaces; bytes that are no letter, and
+    // the invisible ones that turn or hide what follows (bidi overrides, zero widths), go; and a
+    // letter takes three marks at most, so no line spills up and down the chat.
     std::string kept;
     kept.reserve(text.size());
-    for (const char c : text) {
-        const auto b = uint8_t(c);
-        kept.push_back(b < 0x20 || b == 0x7F ? ' ' : c);
+    int marks = 0;
+    for (size_t at = 0; at < text.size();) {
+        const size_t from = at;
+        const uint32_t cp = core::utf8::next(text, at);
+        if (cp >= 0x80 && at - from == 1) continue;  // a lone byte, not UTF-8
+        if (cp < 0x20 || (cp >= 0x7F && cp < 0xA0)) {
+            kept.push_back(' ');
+            marks = 0;
+            continue;
+        }
+        if ((cp >= 0x200B && cp <= 0x200F) || (cp >= 0x202A && cp <= 0x202E) ||
+            (cp >= 0x2060 && cp <= 0x206F) || cp == 0xFEFF || cp == 0xAD) {
+            continue;
+        }
+        const bool mark = (cp >= 0x0300 && cp <= 0x036F) || (cp >= 0x1AB0 && cp <= 0x1AFF) ||
+                          (cp >= 0x1DC0 && cp <= 0x1DFF) || (cp >= 0x20D0 && cp <= 0x20FF) ||
+                          (cp >= 0xFE20 && cp <= 0xFE2F);
+        if (mark && ++marks > 3) continue;
+        if (!mark) marks = 0;
+        kept.append(text, from, at - from);
     }
     const size_t first = kept.find_first_not_of(' ');
     if (first == std::string::npos) return {};

@@ -9,6 +9,7 @@
 
 #include "core/log.h"
 #include "core/paths.h"
+#include "core/utf8.h"
 #include "game/play.h"
 #include "game/roster.h"
 #include "game/ui/controls.h"
@@ -1295,18 +1296,21 @@ void Chat::layRows(float u) {
                 rows_.push_back(row);
                 break;
             }
+            // At spaces, and either side of a letter of a script without them (core/utf8.h).
             size_t cut = 0, from = 0;
             while (from < rest.size()) {
-                size_t next = rest.find(' ', from);
-                if (next == std::string::npos) next = rest.size();
+                const size_t next = core::utf8::nextBreak(rest, from);
                 if (bodyWidth(size, rest.substr(0, next)) > room) break;
                 cut = next;
-                from = next + 1;
+                from = next;
             }
             if (cut == 0) {  // one long word: as many letters as fit
-                cut = 1;
-                while (cut < rest.size() && bodyWidth(size, rest.substr(0, cut + 1)) <= room) ++cut;
-                while (cut < rest.size() && (uint8_t(rest[cut]) & 0xC0) == 0x80) ++cut;
+                cut = core::utf8::after(rest, 0);
+                while (cut < rest.size()) {
+                    const size_t more = core::utf8::after(rest, cut);
+                    if (bodyWidth(size, rest.substr(0, more)) > room) break;
+                    cut = more;
+                }
             }
             row.start = at;
             row.end = at + cut;
@@ -1506,9 +1510,12 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
                 if (!links.empty() && links.back().to == draft_.size()) draft_.resize(links.back().from);
                 else draft_.resize(draft_.size() - lastLetter(draft_));
             }
-            for (const char c : typed) {
-                if (uint8_t(c) < 0x20 || uint8_t(c) == 0x7F) continue;
-                if (draft_.size() < net::kMostSaid) draft_.push_back(c);
+            // Whole letters, in any script, while the line has room for all of one's bytes.
+            for (size_t at = 0; at < typed.size();) {
+                const size_t from = at;
+                const uint32_t cp = core::utf8::next(typed, at);
+                if (cp < 0x20 || (cp >= 0x7F && cp < 0xA0)) continue;
+                if (draft_.size() + (at - from) <= net::kMostSaid) draft_.append(typed, from, at - from);
             }
             if (!typed.empty()) recalled_ = -1;
             switchBySlash();

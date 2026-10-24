@@ -187,7 +187,7 @@ void say(Session& one, const net::Say& said, std::vector<std::unique_ptr<Session
         case net::Channel::Whisper: {
             Session* to = playerNamed(said.to, sessions);
             if (to == nullptr) {
-                chatSystem(one, net::Channel::Whisper, net::saidText(said.to).substr(0, 16) + " is not here.");
+                chatSystem(one, net::Channel::Whisper, net::saidText(said.to.substr(0, 16)) + " is not here.");
                 return;
             }
             if (to == &one) return;
