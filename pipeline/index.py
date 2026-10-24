@@ -582,6 +582,12 @@ EFFECTS = {
     # And Summon: BITMAP_MAGIC_EMBLEM, Effect/Magic_b (ZzzOpenData.cpp:5190), the blue quarter star
     # MODEL_CIRCLE subtype 2 wears in place of Hellfire's magic_a01 (ZzzObject.cpp:1540-1544).
     "recall_magic_b": "effects/recall/magic_b.png",
+    # And Fire Scream: darkfirescrem01's two sheets, darkfirescrem02's (Data/Skill), and BITMAP_INFERNO,
+    # Effect/inferno, the ribbon along the ground (ZzzOpenData.cpp:5408).
+    "fire_scream_motion_blurr": "effects/fire_scream/motion_blurr.png",
+    "fire_scream_swordeffor2": "effects/fire_scream/swordeffor2.png",
+    "fire_scream_chainring3": "effects/fire_scream/chainring3.png",
+    "fire_scream_inferno": "effects/fire_scream/inferno.png",
     "magic_ground": "effects/levelup/magic_ground.png",
 
     # A warp's walls: Magic_Circle1.OZJ, BITMAP_MAGIC + 2, which ReceiveTeleport throws under a

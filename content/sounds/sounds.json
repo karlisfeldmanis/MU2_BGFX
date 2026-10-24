@@ -2892,6 +2892,12 @@
         "eSummon.wav"
       ],
       "from": "SOUND_PART_TELEPORT, Data\\Sound\\eSummon.wav (ZzzOpenData.cpp:4871), 5.0 s. Summon's circles, 5 ticks after the echo (ZzzCharacter.cpp:4385-4390); played whole, on the cast alone (docs/plans/dark-lord-spells/summon.md 8.13), cued by game/fx/recall.h at the let-go."
+    },
+    "fire_scream": {
+      "files": [
+        "Darklord_firescream.wav"
+      ],
+      "from": "SOUND_FIRE_SCREAM, Data\\Sound\\Darklord_firescream.wav (ZzzOpenData.cpp:4900-4901), 1.91 s. MU plays it at the echo and again at the let-go, which a playing buffer ignores; here once, with the three lanes (docs/plans/dark-lord-spells/fire-scream.md 8.6), cued by game/play.cpp on the realm's Loosed."
     }
   },
   "not_built_yet": "Built: a monster's Sounds[0]/[1] while it walks (SetPlayerWalk's rand_fps_check(16), every frame it moves, ZzzCharacter.cpp:788-804) and once as its walk ends (SetPlayerStop's, one in sixteen, :429-443) -- game/play_show.cpp. MuMain has no cry on an idle loop: PlayMonsterSound (:216-237) is map-specific and handles no 0.75 monster. Not built: SetPlayerStop's other callers (a refused path, a server stand), which the realm has no counterpart for."

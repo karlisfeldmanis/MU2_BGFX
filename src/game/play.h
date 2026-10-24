@@ -68,6 +68,7 @@
 #include "game/fx/fire_burst.h"
 #include "game/fx/critical_damage.h"
 #include "game/fx/recall.h"
+#include "game/fx/fire_scream.h"
 #include "game/fx/force.h"
 #include "game/fx/firebreath.h"
 #include "game/invasion_sky.h"
@@ -1107,6 +1108,8 @@ public:
     CriticalDamage& criticalDamage() { return criticalDamage_; }
     // The Dark Lord's Summon: the star and the wall at his feet, the pillars. fx/recall.h.
     Recall& recall() { return recall_; }
+    // And his Fire Scream: three lanes of fire, and its Explosion's bombs. fx/fire_scream.h.
+    FireScream& fireScream() { return fireScream_; }
     // The Dinorant's Fire Breath: its sprays, its haze and its burst. fx/firebreath.h.
     FireBreath& fireBreath() { return fireBreath_; }
     void gatherBolt(gfx::Effects& effects, const float eye[3]) const { bolt_.gather(effects, eye); }
@@ -1968,6 +1971,7 @@ private:
     ElectricSpike electricSpike_;
     CriticalDamage criticalDamage_;
     Recall recall_;
+    FireScream fireScream_;
     FireBreath fireBreath_;
     // A Teleport's fade on the hero: seconds since he began to fade out, or since he was put
     // down and began to fade back in; -1 for neither. MU's tenth of alpha a frame, both ways.
@@ -2095,6 +2099,7 @@ private:
         int electricSpike = -1;  // sDarkElecSpike: Electric Spike let go (fx/electric_spike.h)
         int criticalDamage = -1;  // sDarkCritical: Critical Damage's flash (fx/critical_damage.h)
         int recall = -1;          // eSummon: Summon's circles (fx/recall.h)
+        int fireScream = -1;      // Darklord_firescream: Fire Scream's let-go (fx/fire_scream.h)
         int warp = -1;                                  // sMagic: a Town Portal landing
         int rite = -1;                                  // the Rebirth rite, its whole 14 s
         int riteReborn = -1;                            // and its message, as he stands

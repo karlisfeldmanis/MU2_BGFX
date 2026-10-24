@@ -1611,6 +1611,21 @@ void Play::update(double seconds) {
                                                   caster->crown[2] + ahead[2] * along};
                             electricSpike_.arc(off, to, float(happening.b) * float(kTickSeconds));
                         }
+                    } else if (happening.a == sim::skill::kFireScream) {
+                        // Fire Scream's three lanes down the aim the realm struck along (`c`), and
+                        // Darklord_firescream with them (fx/fire_scream.h).
+                        const float at[3] = {caster->crown[0], feet, caster->crown[2]};
+                        fireScream_.loose(at, float(happening.c) / 1000.0f);
+                        if (heard_.fireScream >= 0) emit(heard_.fireScream, at[0], at[2], happening.who);
+                    } else if (happening.a == sim::skill::kExplosion) {
+                        // Its Explosion: MU's three bombs off the struck body, eExplosion once,
+                        // on the tick its numbers come (fx/fire_scream.h).
+                        if (target) {
+                            const float at[3] = {target->crown[0], ground_->heightAt(target->crown[0], target->crown[2]),
+                                                 target->crown[2]};
+                            fireScream_.explode(at);
+                            if (heard_.explosion >= 0) emit(heard_.explosion, at[0], at[2]);
+                        }
                     } else if (happening.a == sim::skill::kElectricSpike) {
                         // Electric Spike's bolt down the aim the realm struck along (`c`), and
                         // sDarkElecSpike with it (fx/electric_spike.h).
@@ -2907,6 +2922,8 @@ void Play::update(double seconds) {
     fireBreath_.update(float(seconds), [&](const float* at) {
         if (heard_.explosion >= 0) emit(heard_.explosion, at[0], at[2]);
     });
+    // Fire Scream's lanes and its Explosion's bombs, the meteor's Explotion01 at each (fx/fire_scream.h).
+    fireScream_.update(float(seconds), [&](const float* at) { meteor_.blast(at, 1.0f); });
     // Hellfire's wall, and the stones it kicks up -- the meteor's (fx/hellfire.h).
     hellfire_.update(float(seconds),
                      [&](const float* at) { meteor_.stones(at[0], at[2], at[1], 1); });

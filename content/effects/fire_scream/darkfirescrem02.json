@@ -1,0 +1,19 @@
+{
+  "item": "darkfirescrem02",
+  "mu_name_from": "Data/Skill/darkfirescrem02.bmd, MODEL_DARK_SCREAM (ZzzOpenData.cpp:4248-4251), three made by Fire Scream at its let-go (ZzzCharacter.cpp:4500-4549).",
+  "kind": "skill",
+  "why_this_one": "Fire Scream's lane head: Scale 0.9 less 0.04 a frame, lit and drawn with a normal blend, laying Inferno's ribbon (BITMAP_JOINT_FORCE 7) and one PoundingBall puff at its birth; the client's hit test runs off it (1.03.35 ZzzEffect.cpp:7641-7657). game/fx/fire_scream.h draws it.",
+  "mesh": "darkfirescrem02.obj",
+  "mesh_from": "muextract export-obj on Data/Skill/darkfirescrem02.bmd: one mesh, chainring3, 8 triangles, crossed quads +-70 wide, trailing 146 behind its head.",
+  "parts": [
+    {
+      "group": "chainring3",
+      "sheet": "chainring3.png",
+      "blend": "alpha",
+      "note": "Data/Skill/chainring3.OZT, 128 x 64, 32-bit with alpha."
+    }
+  ],
+  "sheets": {
+    "inferno.png": "Data/Effect/inferno.OZJ, BITMAP_INFERNO (ZzzOpenData.cpp:5408): the ribbon along the ground, 13 tails, 150 wide."
+  }
+}

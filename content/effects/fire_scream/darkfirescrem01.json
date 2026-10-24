@@ -1,0 +1,22 @@
+{
+  "item": "darkfirescrem01",
+  "mu_name_from": "Data/Skill/darkfirescrem01.bmd, MODEL_DARK_SCREAM_FIRE (ZzzOpenData.cpp:4248-4251), three made by Fire Scream at its let-go (ZzzCharacter.cpp:4500-4549).",
+  "kind": "skill",
+  "why_this_one": "Fire Scream (AT_SKILL_FIRESCREAM): one a lane, additive, Scale 2.3 less 0.14 a frame, on 35 units a frame for 19 frames, a Flame01 at its head each frame (MoveHandlers.cpp:4626-4648). game/fx/fire_scream.h draws it, cut where it would trail behind his shoulders; docs/plans/dark-lord-spells/fire-scream.md.",
+  "mesh": "darkfirescrem01.obj",
+  "mesh_from": "muextract export-obj on Data/Skill/darkfirescrem01.bmd: two meshes. motion_blurr, 68 triangles, a flame sheet x -100..100, up to 169, trailing 341 behind its head (the export's -Z); SwordEffor2, 48 triangles, a streak in its middle.",
+  "parts": [
+    {
+      "group": "motion_blurr",
+      "sheet": "motion_blurr.png",
+      "blend": "additive",
+      "note": "Data/Skill/motion_blurr.OZJ, 32 x 64: red flame streaks; RENDER_BRIGHT (ZzzObject.cpp:1557-1564)."
+    },
+    {
+      "group": "SwordEffor2",
+      "sheet": "swordeffor2.png",
+      "blend": "additive",
+      "note": "Data/Skill/SwordEffor2.OZJ, 64 x 64: a gold burst."
+    }
+  ]
+}
