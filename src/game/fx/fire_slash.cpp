@@ -152,14 +152,51 @@ void FireSlash::bolt(const float from[3], const float to[3], float yaw, float pi
     }
 }
 
+void FireSlash::bladeBolt(int on, float from, float upto) {
+    for (Bolt& one : bolts_) {
+        if (one.alive) continue;
+        one = Bolt{};
+        one.alive = true;
+        one.on = on;
+        one.from = from;
+        one.upto = upto;
+        one.half = 10.0f * perUnit() * 0.5f;  // MU's Scale 10
+        one.left = kBladeBoltFrames + 1.0f;
+        one.jitter = kBladeThrow * kDegrees;
+        stepBolt(one);
+        return;
+    }
+}
+
+void FireSlash::onBlade(const Gathering& one, float share, float out[3]) {
+    for (int k = 0; k < 3; ++k) out[k] = one.grip[k] + (one.tip[k] - one.grip[k]) * share;
+}
+
 void FireSlash::stepBolt(Bolt& one) {
     const float stride = kBoltStep * perUnit();
     const float reach = kBoltReach * perUnit();
     const float homing = kBoltHoming * kDegrees;
     float way[3], side[3], up[3];
-    // Once a frame, Velocity on its unthrown way (MoveJoint's preamble).
-    frame(one.yaw, one.pitch, way, side, up);
-    for (int k = 0; k < 3; ++k) one.at[k] += way[k] * stride;
+    const bool onBlade_ = one.on >= 0;
+    if (onBlade_) {
+        // On the blade (the header's "ours"): walked afresh from where the blade is now, aimed
+        // straight at its other point, and no preamble step.
+        const Gathering& gathering = gatherings_[one.on];
+        if (!gathering.alive) {
+            one.alive = false;
+            return;
+        }
+        onBlade(gathering, one.from, one.at);
+        onBlade(gathering, one.upto, one.to);
+        const float d[3] = {one.to[0] - one.at[0], one.to[1] - one.at[1], one.to[2] - one.at[2]};
+        one.yaw = std::atan2(d[0], d[2]);
+        one.pitch = std::atan2(d[1], std::sqrt(d[0] * d[0] + d[2] * d[2]));
+        one.tails = 0;
+    } else {
+        // Once a frame, Velocity on its unthrown way (MoveJoint's preamble).
+        frame(one.yaw, one.pitch, way, side, up);
+        for (int k = 0; k < 3; ++k) one.at[k] += way[k] * stride;
+    }
     float far = 0.0f;
     for (int j = 0; j < kBoltTails; ++j) {
         // MoveHumming: turned toward its target, at most 50 degrees in each.
@@ -186,8 +223,10 @@ void FireSlash::stepBolt(Bolt& one) {
             one.trail[0][3][k] = one.at[k] + up[k] * one.half;
         }
         one.tails = std::min(one.tails + 1, kBoltTails);
+        // On the blade it stops at its point rather than curling round it.
+        if (onBlade_ && far < stride) break;
         // Past 150 from its target it is gone (sub 3).
-        if (far > reach) {
+        if (!onBlade_ && far > reach) {
             one.alive = false;
             return;
         }
@@ -200,25 +239,29 @@ void FireSlash::stepBolt(Bolt& one) {
 
 void FireSlash::stepGathering(Gathering& one) {
     const float metre = perUnit();
+    const int index = int(&one - gatherings_);
     for (int n = 0; n < kGatherPoints; ++n) {
-        // A point on the sphere round his hand.
-        const float z = unit() * 2.0f - 1.0f, turn = unit() * kTwoPi;
-        const float r = std::sqrt(std::max(0.0f, 1.0f - z * z));
-        const float at[3] = {one.hand[0] + r * std::cos(turn) * kGatherRadius * metre,
-                             one.hand[1] + z * kGatherRadius * metre,
-                             one.hand[2] + r * std::sin(turn) * kGatherRadius * metre};
+        // MU's three points a frame, on the blade (the header's "ours").
+        const float along = between(kBladeFrom, 1.0f);
         if (one.life % 2 == 0) {
-            // Set off on the point's own random turn and pitch (Angle (rand % 360, 0, rand % 360)).
-            bolt(at, one.hand, turn, unit() * kTwoPi, 10.0f, 10.0f);
+            // A crackle from this point to another a third to a half of the blade on.
+            const float span = between(0.3f, 0.5f) * (unit() < 0.5f ? -1.0f : 1.0f);
+            const float upto = std::clamp(along + span, kBladeFrom, 1.0f);
+            if (std::fabs(upto - along) > 0.1f) bladeBolt(index, along, upto);
         } else {
             for (Spark& spark : sparks_) {
                 if (spark.alive) continue;
                 spark = Spark{};
                 spark.alive = true;
-                for (int k = 0; k < 3; ++k) {
-                    spark.at[k] = at[k];
-                    spark.step[k] = (one.hand[k] - at[k]) / 10.0f;
-                }
+                spark.on = index;
+                spark.along = along;
+                // Off the blade on a random way, kSparkDrift units a frame.
+                const float z = unit() * 2.0f - 1.0f, turn = unit() * kTwoPi;
+                const float r = std::sqrt(std::max(0.0f, 1.0f - z * z));
+                spark.step[0] = r * std::cos(turn) * kSparkDrift * metre;
+                spark.step[1] = z * kSparkDrift * metre;
+                spark.step[2] = r * std::sin(turn) * kSparkDrift * metre;
+                onBlade(one, along, spark.at);
                 spark.scale = between(0.10f, 0.59f);
                 spark.left = kSparkLife;
                 break;
@@ -227,6 +270,7 @@ void FireSlash::stepGathering(Gathering& one) {
     }
     one.shiny = between(kShinyLeast, kShinyMost);
     one.shinyRoll = unit() * kTwoPi;
+    one.shinyAt = between(kBladeFrom, 1.0f);
     if (--one.life <= 0) one.alive = false;
 }
 
@@ -337,7 +381,7 @@ void FireSlash::gatherEffects(gfx::Effects& effects) const {
             if (!effects.add(sprite)) return;
         }
     }
-    // The sparks drawn in to his hand.
+    // The sparks riding his blade.
     if (bgfx::isValid(sparkSheet_)) {
         for (const Spark& one : sparks_) {
             if (!one.alive) continue;
@@ -351,12 +395,12 @@ void FireSlash::gatherEffects(gfx::Effects& effects) const {
             if (!effects.add(sprite)) return;
         }
     }
-    // The glow on his hand while a gathering lasts.
+    // The glow on his blade while a gathering lasts, a new place on it each frame.
     if (bgfx::isValid(shinySheet_)) {
         for (const Gathering& one : gatherings_) {
             if (!one.alive || one.wait > 0.0f) continue;
             gfx::Sprite sprite;
-            for (int k = 0; k < 3; ++k) sprite.position[k] = one.hand[k];
+            onBlade(one, one.shinyAt, sprite.position);
             sprite.halfWidth = kShinyWide * one.shiny * kShinyFrame * metre * 0.5f;
             sprite.halfHeight = kShinyTall * one.shiny * kShinyFrame * metre * 0.5f;
             sprite.spin = one.shinyRoll;

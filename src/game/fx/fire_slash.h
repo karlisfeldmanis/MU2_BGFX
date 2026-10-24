@@ -53,6 +53,13 @@
 // frames. MU's Shiny02 is its pixels times Scale times an AnimationFrame running 0.2 to 1;
 // drawn here at that run's middle, 0.6, one a frame where MU lays three, and the glow and
 // the sparks smaller than MU's (the user's, below). No light: MU adds none.
+// **The gathering is on his blade, not round his hand** (the user, 2026-10-24: "can we attach
+// that electricity effect and sparkle on weapon not just random offset which is not attached to
+// anything?"): MU's points on a sphere of 120 round bone 33 hung in the air, so here each frame
+// reads the blade's grip and tip, off the weapon's own mesh as fx/streak's ribbon does. Its
+// bolts crackle between two points on the blade, walked afresh on it every MU frame, and stop
+// at their target rather than curling round it; its sparks ride a point on the blade, drifting a
+// little off it; its glow runs along it.
 // The swing's two paces are game/play.cpp's (SkillRow::paceAfter); the blow is the realm's.
 //
 // Presentation only, `game` and not `sim`: nothing rolled here reaches the seeded log. Pools are
@@ -82,12 +89,12 @@ public:
     // stands and faces then -- his clip's key 3 as it is played.
     void cast(uint32_t owner, float release);
 
-    // Every frame. `place(id, feet, &yaw)` where a body is drawn, false for none; `hand(id, out)`
-    // its weapon's link bone, false for none; `sound(id, feet)` SOUND_SKILL_SWORD3 as a ribbon is
-    // made; `cuts(lay)` calls `lay(crown)` for each body whose defence stands cut, `crown` the
-    // point 200 of its scale over its feet.
-    template <typename Place, typename Hand, typename Sound, typename Cuts>
-    void update(float seconds, Place place, Hand hand, Sound sound, Cuts cuts);
+    // Every frame. `place(id, feet, &yaw)` where a body is drawn, false for none; `blade(id, grip,
+    // tip)` its weapon's two ends in the world, false for none; `sound(id, feet)`
+    // SOUND_SKILL_SWORD3 as a ribbon is made; `cuts(lay)` calls `lay(crown)` for each body whose
+    // defence stands cut, `crown` the point 200 of its scale over its feet.
+    template <typename Place, typename Blade, typename Sound, typename Cuts>
+    void update(float seconds, Place place, Blade blade, Sound sound, Cuts cuts);
 
     void gatherEffects(gfx::Effects& effects) const;
     void clear();
@@ -99,8 +106,13 @@ private:
     static constexpr int kGatherLife = 20;
     static constexpr int kGatherings = 2;           // AttackTime 1 and 2
     static constexpr int kGatherPoints = 3;
-    static constexpr float kGatherRadius = 120.0f;
-    static constexpr float kHandLift = 10.0f;
+    // Ours, the blade (above): the share of it from the grip that the gathering keeps off (the
+    // hilt), a bolt's throw (MU's 512 / Scale is 51 degrees at 10, which leaves the blade), its
+    // frames, and how far a spark drifts off the blade a frame, in units.
+    static constexpr float kBladeFrom = 0.15f;
+    static constexpr float kBladeThrow = 22.0f;
+    static constexpr float kBladeBoltFrames = 3.0f;
+    static constexpr float kSparkDrift = 1.5f;
     // Ours, a third of MU's 1.6-3.0 (the user, 2026-10-24: "sparkles has to be much smaller").
     // Then half that again, and the sparks under half MU's ("keep finetune sparkles still to
     // large", the same day).
@@ -148,8 +160,8 @@ private:
         float wait = 0.0f;     // seconds to its birth: the second is a frame behind the first
         int life = kGatherLife;
         float owed = 0.0f;     // reference frames not yet stepped
-        float hand[3] = {};
-        float shiny = 2.0f, shinyRoll = 0.0f;
+        float grip[3] = {}, tip[3] = {};  // his blade this frame, metres
+        float shiny = 2.0f, shinyRoll = 0.0f, shinyAt = 0.5f;  // the glow, and where on the blade
     };
     struct Ribbon {
         bool alive = false;
@@ -176,11 +188,15 @@ private:
         float jitter = 1.0f;   // radians a tail either way: 512 / Scale degrees
         int tails = 0;
         float trail[kBoltTails][4][3] = {};  // newest first, each tail's cross: X -/+, Z -/+
+        int on = -1;           // the gathering whose blade it crackles on, or -1
+        float from = 0.0f, upto = 1.0f;  // ...between these shares of it, grip to tip
     };
     struct Spark {
         bool alive = false;
         float at[3] = {}, step[3] = {};  // metres, and metres a frame
         float scale = 0.1f, left = 0.0f;
+        int on = -1;           // the gathering whose blade it rides, or -1
+        float along = 0.5f, off[3] = {};  // its share of the blade, and how far off it, metres
     };
     struct Fire {
         bool alive = false;
@@ -221,14 +237,18 @@ private:
     void bolt(const float from[3], const float to[3], float yaw, float pitch, float scale,
               float frames);
     void stepGathering(Gathering& one);
+    // A bolt crackling on gathering `on`'s blade from share `from` to `upto` of it.
+    void bladeBolt(int on, float from, float upto);
+    // A point `share` of the way along a gathering's blade, grip to tip.
+    static void onBlade(const Gathering& one, float share, float out[3]);
     template <typename Sound>
     void makeRibbon(Ribbon& one, Sound& sound);
     void stepRibbon(Ribbon& one);
     void stepBolt(Bolt& one);
 };
 
-template <typename Place, typename Hand, typename Sound, typename Cuts>
-void FireSlash::update(float seconds, Place place, Hand hand, Sound sound, Cuts cuts) {
+template <typename Place, typename Blade, typename Sound, typename Cuts>
+void FireSlash::update(float seconds, Place place, Blade blade, Sound sound, Cuts cuts) {
     seconds = std::fmin(seconds, 0.1f);
     const float frames = seconds * kReferenceFps;
     clock_ += seconds;
@@ -236,18 +256,16 @@ void FireSlash::update(float seconds, Place place, Hand hand, Sound sound, Cuts 
     const float metre = perUnit();
     for (Gathering& one : gatherings_) {
         if (!one.alive) continue;
-        float at[3];
-        if (hand(one.owner, at)) {
-            for (int k = 0; k < 3; ++k) one.hand[k] = at[k];
-            one.hand[1] += kHandLift * metre;
-        } else {
+        if (!blade(one.owner, one.grip, one.tip)) {
+            // Bare-handed or not drawn: a short upright line where his hand would be.
             float feet[3], yaw = 0.0f;
             if (!place(one.owner, feet, &yaw)) {
                 one.alive = false;
                 continue;
             }
-            for (int k = 0; k < 3; ++k) one.hand[k] = feet[k];
-            one.hand[1] += 1.2f;
+            for (int k = 0; k < 3; ++k) one.grip[k] = one.tip[k] = feet[k];
+            one.grip[1] += 1.0f;
+            one.tip[1] += 1.6f;
         }
         if (one.wait > 0.0f) {
             one.wait -= seconds;
@@ -306,7 +324,15 @@ void FireSlash::update(float seconds, Place place, Hand hand, Sound sound, Cuts 
             one.alive = false;
             continue;
         }
-        for (int k = 0; k < 3; ++k) one.at[k] += one.step[k] * frames;
+        if (one.on >= 0 && gatherings_[one.on].alive) {
+            // On the blade as it is now, drifting off it.
+            for (int k = 0; k < 3; ++k) one.off[k] += one.step[k] * frames;
+            onBlade(gatherings_[one.on], one.along, one.at);
+            for (int k = 0; k < 3; ++k) one.at[k] += one.off[k];
+        } else {
+            // Its blade's gathering is over: it stays where it was last.
+            one.on = -1;
+        }
         one.scale += kSparkGrows * frames;
     }
     for (Fire& one : fires_) {

@@ -2877,6 +2877,34 @@ void Play::update(double seconds) {
         }
         return false;
     };
+    // The weapon's grip and tip in the world: the tip the far end of its mesh's longest axis, as
+    // the skill streak reads it (play_show.cpp).
+    const auto bladeOf = [&](uint32_t id, float* grip, float* tip) {
+        const Drawn* drawn = drawnOf(id);
+        const FigureBody* look = drawn ? drawn->figure.body() : nullptr;
+        if (look == nullptr) return false;
+        for (const HeldItem& held : look->held) {
+            if (held.kind != "weapon" || held.mesh == nullptr || held.bone < 0) continue;
+            const content::Bounds& box = held.mesh->bounds();
+            int axis = 0;
+            float far = 0.0f;
+            for (int k = 0; k < 3; ++k) {
+                const float reach = std::max(std::fabs(box.min[k]), std::fabs(box.max[k]));
+                if (reach > far) {
+                    far = reach;
+                    axis = k;
+                }
+            }
+            if (far <= 0.001f) return false;
+            const float way = std::fabs(box.max[axis]) >= std::fabs(box.min[axis]) ? 1.0f : -1.0f;
+            const float origin[3] = {0.0f, 0.0f, 0.0f};
+            float end[3] = {0.0f, 0.0f, 0.0f};
+            end[axis] = way * far;
+            return drawn->figure.pointOn(held.bone, origin, grip) &&
+                   drawn->figure.pointOn(held.bone, end, tip);
+        }
+        return false;
+    };
     const auto skillWave = [&](int32_t skill, uint32_t id) {
         const int index = sim::skillIndexOf(skill);
         const Drawn* drawn = drawnOf(id);
@@ -2928,7 +2956,7 @@ void Play::update(double seconds) {
             float tall = 1.8f;
             return bodyAt(id, feet, &tall, yaw);
         },
-        gripOf, [&](uint32_t id, const float* feet) {
+        bladeOf, [&](uint32_t id, const float* feet) {
             const int index = sim::skillIndexOf(sim::skill::kFireSlash);
             if (index >= 0 && heard_.skill[index] >= 0) emit(heard_.skill[index], feet[0], feet[2], id);
         },
