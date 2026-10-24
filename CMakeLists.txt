@@ -1130,6 +1130,10 @@ target_compile_definitions(raid PRIVATE MU2_ASSET_DIR="${MU_ASSETS}"
                                         MU2_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 target_compile_options(raid PRIVATE -Wall -Wextra -Wno-unused-parameter)
 
+# The Armory's dump: cards, drop odds, skills, talents and rules for mu-classic.com, from the
+# game's own code and the release's packs (docs/plans/armory.md; `armory_dump --help`).
+include(tools/armory/dump/armory.cmake)
+
 # The server build's own: every test that runs without a window, a sound device or the client's
 # meshes (cooked_test reads those; a server has only the tables).
 if(MU2_SERVER_ONLY AND WIN32)
