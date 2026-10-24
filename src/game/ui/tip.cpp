@@ -607,9 +607,12 @@ float heavy(const Type& type, gfx::Canvas& canvas, float x, float baseline, floa
 }
 
 // A free row as one string: the keyword, the prose and the value, which wrap together.
-// A rune's pips hold their room as a word of one 'n' a pip, which wraps whole and is never
-// printed: the pips are drawn over it.
-size_t pipRoom(const Row& row) { return size_t(std::max(row.pips, row.lit)); }
+// A rune's pips hold their room as a word of 'n's, five for every four pips, which wraps whole
+// and is never printed: the pips are drawn over it.
+size_t pipRoom(const Row& row) {
+    const size_t slots = size_t(std::max(row.pips, row.lit));
+    return slots + (slots + 3) / 4;
+}
 std::string composed(const Row& row) {
     std::string s;
     if (!row.keyword.empty() && row.pips > 0) {
@@ -623,30 +626,43 @@ std::string composed(const Row& row) {
 }
 bool prosaic(const Row& row) { return !row.free.empty() || !row.tail.empty(); }
 
-// A rune's pips over the room `composed` left them, from `x`: a tight cluster of small round
-// stones, lit for those worn, dark for room left.
+// A rune's pips over the room `composed` left them, from `x`: a track, o-o-o-o -- round stones
+// on a thin line, lit stones and the line between them in the rune's ink (gold once full), the
+// rest hollow rings on a dim line, and any past the limit dim and struck through.
 void pipsAt(gfx::Canvas& canvas, const Row& row, float x, float cy, float size, uint32_t ink,
-            uint32_t gold, uint32_t dim) {
+            uint32_t gold, uint32_t dim, uint32_t hole) {
     const int slots = std::max(row.pips, row.lit);
-    const float r = size * 0.19f, pitch = r * 2.6f;
+    if (slots <= 0) return;
+    const float r = size * 0.20f, pitch = r * 3.0f, line = std::max(1.0f, size * 0.07f);
     const bool full = row.lit >= row.pips;
-    const auto disc = [&](float cx, uint32_t colour) {
+    const uint32_t lit = full ? gold : ink;
+    const auto disc = [&](float cx, float radius, uint32_t colour) {
         constexpr int kSides = 16;
         float xy[kSides * 2];
         for (int k = 0; k < kSides; ++k) {
             const float a = 6.2831853f * float(k) / float(kSides);
-            xy[k * 2] = cx + r * std::cos(a);
-            xy[k * 2 + 1] = cy + r * std::sin(a);
+            xy[k * 2] = cx + radius * std::cos(a);
+            xy[k * 2 + 1] = cy + radius * std::sin(a);
         }
         canvas.polygon(nullptr, xy, nullptr, kSides, colour);
     };
+    const auto at = [&](int i) { return x + r * 1.6f + pitch * float(i); };
+    // The line first, under the stones: dim the length of it, lit as far as the last lit.
+    if (slots > 1) {
+        canvas.rect({at(0), cy - line * 0.5f, at(slots - 1) - at(0), line}, dim);
+        const int litTo = std::min(row.lit, row.pips) - 1;
+        if (litTo > 0) canvas.rect({at(0), cy - line * 0.5f, at(litTo) - at(0), line}, lit);
+    }
     for (int i = 0; i < slots; ++i) {
-        const float cx = x + r * 1.6f + pitch * float(i);
+        const float cx = at(i);
         if (i >= row.pips) {  // past the limit: dim, struck through
-            disc(cx, dim);
-            canvas.rect({cx - r * 1.4f, cy - size * 0.03f, r * 2.8f, size * 0.06f}, gold);
-        } else {
-            disc(cx, i < row.lit ? (full ? gold : ink) : dim);
+            disc(cx, r, dim);
+            canvas.rect({cx - r * 1.4f, cy - line * 0.5f, r * 2.8f, line}, gold);
+        } else if (i < row.lit) {
+            disc(cx, r, lit);
+        } else {  // room for one more: a hollow ring
+            disc(cx, r, dim);
+            disc(cx, r - line * 1.2f, hole);
         }
     }
 }
@@ -1071,7 +1087,8 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, const gfx::Box& over, float s
                             const uint32_t gray = fade(colourOf(Tone::Gray));
                             pipsAt(canvas, row, px, baseline - rowSize * 0.32f, rowSize,
                                    fade(colourOf(row.keywordTone)), fade(colourOf(Tone::Yellow)),
-                                   (gray & 0x00FFFFFFu) | (((gray >> 24) * 2 / 5) << 24));
+                                   (gray & 0x00FFFFFFu) | (((gray >> 24) * 3 / 5) << 24),
+                                   fade(kBody));
                             px += wide;
                             at = stop;
                             continue;
