@@ -272,7 +272,7 @@ void FireSlash::gatherEffects(gfx::Effects& effects) const {
             if (!one.alive) continue;
             gfx::Sprite sprite;
             for (int k = 0; k < 3; ++k) sprite.position[k] = one.at[k];
-            sprite.halfWidth = sprite.halfHeight = kSparkPixels * one.scale * metre * 0.5f;
+            sprite.halfWidth = sprite.halfHeight = kSparkPixels * one.scale * kSparkShrink * metre * 0.5f;
             const float lum = clampOne(one.left / 5.0f);
             for (int k = 0; k < 3; ++k) sprite.colour[k] = lum;
             sprite.sheet = sparkSheet_;

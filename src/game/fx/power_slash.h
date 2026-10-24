@@ -86,9 +86,10 @@ private:
     static constexpr float kLightTiles = 3.0f;
     // ---- its sprites, a frame each ----------------------------------------------------------
     // Ours, smaller than MU's 1.5 and 3.5 (a 224-unit flare on each of five heads): the user,
-    // 2026-10-24, "sparkles has to be much smaller".
-    static constexpr float kShinyScale = 0.6f, kShinyWide = 32.0f, kShinyTall = 64.0f;
-    static constexpr float kFlareScale = 1.2f, kFlarePixels = 64.0f;
+    // 2026-10-24, "sparkles has to be much smaller", then half that again: "keep finetune
+    // sparkles still to large".
+    static constexpr float kShinyScale = 0.3f, kShinyWide = 32.0f, kShinyTall = 64.0f;
+    static constexpr float kFlareScale = 0.6f, kFlarePixels = 64.0f;
     // ---- the puffs (BITMAP_SMOKE sub 3) and the haze (sub 11) -------------------------------
     static constexpr int kPuffsAFrame = 4;
     static constexpr float kSmokePixels = 64.0f;
