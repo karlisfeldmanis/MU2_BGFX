@@ -908,6 +908,7 @@ void Play::update(double seconds) {
                         caster->figure.play(burst, true, -1.0f, true);
                         caster->swinging = caster->casting = caster->figure.length();
                         caster->swingPace = 1.0f;
+                        caster->swingPaceAfter = 0.0f;
                         ++caster->swingToken;
                     }
                     // Owed to the key he comes down on (kNovaBurstKey): the burst, its sound,
@@ -1001,6 +1002,7 @@ void Play::update(double seconds) {
                         // was the clip's own 2.08 s until kSpellQuicken, 2026-10-03).
                         caster->swingPace = lasts > 0.01f ? std::max(1.0f, caster->figure.length() / lasts)
                                                           : 1.0f;
+                        caster->swingPaceAfter = 0.0f;
                         caster->swinging = lasts;
                         ++caster->swingToken;
                         // A new draw: the arrow is back on the string (Figure::nock).
@@ -1028,6 +1030,7 @@ void Play::update(double seconds) {
                         caster->selfClip = row->onSelf() ? caster->castClip : -1;
                         caster->casting = caster->figure.played();
                         caster->swingPace = 1.0f;
+                        caster->swingPaceAfter = 0.0f;
                         caster->swinging = caster->figure.played();
                         ++caster->swingToken;
                         // A new draw: the arrow is back on the string (Figure::nock).
@@ -1786,6 +1789,8 @@ void Play::update(double seconds) {
                         // hand was still coming down when the next cast began.
                         const sim::SkillRow* spell =
                             cast ? sim::skillNumbered(swinger->castSkill) : nullptr;
+                        swinger->swingPaceAfter = 0.0f;
+                        float keyed = 0.0f;  // the clip's seconds, authored, to its pace's turn
                         // A primary's does the same at AttackSpeed, every class's: the realm
                         // holds Twisting Slash and Skillshot for their quickened clip
                         // (Realm::throwSkill), so the spin has to end when the hold does. And
@@ -1804,10 +1809,28 @@ void Play::update(double seconds) {
                                                body->castSpeed(realm_.tick()));
                             const float fits = float(ticks) * float(kTickSeconds);
                             if (fits > 0.01f && clip > fits) swinger->swingPace = clip / fits;
+                            // **Fire Slash's two paces** (SkillRow::paceAfter): MU's 0.24 to key 3
+                            // and 0.54 after it, fitted so key 3 comes on the realm's release and
+                            // the spin ends on its hold.
+                            const content::PlayerAction* action = tables_.action(spell->clip);
+                            if (spell->paceAfter > 0.0f && fits > 0.01f && action != nullptr &&
+                                action->keys > spell->paceKey) {
+                                keyed = clip * float(spell->paceKey) / float(action->keys);
+                                swinger->swingPace = keyed / (spell->release * fits);
+                                swinger->swingPaceAfter = (clip - keyed) / ((1.0f - spell->release) * fits);
+                            }
                         }
                         // Paced on the whole clip, as the realm times it, and ended on its
                         // last authored key, before the closing one (Figure::played).
                         swinger->swinging = swinger->figure.played() / swinger->swingPace;
+                        // Two paces: the keys to the turn at the first, the rest at the second.
+                        float released = swinger->swinging * (spell ? spell->release : 0.5f);
+                        if (swinger->swingPaceAfter > 0.0f) {
+                            released = keyed / swinger->swingPace;
+                            swinger->swinging =
+                                released + std::max(0.0f, swinger->figure.played() - keyed) / swinger->swingPaceAfter;
+                            swinger->swingTurn = swinger->swinging - released;
+                        }
                         ++swinger->swingToken;
                         // A new draw: the arrow is back on the string (Figure::nock).
                         swinger->figure.nock(true);
@@ -1851,6 +1874,12 @@ void Play::update(double seconds) {
                             // starts; the weapon leaves his hand a key in. fx/fury.h.
                             if (swinger->castSkill == sim::skill::kRagefulBlow) {
                                 throwFury(*swinger, body);
+                            }
+                            // Fire Slash's SOUND_SKILL_SWORD3 with its ribbon, on key 3, and the
+                            // lightning gathering at his hand from now. fx/fire_slash.h.
+                            if (swinger->castSkill == sim::skill::kFireSlash) {
+                                cry = -1;
+                                fireSlash_.cast(swinger->id, released);
                             }
                         }
                         if (cry >= 0 && swinger->placed) {
@@ -2714,6 +2743,7 @@ void Play::update(double seconds) {
                 if (held >= 0 && hero->figure.clip() != held) hero->figure.play(held, true);
                 hero->swinging = hero->casting = 1e9f;
                 hero->swingPace = 0.5f;
+                hero->swingPaceAfter = 0.0f;
             }
             float points[20 * 3];
             int count = 0;
@@ -2749,6 +2779,7 @@ void Play::update(double seconds) {
         if (Drawn* hero = drawnOf(realm_.hero().id); hero && hero->swinging > 1e8f) {
             hero->swinging = hero->casting = 0.0f;
             hero->swingPace = 1.0f;
+            hero->swingPaceAfter = 0.0f;
         }
     }
     spirits_.update(float(seconds), [&](uint32_t id, float* feet) {
@@ -2869,6 +2900,44 @@ void Play::update(double seconds) {
     // Impale's sound and ghosts (fx/impale.h).
     impale_.update(float(seconds), bodyAt,
                    [&](uint32_t id) { skillWave(sim::skill::kImpale, id); });
+    // Fire Slash's gathering, ribbon and skulls (fx/fire_slash.h): its swing's wave as the ribbon
+    // is made, and eBloodAttack on a body as a cut is laid on it or laid again.
+    fireSlash_.update(
+        float(seconds),
+        [&](uint32_t id, float* feet, float* yaw) {
+            float tall = 1.8f;
+            return bodyAt(id, feet, &tall, yaw);
+        },
+        gripOf, [&](uint32_t id, const float* feet) {
+            const int index = sim::skillIndexOf(sim::skill::kFireSlash);
+            if (index >= 0 && heard_.skill[index] >= 0) emit(heard_.skill[index], feet[0], feet[2], id);
+        },
+        [&](auto lay) {
+            const int64_t now = int64_t(realm_.tick());
+            for (Drawn& one : drawn_) {
+                const sim::Body* body = realm_.find(one.id);
+                if (body == nullptr || !body->alive() || body->defenseCutUntil <= now) {
+                    one.cutSeen = 0;
+                    continue;
+                }
+                if (body->defenseCutUntil > one.cutSeen) {
+                    one.cutSeen = body->defenseCutUntil;
+                    if (heard_.bloodAttack >= 0 && one.placed) {
+                        emit(heard_.bloodAttack, one.crown[0], one.crown[2], one.id);
+                    }
+                }
+                if (!one.visible || !one.placed || !ground_) continue;
+                // 200 of its scale over its feet: MU's o->Scale, here its drawn height over a
+                // man's 1.8 m.
+                const FigureBody* look = one.figure.body();
+                const float scale = look ? look->height * look->scale / 1.8f : 1.0f;
+                const float crown[3] = {one.crown[0],
+                                        ground_->heightAt(one.crown[0], one.crown[2]) + 2.0f * scale *
+                                            ground_->metresPerTile(),
+                                        one.crown[2]};
+                lay(crown);
+            }
+        });
     // The fire on him while he calls a Meteorite down: while its clip is on him, not while the
     // realm holds him -- a cast on the tick he arrives is held while the drawn body is still
     // sliding in on its run, and the fire read as a man on fire running. And while he casts
@@ -3184,9 +3253,11 @@ void Play::update(double seconds) {
                 const bool held = t >= kRiteLow && t < Rite::kStands;
                 if (held) hero->figure.setClock(kRiteLow);
                 hero->swingPace = held ? 0.0f : 1.0f;
+                hero->swingPaceAfter = 0.0f;
             } else if (hero->swinging > 1e8f) {
                 hero->swinging = 0.0f;
                 hero->swingPace = 1.0f;
+                hero->swingPaceAfter = 0.0f;
             }
         }
     }

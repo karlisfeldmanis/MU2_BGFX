@@ -566,6 +566,9 @@ bool PlayMode::open(Context& ctx) {
                 world_.played().fury().open(assets, ctx.textures,
                                             world_.played().showing().table(),
                                             &world_.ground());
+                world_.played().fireSlash().open(assets, ctx.textures,
+                                                 world_.played().showing().table(),
+                                                 &world_.ground());
                 world_.played().hellfire().open(assets, ctx.textures, &world_.ground());
                 world_.played().storm().open(assets, ctx.textures,
                                              world_.played().showing().table(), &world_.ground());
@@ -2025,6 +2028,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().inferno().gatherEffects(ctx.renderer.effects());
         world_.played().aqua().gatherEffects(ctx.renderer.effects());
         world_.played().deathStab().gatherEffects(ctx.renderer.effects());
+        world_.played().fireSlash().gatherEffects(ctx.renderer.effects());
         world_.played().impale().gatherEffects(ctx.renderer.effects());
         world_.played().fireBreath().gatherEffects(ctx.renderer.effects(), eye.position,
                                                    eye.target, daylightOf(ctx.lighting));

@@ -58,6 +58,7 @@
 #include "game/fx/thunder.h"
 #include "game/fx/wheel.h"
 #include "game/fx/fury.h"
+#include "game/fx/fire_slash.h"
 #include "game/fx/hellfire.h"
 #include "game/fx/storm.h"
 #include "game/fx/inferno.h"
@@ -1086,6 +1087,8 @@ public:
     Wheel& wheel() { return wheel_; }
     // The knight's Rageful Blow: his weapon thrown down and the ground broken. fx/fury.h.
     Fury& fury() { return fury_; }
+    // The gladiator's Fire Slash: its ribbon, the lightning at his hand, the skulls. fx/fire_slash.h.
+    FireSlash& fireSlash() { return fireSlash_; }
     // The wizard's Hellfire: the sigil and the wall of fire at his feet. fx/hellfire.h.
     Hellfire& hellfire() { return hellfire_; }
     // The wizard's Twister: the whirlwind walked out ahead of him. fx/storm.h.
@@ -1449,6 +1452,12 @@ private:
         // is under its fourth key (ZzzCharacter.cpp:10079). fx/fury.h.
         float handEmpty = 0.0f;
         float swingPace = 1.0f;  // how much faster than authored the swing clip must run
+        // And a second pace from a key on (Fire Slash's, sim::SkillRow::paceAfter): run at
+        // `swingPaceAfter` once `swinging` is down to `swingTurn`. 0 for one pace through.
+        float swingPaceAfter = 0.0f, swingTurn = 0.0f;
+        // The last defence cut seen on it (sim::Body::defenseCutUntil): one later is a cut laid
+        // or laid again, and sounds (fx/fire_slash.h).
+        int64_t cutSeen = 0;
         // Seconds of a flinch left to play, held as a swing is -- without it the idle took the
         // shock clip back on the next frame. A swing or a step ends it. See Play::flinch.
         float shocked = 0.0f;
@@ -1944,6 +1953,7 @@ private:
     Firework firework_;
     Wheel wheel_;
     Fury fury_;
+    FireSlash fireSlash_;
     Hellfire hellfire_;
     Storm storm_;
     Inferno inferno_;
@@ -2095,6 +2105,7 @@ private:
         int weakness = -1;                     // SE_Ch_summoner_weakness, the Ancient rune Weakness's
         int pollution = -1;                    // Rargle, the Ancient rune Pollution's
         int drainLife = -1;                    // SE_Ch_summoner_skill07, the Ancient rune Drain Life's
+        int bloodAttack = -1;                  // eBloodAttack, Fire Slash's cut landing on a body
         // The knight's skills, one wave each -- and Cyclone and Slash share SWORD4, which is
         // MU's own reuse. Indexed by the skill table's own index, as the cooldowns are.
         int skill[sim::kSkills] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};

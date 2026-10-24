@@ -390,6 +390,8 @@ const char* Hud::artOf(const Boon& one) {
            // A monster's burn and freeze (Vitals): the Flame's pillar and the Ice spell's shard.
            : one.burn             ? "skill_5"
            : one.frozen           ? "skill_7"
+           // Fire Slash's cut wears the skill's own cell.
+           : one.cut              ? "skill_55"
            : one.ale              ? "buff_ale"
            : one.frenzy           ? "buff_frenzy"
            : one.potion == 0      ? "buff_healing"

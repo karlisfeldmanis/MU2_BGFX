@@ -146,6 +146,8 @@ public:
         // Or, on a monster (Vitals' row under its bar): an Immolate or Scorch burn, or a Frost
         // Arrow's freeze. Nothing lays either on a player.
         bool burn = false, frozen = false;
+        // Or Fire Slash's defence cut (sim::Body::defenseCutUntil), MU's eDeBuff_Defense.
+        bool cut = false;
         // Or a potion still pouring in: 0 health, 1 mana, -1 none. Its second of three
         // instalments (Realm::pouring), and `amount` what is still to come. Ours, as the Ale's
         // cell is (the user, 2026-10-05: 'when char uses potion add little aura icon while
@@ -181,16 +183,16 @@ public:
         float share = 0.0f;   // and that as a fraction of its whole, for the bar under it
         bool empty() const {
             return skill == 0 && !ale && !poison && !chill && !frenzy && !dragonfire && !bleed && !burn &&
-                   !frozen && pet < 0 && potion < 0 && !summon && talent < 0 && !party;
+                   !frozen && !cut && pet < 0 && potion < 0 && !summon && talent < 0 && !party;
         }
         // Something done TO him: its cell wears a red edge, as a debuff does in WoW's strip.
-        bool debuff() const { return poison || chill || dragonfire || bleed || burn || frozen; }
+        bool debuff() const { return poison || chill || dragonfire || bleed || burn || frozen || cut; }
         bool operator==(const Boon& o) const {
             // Tenths, as the cooldown's sweep is compared: a strip that redrew on every frame
             // of four seconds would be eighty redraws for a number that changes forty times.
             return skill == o.skill && ale == o.ale && poison == o.poison &&
                    chill == o.chill && frenzy == o.frenzy && dragonfire == o.dragonfire && bleed == o.bleed &&
-                   burn == o.burn && frozen == o.frozen && stacks == o.stacks && pet == o.pet && summon == o.summon &&
+                   burn == o.burn && frozen == o.frozen && cut == o.cut && stacks == o.stacks && pet == o.pet && summon == o.summon &&
                    kinship == o.kinship && lifeMost == o.lifeMost && talent == o.talent &&
                    party == o.party && trio == o.trio &&
                    potion == o.potion && amount == o.amount &&

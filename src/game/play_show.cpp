@@ -158,6 +158,9 @@ void Play::exhale(float seconds) {
         if (skill && one.swingSkill == sim::skill::kTwistingSlash) continue;
         // Nor Rageful Blow, past them too, whose weapon is out of his hand. fx/fury.h.
         if (skill && one.swingSkill == sim::skill::kRagefulBlow) continue;
+        // Nor Fire Slash, on the same WHEEL: MU lays no blur on it (ZzzCharacter.cpp:3783-3864),
+        // its ribbon is the look. fx/fire_slash.h.
+        if (skill && one.swingSkill == sim::skill::kFireSlash) continue;
         // Nor Death Stab: PLAYER_ATTACK_DEATHSTAB is on neither of CreateWeaponBlur's lists -- a
         // spear blurs PLAYER_ATTACK_SPEAR1..SCYTHE3 alone (ZzzCharacter.cpp:3859-3863) -- and the
         // blur the skill rung laid over its thrust was a pink-white smear MU never draws
@@ -1684,7 +1687,9 @@ void Play::follow(float seconds) {
             one.casting = 0.0f;
         }
         if (one.swinging > 0.0f) {
-            one.clipRate = one.swingPace;
+            // Fire Slash's second pace from its key 3 on (Drawn::swingPaceAfter).
+            one.clipRate = one.swingPaceAfter > 0.0f && one.swinging <= one.swingTurn ? one.swingPaceAfter
+                                                                                     : one.swingPace;
             one.shocked = 0.0f;
             continue;
         }
