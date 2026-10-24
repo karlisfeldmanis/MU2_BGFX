@@ -48,7 +48,8 @@ armory_deploy() {
   local link=()
   [ -n "$was" ] && [ "$was" != "$a" ] && link=(--link-dest="$box/$was")
   $run ssh $host "mkdir -p $box"
-  $run rsync -az --chmod=a+rX "${link[@]}" "$d/" "$host:$box/$a/"
+  # --delete: a release sent again (a rebuild of the same commit) keeps nothing of the old one
+  $run rsync -az --delete --chmod=a+rX "${link[@]}" "$d/" "$host:$box/$a/"
   $run ssh $host "cd $box && ln -sfn $a current.new && mv -T current.new current"
   $run ssh $host "cd $box && python3 - $a ${was:--} <<'EOF'
 import json, os, shutil, sys
