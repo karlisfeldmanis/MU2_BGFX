@@ -48,11 +48,13 @@ SITE = i18n.SITE
 LISTS = ("items", "monsters", "npcs", "quests", "events", "runes", "skills", "talents", "mixes", "elites", "worlds", "boxes")
 LIST_NAMES = {"items": "Items", "monsters": "Monsters", "npcs": "NPCs", "quests": "Quests", "events": "Events",
               "runes": "Runes", "skills": "Skills", "talents": "Talent calculator", "mixes": "Chaos Machine",
-              "elites": "Elite monsters", "worlds": "Maps", "boxes": "Boxes"}
+              "elites": "Elite monsters", "worlds": "Maps", "boxes": "Boxes", "updates": "Updates"}
 # An entity's path's one: /armory/item/<slug> is items/<slug>.json (build.py singular()).
 ONE = {"item": "items", "monster": "monsters", "npc": "npcs", "quest": "quests", "event": "events", "rune": "runes",
        "skill": "skills", "talents": "talents", "mix": "mixes", "elite": "elites", "world": "worlds", "box": "boxes"}
 KIND_ONE = {v: k for k, v in ONE.items()}
+# A class as the pages name it.
+CLASS_NAMES = {"DK": "Dark Knight", "DW": "Dark Wizard", "FE": "Fairy Elf", "Elf": "Fairy Elf", "MG": "Magic Gladiator"}
 # What the items list's address carries (/armory?cat=... before /armory/items).
 LIST_QUERY = {"cat", "sub", "sort", "dir", "page", "cls", "src", "q"}
 STATIC = {"armory.js", "armory.css", "card.js", "card_grain.png"}
@@ -228,9 +230,16 @@ class Armory:
         if not parts and LIST_QUERY & set(parse_qs(query)):
             return self.redirect(h, ("" if lang is None else f"/{lang}") + f"/armory/items?{query}")
         route = self.route(r, parts)
+        status = 200
         if route is None:
-            h.send_error(404)
-            return True
+            # An address the release had before (a page folded into another's): there, for good.
+            if r is not None and len(parts) == 2 and parts[0] in ONE:
+                moved = (r.load("redirects.json") or {}).get(f"{ONE[parts[0]]}/{parts[1]}")
+                if isinstance(moved, str) and SLUG.match(moved):
+                    return self.redirect(h, ("" if lang is None else f"/{lang}") + f"/armory/{parts[0]}/{moved}" + (f"?{query}" if query else ""),
+                                         permanent=True)
+            # Anything else not here is the site's own page that says so, not a bare error.
+            route, status = {"view": "missing", "kind": "missing"}, 404
         # As every page of the site: an English page asked by a browser in one of the site's
         # languages is sent there (i18n.pick), the pick in the footer outranking the browser's.
         if lang is None:
@@ -243,7 +252,7 @@ class Armory:
         elif parse_qs(query).get("lang", [""])[0] in (["en"] + list(i18n.LANGS)):
             return self.keep_pick(h, parse_qs(query)["lang"][0], rest)
         page = self.page(h, r, route, lang or "en", rest).encode()
-        h.send_response(200)
+        h.send_response(status)
         h.send_header("Content-Type", "text/html; charset=utf-8")
         h.send_header("Content-Length", str(len(page)))
         h.send_header("Vary", "Accept-Language, Cookie")
@@ -262,8 +271,8 @@ class Armory:
         h.end_headers()
         return True
 
-    def redirect(self, h, where, vary=False):
-        h.send_response(302)
+    def redirect(self, h, where, vary=False, permanent=False):
+        h.send_response(301 if permanent else 302)
         h.send_header("Location", where)
         if vary:
             h.send_header("Vary", "Accept-Language, Cookie")
@@ -278,6 +287,8 @@ class Armory:
             return {"view": "home", "kind": "home"}
         if len(parts) == 1:
             kind = "mixes" if parts[0] == "chaos-machine" else parts[0]
+            if kind == "updates":  # every release's patch notes (history/releases.json)
+                return {"view": "list", "kind": "updates"}
             if kind in LISTS and (r is None or kind in r.kinds() or kind in ("items",)):
                 return {"view": "list", "kind": kind}
             return None
@@ -382,11 +393,12 @@ class Armory:
             if st.get("drop_level"):
                 bits.append(f"drop level {st['drop_level']}")
             if e.get("classes"):
-                bits.append("for " + ", ".join(e["classes"]))
+                bits.append("for " + ", ".join(CLASS_NAMES.get(c, c) for c in e["classes"]))
             drops = e.get("drops") or []
             if drops:
                 best = max(drops, key=lambda d: d.get("chance") or 0)
                 c = best.get("chance") or 0
+                # As many as the page's "Dropped by" tab counts: monsters, not their places.
                 bits.append(f"dropped by {len({d.get('monster_slug') for d in drops})} monsters"
                             + (f", best 1 in {round(1 / c):,} from {best.get('monster_name')}" if 0 < c < 0.2 else ""))
             if e.get("live") is False:
@@ -400,7 +412,9 @@ class Armory:
             homes = sorted({n.get("map") for n in e.get("nests") or [] if n.get("map")}) or [w.title() for w in e.get("met_in") or []]
             if homes:
                 bits.append("lives in " + ", ".join(homes))
-            n = sum(len(p.get("items") or []) for p in e.get("drops") or [])
+            places = e.get("drops") or []
+            pl = next((d for d in places if not d.get("elite")), places[0] if places else None)
+            n = sum(1 for i in (pl or {}).get("items") or [] if (i.get("chance") or 0) > 0)  # as its Drops tab counts them
             if n:
                 bits.append(f"drops {n} items")
         elif kind == "npcs":
@@ -434,7 +448,7 @@ class Armory:
         tr = lambda s: texts.get(i18n.key(s)) or s  # noqa: E731
         kind = route["kind"]
         e, card, row = None, None, None
-        title = "Armory" if kind == "home" else LIST_NAMES.get(kind, kind.title())
+        title = "Armory" if kind == "home" else "Not found" if kind == "missing" else LIST_NAMES.get(kind, kind.title())
         desc = ("Every item, monster, townsperson, quest, event, rune, skill and talent of MU Classic, built from "
                 "the game itself on every release: drop chances, shops, mixes, updates and players' comments.")
         image = None
@@ -543,7 +557,10 @@ class Armory:
         kind = route["kind"]
         trail = [f'<li><a class="crumb" href="{pre}/armory">Armory</a></li>']
         out = []
-        if route["view"] == "home":
+        if route["view"] == "missing":
+            trail.append(f'<li><span class="here">{esc(tr("Not found"))}</span></li>')
+            out.append(f'<h1 class="h1 big">{esc(tr("Not found"))}</h1><p>{esc(tr("Nothing by that name in this release."))}</p>')
+        elif route["view"] == "home":
             trail = [f'<li><span class="here">Armory</span></li>']
             out.append('<h1 class="h1 big">Armory</h1><ul>')
             for k in r.kinds():
@@ -554,6 +571,8 @@ class Armory:
             one = KIND_ONE.get(kind)
             out.append(f'<h1 class="h1">{esc(LIST_NAMES.get(kind, kind))}</h1><ul>')
             for row in r.rows(kind):
+                if row.get("in_release") is False or row.get("listed") is False:
+                    continue  # what the list page leaves out too
                 out.append(f'<li><a href="{pre}/armory/{one}/{esc(row.get("slug"))}">{esc(row.get("n"))}</a></li>')
             out.append("</ul>")
         else:
@@ -561,30 +580,73 @@ class Armory:
             name = e.get("name") or e.get("title") or e.get("class") or route["slug"]
             trail.append(f'<li><span class="here">{esc(name)}</span></li>')
             out.append(f'<h1 class="h1 big">{esc(name)}</h1>')
-            facts = []
-            # A monster's numbers as the realm spawns it, never its content row.
-            sp = next((x for x in e.get("spawned") or [] if not x.get("elite")), None)
-            shown = ({"level": sp.get("level"), "life": sp.get("life"), "defense": sp.get("defense")} if sp
-                     else {} if kind == "monsters" else (e.get("stats") or e.get("guard") or {}))
-            for k, v in shown.items():
-                if isinstance(v, (int, float, str)) and not isinstance(v, bool) and v not in ("", None):
-                    facts.append(f"<li>{esc(k.replace('_', ' '))}: {esc(v)}</li>")
-            for k in ("tells", "giverName", "rarity_name", "role"):
-                if isinstance(e.get(k), str) and e[k] and e[k].lower() not in ("none", "null"):
-                    facts.append(f"<li>{esc(e[k])}</li>")
+            facts, links = self.ssr_facts(r, kind, e, pre)
             if facts:
-                out.append("<ul>" + "".join(facts[:24]) + "</ul>")
-            links = []
-            for d in (e.get("drops") or [])[:60]:
-                if d.get("monster_slug"):
-                    links.append(f'<li><a href="{pre}/armory/monster/{esc(d["monster_slug"])}">{esc(d.get("monster_name"))}</a></li>')
-                for it in d.get("items") or []:
-                    if it.get("slug"):
-                        links.append(f'<li><a href="{pre}/armory/item/{esc(it["slug"])}">{esc(it.get("n"))}</a></li>')
+                out.append("<dl>" + "".join(f"<dt>{esc(k)}</dt><dd>{v}</dd>" for k, v in facts) + "</dl>")
             if links:
-                out.append("<ul>" + "".join(dict.fromkeys(links)) + "</ul>")
+                out.append("<ul>" + "".join(f"<li>{x}</li>" for x in links) + "</ul>")
         return (f'<div class="awrap" id="ssr"><nav aria-label="Breadcrumb"><ol class="crumbs">{"".join(trail)}</ol></nav>'
                 + "".join(out) + "</div>")
+
+    def place_name(self, r, d):
+        """A drop's place as the pages say it: its event's name (Blood Castle 4), else its map's."""
+        kind = d.get("kind")
+        key = f"{kind}-{d.get(kind)}" if kind in ("castle", "square") else "raid" if kind == "raid" else None
+        ev = {x.get("k"): x.get("n") for x in r.rows("events")}
+        worlds = {x.get("k"): x.get("n") for x in r.rows("worlds")}
+        name = ev.get(key) or worlds.get(d.get("world")) or d.get("world") or ""
+        return name + (", Elite" if d.get("elite") else "")
+
+    def ssr_facts(self, r, kind, e, pre):
+        """The labelled facts and links of an entity's plain page, the ones its page shows: never a
+        table row's raw fields."""
+        facts, links = [], []
+        odds = lambda c: ("always" if c >= 0.999 else f"{round(c * 100)}%" if c >= 0.2 else f"1 in {round(1 / c):,}") if c else "—"  # noqa: E731
+        num = lambda v: f"{v:,}" if isinstance(v, (int, float)) else esc(v)  # noqa: E731
+        if kind == "items":
+            st = e.get("stats") or {}
+            need = ((e.get("powers") or {}).get("needs") or st.get("requires") or {})
+            if st.get("minimum_damage"):
+                facts.append(("Damage", f"{num(st['minimum_damage'])} ~ {num(st['maximum_damage'])}"))
+            for k, label in (("defense", "Defense"), ("attack_speed", "Attack speed"), ("magic_power", "Wizardry"), ("drop_level", "Drop level"), ("durability", "Durability")):
+                if st.get(k):
+                    facts.append((label, num(st[k])))
+            req = ", ".join(f"{label} {need[k]}" for k, label in (("level", "Level"), ("strength", "Strength"), ("agility", "Agility"), ("energy", "Energy"), ("vitality", "Vitality")) if need.get(k))
+            if req:
+                facts.append(("Requires at +0", esc(req)))
+            if e.get("classes"):
+                facts.append(("Classes", esc(", ".join(CLASS_NAMES.get(c, c) for c in e["classes"]))))
+            for d in sorted(e.get("drops") or [], key=lambda d: -(d.get("chance") or 0))[:40]:
+                if d.get("monster_slug"):
+                    links.append(f'<a href="{pre}/armory/monster/{esc(d["monster_slug"])}">{esc(d.get("monster_name"))}</a> ({esc(self.place_name(r, d))}) — {odds(d.get("chance") or 0)}')
+        elif kind == "monsters":
+            sp = next((x for x in e.get("spawned") or [] if not x.get("elite")), None) or {}
+            for k, label in (("level", "Level"), ("life", "Life"), ("defense", "Defense")):
+                if sp.get(k):
+                    facts.append((label, num(sp[k])))
+            if sp.get("damage") and sp["damage"][1]:
+                facts.append(("Damage", f"{num(sp['damage'][0])} ~ {num(sp['damage'][1])}"))
+            places = e.get("drops") or []
+            lives = [w.title() for w in e.get("met_in") or []] or list(dict.fromkeys(self.place_name(r, d) for d in places if not d.get("elite"))) \
+                or [n.get("map") for n in e.get("nests") or []]
+            if lives:
+                facts.append(("Lives in", esc(", ".join(lives))))
+            pl = next((d for d in places if not d.get("elite")), places[0] if places else None)
+            for it in sorted((pl or {}).get("items") or [], key=lambda i: -(i.get("chance") or 0)):
+                if it.get("slug") and (it.get("chance") or 0) > 0:
+                    links.append(f'<a href="{pre}/armory/item/{esc(it["slug"])}">{esc(it.get("n"))}</a> — {odds(it["chance"])}')
+        elif kind == "npcs":
+            g = e.get("guard") or {}
+            for k, label in (("level", "Level"), ("life", "Life"), ("defense", "Defense")):
+                if g.get(k):
+                    facts.append((label, num(g[k])))
+            maps = list(dict.fromkeys(w.get("map") for w in e.get("where") or [] if w.get("map")))
+            if maps:
+                facts.append(("Where", esc(", ".join(maps))))
+        for k, label in (("tells", "What it does"), ("giverName", "Given by"), ("rarity_name", "Rarity")):
+            if isinstance(e.get(k), str) and e[k]:
+                facts.append((label, esc(e[k])))
+        return facts, links
 
     # ---- comments
 

@@ -71,7 +71,15 @@ async function main() {
     ok(/<meta name="description" content="[^"]{30,}">/.test(html), 'item page: a description');
     ok(html.includes(`<h1 class="h1 big">${sod.n}</h1>`), 'item page: its name in the served body');
     ok(html.includes('"route":{"view":"entity","kind":"items"'), 'item page: its entity inlined');
-    ok((await fetch(`${base}/armory/item/no-such-thing`)).status === 404, 'a missing entity is 404');
+    const gone = await fetch(`${base}/armory/item/no-such-thing`);
+    ok(gone.status === 404 && /Nothing by that name in this release/.test(await gone.text()), 'a missing entity is the site\'s own 404 page');
+    const moved = fs.existsSync(path.join(dir, 'redirects.json')) ? Object.entries(J('redirects.json')).filter(([k]) => k.includes('/')) : [];
+    if (moved.length) {
+      const [from, to] = moved[0];
+      const one = { monsters: 'monster', items: 'item', npcs: 'npc' }[from.split('/')[0]];
+      const r3 = await fetch(`${base}/armory/${one}/${from.split('/')[1]}`, { redirect: 'manual' });
+      ok(r3.status === 301 && (r3.headers.get('location') || '').endsWith(`/armory/${one}/${to}`), 'an old address goes to its page', [r3.status, r3.headers.get('location')]);
+    }
     const data = await fetch(`${base}/armory/data/${meta.commit}/index/items.json`);
     // A rebuild of the same commit rewrites its JSON at the same URLs: only hashed pictures are kept forever.
     ok(data.ok && /no-cache/.test(data.headers.get('cache-control') || '') && !!data.headers.get('etag'), 'release JSON is revalidated, not kept', data.headers.get('cache-control'));

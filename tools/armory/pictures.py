@@ -13,7 +13,8 @@ thumbnails), on its file and its index row, chosen from the built release alone:
   event   its strongest monster's
   quest   its giver's, else its first target monster's
 
-Nothing is chosen by name; a page whose links give nothing keeps none.
+and search.json's rows get a picture, a level and a place (search()), so hits of one name can be
+told apart. Nothing is chosen by name; a page whose links give nothing keeps none.
 """
 import json
 import sys
@@ -113,7 +114,47 @@ def run(dest, say=print):
                 done[kind] += 1
         _save(dest / "index" / f"{kind}.json", idx)
     say("pictures: " + ", ".join(f"{n} {k}" for k, n in sorted(done.items())))
+    search(dest, say)
     return done
+
+
+def search(dest, say=print):
+    """search.json's rows get what tells same-named hits apart: a small picture (`t`), a level
+    (`lv`, a monster's lowest where it is met; an item's level or drop level) and a place (`at`:
+    a monster's first place by its event's or map's name, a townsperson's map)."""
+    dest = Path(dest)
+    s = _load(dest / "search.json")
+    if not s:
+        return
+    rows = lambda kind: {r["slug"]: r for r in (_load(dest / "index" / f"{kind}.json") or {}).get("rows") or []}  # noqa: E731
+    by = {"item": rows("items"), "monster": rows("monsters"), "npc": rows("npcs"), "quest": rows("quests"), "event": rows("events"),
+          "rune": rows("runes"), "mix": rows("mixes"), "box": rows("boxes"), "elite": rows("elites"), "skill": rows("skills")}
+    events = {r["k"]: r["n"] for r in by["event"].values()}
+    worlds = {r["k"]: r["n"] for r in (_load(dest / "index" / "worlds.json") or {}).get("rows") or []}
+    low = lambda v: v[0] if isinstance(v, list) else v  # noqa: E731
+    for h in s.get("rows") or []:
+        r = by.get(h.get("k"), {}).get(h.get("s"))
+        if not r:
+            continue
+        pic = r.get("t") or (r.get("pic") or {}).get("card") or r.get("icon")
+        if pic:
+            h["t"] = pic
+        if h["k"] == "monster":
+            if low(r.get("lv")):
+                h["lv"] = low(r["lv"])
+            e = _load(dest / "monsters" / f"{r['slug']}.json") or {}
+            d = (e.get("drops") or [None])[0]
+            if d:
+                ev = f"{d['kind']}-{d.get(d['kind'])}" if d.get("kind") in ("castle", "square") else "raid" if d.get("kind") == "raid" else None
+                h["at"] = events.get(ev) or worlds.get(d.get("world")) or d.get("world")
+            elif r.get("maps"):
+                h["at"] = r["maps"][0]
+        elif h["k"] == "item" and (r.get("lv") or r.get("dl")):
+            h["lv"] = r.get("lv") or r.get("dl")
+        elif h["k"] == "npc" and r.get("maps"):
+            h["at"] = ", ".join(r["maps"])
+    _save(dest / "search.json", s)
+    say("pictures: search rows told apart")
 
 
 if __name__ == "__main__":

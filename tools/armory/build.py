@@ -395,6 +395,9 @@ def build(commit=None, out=None, thumbs=True, say=print):
             merged.update({x["key"]: prim for x in looks[prim]["looks"] if x["key"] and x["key"] != prim})
     mon_slug = slugs.assign("monsters", [(k, v["name"]) for k, v in M.items() if k not in merged])
     mon_slug.update({k: mon_slug[prim] for k, prim in merged.items()})
+    # A look folded into another's page had a page of its own as "<name>-<key>" (common.Slugs on a
+    # shared name): its old address goes to the page it is now (web/armory.py reads redirects.json).
+    redirects = {f"monsters/{common.slug(M[k]['name'])}-{common.slug(k)}": mon_slug[prim] for k, prim in merged.items()}
     npc_slug = slugs.assign("npcs", [(k, k) for k in F])
     world_slug = slugs.assign("worlds", [(k, v["name"]) for k, v in W.items()])
 
@@ -702,6 +705,7 @@ def build(commit=None, out=None, thumbs=True, say=print):
         if rows:
             publish("events", rows, ents)
 
+    write(dest / "redirects.json", redirects, stamp)
     write(dest / "search.json", {"rows": sorted(search, key=lambda r: (r["n"].lower(), r["k"]))}, stamp)
     meta = {"built": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "previous": prev,
             "counts": counts, "dump": {"dir": str(dump_dir.relative_to(common.ROOT)), "missing": missing},

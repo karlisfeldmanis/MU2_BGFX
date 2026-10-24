@@ -145,7 +145,13 @@
     busy($('in-go'), t('Signing in…'));
     try {
       const { status, said } = await api('/api/login', { email, password });
-      if (status === 200) { token.set(said.token); $('in-pass').value = ''; await load(); }
+      if (status === 200) {
+        token.set(said.token); $('in-pass').value = '';
+        // Sent here to sign in from another page (the Armory's comments: ?next=/armory/...): back there.
+        const next = new URLSearchParams(location.search).get('next') || '';
+        if (/^\/(?!\/)[^\s]*$/.test(next)) { location.href = next; return; }
+        await load();
+      }
       else alertOn($('in-alert'), said.error ? t(said.error) : t('Something went wrong. Try again in a minute.'));
     } catch (e) { alertOn($('in-alert'), OFFLINE); }
     busy($('in-go'));
