@@ -193,6 +193,8 @@ New:
    at a tile, 4 at three, 5 at nine.
 3. **Damage**: the band 250..375, plus Command/10 + 50 x (his party within 10 tiles, himself included; 0 outside a
    party) **in place of** Str/25 + Ene/50, then (200 + Ene/20)%.
+3b. **The gather's zaps from his front half** (2026-10-24, "only frontal"): MU throws them in from 120 units out any
+   way round, and they trailed down behind him; one whose start falls behind him is mirrored to the front.
 4. **No party drain** (decision 6), and so **no wisps** from the party, which only draw it.
 5. **The rings** (two DarkLordSkill at frames 7-8, colour 0.8, 0.5, 1.0) with 1.03.35's swell and fade, set at his
    weapon hand's height and slid ahead of him -- "only frontal" -- where MU's crescent flares beside and behind.
