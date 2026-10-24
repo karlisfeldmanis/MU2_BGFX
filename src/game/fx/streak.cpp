@@ -128,8 +128,13 @@ void Streak::gather(gfx::Effects& effects) const {
             const float atNear = 1.0f - float(i) / float(one.count);
             const float atFar = 1.0f - float(i + 1) / float(one.count);
             const bool plain = one.sheet == Sheet::Plain || one.sheet == Sheet::Spear;
-            const float alpha =
-                (plain ? kPlainBrightest : kBrightest) * leaving * atNear * atNear;
+            // Power Slash's blue sheet as MU lays it: whole at the blade and down the ribbon in a
+            // straight line, (Number - j) / Number (ZzzEffectBlurSpark.cpp:213-236) -- squared,
+            // its broad glassy fan was a thin streak at the blade.
+            const bool lightning = one.sheet == Sheet::Lightning;
+            const float alpha = lightning ? leaving * atNear
+                                          : (plain ? kPlainBrightest : kBrightest) * leaving *
+                                                atNear * atNear;
             if (alpha <= 0.004f) continue;
             const float u0 = 1.0f - atNear, u1 = 1.0f - atFar;
             // Across the blade: one band for a skill, kBands for a plain blow, each lit by a

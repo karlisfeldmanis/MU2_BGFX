@@ -8,8 +8,9 @@
 //   * **AttackTime 1 and 2, the gathering**: two BITMAP_GATHERING sub 1, a frame apart, each
 //     twenty frames long (ZzzEffect.cpp:1295-1310, MoveHandlers.cpp:1603-1647). Every frame each
 //     picks three points on a sphere of 120 units round his hand (bone 33 plus 10 up): on an
-//     even LifeTime a blue BITMAP_JOINT_THUNDER sub 3 from the point in to the hand (scale 10,
-//     ten frames, ten units a step, ten tails), on an odd one a BITMAP_SPARK + 1 (Spark03) at
+//     even LifeTime a blue BITMAP_JOINT_THUNDER sub 3 from the point, set off on the point's own
+//     random turn, homing on where the hand was (scale 10, ten frames), on an odd one a
+//     BITMAP_SPARK + 1 (Spark03) at
 //     the point that reaches the hand in ten frames (life 15, scale 0.10-0.59 growing 0.05 a
 //     frame, light LifeTime / 5); and a BITMAP_SHINY + 1 sprite (Shiny02) on the hand, scale
 //     1.6-3.0, rolled at random.
@@ -20,21 +21,38 @@
 //     turned 11 degrees -- from +75 of his facing round his front to -112, 187 degrees in three
 //     frames. Each tail is a band 150 across its spawn angle's X, which does not turn with the
 //     sweep, so the crescent thins at its ends. At each step a BITMAP_FIRE (Fire01) on a coin
-//     (life 24, scale 1.28-1.91, drifting 3.2-4.7 units a frame the joint's way, rising by a
-//     Gravity of 0.004 a frame) and two blue JOINT_THUNDER sub 3 from the last point to this
-//     one (scale 5-14 and 4-11, five frames). Its light is LifeTime / 30 down to 10, then
-//     divided by 1.5 a frame; a tail's is ((18 - j) / 18) * 2 of that, the newest brightest. The
-//     sheet is motion_blur_r2, U along the tails (the head at 1), V across.
+//     (life 24, scale 1.28-1.91 shrinking 0.04 a frame, drifting 3.2-4.7 units a frame the
+//     joint's way, rising by a Gravity of 0.004 a frame, lit by the joint's Light as it is made
+//     and never faded: its Luminosity is worked out and not written, ZzzEffectParticle.cpp:
+//     4541-4549) and two blue JOINT_THUNDER sub 3 from the last point to this one (scale 5-14
+//     and 4-11, five frames), the first from where the joint was made, 180 out. Its light is
+//     1 as it is made, then LifeTime / 30 down to 10, then divided by 1.5 a frame; it lives
+//     twenty-one frames (LifeTime 20 to 0); a tail's is ((18 - j) / 18) * 2 of that, the newest
+//     brightest, 1.33 at the head on its first frame. The sheet is motion_blur_r2, U along the
+//     tails (the head at 1), V across.
+//   * **A JOINT_THUNDER sub 3** (ZzzEffectJoint.cpp:1114-1121, 4727-5005) walks its whole ten
+//     tails EVERY frame: ten times it turns at most 50 degrees toward its target (MoveHumming),
+//     is thrown off that by (rand() % 1024 - 512) / Scale degrees in its pitch and its turn, lays
+//     a tail -- a cross of +-Scale/2 on that thrown frame's X and Z -- and steps Velocity (10)
+//     along it; and once a frame it steps Velocity on its unthrown way first. So it is a tight
+//     crackle hugging its target, walked afresh each frame, never a growing line; past 150 from
+//     its target it dies. Lit (0.5, 0.5, 1) to the end, unfaded; U = (NumTails - j) / 9 * 2
+//     less the clock's second, the second face's twice that again.
 //   * **The skulls** (ReceiveMagic, WSclient.cpp:4364-4381; MoveHandlers.cpp:583-634): while a
 //     body's eDeBuff_Defense stands, three BITMAP_SKULL sprites (Skull, 16 units) 200 of its
 //     scale over its feet, 120 degrees apart at a fixed turn, each 50 + 20 sin(i * 15.37 +
 //     WorldTime * 0.0031) out, breathing; SOUND_BLOODATTACK on the body as it is laid.
 //
-// **Ours, and marked.** The joints' walk is MoveJoint's homing step with its jitter, a fresh
-// turn each step, but drawn as one crossed strip (as fx/thunder.h draws MU's), its last two
-// frames fading. Colours are clamped to one, as MU's glColor clamps -- under this renderer's HDR
-// an unclamped 2x head blooms white. MU's Shiny02 is its pixels times Scale times an
-// AnimationFrame running 0.2 to 1; drawn here at that run's middle, 0.6. No light: MU adds none.
+// **Ours, and marked.** A colour over one is drawn as a second layer of the same quad, so the
+// ribbon's head is MU's 1.33 (MuMain's ImmediateRenderer takes the float unclamped; and this
+// pass adds in linear light where MU added in the screen's, which the overbright head makes up
+// for). The flames are Fire01 read through fs_effect's breath, the heat ramp softened, with
+// each cell scaled to a whole flame, as fx/breath.cpp draws this same subtype (game/world/
+// lamps.cpp kCellGain): added plain, its last
+// three cells are a ninth and a nineteenth of the first and the flames went out after six
+// frames. MU's Shiny02 is its pixels times Scale times an AnimationFrame running 0.2 to 1;
+// drawn here at that run's middle, 0.6, one a frame where MU lays three, and the glow and
+// the sparks smaller than MU's (the user's, below). No light: MU adds none.
 // The swing's two paces are game/play.cpp's (SkillRow::paceAfter); the blow is the realm's.
 //
 // Presentation only, `game` and not `sim`: nothing rolled here reaches the seeded log. Pools are
@@ -104,10 +122,18 @@ private:
     // ---- its fire (BITMAP_FIRE sub 0) -------------------------------------------------------
     static constexpr float kFireLife = 24.0f, kFirePixels = 64.0f;
     static constexpr float kFireShrinks = 0.04f, kFireRises = 0.004f;
+    static constexpr float kFireCellGain[4] = {1.0f, 8.8f, 19.0f, 19.0f};  // lamps.cpp's
+    // Ours: fs_flame's heat at the joint's Light of 1, cooling by this share over a life -- MU's
+    // later cells are its darker paint, which the gains above take out -- and the sheet read this
+    // much fuller, so the whole tongue burns orange as MU's added paint does and not only a hot
+    // core: MU's flames are broad, two thirds of the ribbon's width.
+    static constexpr float kFireHeat = 0.6f, kFireCools = 0.2f, kFireFull = 4.0f;
+    static constexpr float kMadeFrom = 180.0f;      // the joint is made 180 out (2283-2293)
     // ---- the bolts (BITMAP_JOINT_THUNDER sub 3) ---------------------------------------------
-    static constexpr int kBoltTails = 10;
-    static constexpr float kBoltStep = 10.0f;       // Velocity, units a move
-    static constexpr float kBoltFade = 2.0f;        // ours: its last two frames dimming
+    static constexpr int kBoltTails = 10;           // MaxTails, laid every frame
+    static constexpr float kBoltStep = 10.0f;       // Velocity, units a tail
+    static constexpr float kBoltHoming = 50.0f;     // MoveHumming's turn, degrees a tail
+    static constexpr float kBoltReach = 150.0f;     // dies past this from its target
     static constexpr float kBoltBlue[3] = {0.5f, 0.5f, 1.0f};
     static constexpr float kBoltRepeats = 2.0f, kBoltScroll = 1.0f;
     // ---- the skulls (BITMAP_SKULL sub 0) ----------------------------------------------------
@@ -132,7 +158,7 @@ private:
         bool made = false;
         int life = kRibbonLife;
         float owed = 0.0f;
-        float light = 0.0f;
+        float light = 1.0f;    // MU's o->Light: (1, 1, 1) as it is made
         float pivot[3] = {};
         float yaw = 0.0f;      // his, at the making
         float turn = kStartTurn;  // Direction[2] off his facing, degrees
@@ -142,15 +168,14 @@ private:
     };
     struct Bolt {
         bool alive = false;
-        uint32_t owner = 0;    // a gathering's homes on his hand as he moves; 0 holds `to`
-        float to[3] = {};
+        float at[3] = {}, to[3] = {};   // metres; `to` fixed at its making, as MU's
+        float yaw = 0.0f, pitch = 0.0f; // its unthrown way, radians (MU's Angle[2], Angle[0])
         float half = 0.05f;    // metres
-        float left = 0.0f;     // frames
+        float left = 0.0f;     // moves left
         float owed = 0.0f;
-        float jitter = 1.0f;   // radians a move either way: 512 / Scale degrees
-        float way[3] = {};
+        float jitter = 1.0f;   // radians a tail either way: 512 / Scale degrees
         int tails = 0;
-        float trail[kBoltTails][3] = {};  // newest first
+        float trail[kBoltTails][4][3] = {};  // newest first, each tail's cross: X -/+, Z -/+
     };
     struct Spark {
         bool alive = false;
@@ -160,7 +185,7 @@ private:
     struct Fire {
         bool alive = false;
         float at[3] = {}, drift[3] = {};
-        float scale = 1.5f, left = 0.0f, gravity = 0.0f, spin = 0.0f;
+        float scale = 1.5f, left = 0.0f, gravity = 0.0f, light = 1.0f;
     };
     struct Skull {
         float at[3] = {};
@@ -192,7 +217,9 @@ private:
     // MU's local (x, y) on an angle `turn` degrees off our `yaw`, into our (x, z): fury.h's
     // mapping (MU's -y ahead, its -x to his left), turned first by MU's own rotation.
     static void local(float yaw, float turn, float x, float y, float out[2]);
-    void bolt(uint32_t owner, const float from[3], const float to[3], float scale, float frames);
+    // A JOINT_THUNDER sub 3 from `from` to `to`, set off on `yaw` and `pitch` (radians).
+    void bolt(const float from[3], const float to[3], float yaw, float pitch, float scale,
+              float frames);
     void stepGathering(Gathering& one);
     template <typename Sound>
     void makeRibbon(Ribbon& one, Sound& sound);
@@ -248,6 +275,12 @@ void FireSlash::update(float seconds, Place place, Hand hand, Sound sound, Cuts 
             for (int k = 0; k < 3; ++k) one.pivot[k] = feet[k];
             one.pivot[1] += kPivotLift * metre;
             one.yaw = yaw;
+            // Where the joint is made: 180 out on its own angle, the first bolts' start.
+            float made[2];
+            local(yaw, kStartTurn, 0.0f, -kMadeFrom, made);
+            one.last[0] = one.pivot[0] + made[0] * metre;
+            one.last[1] = one.pivot[1];
+            one.last[2] = one.pivot[2] + made[1] * metre;
             one.owed = -one.wait * kReferenceFps;
             makeRibbon(one, sound);
             continue;
@@ -260,13 +293,6 @@ void FireSlash::update(float seconds, Place place, Hand hand, Sound sound, Cuts 
     }
     for (Bolt& one : bolts_) {
         if (!one.alive) continue;
-        if (one.owner != 0) {
-            float at[3];
-            if (hand(one.owner, at)) {
-                for (int k = 0; k < 3; ++k) one.to[k] = at[k];
-                one.to[1] += kHandLift * metre;
-            }
-        }
         one.owed += frames;
         while (one.alive && one.owed >= 1.0f) {
             one.owed -= 1.0f;

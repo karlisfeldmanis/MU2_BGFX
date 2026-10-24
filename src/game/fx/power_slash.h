@@ -31,8 +31,14 @@
 // it crosses rather than to the height it left at. They leave a tick after the cast is said,
 // when the realm lets the blow go (sim::SkillRow::release, its least tick), so the numbers come
 // as each wave reaches its body (sim::kWaveTilesPerSecond, the same fifteen tiles a second).
-// Colours are clamped to one, as MU's glColor clamps. The blade's trail is play_show.cpp's
-// (fx/streak.h, motion_blur, motion_blur_r on the Sword Dancer).
+// A colour over one is drawn as a second layer of the same sprite (fire_slash.cpp's addLit), so
+// the puffs are MU's 1.125 at their making: MuMain's ImmediateRenderer takes the float unclamped,
+// and this pass adds in linear light where MU added in the screen's -- which the smoke makes up
+// for at twice its light (kSmokeGain), soft so the field's grass does not stipple it. The blade's
+// trail is play_show.cpp's (fx/streak.h, motion_blur, motion_blur_r on the Sword Dancer), MU's
+// straight fade down it. The ground light
+// is MU's colour at twice its strength: AddTerrainLight adds to a terrain light that MU's maps
+// keep well under one, and a point light here lands on a sunlit field.
 //
 // Presentation only, `game` and not `sim`: nothing rolled here reaches the seeded log. Pools are
 // sized once and a frame allocates nothing.
@@ -84,6 +90,7 @@ private:
     static constexpr float kSpriteLift = 50.0f;
     static constexpr float kBlue[3] = {0.3f, 0.6f, 1.0f};
     static constexpr float kLightTiles = 3.0f;
+    static constexpr float kLightGain = 2.0f;       // ours, see above
     // ---- its sprites, a frame each ----------------------------------------------------------
     // Ours, smaller than MU's 1.5 and 3.5 (a 224-unit flare on each of five heads): the user,
     // 2026-10-24, "sparkles has to be much smaller", then half that again: "keep finetune
@@ -96,9 +103,13 @@ private:
     static constexpr float kPuffLife = 10.0f, kPuffGrows = 0.1f;
     static constexpr float kHazeLife = 50.0f, kHazeGrows = 0.05f, kHazeSinks = 1.0f;
     static constexpr float kSlows = 0.4f;
-    // Ours: the bright puffs pale blue and dimmer than MU's white (0.8, 0.8, 1), so five heads
-    // at once do not burn a white blot into the grass (the user, 2026-10-24).
-    static constexpr float kPuffTint[3] = {0.45f, 0.55f, 0.75f};
+    // MU's (0.8, 0.8, 1) times LifeTime / 8 (ZzzEffectParticle.cpp:5328-5333).
+    static constexpr float kPuffTint[3] = {0.8f, 0.8f, 1.0f};
+    // Ours: the smoke's light, puffs and haze, times this. MU added smoke01 to the screen's
+    // colour, where half of white on a dim field reads near white; added here in linear light
+    // the same sheet is a third as strong, and the fan's fog a faint haze.
+    static constexpr float kSmokeGain = 2.0f;
+    static constexpr float kSmokeSoft = 1.0f;  // metres, gfx::Sprite::soft (see gatherSmoke)
 
     struct Wave {
         bool alive = false;

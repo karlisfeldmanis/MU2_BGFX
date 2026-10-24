@@ -9,6 +9,20 @@ constexpr float kTwoPi = 6.28318531f;
 
 float clampOne(float v) { return std::clamp(v, 0.0f, 1.0f); }
 
+// A sprite whose colour runs past one, as layers (fire_slash.cpp's addLit, which says why).
+bool addLit(gfx::Effects& effects, gfx::Sprite sprite, const float rgb[3]) {
+    float left[3] = {rgb[0], rgb[1], rgb[2]};
+    for (int layer = 0; layer < 3; ++layer) {
+        if (left[0] <= 0.0f && left[1] <= 0.0f && left[2] <= 0.0f) break;
+        for (int k = 0; k < 3; ++k) {
+            sprite.colour[k] = clampOne(left[k]);
+            left[k] -= 1.0f;
+        }
+        if (!effects.add(sprite)) return false;
+    }
+    return true;
+}
+
 }  // namespace
 
 float PowerSlash::unit() {
@@ -121,7 +135,7 @@ uint32_t PowerSlash::lights(gfx::PointLight* out, uint32_t max) const {
         for (int k = 0; k < 3; ++k) light.position[k] = one.shown[k];
         light.reach = kLightTiles * metres;
         light.height = 1.0f;
-        for (int k = 0; k < 3; ++k) light.colour[k] = kBlue[k] * one.light;
+        for (int k = 0; k < 3; ++k) light.colour[k] = kBlue[k] * one.light * kLightGain;
     }
     return count;
 }
@@ -141,14 +155,18 @@ void PowerSlash::gatherSmoke(gfx::Effects& effects, const Puff* pool, int size, 
         const float scale = one.scale + (haze ? kHazeGrows : kPuffGrows) * one.age;
         sprite.halfWidth = sprite.halfHeight = kSmokePixels * scale * metre * 0.5f;
         sprite.spin = one.spin;
-        // The bright puffs their tint times LifeTime / 8 (MU's is (0.8, 0.8, 1), overbright at
-        // first and clamped; ours `kPuffTint`); the haze its wave's blue times LifeTime / 50.
+        // The bright puffs (0.8, 0.8, 1) times LifeTime / 8, 1.125 as they are made; the haze its
+        // wave's blue times LifeTime / 50. MU's LifeTime is a frame down before it is drawn.
+        float rgb[3];
         for (int k = 0; k < 3; ++k) {
-            sprite.colour[k] = clampOne(one.tint[k] * left / (haze ? kHazeLife : 8.0f));
+            rgb[k] = std::max(0.0f, one.tint[k] * (left - 1.0f) / (haze ? kHazeLife : 8.0f)) * kSmokeGain;
         }
         sprite.sheet = smokeSheet_;
         sprite.blend = gfx::Blend::Additive;
-        if (!effects.add(sprite)) return;
+        // Ours: soft, so a puff half sunk in the field thins into the ground and over the grass
+        // instead of being cut by every blade into a stipple (MU's ground has no grass standing).
+        sprite.soft = kSmokeSoft;
+        if (!addLit(effects, sprite, rgb)) return;
     }
 }
 

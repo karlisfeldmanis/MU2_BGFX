@@ -11,6 +11,45 @@ float clampOne(float v) { return std::clamp(v, 0.0f, 1.0f); }
 
 float length(const float v[3]) { return std::sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]); }
 
+// An angle brought into -pi..pi.
+float wrapped(float a) {
+    const float kPi = 3.14159265f;
+    while (a > kPi) a -= kTwoPi;
+    while (a < -kPi) a += kTwoPi;
+    return a;
+}
+
+// MU's TurnAngle2: `from` turned toward `to` by at most `most`, the short way round.
+float turnToward(float from, float to, float most) {
+    const float off = wrapped(to - from);
+    return from + std::clamp(off, -most, most);
+}
+
+// A way of `yaw` and `pitch` in our (x, up, z), and the two axes of a tail's cross on it: MU's
+// AngleMatrix X, which stays level, and Z, which tilts with the pitch.
+void frame(float yaw, float pitch, float way[3], float side[3], float up[3]) {
+    const float cy = std::cos(yaw), sy = std::sin(yaw), cp = std::cos(pitch), sp = std::sin(pitch);
+    way[0] = cp * sy; way[1] = sp; way[2] = cp * cy;
+    side[0] = cy; side[1] = 0.0f; side[2] = -sy;
+    up[0] = -sp * sy; up[1] = cp; up[2] = -sp * cy;
+}
+
+// A quad whose colour runs past one, as layers: one at the colour up to one, the rest over it.
+// MuMain's ImmediateRenderer takes MU's float colour unclamped (Render/Core/ImmediateRenderer.cpp
+// Color3f), and the pass packs a colour in a byte a channel; additive, two layers are the sum.
+bool addLit(gfx::Effects& effects, gfx::Sprite quad, const float rgb[3]) {
+    float left[3] = {rgb[0], rgb[1], rgb[2]};
+    for (int layer = 0; layer < 2; ++layer) {
+        if (left[0] <= 0.0f && left[1] <= 0.0f && left[2] <= 0.0f) break;
+        for (int k = 0; k < 3; ++k) {
+            quad.colour[k] = clampOne(left[k]);
+            left[k] -= 1.0f;
+        }
+        if (!effects.add(quad)) return false;
+    }
+    return true;
+}
+
 }  // namespace
 
 float FireSlash::unit() {
@@ -90,49 +129,71 @@ void FireSlash::cast(uint32_t owner, float release) {
     ribbon->wait = std::max(0.0f, release);
 }
 
-void FireSlash::bolt(uint32_t owner, const float from[3], const float to[3], float scale,
+void FireSlash::bolt(const float from[3], const float to[3], float yaw, float pitch, float scale,
                      float frames) {
     for (Bolt& one : bolts_) {
         if (one.alive) continue;
         one = Bolt{};
         one.alive = true;
-        one.owner = owner;
         for (int k = 0; k < 3; ++k) {
+            one.at[k] = from[k];
             one.to[k] = to[k];
-            one.trail[0][k] = from[k];
-            one.way[k] = to[k] - from[k];
         }
-        one.tails = 1;
+        one.yaw = yaw;
+        one.pitch = pitch;
         one.half = scale * perUnit() * 0.5f;
-        one.left = frames;
-        // MoveJoint's turn a step, (rand() % 1024 - 512) / Scale degrees, held to a quarter turn.
-        one.jitter = std::min(90.0f, 512.0f / std::max(1.0f, scale)) * kDegrees;
+        // LifeTime moves and the one it reaches 0 on: MU kills a joint below 0.
+        one.left = frames + 1.0f;
+        // MoveJoint's throw a tail, (rand() % 1024 - 512) / Scale degrees.
+        one.jitter = 512.0f / std::max(1.0f, scale) * kDegrees;
+        // MU moves a joint on the frame it is made.
+        stepBolt(one);
         return;
     }
 }
 
 void FireSlash::stepBolt(Bolt& one) {
-    // Toward its target (MoveHumming, a turn of 50 a move -- here straight at it), thrown off it
-    // by the step's jitter in both the level and the upright, and a tail laid where it lands.
-    float to[3] = {one.to[0] - one.trail[0][0], one.to[1] - one.trail[0][1],
-                   one.to[2] - one.trail[0][2]};
-    const float far = length(to);
-    const float metre = perUnit();
-    if (far > 1e-4f) {
-        for (int k = 0; k < 3; ++k) one.way[k] = to[k] / far;
+    const float stride = kBoltStep * perUnit();
+    const float reach = kBoltReach * perUnit();
+    const float homing = kBoltHoming * kDegrees;
+    float way[3], side[3], up[3];
+    // Once a frame, Velocity on its unthrown way (MoveJoint's preamble).
+    frame(one.yaw, one.pitch, way, side, up);
+    for (int k = 0; k < 3; ++k) one.at[k] += way[k] * stride;
+    float far = 0.0f;
+    for (int j = 0; j < kBoltTails; ++j) {
+        // MoveHumming: turned toward its target, at most 50 degrees in each.
+        const float d[3] = {one.to[0] - one.at[0], one.to[1] - one.at[1], one.to[2] - one.at[2]};
+        const float flat = std::sqrt(d[0] * d[0] + d[2] * d[2]);
+        far = length(d);
+        if (far > 1e-5f) {
+            one.yaw = turnToward(one.yaw, std::atan2(d[0], d[2]), homing);
+            one.pitch = turnToward(one.pitch, std::atan2(d[1], flat), homing);
+        }
+        // Thrown off it, and a tail laid on the thrown frame where it stands.
+        const float yaw = one.yaw + (unit() * 2.0f - 1.0f) * one.jitter;
+        const float pitch = one.pitch + (unit() * 2.0f - 1.0f) * one.jitter;
+        frame(yaw, pitch, way, side, up);
+        for (int t = std::min(one.tails, kBoltTails - 1); t > 0; --t) {
+            for (int c = 0; c < 4; ++c) {
+                for (int k = 0; k < 3; ++k) one.trail[t][c][k] = one.trail[t - 1][c][k];
+            }
+        }
+        for (int k = 0; k < 3; ++k) {
+            one.trail[0][0][k] = one.at[k] - side[k] * one.half;
+            one.trail[0][1][k] = one.at[k] + side[k] * one.half;
+            one.trail[0][2][k] = one.at[k] - up[k] * one.half;
+            one.trail[0][3][k] = one.at[k] + up[k] * one.half;
+        }
+        one.tails = std::min(one.tails + 1, kBoltTails);
+        // Past 150 from its target it is gone (sub 3).
+        if (far > reach) {
+            one.alive = false;
+            return;
+        }
+        // And Velocity along the thrown way.
+        for (int k = 0; k < 3; ++k) one.at[k] += way[k] * stride;
     }
-    const float yawOff = (unit() * 2.0f - 1.0f) * one.jitter;
-    const float pitchOff = (unit() * 2.0f - 1.0f) * one.jitter;
-    const float c = std::cos(yawOff), s = std::sin(yawOff);
-    float way[3] = {one.way[0] * c - one.way[2] * s, one.way[1], one.way[0] * s + one.way[2] * c};
-    way[1] += std::sin(pitchOff);
-    const float size = std::max(1e-4f, length(way));
-    const float stride = kBoltStep * metre;
-    for (int t = std::min(one.tails, kBoltTails - 1); t > 0; --t) {
-        for (int k = 0; k < 3; ++k) one.trail[t][k] = one.trail[t - 1][k];
-    }
-    for (int k = 0; k < 3; ++k) one.trail[0][k] += way[k] / size * stride;
-    one.tails = std::min(one.tails + 1, kBoltTails);
     one.left -= 1.0f;
     if (one.left <= 0.0f) one.alive = false;
 }
@@ -147,7 +208,8 @@ void FireSlash::stepGathering(Gathering& one) {
                              one.hand[1] + z * kGatherRadius * metre,
                              one.hand[2] + r * std::sin(turn) * kGatherRadius * metre};
         if (one.life % 2 == 0) {
-            bolt(one.owner, at, one.hand, 10.0f, 10.0f);
+            // Set off on the point's own random turn and pitch (Angle (rand % 360, 0, rand % 360)).
+            bolt(at, one.hand, turn, unit() * kTwoPi, 10.0f, 10.0f);
         } else {
             for (Spark& spark : sparks_) {
                 if (spark.alive) continue;
@@ -170,10 +232,11 @@ void FireSlash::stepGathering(Gathering& one) {
 
 void FireSlash::stepRibbon(Ribbon& one) {
     const float metre = perUnit();
-    // Its light this frame: LifeTime / 30 down to ten, then a third less each frame.
-    one.light = one.life >= 10 ? float(one.life) / 30.0f : one.light / 1.5f;
     float axis[2];
     local(one.yaw, kStartTurn, 1.0f, 0.0f, axis);
+    float ahead[2];
+    local(one.yaw, kStartTurn, 0.0f, -1.0f, ahead);
+    const float aheadYaw = std::atan2(ahead[0], ahead[1]);  // the joint's angle, for its bolts
     for (int step = 0; step < kStepsAFrame && one.tails < kTails; ++step) {
         float off[2];
         local(one.yaw, one.turn, 0.0f, -kRadius, off);
@@ -190,7 +253,7 @@ void FireSlash::stepRibbon(Ribbon& one) {
             one.edge[0][e][1] = at[1];
             one.edge[0][e][2] = at[2] + axis[1] * side;
         }
-        // A flame on a coin, drifting the joint's way.
+        // A flame on a coin, drifting the joint's way, lit by the joint's light as it is now.
         if (unit() < 0.5f) {
             for (Fire& fire : fires_) {
                 if (fire.alive) continue;
@@ -203,20 +266,21 @@ void FireSlash::stepRibbon(Ribbon& one) {
                 fire.drift[2] = drift[1] * metre;
                 fire.scale = between(1.28f, 1.91f);
                 fire.left = kFireLife;
-                fire.spin = unit() * kTwoPi;
+                fire.light = one.light;
                 break;
             }
         }
-        // And two blue bolts from the last point to this one.
-        if (one.tails > 0) {
-            bolt(0, one.last, at, between(5.0f, 14.0f), 5.0f);
-            bolt(0, one.last, at, between(4.0f, 11.0f), 5.0f);
-        }
+        // And two blue bolts from the last point to this one, set off on the joint's angle.
+        bolt(one.last, at, aheadYaw, 0.0f, std::floor(between(5.0f, 15.0f)), 5.0f);
+        bolt(one.last, at, aheadYaw, 0.0f, std::floor(between(4.0f, 12.0f)), 5.0f);
         for (int k = 0; k < 3; ++k) one.last[k] = at[k];
         ++one.tails;
         one.turn -= kStepTurn;
     }
-    if (--one.life <= 0) one.alive = false;
+    // Its light, after the tails: LifeTime / 30 down to ten, then a third less each frame.
+    one.light = one.life >= 10 ? float(one.life) / 30.0f : one.light / 1.5f;
+    // Twenty-one frames: MU's LifeTime 20 to 0, dead below it.
+    if (--one.life < 0) one.alive = false;
 }
 
 void FireSlash::gatherEffects(gfx::Effects& effects) const {
@@ -230,8 +294,9 @@ void FireSlash::gatherEffects(gfx::Effects& effects) const {
             quad.placed = true;
             quad.sheet = ribbonSheet_;
             quad.blend = gfx::Blend::Additive;
-            const float lit = clampOne((float(kTails - j) - 0.5f) / float(kTails) * 2.0f * one.light);
-            for (int k = 0; k < 3; ++k) quad.colour[k] = lit;
+            // ((18 - j) / 18) * 2 * Light: 1.33 at the head on its first frame, unclamped.
+            const float lit = float(kTails - j) / float(kTails) * 2.0f * one.light;
+            const float rgb[3] = {lit, lit, lit};
             quad.colour[3] = 1.0f;
             const float u0 = float(numTails - j) / float(kTails - 1);
             const float u1 = float(numTails - j - 1) / float(kTails - 1);
@@ -246,10 +311,11 @@ void FireSlash::gatherEffects(gfx::Effects& effects) const {
             quad.cornerUv[1][0] = u0; quad.cornerUv[1][1] = 1.0f;
             quad.cornerUv[2][0] = u1; quad.cornerUv[2][1] = 1.0f;
             quad.cornerUv[3][0] = u1; quad.cornerUv[3][1] = 0.0f;
-            if (!effects.add(quad)) return;
+            if (!addLit(effects, quad, rgb)) return;
         }
     }
-    // The flames: Fire01's four cells over their life, fading with it.
+    // The flames: Fire01's four cells over their life, each a whole flame, never faded (MU
+    // writes no Luminosity into this subtype's Light); heat its joint's light, cooling a little.
     if (bgfx::isValid(fireSheet_)) {
         for (const Fire& one : fires_) {
             if (!one.alive || one.scale <= 0.0f) continue;
@@ -259,10 +325,15 @@ void FireSlash::gatherEffects(gfx::Effects& effects) const {
             const int cell = std::clamp(int((kFireLife - 1.0f - one.left) / 6.0f), 0, 3);
             sprite.u0 = float(cell) * 0.25f;
             sprite.u1 = float(cell + 1) * 0.25f;
-            const float lum = clampOne(one.left / kFireLife);
-            for (int k = 0; k < 3; ++k) sprite.colour[k] = lum;
+            const float aged = 1.0f - clampOne(one.left / kFireLife);
+            sprite.colour[0] = kFireCellGain[cell] * kFireFull / 20.0f;
+            // The joint's light as heat on its square root: the ramp's brightness runs on the heat
+            // squared, and MU's 0.67 (the flames of its second and third frames) is no ember.
+            sprite.colour[1] = clampOne(kFireHeat * std::sqrt(one.light) * (1.0f - kFireCools * aged));
+            sprite.colour[2] = 0.0f;
+            sprite.colour[3] = 1.0f;
             sprite.sheet = fireSheet_;
-            sprite.blend = gfx::Blend::Additive;
+            sprite.blend = gfx::Blend::Breath;
             if (!effects.add(sprite)) return;
         }
     }
@@ -294,51 +365,38 @@ void FireSlash::gatherEffects(gfx::Effects& effects) const {
             if (!effects.add(sprite)) return;
         }
     }
-    // The bolts: each a crossed strip along its trail, the sheet scrolling along it.
+    // The bolts: each tail's cross joined to the next, both faces, the sheet scrolling along
+    // them with the clock's second, the second face twice as fast (ZzzEffectJoint.cpp:7118-7124,
+    // 7303-7320). Lit (0.5, 0.5, 1) to the end.
     if (bgfx::isValid(boltSheet_)) {
         const float scroll = clock_ * kBoltScroll - std::floor(clock_ * kBoltScroll);
         for (const Bolt& one : bolts_) {
             if (!one.alive || one.tails < 2) continue;
-            const float lit = clampOne(one.left / kBoltFade);
-            for (int i = 0; i + 1 < one.tails; ++i) {
-                const float* a = one.trail[i];
-                const float* b = one.trail[i + 1];
-                float along[3] = {b[0] - a[0], b[1] - a[1], b[2] - a[2]};
-                const float len = std::max(1e-4f, length(along));
-                for (float& v : along) v /= len;
-                float level[3] = {-along[2], 0.0f, along[0]};
-                const float lw = std::sqrt(level[0] * level[0] + level[2] * level[2]);
-                if (lw < 1e-3f) {
-                    level[0] = 1.0f;
-                    level[2] = 0.0f;
-                } else {
-                    level[0] /= lw;
-                    level[2] /= lw;
-                }
-                const float upright[3] = {level[1] * along[2] - level[2] * along[1],
-                                          level[2] * along[0] - level[0] * along[2],
-                                          level[0] * along[1] - level[1] * along[0]};
-                const float u0 = float(i) / float(kBoltTails - 1) * kBoltRepeats - scroll;
-                const float u1 = float(i + 1) / float(kBoltTails - 1) * kBoltRepeats - scroll;
+            const int numTails = one.tails - 1;
+            for (int j = 0; j < numTails; ++j) {
+                const float l1 = float(numTails - j) / float(kBoltTails - 1) * kBoltRepeats - scroll;
+                const float l2 = float(numTails - j - 1) / float(kBoltTails - 1) * kBoltRepeats - scroll;
                 for (int face = 0; face < 2; ++face) {
-                    const float* side = face == 0 ? level : upright;
+                    // Face one on the tails' Z (corners 2, 3), face two on their X (0, 1).
+                    const int lo = face == 0 ? 2 : 0, hi = face == 0 ? 3 : 1;
+                    const float shift = face == 0 ? 0.0f : scroll * 2.0f;
                     gfx::Sprite quad;
                     quad.placed = true;
                     quad.sheet = boltSheet_;
                     quad.blend = gfx::Blend::Additive;
-                    for (int k = 0; k < 3; ++k) quad.colour[k] = kBoltBlue[k] * lit;
+                    for (int k = 0; k < 3; ++k) quad.colour[k] = kBoltBlue[k];
                     quad.colour[3] = 1.0f;
                     for (int k = 0; k < 3; ++k) {
-                        quad.corner[0][k] = a[k] - side[k] * one.half;
-                        quad.corner[1][k] = b[k] - side[k] * one.half;
-                        quad.corner[2][k] = b[k] + side[k] * one.half;
-                        quad.corner[3][k] = a[k] + side[k] * one.half;
-                        quad.position[k] = (a[k] + b[k]) * 0.5f;
+                        quad.corner[0][k] = one.trail[j][lo][k];
+                        quad.corner[1][k] = one.trail[j + 1][lo][k];
+                        quad.corner[2][k] = one.trail[j + 1][hi][k];
+                        quad.corner[3][k] = one.trail[j][hi][k];
+                        quad.position[k] = (one.trail[j][lo][k] + one.trail[j + 1][hi][k]) * 0.5f;
                     }
-                    quad.cornerUv[0][0] = u0; quad.cornerUv[0][1] = 1.0f;
-                    quad.cornerUv[1][0] = u1; quad.cornerUv[1][1] = 1.0f;
-                    quad.cornerUv[2][0] = u1; quad.cornerUv[2][1] = 0.0f;
-                    quad.cornerUv[3][0] = u0; quad.cornerUv[3][1] = 0.0f;
+                    quad.cornerUv[0][0] = l1 + shift; quad.cornerUv[0][1] = 1.0f;
+                    quad.cornerUv[1][0] = l2 + shift; quad.cornerUv[1][1] = 1.0f;
+                    quad.cornerUv[2][0] = l2 + shift; quad.cornerUv[2][1] = 0.0f;
+                    quad.cornerUv[3][0] = l1 + shift; quad.cornerUv[3][1] = 0.0f;
                     if (!effects.add(quad)) return;
                 }
             }
