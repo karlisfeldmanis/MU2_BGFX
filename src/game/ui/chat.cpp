@@ -1,6 +1,7 @@
 #include "game/ui/chat.h"
 
 #include <algorithm>
+#include <utility>
 #include <cmath>
 #include <cstdio>
 #include <ctime>
@@ -656,6 +657,7 @@ Chat::Set Chat::setOf(const Line& line) const {
         set.who = line.inviter;
     }
     const size_t offset = set.text.size();
+    set.saidFrom = offset;
     set.text += line.shown;
     set.links = line.links;
     for (sim::ItemLink& link : set.links) {
@@ -676,10 +678,19 @@ float Chat::spans(gfx::Canvas& canvas, float x, float base, float size, uint32_t
     if (set.nameTo > set.nameFrom) cut(set.nameFrom), cut(set.nameTo);
     for (const sim::ItemLink& link : set.links) cut(link.from), cut(link.to);
     std::sort(cuts.begin(), cuts.end());
+    cut(set.saidFrom);
     cuts.erase(std::unique(cuts.begin(), cuts.end()), cuts.end());
+    // What was said, when it reads from the right, its parts from the last: each part turns its
+    // own letters (gfx::Canvas::text), and a link in Hebrew stands where it was typed.
+    std::vector<std::pair<size_t, size_t>> parts;
+    for (size_t k = 0; k + 1 < cuts.size(); ++k) parts.push_back({cuts[k], cuts[k + 1]});
+    const size_t said = std::max(start, set.saidFrom);
+    if (said < end && core::bidi::rightToLeft(set.text.substr(said, end - said))) {
+        const auto first = std::find_if(parts.begin(), parts.end(), [&](const auto& p) { return p.first >= said; });
+        std::reverse(first, parts.end());
+    }
     float advance = 0.0f;
-    for (size_t k = 0; k + 1 < cuts.size(); ++k) {
-        const size_t a = cuts[k], b = cuts[k + 1];
+    for (const auto& [a, b] : parts) {
         const std::string part = set.text.substr(a, b - a);
         const float wide = bodyWidth(size, part);
         const Box box{x + advance, base - size * 0.95f, wide, size * 1.3f};
