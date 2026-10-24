@@ -810,7 +810,9 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     // what a drop rolls, a green star for an excellent option. The text stays MU's blue. Luck's
     // two lines become "Luck" as a keyword on each, which is the only change to MU's wording.
     const bool carriesSkill = what.skill && row.skill > 0;
-    if ((sim::takesOptions(row) || sim::jewellery(row)) &&
+    // A wing is past takesOptions' boots and carries its Life option all the same (Discord,
+    // 2026-10-24: "jewel of life on wings ... no stats appeared").
+    if ((sim::takesOptions(row) || sim::jewellery(row) || sim::anyWing(row)) &&
         (what.luck || what.option > 0 || what.excellent != 0 || carriesSkill ||
          (sim::secondWing(row) && what.wing != 0))) {
         Section options;
