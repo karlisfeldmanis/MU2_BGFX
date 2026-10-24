@@ -161,6 +161,18 @@ enum class What : uint8_t {
     Reborn,    // a rebirth (sim/rebirth.h, Realm::rebirth): a: how many he has made now, b: the
                // worn pieces it put in the bag. `who` is the player; said to everyone, as the
                // rite is seen and the server tells Global.
+    Recall,    // a Dark Lord's Summon (Realm::recall): a: a RecallEvent, b and c as it says. `who`
+               // is the one it is said to, `whom` the lord; for him alone but Landed, said to all.
+};
+
+// What a Summon did (What::Recall). MU's notices 1243-1254 (WebZen user.cpp:25460-25510).
+enum class RecallEvent : int32_t {
+    Called = 0,     // to the lord: b how many he called ("Summoning N people"); and to each one
+                    // called, b -1: "Summoning in process. It may be cancelled if you move."
+    Count = 1,      // to the one called: b the seconds left, 5 down to 1 ("Will be summoned in N seconds.")
+    Cancelled = 2,  // to the one called: he walked, or the place refuses him now ("Summon cancelled.")
+    Landed = 3,     // he is down: b the column, c the row; to everyone, for the drawing
+    Busy = 4,       // to the lord: one of his party here is already being summoned; nothing paid
 };
 
 // What a trade between two players did (What::Deal). MU's trade packets 0x36-0x3D in one.
@@ -612,6 +624,12 @@ struct Body {
     // off the lord at the cast, and the tick it lapses. Not saved: MU ends it on logout.
     int32_t keen = 0;
     int64_t keenUntil = 0;
+    // A Dark Lord's Summon on him (Realm::recall): the tick he is set down, 0 for none; the tile,
+    // drawn at the cast and kept however the lord moves after (WebZen's SkillRecallParty_X/Y);
+    // and the lord's id. Walking, a gate or a death ends it. Not saved: MU zeroes it on login.
+    int64_t recallAt = 0;
+    int32_t recallColumn = 0, recallRow = 0;
+    uint32_t recallBy = 0;
     // Being pushed (`Realm::push`): tiles a tick to slide, and how many ticks are left. While it
     // runs the body neither thinks nor walks.
     float pushX = 0.0f, pushY = 0.0f;
@@ -1881,6 +1899,11 @@ private:
                  int* outRow) const;
     // And putting him down there, on the tick the fade-out ends.
     void blink(Body& hero);
+    // Summon (docs/plans/dark-lord-spells/summon.md): the cast on the lord's party here, each
+    // member's tile drawn at once (recallTile), and each member's countdown on his own tick.
+    bool recallParty(Body& lord);
+    bool recallTile(const Body& lord, int* column, int* row);
+    void recall(Body& hero);
     // Walks him to within `radius` of what he is fighting, on the chase's own re-plan clock --
     // and with `sight`, to a tile from which nothing walls it off (`seen`).
     void approach(Body& hero, const Body& target, int radius, bool sight = false);
@@ -2315,6 +2338,8 @@ private:
     // When each body round a Fire Burst burns (Realm::fireBurst), so a Dark Lord's casts move no
     // other roll.
     Random burstDice_{0};
+    // And where each member of a Summon lands, for the same reason.
+    Random recallDice_{0};
     void raiseElites();
     // Drawn again and stood up: a breed of the map's nests, a tile in one, its numbers raised.
     void riseElite(Body& elite);

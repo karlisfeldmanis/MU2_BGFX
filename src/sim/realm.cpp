@@ -328,6 +328,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     raiderDice_.seed(seed ^ 0x5be0cd19137e2179ull);
     eliteDice_.seed(seed ^ 0xa54ff53a3c6ef372ull);
     burstDice_.seed(seed ^ 0x3c6ef372a54ff53aull);
+    recallDice_.seed(seed ^ 0x9b05688c510e527full);
     for (int slot = 0; slot < kWorn; ++slot) {
         me().wearCarry[slot] = 0.0;
         me().wearItem[slot] = -1;
@@ -1556,6 +1557,7 @@ void Realm::heroAfter() {
         burn();
         channel(hero);
         if (hero.blinkAt != 0 && tick_ >= hero.blinkAt) blink(hero);
+        if (hero.recallAt != 0) recall(hero);
         poisonPulse(hero), burnPulse(hero), bleedPulse(hero);   // kBurners' fire lay, kBleeders' claws
         accept();
         // Pushed by a beast's Lightning: he slides as a pushed monster does, and walks on when
@@ -1903,6 +1905,10 @@ std::string describe(const Happening& happening, const Realm& realm) {
         case What::Reborn:
             std::snprintf(line, sizeof(line), "%6u %s reborn, rebirth %d, %d piece(s) to the bag",
                           happening.tick, who, happening.a, happening.b);
+            break;
+        case What::Recall:
+            std::snprintf(line, sizeof(line), "%6u %s summoned by %s: event %d, %d, %d", happening.tick,
+                          who, name(happening.whom).c_str(), happening.a, happening.b, happening.c);
             break;
         case What::Cracked:
             if (happening.a < 0) {

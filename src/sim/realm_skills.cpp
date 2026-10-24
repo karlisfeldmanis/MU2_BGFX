@@ -177,8 +177,11 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     // Ours: Blood Castle's court lets him raise his auras for the fight before the barrier lifts
     // (the user, 2026-10-04: 'allow to cast auras on BC waiting zone to prepare for fight') --
     // a boon, a mend or a might on himself, not a summon, and nothing aimed.
+    // **And Summon in town**, as MU casts it there (WebZen CGMagicAttack lets it through,
+    // protocol.cpp:15230-15299): his party lands round him on the nearest free tiles
+    // (Realm::recallTile).
     if (tables_->grid.safe(hero.column(), hero.row()) &&
-        !(row.aura() && event() == EventKind::Castle)) {
+        !(row.aura() && event() == EventKind::Castle) && !row.recalls) {
         return false;
     }
     // And a mount's skill only on the mount: off it -- on a safe tile, or the horn's life gone this
@@ -310,6 +313,21 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
             aid = one;
         }
         aided = aid != nullptr ? aid->id : hero.id;
+        // **Summon's refusals, before anything is paid**: no party, an event map (WebZen's
+        // CheckMainToMove on him, ObjUseSkill.cpp:3946), or one of his party here already
+        // counting down (RecallPartyCheck, :3892-3926). Ours: WebZen takes the mana for all three.
+        if (row.recalls) {
+            if (hero.party == 0 || event() != EventKind::None) return false;
+            for (const Body& one : bodies_) {
+                if (&one == &hero || !one.player || one.gone || one.party != hero.party || one.recallAt == 0) {
+                    continue;
+                }
+                say(What::Recall, hero, int32_t(RecallEvent::Busy), 0, 0, hero.id);
+                happenings_.back().audience = hero.id;
+                me().wants = skill::kNone;
+                return false;
+            }
+        }
         if (hero.mana < manaCostOf(hero, row)) return false;
         hero.mana -= manaCostOf(hero, row);
         if (row.summons > 0) {
@@ -351,6 +369,8 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
                     to.mercy = spare;
                 }
             }
+        } else if (row.recalls) {
+            recallParty(hero);
         } else if (row.sharpens) {
             // Critical Damage: off his Command and energy now, on him and on every member of his
             // party on this map within ten whole tiles (`gObjCalDistance < 10`), himself alone
@@ -1012,6 +1032,112 @@ void Realm::blink(Body& hero) {
     // casts Teleport in 0.75, so this only keeps the rule whole.
     if (me().summonSlot >= 0) dismiss(bodies_[size_t(me().summonSlot)]);
     say(What::Blinked, hero, hero.blinkColumn, hero.blinkRow);
+}
+
+// ---- Summon (docs/plans/dark-lord-spells/summon.md) ------------------------------------------
+
+bool Realm::recallParty(Body& lord) {
+    // Each of his party on this map, alive, wherever he stands: his tile drawn now and kept, his
+    // seven seconds on his own clock (WebZen ObjUseSkill.cpp:4040-4095). The level a map asks
+    // is asked of one coming from another; here he already stands in it.
+    int called = 0;
+    for (Body& one : bodies_) {
+        if (&one == &lord || !one.player || one.gone || !one.alive() || one.party != lord.party) continue;
+        int column = lord.column(), row = lord.row();
+        recallTile(lord, &column, &row);
+        one.recallAt = tick_ + kRecallTicks;
+        one.recallColumn = column;
+        one.recallRow = row;
+        one.recallBy = lord.id;
+        say(What::Recall, one, int32_t(RecallEvent::Called), -1, 0, lord.id);
+        happenings_.back().audience = one.id;
+        ++called;
+    }
+    say(What::Recall, lord, int32_t(RecallEvent::Called), called, 0, lord.id);
+    happenings_.back().audience = lord.id;
+    return called > 0;
+}
+
+bool Realm::recallTile(const Body& lord, int* column, int* row) {
+    // WebZen's: fifty draws in the square four each way, a tile with no attribute at all -- not
+    // safe, not stood on, no wall -- and none while he stands on a safe tile himself
+    // (gObjCheckTeleportArea, user.cpp:29656-29690). The draws are made either way, so the
+    // stream moves the same in town and out.
+    const content::Grid& grid = tables_->grid;
+    const bool safe = grid.safe(lord.column(), lord.row());
+    const auto free = [&](int c, int r) {
+        if (!grid.open(c, r, content::kWallCharacter)) return false;
+        for (const Body& one : bodies_) {
+            if (!one.gone && one.alive() && one.column() == c && one.row() == r) return false;
+        }
+        return true;
+    };
+    bool found = false;
+    for (int tries = 0; tries < kRecallTries; ++tries) {
+        const int c = lord.column() - kRecallReach + recallDice_.nextInt(0, 2 * kRecallReach + 1);
+        const int r = lord.row() - kRecallReach + recallDice_.nextInt(0, 2 * kRecallReach + 1);
+        if (found || safe || grid.safe(c, r) || !free(c, r)) continue;
+        *column = c;
+        *row = r;
+        found = true;
+    }
+    if (found) return true;
+    // **Ours, where WebZen sets him on the lord's own tile** (:4077-4081, every time in town): the
+    // nearest free tile round the lord, ring by ring, safe or not.
+    for (int ring = 1; ring <= 8; ++ring) {
+        for (int dy = -ring; dy <= ring; ++dy) {
+            for (int dx = -ring; dx <= ring; ++dx) {
+                if (std::max(std::abs(dx), std::abs(dy)) != ring) continue;
+                if (!free(lord.column() + dx, lord.row() + dy)) continue;
+                *column = lord.column() + dx;
+                *row = lord.row() + dy;
+                return true;
+            }
+        }
+    }
+    *column = lord.column();
+    *row = lord.row();
+    return false;
+}
+
+void Realm::recall(Body& hero) {
+    const auto end = [&](RecallEvent event) {
+        hero.recallAt = 0;
+        say(What::Recall, hero, int32_t(event), 0, 0, hero.recallBy);
+        happenings_.back().audience = hero.id;
+    };
+    // **A step of his own ends it** -- MU's move packet (PMoveProc, protocol.cpp:14110-14119): a
+    // click to walk, or walking in to a fight; striking or casting where he stands does not.
+    if (hero.walking) return end(RecallEvent::Cancelled);
+    const int64_t left = hero.recallAt - tick_;
+    if (left > 0) {
+        // "Will be summoned in N seconds.", from five down (user.cpp:25503-25508).
+        if (left % 20 == 0 && left / 20 <= 5) {
+            say(What::Recall, hero, int32_t(RecallEvent::Count), int32_t(left / 20), 0, hero.recallBy);
+            happenings_.back().audience = hero.id;
+        }
+        return;
+    }
+    // Down where the lord stood at the cast, the tile not asked again (WebZen's gObjRecall on the
+    // same map, user.cpp:32481-32500): what he was doing dropped, as a gate drops it, and what
+    // hunted him forgets him.
+    hero.recallAt = 0;
+    rise(hero);
+    dropBlow(hero);
+    me().order = Request{};
+    me().pending = Request{};
+    me().wants = skill::kNone;
+    me().trading = -1;
+    me().banking = -1;
+    closeMachine();
+    me().gating = -1;
+    setDown(hero, hero.recallColumn, hero.recallRow);
+    for (Body& one : bodies_) {
+        if (one.player || one.quarry != hero.id) continue;
+        one.quarry = 0;
+        one.provoked = false;
+    }
+    say(What::Recall, hero, int32_t(RecallEvent::Landed), hero.recallColumn, hero.recallRow, hero.recallBy);
 }
 
 // How long a push takes, in ticks: three tenths of a second -- quick enough to read as a blow,

@@ -133,6 +133,10 @@ constexpr int32_t kElectricSpike = 65;
 // on him and his party near him (WebZen ObjUseSkill.cpp:4136-4215;
 // docs/plans/dark-lord-spells/critical-damage.md).
 constexpr int32_t kCriticalDamage = 64;
+// `AT_SKILL_RECALL_PARTY`, Summon: his party pulled to him seven seconds on, each on a free tile
+// within four of where he stood (WebZen ObjUseSkill.cpp:3928-4119, user.cpp:25460-25510;
+// docs/plans/dark-lord-spells/summon.md).
+constexpr int32_t kSummon = 63;
 // `AT_SKILL_PENETRATION`, off the Orb of Penetration (group 12 number 17): 0.95d's and not
 // 0.75's (Version095d is where OpenMU first has it; VersionSeasonSix/SkillsInitializer.cs:171
 // carries the row). An arrow that flies on through everything in its line.
@@ -459,6 +463,10 @@ struct SkillRow {
     // for `60 + Energy/10` seconds, on him and every party member within ten tiles (sim::keenOf,
     // Realm::throwSkill).
     bool sharpens = false;
+    // ---- Summon's, appended after Critical Damage's -------------------------------------------
+    // **A party pulled to him**: each member on a free tile within kRecallReach of where he
+    // stands, kRecallTicks after the cast, unless he walks first (Realm::recall).
+    bool recalls = false;
     // **Whether a press aims it at the ground under the pointer** rather than at a body: the
     // shapes that have a direction -- Aqua Beam's beam, Power Wave's line, the knight's arcs and
     // Twister's walking storm. Thrown from the keys or the right button, he turns to where the
@@ -488,7 +496,7 @@ struct SkillRow {
                number == skill::kHellfire || number == skill::kTwistingSlash;
     }
     // Whether it is cast on the caster and takes no target.
-    bool onSelf() const { return boonTicks > 0 || mends || mightTicks > 0 || summons > 0 || sharpens; }
+    bool onSelf() const { return boonTicks > 0 || mends || mightTicks > 0 || summons > 0 || sharpens || recalls; }
     // Whether it is an aura: a self-cast that is not a summon. Blood Castle's court lets these
     // be raised on its safe tiles, to go into the fight with them (Realm::throwSkill).
     bool aura() const { return boonTicks > 0 || mends || mightTicks > 0 || sharpens; }
@@ -525,9 +533,9 @@ struct SkillRow {
 // again, which the static_assert below says. Also the width of a body's cooldown array -- and
 // the learned mask is by INDEX, so a new row goes on the END of the table or an old save
 // gives a knight somebody else's skill. The Dark Lord's Force past the Alquamos (41), his Fire
-// Burst (42), Electric Spike (43) and Critical Damage (44); a kept layout before 15 carries 40
-// cools, net/wire.cpp.
-constexpr int kSkills = 44;
+// Burst (42), Electric Spike (43), Critical Damage (44) and Summon (45); a kept layout before 15
+// carries 40 cools, net/wire.cpp.
+constexpr int kSkills = 45;
 
 // What each of Nova's stages adds to its blow: OpenMU's NovaDamageTable (NovaSkillStartPlugin.cs:30),
 // stage 0 to 12, with the strength's half beside it (SkillsInitializer.cs:610-611).
@@ -830,6 +838,12 @@ int mightOf(const HeroPoints& points);
 // excellent hit, for `60 + Energy/10` seconds, in ticks (WebZen ObjUseSkill.cpp:4173-4175).
 int32_t keenOf(const HeroPoints& points);
 int32_t keenTicksOf(const HeroPoints& points);
+// Summon: each member set down kRecallTicks after the cast -- WebZen's 7 on his once-a-second
+// clock (ObjUseSkill.cpp:4083), his notices from 5 down (user.cpp:25503) -- on a tile drawn
+// kRecallTries times in the square kRecallReach each way round the lord (:4064-4081).
+constexpr int64_t kRecallTicks = 7 * 20;
+constexpr int kRecallReach = 4;
+constexpr int kRecallTries = 50;
 
 // Whichever of the two a self-cast row is, so the realm, the card, the scroll and the strip ask
 // one question and cannot say different numbers for the same buff.

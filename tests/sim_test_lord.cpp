@@ -389,4 +389,91 @@ void testDarkLord(void (*check)(bool, const char*), void (*checkEqual)(long long
         check(me.keenUntil - lordRealm.tick() > sim::keenTicksOf(me.totalPoints()) - 40,
               "held for its sixty seconds and more");
     }
+
+    // **Summon** (63, docs/plans/dark-lord-spells/summon.md): his party on this map set down within
+    // four tiles of where he stood, seven seconds on, unless they walk first.
+    {
+        const sim::SkillRow* row = sim::skillNumbered(sim::skill::kSummon);
+        check(row != nullptr && row->onSelf() && !row->aura() && row->kin == sim::Kin::DarkLord &&
+                  row->mana == 70 && row->needLevel == 98 && row->coolTicks == 600 && row->recalls,
+              "Summon: a self-cast of his, level 98, 70 mana, thirty seconds");
+        // PLAYER_ATTACK_TELEPORT in the world's tables: 8 keys at 0.28, over a second.
+        const int32_t clip = sim::castTicks(lorencia, sim::Kin::DarkLord, 20, nullptr, nullptr, *row, 0);
+        check(clip >= 20, "Summon's clip is in the tables, a second and more");
+
+        // Alone, he has nobody to call: refused, nothing paid (ours; WebZen takes the mana).
+        sim::Realm alone;
+        check(alone.raise(&lorencia, 9, 160, 60, sim::Kin::DarkLord, 100), "a lone lord raises");
+        check(alone.learn(sim::skill::kSummon), "he learns it");
+        const int32_t full = alone.hero().mana;
+        alone.invoke(sim::skill::kSummon, 0);
+        for (int tick = 0; tick < 20; ++tick) alone.step();
+        check(alone.hero().mana >= full, "no party: refused, nothing paid");
+
+        sim::Realm realm;
+        check(realm.raise(&lorencia, 9, 160, 60, sim::Kin::DarkLord, 100), "a level-100 Dark Lord raises");
+        check(realm.learn(sim::skill::kSummon), "he learns it");
+        realm.unseen(true);
+        const uint32_t lord = realm.hero().id;
+        const int hx = realm.hero().column(), hy = realm.hero().row();
+        const uint32_t comes = realm.join(sim::Kin::DarkKnight, 100, hx + 14, hy);
+        const uint32_t walks = realm.join(sim::Kin::DarkKnight, 100, hx, hy + 14);
+        const uint32_t stranger = realm.join(sim::Kin::DarkKnight, 100, hx + 14, hy + 2);
+        check(comes && walks && stranger, "three knights join");
+        for (uint32_t one : {lord, comes, walks}) check(realm.setParty(one, 7), "into his party");
+        const int sx = realm.find(stranger)->column(), sy = realm.find(stranger)->row();
+        realm.invoke(sim::skill::kSummon, 0);
+        int cast = 0, counts = 0, landed = 0, cancelled = 0, called = -1, paid = 0;
+        for (int tick = 0; tick < 7 * 20 + 20; ++tick) {
+            if (tick == 10) {
+                realm.command({.kind = sim::Command::Kind::Order, .player = walks,
+                               .a = int(sim::Request::Kind::WalkTo), .b = hx, .c = hy + 20});
+            }
+            const int32_t before = realm.hero().mana;
+            realm.step();
+            for (const sim::Happening& one : realm.happenings()) {
+                if (one.what == sim::What::Cast && one.who == lord && one.a == sim::skill::kSummon) {
+                    ++cast;
+                    paid = before - realm.hero().mana;
+                }
+                if (one.what != sim::What::Recall) continue;
+                const auto event = sim::RecallEvent(one.a);
+                if (event == sim::RecallEvent::Called && one.who == lord) called = one.b;
+                if (event == sim::RecallEvent::Count && one.who == comes) ++counts;
+                if (event == sim::RecallEvent::Landed && one.who == comes) ++landed;
+                if (event == sim::RecallEvent::Cancelled && one.who == walks) ++cancelled;
+            }
+        }
+        checkEqual(cast, 1, "it is cast once");
+        checkEqual(called, 2, "on the two of his party: \"Summoning 2 people\"");
+        check(paid > 60 && paid <= 70, "for its 70 mana");
+        check(realm.cooling(sim::skill::kSummon) > 0, "and it cools");
+        checkEqual(counts, 5, "the one called hears 5, 4, 3, 2, 1");
+        checkEqual(landed, 1, "and is set down once");
+        const sim::Body& came = *realm.find(comes);
+        const int gap = std::max(std::abs(came.column() - hx), std::abs(came.row() - hy));
+        check(gap >= 1 && gap <= sim::kRecallReach, "within four tiles of the lord, never on him");
+        checkEqual(cancelled, 1, "the one who walked off is not summoned");
+        check(std::abs(realm.find(walks)->row() - hy) > sim::kRecallReach, "and is where he walked");
+        check(realm.find(stranger)->column() == sx && realm.find(stranger)->row() == sy,
+              "a stranger is never called");
+    }
+
+    // **In town**, as MU casts it: the one called lands on the nearest free tile round him.
+    {
+        sim::Realm realm;
+        check(realm.raise(&lorencia, 9, 130, 130, sim::Kin::DarkLord, 100), "a lord raises in Lorencia");
+        check(realm.learn(sim::skill::kSummon), "he learns it");
+        realm.unseen(true);
+        const uint32_t lord = realm.hero().id;
+        const int hx = realm.hero().column(), hy = realm.hero().row();
+        check(lorencia.grid.safe(hx, hy), "on a safe tile");
+        const uint32_t comes = realm.join(sim::Kin::DarkKnight, 100, hx + 10, hy);
+        for (uint32_t one : {lord, comes}) check(realm.setParty(one, 8), "into his party");
+        realm.invoke(sim::skill::kSummon, 0);
+        for (int tick = 0; tick < 7 * 20 + 20; ++tick) realm.step();
+        const sim::Body& came = *realm.find(comes);
+        checkEqual(std::max(std::abs(came.column() - hx), std::abs(came.row() - hy)), 1,
+                   "cast in town, he lands beside the lord");
+    }
 }

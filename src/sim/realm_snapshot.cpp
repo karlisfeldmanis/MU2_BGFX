@@ -144,7 +144,7 @@ void Realm::serialize(Archive& a) {
                          &chillDice_, &crackerDice_, &featherDice_, &novaScrollDice_, &wingDice_,
                          &gearDice_, &ticketDice_, &devilDice_, &treasureDice_, &orbDice_, &showerDice_,
                          &invasionDice_, &raidDice_, &raiderDice_, &mixDice_, &lifeDice_, &talentDice_,
-                         &eliteDice_, &burstDice_}) {
+                         &eliteDice_, &burstDice_, &recallDice_}) {
         a.pod(*dice);
     }
     a.vec(eliteSlots_);

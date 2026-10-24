@@ -2356,6 +2356,9 @@ void Realm::kill(Body& dead, Body& killer) {
         dead.might = 0;
         dead.keenUntil = 0;
         dead.keen = 0;
+        // And a Summon he was waiting on: ours, where WebZen's reset is compiled out and the dead
+        // were set down at the lord's feet (summon.md section 1).
+        dead.recallAt = 0;
         dead.channelSkill = 0;
         dead.channelUntil = 0;
         dead.blinkAt = 0;

@@ -960,6 +960,21 @@ constexpr SkillRow kRows[kSkills] = {
               "and energy, for a minute and more.",
      .clip = 147, .sound = "", .built = true, .families = arms::kNone, .needLevel = 82,
      .kin = Kin::DarkLord, .anyHand = true, .release = 0.56f / 0.83f, .sharpens = true},
+    // Summon 63 (docs/plans/dark-lord-spells/summon.md): MU's row, WebZen skill.txt:68 -- level 98,
+    // 70 mana, energy 153 and Command 400, thirty seconds' delay -- on PLAYER_ATTACK_TELEPORT (raw
+    // 81, 8 keys at 0.28: 1.14 s; WSclient.cpp:4702-4719), his circles 5 ticks after the echo
+    // (ZzzCharacter.cpp:2904-2910). MU's tenth-speed hold past key 5.5 is the drawing's: the
+    // realm holds him the clip alone, as a self-cast is held. Each member of his
+    // party on this map set down on a free tile within four of him seven seconds on, unless he
+    // walks first (Realm::recall).
+    // **Ours**: the thirty seconds as its cooldown, which only MU's client holds, and no AG; refused
+    // with nothing paid where WebZen takes the mana anyway (no party, an event map, a member
+    // already counting); this map only until the server carries it across (summon.md section 8).
+    {.number = skill::kSummon, .name = "Summon", .mana = 70, .coolTicks = 30 * 20,
+     .tells = "His party, wherever they stand on this map, brought to him seven seconds on -- "
+              "unless they move.",
+     .clip = 81, .sound = "", .built = true, .families = arms::kNone, .needLevel = 98,
+     .kin = Kin::DarkLord, .anyHand = true, .release = 0.2f / 1.14f, .recalls = true},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy
