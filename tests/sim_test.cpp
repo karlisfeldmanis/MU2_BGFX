@@ -954,10 +954,11 @@ void testItems(const content::Tables& tables) {
     // 2026-10-22: the 39 rows after a3d4dc48 -- Kanturu's dormant 380 sets and arms (8a1d6e55)
     // and the shields, bows, staffs, mace and swords between. 401 since 2026-10-23: the 59 rows
     // of the missing-gear audit -- twelve sets' 56 pieces (*Male21, 35-38, 46-49, 51, 53) and
-    // the three gamble arms (Spear12, Bow25, Staff34). A count
+    // the three gamble arms (Spear12, Bow25, Staff34). 402 since 2026-10-24: the Orb of Fire
+    // Slash (1bd2f5da). A count
     // rather than a list, because what it is guarding is the cook -- a
     // recipe that stops being picked up is a row the shelf silently cannot sell.
-    checkEqual(long(tables.items.size()), 401, "401 item rows cooked");
+    checkEqual(long(tables.items.size()), 402, "402 item rows cooked");
     // And Noria's three shops sell only what is cooked: Elf Lala, Eo the Craftsman and Potion
     // Girl Amy, every offer a row (the user, 2026-09-28: "fill Noria's vendors").
     // And Lumen's, whose Guardian Angel and Imp are ours (the user, 2026-09-30: "put imp and
