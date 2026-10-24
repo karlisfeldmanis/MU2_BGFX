@@ -746,7 +746,8 @@ Stacking stackingOf(Power power) {
 
 int stackMostOf(Power power) {
     switch (power) {
-        case Power::Undying: return 3;
+        case Power::Undying:
+        case Power::Kindle: return 3;
         case Power::KeenEye:
         case Power::Bloodwell:
         case Power::Renewal:

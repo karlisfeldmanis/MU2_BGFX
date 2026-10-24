@@ -10771,10 +10771,10 @@ void testRunes(const content::Tables& tables) {
         sim::reckon(dk, 30, sim::startingPoints(dk), arms, &fighter, &bare);
         arms.excel.undyingRate = sim::kUndyingHealth;
         sim::reckon(dk, 30, sim::startingPoints(dk), arms, &fighter, &once);
-        arms.excel.undyingRate = sim::kUndyingHealth * sim::kUndyingHealth;
+        arms.excel.undyingRate = 1.0 + 2.0 * (sim::kUndyingHealth - 1.0);
         sim::reckon(dk, 30, sim::startingPoints(dk), arms, &fighter, &twice);
-        checkEqual(once, int(double(bare) * 1.2), "one Undying is x1.2 on maximum health");
-        checkEqual(twice, int(double(bare) * 1.44), "and two are x1.44");
+        checkEqual(once, int(double(bare) * 1.2), "one Undying is +20% maximum health");
+        checkEqual(twice, int(double(bare) * 1.4), "and two add to +40%");
         // Every quest that pays an Undying pays mana's Wellspring beside it (2026-10-09).
         int undyings = 0, unmatched = 0;
         for (int q = 0; q < sim::kQuests; ++q) {
@@ -10942,7 +10942,7 @@ void testRunes(const content::Tables& tables) {
                   e.killLife >= sim::kSecondWindShare && e.killMana >= sim::kSecondWindShare,
               "worn, the four are each counted");
         // The strongest runes count so many (sim::stackMostOf): nine Keen Eyes, in the armour, the
-        // helm and the pants, are five's critical; eight Greater Mights six's strength
+        // helm and the pants, are five's critical; eight Greater Mights four's strength
         // (sim::kStatRuneMost), and a Lesser none.
         {
             sim::Realm keen;
@@ -10970,7 +10970,7 @@ void testRunes(const content::Tables& tables) {
             mighty.give(helm, sim::kHelm, 0, -1, false, 0, 0, 3, greater);
             checkEqual(mighty.hero().runeShare.strength,
                        sim::kStatRuneMost * sim::statShareOf(sim::Power::GreaterMight).strength,
-                       "eight Greater Mights and a Lesser are six Greaters' strength");
+                       "eight Greater Mights and a Lesser are four Greaters' strength");
             check(sim::stackingOf(sim::Power::KeenEye).stacks &&
                       !sim::stackingOf(sim::Power::Frenzy).stacks,
                   "and their tooltips say which stack");

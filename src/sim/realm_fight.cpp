@@ -174,9 +174,9 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
         pyroblasts(attacker) > 0) {
         force *= kPyroblastForce;
     }
-    // His Kindles on it, each its own (sim::kKindleForce).
+    // His Kindles on it, their shares added (sim::kKindleForce).
     if (row != nullptr && row->number == skill::kFireBall && attacker.player) {
-        for (int i = 0; i < attacker.excel.kindles; ++i) force *= kKindleForce;
+        force *= 1.0f + (kKindleForce - 1.0f) * float(attacker.excel.kindles);
     }
     // His element runes on a spell or a skill of their element; the sweeps' are laid in
     // strikeAround and the runes' own blows where each is let go.

@@ -916,8 +916,10 @@ struct PowerRow {
 };
 
 // **The Undying**, the first armour power and every class's (the user, 2026-09-30: "its for
-// all classes the same"): x1.2 on maximum health for each set in anything worn, armour or
-// shield. Devin's first clear pays it (sim/quests.cpp). Invention, as every rune is.
+// all classes the same"): +20% maximum health for each set in anything worn, armour or
+// shield -- added since 2026-10-24, x1.4 for two, where each multiplied before (x1.44, and
+// x1.73 for three: the multiplying stacks outgrew every other source). Devin's first clear pays
+// it (sim/quests.cpp). Invention, as every rune is.
 constexpr double kUndyingHealth = 1.2;
 // The Dungeon's three, the Golden Archer's chain (the user, 2026-09-30: "same runes for all, for
 // helm, pants, boots ... life steal, mana gain back, increase attack speed, increased chance of
@@ -991,8 +993,9 @@ Stacking stackingOf(Power power);
 // weapon's runes, held to its sockets, and Wellspring to the jewellery's five. Steadfast and the
 // Plagues keep the ceilings they had. Ours.
 int stackMostOf(Power power);
-// The stat runes': the best six for each stat, Might and Ascendance alike.
-constexpr int kStatRuneMost = 6;
+// The stat runes': the best four for each stat, Might and Ascendance alike -- six were +180%,
+// far above every other limited rune's top (2026-10-24).
+constexpr int kStatRuneMost = 4;
 // A rune paid to the Magic Gladiator that he may not set -- a Legendary of the knight's or the
 // wizard's, from a giver's path -- comes as its weaker kin he may: Arcane Echo as Faint Echo,
 // Pyroblaster as Scorch, Whirlwind as Eddy, Fireburst as Sparkburst, Hellfire as Brimstone,
@@ -1347,6 +1350,7 @@ constexpr float kSplitArrowSide = 0.25f;
 // Of the guard a shield would let him raise, with no shield on his arm; a Bulwark's is whole.
 constexpr float kBucklerGuard = 0.6f;
 constexpr float kBraceGuard = 0.3f;
+// Kindle's +15% Fire Ball each, added (2026-10-24; multiplied before), three counting.
 constexpr float kKindleForce = 1.15f;
 // **Immolate** (the user, 2026-10-06: 'chance to burn monsters to do some % of damage of hp and
 // their has to be some burn efekt to the monster'), Epic, any knight's weapon: a swing that lands

@@ -418,7 +418,9 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
             const PowerRow* power = powerOf(kit[slot].powers[at]);
             if (!power || !counted[slot][at]) continue;
             Excellence& e = hero.excel;
-            if (power->power == Power::Undying && jewellery(*row)) e.undyingRate *= kUndyingHealth;
+            if (power->power == Power::Undying && jewellery(*row)) {
+                e.undyingRate += kUndyingHealth - 1.0;
+            }
             if (power->power == Power::KeenEye) e.runeCritical += kKeenEyeCritical;
             if (power->power == Power::Bloodwell) {
                 e.lifeSteal += kBloodwellLife;
