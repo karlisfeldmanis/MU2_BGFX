@@ -649,6 +649,62 @@ J monsters(std::vector<Ground> grounds) {
 }
 
 // What one box opens into (crack, openBox).
+// Blood Castle's Statue of Saint (CastleInstance::set): each run raises one of kCastleStatues at
+// random, of those whose kind has a figure cooked, at kCastleStatueHealth for its castle; broken,
+// it lays the Archangel weapon it held (CastleInstance::kill, kArchangelWeapons) and pays
+// kCastleStatueExps. One entity, its three kinds its `looks`; its numbers read off raised castles.
+J statueOf(const World& w) {
+    const Tables& t = *w.tables;
+    J looks = J::arr();
+    std::vector<int32_t> standing;
+    for (int i = 0; i < 3; ++i) {
+        const int32_t number = sim::kCastleStatues[i];
+        const int32_t kind = kindNumbered(t, number);
+        if (kind < 0) continue;
+        const bool raisable = !t.kinds[size_t(kind)].figure.empty();
+        if (raisable) standing.push_back(number);
+        const int32_t weapon = t.itemAt(sim::kArchangelWeapons[i][0], sim::kArchangelWeapons[i][1]);
+        looks.push(J::obj().set("number", number).set("name", t.kinds[size_t(kind)].label)
+                       .set("figure", t.kinds[size_t(kind)].figure).set("live", raisable)
+                       .set("leaves", weapon >= 0 ? J(t.items[size_t(weapon)].name) : J()));
+    }
+    if (looks.size() == 0) return J();
+    const int32_t first = sim::kCastleStatues[0];
+    const int32_t firstKind = kindNumbered(t, first);
+    J places = J::arr();
+    for (int c = 1; c <= sim::kCastles; ++c) {
+        J spawnedHere;
+        for (const int32_t number : sim::kCastleStatues) {
+            if (const J* s = spawned(w, c, number, false)) spawnedHere = *s;
+        }
+        J items = J::arr();
+        for (size_t i = 0; i < standing.size(); ++i) {
+            const int at = int(standing[i] - sim::kCastleStatues[0]);
+            const int32_t weapon = t.itemAt(sim::kArchangelWeapons[at][0], sim::kArchangelWeapons[at][1]);
+            if (weapon < 0) continue;
+            const double p = 1.0 / double(standing.size());
+            J roll = J::obj();
+            roll.set("roll", "statue_broken").set("chance", J::p(p)).set("look", standing[i]);
+            J rolls = J::arr();
+            rolls.push(roll);
+            items.push(J::obj().set("item", t.items[size_t(weapon)].name).set("chance", J::p(p)).set("rolls", rolls)
+                           .set("chance_note", "the weapon of the statue that stands this run, laid where it breaks"));
+        }
+        J pl = J::obj();
+        pl.set("place", "bloodcastle-" + std::to_string(c)).set("world", w.name).set("map", t.map).set("kind", "castle")
+            .set("castle", c).set("elite", false).set("name", t.kinds[size_t(firstKind)].label)
+            .set("level", t.kinds[size_t(firstKind)].level).set("items", items)
+            .set("breaking", J::obj().set("experience", J((long long)sim::kCastleStatueExps[c - 1]))
+                                 .set("note", "broken, it lays its Archangel weapon to carry back to the Archangel, and the win pays its bonus experience"));
+        if (!spawnedHere.null()) pl.set("spawned", spawnedHere);
+        places.push(pl);
+    }
+    J o = J::obj();
+    o.set("number", first).set("name", t.kinds[size_t(firstKind)].label).set("looks", looks)
+        .set("one_of", "one of these stands at random each run (CastleInstance::set)").set("places", places);
+    return o;
+}
+
 }  // namespace
 
 J dumpBoxes(const Dump& d) {
@@ -778,6 +834,8 @@ J dumpDrops(const Dump& d) {
     J out = d.stamped();
     out.set("baseline", "one kill, the killer alone: no item find, no Fortune talents, no party or raider credit");
     J places = J::obj();
+    // Monsters of which the game raises one of several kinds at random (one entity, its `looks`).
+    std::vector<J> variants;
     for (const World& w : d.worlds) {
         const Tables& t = *w.tables;
         const sim::EventKind event = sim::eventOf(t.map);
@@ -799,6 +857,7 @@ J dumpDrops(const Dump& d) {
                     .set("built", c <= sim::kCastlesBuilt).set("rules", rules).set("monsters", monsters(grounds));
                 places["bloodcastle-" + std::to_string(c)] = place;
             }
+            variants.push_back(statueOf(w));
             continue;
         }
         if (event == sim::EventKind::Square) {
@@ -880,6 +939,9 @@ J dumpDrops(const Dump& d) {
             entry["places"].push(std::move(m));
         }
         place.set("monsters", met);
+    }
+    for (J& one : variants) {
+        if (!one.null()) byNumber[int(one.find("number")->real())] = std::move(one);
     }
     J list = J::arr();
     for (auto& [number, entry] : byNumber) list.push(std::move(entry));

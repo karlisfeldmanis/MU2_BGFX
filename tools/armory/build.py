@@ -370,7 +370,16 @@ def build(commit=None, out=None, thumbs=True, say=print):
     say(f"content: {len(I)} items, {len(M)} monsters, {len(W)} worlds, {len(F)} townsfolk")
 
     item_slug = slugs.assign("items", [(k, v["name"]) for k, v in I.items()])
-    mon_slug = slugs.assign("monsters", [(k, v["name"]) for k, v in M.items()])
+    # Where the game raises one of several kinds at random (Blood Castle's statue): one entity, the
+    # dump's `looks`; the other kinds share its slug and get no page of their own.
+    looks, merged = {}, {}
+    for e in D.listed("drops", "monsters"):
+        prim = by_number.get(e.get("number"))
+        if prim in M and isinstance(e.get("looks"), list):
+            looks[prim] = {"one_of": e.get("one_of"), "looks": [dict(x, key=by_number.get(x.get("number"))) for x in e["looks"]]}
+            merged.update({x["key"]: prim for x in looks[prim]["looks"] if x["key"] and x["key"] != prim})
+    mon_slug = slugs.assign("monsters", [(k, v["name"]) for k, v in M.items() if k not in merged])
+    mon_slug.update({k: mon_slug[prim] for k, prim in merged.items()})
     npc_slug = slugs.assign("npcs", [(k, k) for k in F])
     world_slug = slugs.assign("worlds", [(k, v["name"]) for k, v in W.items()])
 
@@ -553,6 +562,8 @@ def build(commit=None, out=None, thumbs=True, say=print):
     # ---- monsters
     rows, ents = [], []
     for k, m in sorted(M.items(), key=lambda kv: mon_slug[kv[0]]):
+        if k in merged:
+            continue  # one of another's looks
         s = mon_slug[k]
         c = m["combat"]
         where = [dict(n, world_slug=world_slug[n["world"]], live=is_live(n["world"])) for n in nests.get(m["number"], [])]
@@ -586,6 +597,10 @@ def build(commit=None, out=None, thumbs=True, say=print):
                 e["met_in"] = towns
                 row["maps"] = [W[w]["name"] if w in W else w for w in towns]
                 row["home"] = ", ".join(row["maps"])
+        if k in looks:
+            e["one_of"] = looks[k]["one_of"]
+            e["looks"] = [dict(x, thumb=pics(f"monster:{x['key']}")) for x in looks[k]["looks"]]
+            e["live"] = row["live"] = bool(live) or any(x.get("live") for x in looks[k]["looks"])
         ents.append((s, e))
         search.append({"n": m["name"], "k": "monster", "s": s})
     publish("monsters", rows, ents)
