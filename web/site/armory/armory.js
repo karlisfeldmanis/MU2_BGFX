@@ -287,23 +287,62 @@ ${evs ? sec(t('Events'), `<div class="rel evs">${evs}</div>`) : ''}</div></artic
     const row = idx[x.slug] || {};
     const name = x.name || row.n || pretty(x.slug);
     const thumb = rowPic(row);
-    const inner = `<span class="ico">${thumb ? `<img src="${pic(thumb)}" alt="" loading="lazy" width="40" height="40">` : ''}</span><span class="relt"><span class="reln">${esc(kindOf === 'npcs' ? npcName(name) : name)}</span>${(x.lines || []).length ? `<span class="nlines">${x.lines.slice(0, 3).map(l => `<span class="mute small">${esc(l)}</span>`).join('')}${x.lines.length > 3 ? `<span class="mute small">${esc(t('and {n} more', { n: x.lines.length - 3 }))}</span>` : ''}</span>` : ''}</span>`;
+    const inner = `${thumb ? `<span class="ico"><img src="${pic(thumb)}" alt="" loading="lazy" width="40" height="40"></span>` : ''}<span class="relt"><span class="reln">${esc(kindOf === 'npcs' ? npcName(name) : name)}</span>${(x.lines || []).length ? `<span class="nlines">${x.lines.slice(0, 3).map(l => `<span class="mute small">${esc(l)}</span>`).join('')}${x.lines.length > 3 ? `<span class="mute small">${esc(t('and {n} more', { n: x.lines.length - 3 }))}</span>` : ''}</span>` : ''}</span>`;
     return gone || !row.slug ? `<div class="relc note">${inner}</div>` : `<a class="relc note" href="${href(kindOf, x.slug)}">${inner}</a>`;
   }
+  // A release's grouped changes (history.py `groups`): one headline per cause, what it touched under it.
+  const groupsOf = (rel) => (Array.isArray(rel.groups) ? rel.groups : []).map(x => ({
+    head: x.headline || x.title || (Array.isArray(x.summary) ? x.summary[0] : x.summary) || '',
+    more: Array.isArray(x.summary) ? x.summary.slice(x.headline || x.title ? 0 : 1) : x.detail ? [x.detail] : [],
+    things: (x.things || x.entities || x.members || []).filter(y => y && y.slug) })).filter(x => x.head);
+  function groupRow(gr) {
+    const pics = gr.things.slice(0, 6).map(x => { const k = KIND_OF[x.kind] ? KIND_OF[x.kind] : x.kind; const p0 = rowPic((by(k, 'slug') || {})[x.slug] || {}); return p0 ? `<img src="${pic(p0)}" alt="" loading="lazy" width="28" height="28">` : ''; }).join('');
+    return `<details class="ngrp"><summary><span class="ngh">${esc(gr.head)}</span>${pics ? `<span class="ngpics">${pics}</span>` : ''}</summary>
+${gr.more.length ? `<div class="nlines" style="margin:0 0 10px">${gr.more.map(l => `<span class="mute small">${esc(l)}</span>`).join('')}</div>` : ''}<div class="rel notes">${gr.things.map(x => noteLine(x)).join('')}</div></details>`;
+  }
   function releaseNotes(rel, most, key) {
+    if (Array.isArray(rel.notes)) return orderedNotes(rel, most, key);
+    const grs = groupsOf(rel);
+    const inGroup = new Set(grs.flatMap(gr => gr.things.map(x => (KIND_OF[x.kind] || x.kind) + '/' + x.slug)));
     const g = notesOf(rel);
+    g.changed = g.changed.filter(x => !inGroup.has((KIND_OF[x.kind] || x.kind) + '/' + x.slug));
     const all = R.q[key] === 'all';
     let left = all ? 1e9 : most;
+    const heads = grs.slice(0, left); left -= heads.length;
+    const groupsHtml = heads.length ? `<h3 class="h3 ngroup">${esc(t('What changed'))}</h3><div class="ngrps">${heads.map(groupRow).join('')}</div>` : '';
     const group = (title, list, gone) => {
       if (!list.length || left <= 0) return '';
       const shown = list.slice(0, left); left -= shown.length;
       return `<h3 class="h3 ngroup">${esc(title)} <span class="mute">${list.length}</span></h3><div class="rel notes">${shown.map(x => noteLine(x, gone)).join('')}</div>`;
     };
-    const total = g.new.length + g.changed.length + g.removed.length;
-    const body = group(t('New'), g.new) + group(t('Changed'), g.changed) + group(t('Removed'), g.removed, true);
+    const total = grs.length + g.new.length + g.changed.length + g.removed.length;
+    const body = groupsHtml + group(t('New'), g.new) + group(t('Changed'), g.changed) + group(t('Removed'), g.removed, true);
     const shifts = (rel.counts || {}).pool_shifts;
     return `${rel.note ? `<div class="rnote">${markdown(rel.note)}</div>` : ''}${body || `<p class="mute" style="margin:0">${esc(rel.previous ? t('Nothing in the Armory changed.') : t('The first update the Armory keeps: what changes from here on is listed.'))}</p>`}${
       total > most ? showAll(all ? total : Math.min(most, total), total, key) : ''}${shifts ? `<p class="mute small" style="margin:12px 0 0">${esc(t('Drop chances shifted slightly for {n} more, as their pools grew or shrank.', { n: shifts }))}</p>` : ''}`;
+  }
+  // history.py's `notes`: most important first -- a group (one cause, the things it touched, folded
+  // under its headline), a single thing's own lines, a new thing. Runs of single and new things share
+  // a grid; twelve notes, then "Show all".
+  function orderedNotes(rel, most, key) {
+    const all = R.q[key] === 'all';
+    const list = rel.notes.filter(n => n && (n.type === 'group' ? n.headline : n.slug));
+    const shown = all ? list : list.slice(0, most);
+    let out = '', run = [];
+    const flush = () => { if (run.length) out += `<div class="rel notes">${run.join('')}</div>`; run = []; };
+    shown.forEach(n => {
+      if (n.type === 'group') {
+        flush();
+        out += groupRow({ head: n.headline, more: [], things: (n.entities || []).filter(x => x && x.slug).map(x => Object.assign({ kind: n.kind }, x, { lines: x.lines || [] })) });
+      } else {
+        const lines = n.type === 'new' ? [t('New')].concat(n.summary || []) : (n.summary || []);
+        run.push(noteLine(Object.assign({}, n, { lines })));
+      }
+    });
+    flush();
+    const shifts = (rel.counts || {}).pool_shifts;
+    return `${rel.note ? `<div class="rnote">${markdown(rel.note)}</div>` : ''}${out ? `<div class="ngrps">${out}</div>` : `<p class="mute" style="margin:0">${esc(rel.previous ? t('Nothing in the Armory changed.') : t('The first update the Armory keeps: what changes from here on is listed.'))}</p>`}${
+      list.length > most ? showAll(all ? list.length : Math.min(most, list.length), list.length, key) : ''}${shifts ? `<p class="mute small" style="margin:12px 0 0">${esc(t('Drop chances shifted slightly for {n} more, as their pools grew or shrank.', { n: shifts }))}</p>` : ''}`;
   }
   // A release's hand note (tools/armory/notes/<commit>.md): paragraphs, "- " lists, **bold**, nothing else.
   function markdown(md) {
@@ -315,6 +354,16 @@ ${evs ? sec(t('Events'), `<div class="rel evs">${evs}</div>`) : ''}</div></artic
       return `<p>${inline(ls.join(' '))}</p>`;
     }).join('');
   }
+  // A release's name for people: its own label, else its day, and the time too when two share a day.
+  function relLabel(r, rels) {
+    if (r.label || r.title) return r.label || r.title;
+    const day = dayOf(r.date || r.built);
+    const twin = (rels || []).filter(x => dayOf(x.date || x.built) === day).length > 1;
+    const at = r.time || (r.built && r.built.length > 10 ? r.built : '');
+    const n = r.number || ((rels || []).length - (rels || []).indexOf(r));
+    const time = !twin ? '' : at ? ' · ' + (r.time || new Date(at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }) + ' UTC') : ' · ' + t('release {n}', { n });
+    return t('The update of {day}', { day }) + time;
+  }
   function patchNotes(o) {
     const h = have('history/releases.json');
     if (h === undefined) return '';
@@ -322,8 +371,8 @@ ${evs ? sec(t('Events'), `<div class="rel evs">${evs}</div>`) : ''}</div></artic
     if (!rels.length) return '';
     const first = rels[0];
     const earlier = rels.slice(1);
-    return sec(t('Patch notes'), `<div class="relhead">${esc(t('The update of {day}', { day: dayOf(first.date || first.built) }))}</div>${releaseNotes(first, o.most, 'notes')}${
-      earlier.length ? `<div class="earlier">${earlier.map((r, i) => `<details class="upd"><summary>${esc(t('The update of {day}', { day: dayOf(r.date || r.built) }))}</summary>${releaseNotes(r, 1e9, 'n' + i)}</details>`).join('')}</div>` : ''}
+    return sec(t('Patch notes'), `<div class="relhead">${esc(relLabel(first, rels))}</div>${releaseNotes(first, o.most, 'notes')}${
+      earlier.length ? `<div class="earlier">${earlier.map((r, i) => `<details class="upd"><summary>${esc(relLabel(r, rels))}</summary>${releaseNotes(r, 1e9, 'n' + i)}</details>`).join('')}</div>` : ''}
 ${o.fold ? `<p style="margin:14px 0 0"><a class="crumb" style="text-decoration:underline" href="${listHref('updates')}">${esc(t('Every update'))}</a></p>` : ''}`);
   }
   function updatesPage() {
@@ -331,7 +380,7 @@ ${o.fold ? `<p style="margin:14px 0 0"><a class="crumb" style="text-decoration:u
     const h = have('history/releases.json');
     if (h === undefined) return listPage(t('Updates'), '', ld);
     const rels = (h && h.releases) || [];
-    return listPage(t('Updates'), t('{n} updates', { n: rels.length }), rels.map((r, i) => `<section class="esec"><h2 class="h2">${esc(t('The update of {day}', { day: dayOf(r.date || r.built) }))}</h2>${releaseNotes(r, i ? 1e9 : 40, i ? 'u' + i : 'all')}</section>`).join('') || absent(t('No update yet.')));
+    return listPage(t('Updates'), t('{n} updates', { n: rels.length }), rels.map((r, i) => `<section class="esec"><h2 class="h2">${esc(relLabel(r, rels))}</h2>${releaseNotes(r, i ? 1e9 : 40, i ? 'u' + i : 'all')}</section>`).join('') || absent(t('No update yet.')));
   }
 
   // ---- items
@@ -935,7 +984,7 @@ ${table([[t('Item')], [t('Type')], [t('Best from')], [t('Chance a kill'), 1]], (
     const cls = [...new Set(rows.flatMap(r => r.classes || []))];
     const list = rows.filter(r => !R.q.cls || (r.classes || []).includes(R.q.cls)).sort((x, y) => (x.kin > y.kin ? 1 : x.kin < y.kin ? -1 : (x.needLevel || 0) - (y.needLevel || 0)));
     return listPage(LIST.skills, t('{n} skills', { n: list.length }), `<div class="chips" style="margin-bottom:16px">${chip(esc(t('All')), !R.q.cls, { cls: '' })}${cls.map(c => chip(esc(CLS[c] || c), R.q.cls === c, { cls: R.q.cls === c ? '' : c })).join('')}</div>` +
-      table([[''], [t('Skill')], [t('Class')], [t('Level'), 1], [t('Mana'), 1], [t('Reach'), 1], [t('What it does')]], list.map(s => `<tr><td style="width:56px">${s.icon ? `<span class="ticon" style="background-image:url(${pic(s.icon)})"></span>` : ''}</td><td>${a('skills', s.slug, s.n)}</td>
+      table([[''], [t('Skill')], [t('Class')], [t('Level'), 1], [t('Mana'), 1], [t('Reach'), 1], [t('What it does')]], list.map(s => `<tr><td style="width:56px">${s.icon ? `<span class="ticon" style="background-image:url(${pic(s.icon)})"></span>` : s.pic ? `<span class="ico"><img src="${pic(s.pic.card)}" alt="" loading="lazy" width="40" height="40"></span>` : ''}</td><td>${a('skills', s.slug, s.n)}</td>
 <td class="mute">${esc((s.classes || []).join(', '))}</td><td class="r num">${s.needLevel ? N(s.needLevel) : '—'}</td><td class="r num">${N(s.mana)}</td><td class="r num">${s.reach ? N(s.reach) : '—'}</td><td class="wrap mute" style="min-width:260px">${esc(s.tells || '')}</td></tr>`)));
   }
   function skillPage(e) {
@@ -950,7 +999,7 @@ ${table([[t('Item')], [t('Type')], [t('Best from')], [t('Chance a kill'), 1]], (
     const raises = r ? sec(t('What it raises'), `<div class="callout"><span class="slabel">${esc(t('Raises'))}</span><div>${a('monsters', r.monster.slug, r.monster.name, 'open')}${r.fights_as ? ` <span class="dotsep">·</span> ${esc(t('fights as'))} ${a('monsters', r.fights_as.slug, r.fights_as.name, 'open')}` : ''}${r.orb ? ` <span class="dotsep">·</span> ${esc(t('taught by'))} ${a('items', r.orb.slug, `${r.orb.name} +${r.orb.plus}`, 'open')}${r.orb.energy ? ` <span class="dotsep">·</span> ${esc(t('{n} energy', { n: r.orb.energy }))}` : ''}` : ''}</div></div>`) : '';
     const body = raises + (feeds.length ? sec(t('Talent columns that feed it'), `${feeds.map(f => `<div>· ${esc(f)}</div>`).join('')}<p style="margin:12px 0 0"><a class="crumb" style="text-decoration:underline" href="${listHref('talents')}">${esc(t('Open the talent calculator'))}</a></p>`) : '') +
       sec(t('Comments'), comments('skills', e.slug, []));
-    return frame({ pic: e.icon_png ? `<div class="epicol"><div class="epic sm"><span class="ticon" style="width:46px;height:64px;border-color:#6A5426;background-image:url(${pic(e.icon_png)})"></span></div></div>` : '', name: e.name,
+    return frame({ pic: e.icon_png ? `<div class="epicol"><div class="epic sm"><span class="ticon" style="width:46px;height:64px;border-color:#6A5426;background-image:url(${pic(e.icon_png)})"></span></div></div>` : e.pic ? epic(e.pic, e.name) : '', name: e.name,
       sub: esc((e.classes || []).map(c => CLS[c] || c).join(', ')), lead: esc(e.tells || ''), facts, body });
   }
 

@@ -12,6 +12,7 @@ thumbnails), on its file and its index row, chosen from the built release alone:
   elite   the Elite look of that map's strongest Elite breed
   event   its strongest monster's
   quest   its giver's, else its first target monster's
+  skill   (one with no icon of its own) the item that teaches it
 
 and search.json's rows get a picture, a level and a place (search()), so hits of one name can be
 told apart. Nothing is chosen by name; a page whose links give nothing keeps none.
@@ -68,7 +69,18 @@ def run(dest, say=print):
                 if best is None or (s.get("level") or 0) > best[0]:
                     elite_of[s["world"]] = (s.get("level") or 0, e["elite_thumb"])
 
+    # The item that teaches each skill (an orb or scroll's `teaches`, or one of its by_plus rows').
+    teaches = {}
+    for r in items.values():
+        e = _load(dest / "items" / f"{r['slug']}.json") or {}
+        pw = e.get("powers") or {}
+        for n in [pw.get("teaches")] + [b.get("teaches") for b in (pw.get("by_plus") or []) if isinstance(b, dict)]:
+            if isinstance(n, int) and n and r.get("t"):
+                teaches.setdefault(n, r["k"])
+
     def choose(kind, e):
+        if kind == "skills":
+            return item_pic(teaches.get(e.get("number")))
         if kind == "boxes":
             return item_pic(e.get("item"))
         if kind == "mixes":
@@ -98,14 +110,14 @@ def run(dest, say=print):
         return None
 
     done = Counter()
-    for kind in ("boxes", "mixes", "runes", "elites", "events", "quests"):
+    for kind in ("boxes", "mixes", "runes", "elites", "events", "quests", "skills"):
         idx = _load(dest / "index" / f"{kind}.json")
         if not idx:
             continue
         for r in idx.get("rows") or []:
             f = dest / kind / f"{r['slug']}.json"
             e = _load(f)
-            if not e or e.get("thumb"):
+            if not e or e.get("thumb") or e.get("icon_png"):
                 continue
             p = choose(kind, e)
             if p:
