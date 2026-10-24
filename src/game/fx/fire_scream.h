@@ -63,6 +63,12 @@ private:
     static constexpr float kRingScale = 0.9f, kRingShrink = 0.04f;
     static constexpr int kTails = 13;
     static constexpr float kRibbonWidth = 150.0f;
+    // **Ours**: the flames at this share of MU's size and light (the user, 2026-10-24: "its feel
+    // very over the top can we make it little bit subtle and more clear?"). A hundred of MU's, up
+    // to four metres across and stood on the ground, added up to one white mass over him.
+    static constexpr float kFlameSize = 0.5f, kFlameLight = 0.55f;
+    // And the flame sheets' light, so their white tips do not flare past the lanes.
+    static constexpr float kSheetLight = 0.65f;
 
     struct Lane {
         bool alive = false;

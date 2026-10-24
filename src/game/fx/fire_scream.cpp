@@ -156,7 +156,7 @@ void FireScream::step(float frames) {
             const float fire = std::max(0.0f, kFireScale - kFireShrink * float(lane.laid));
             const float ring = std::max(0.0f, kRingScale - kRingShrink * float(lane.laid));
             for (const float scale : {(fire - 0.4f) * 3.5f, (ring - 0.4f) * 3.5f}) {
-                const float half = 32.0f * scale;
+                const float half = 32.0f * scale * kFlameSize;
                 float at[3];
                 head(lane, std::max(along, half), at);
                 flame(at, scale);
@@ -207,6 +207,7 @@ void FireScream::gatherEffects(gfx::Effects& effects) const {
     const float tile = m / kUnit;
     const float up[3] = {0.0f, 1.0f, 0.0f};
     const float white[3] = {1.0f, 1.0f, 1.0f};
+    const float sheetLight[3] = {kSheetLight, kSheetLight, kSheetLight};
     for (const Lane& lane : lanes_) {
         if (!lane.alive) continue;
         // The pair's heads while they live, MU's scale at this frame.
@@ -220,9 +221,9 @@ void FireScream::gatherEffects(gfx::Effects& effects) const {
                 float at[3];
                 head(lane, std::max(along, sheetTail_ * fire / kUnit), at);
                 submitEffectAlong(effects, sheet_, sheetTex_, gfx::Blend::Additive, at, lane.across, up, back,
-                                  fire * tile, white, 1.0f);
+                                  fire * tile, sheetLight, 1.0f);
                 submitEffectAlong(effects, streak_, streakTex_, gfx::Blend::Additive, at, lane.across, up, back,
-                                  fire * tile, white, 1.0f);
+                                  fire * tile, sheetLight, 1.0f);
             }
             const float ring = kRingScale - kRingShrink * lane.frame;
             if (ring >= 0.1f) {
@@ -269,7 +270,7 @@ void FireScream::gatherEffects(gfx::Effects& effects) const {
         if (!one.alive) continue;
         gfx::Sprite flame;
         for (int k = 0; k < 3; ++k) flame.position[k] = one.at[k];
-        flame.halfWidth = flame.halfHeight = 32.0f * one.scale * m;
+        flame.halfWidth = flame.halfHeight = 32.0f * one.scale * kFlameSize * m;
         // **Ours**: stood on the ground rather than half in it. MU's is centred 3 units over the
         // land and four metres across, so the ground cut each one off in a flat line and the wall
         // showed stepped edges (the user, 2026-10-24: "cuted/croped parts from spell"); a wider
@@ -277,7 +278,7 @@ void FireScream::gatherEffects(gfx::Effects& effects) const {
         flame.position[1] += flame.halfHeight;
         flame.spin = one.spin;
         flame.soft = 1.0f;
-        for (int k = 0; k < 3; ++k) flame.colour[k] = std::min(1.0f, one.light);
+        for (int k = 0; k < 3; ++k) flame.colour[k] = std::min(1.0f, one.light) * kFlameLight;
         flame.sheet = flameTex_;
         flame.blend = gfx::Blend::Additive;
         effects.add(flame);
