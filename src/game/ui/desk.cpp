@@ -463,6 +463,8 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // The chat's keyboard, taken before the box spends the script's: it types only while it is
     // open and no box is up, and its Enter and Escape are then its own.
     const bool chatTyping = chat_.typing() && !typing;
+    // Its settings, showing in its panel, take Escape the same way: back to the chat.
+    const bool chatSetting = chat_.setting() && chat_.showing() && !chatHidden() && !typing;
     const std::string typedNow = window.typed() + scriptTyped_;
     const bool enterNow = window.entered() || scriptEnter_;
     const bool escapeNow = window.escaped() || scriptEscape_;
@@ -473,7 +475,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // And a quest giver's window, which is answered as the box is and takes Escape before the menu.
     const bool questing = play.isOpen() && (play.realm().questing() >= 0 || journal_ >= 0);
     const bool escape =
-        !typing && !chatTyping && !questing && (scriptEscape_ || (holdEscape_ && window.escaped()));
+        !typing && !chatTyping && !chatSetting && !questing && (scriptEscape_ || (holdEscape_ && window.escaped()));
     {
         Amount::Result result;
         const std::string typed = window.typed() + scriptTyped_;
@@ -1077,7 +1079,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                      hud_.buffsLeft() - 16.0f * u, chatPointer,
                      chat_.over(chatPointer.x, chatPointer.y) && !chatHidden() ? window.scroll() : 0.0f,
                      chatTyping ? typedNow : std::string(), chatTyping ? window.backspaces() : 0,
-                     (chatTyping || free) && enterNow, chatTyping && escapeNow, toggleChat, play,
+                     (chatTyping || free) && enterNow, (chatTyping || chatSetting) && escapeNow, toggleChat, play,
                      chatTyping && window.tabbed(), chatTyping ? window.arrows() : 0);
         // While the Helper helps, what its window says of invites and trades is answered for him
         // (HelperSettings::invites, noTrades): the card shows it answered.
