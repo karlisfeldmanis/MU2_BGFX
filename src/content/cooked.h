@@ -210,7 +210,10 @@ enum class EmitterKind : uint8_t {
     CrystalSpark = 24,
     // Kanturu's tanks' arcs, from and to (Object93, bones 1 and 2), and its plants' spit
     // (Object99, bone 1): game/world/ruin_effects.h.
-    TankArcFrom = 25, TankArcTo = 26, PlantSpit = 27
+    TankArcFrom = 25, TankArcTo = 26, PlantSpit = 27,
+    // The Relics' poles' pulsing flare (Object05, bone 1), drawn with the crystal sparks:
+    // game/world/crystal_sparks.h. `low`/`high` MU's fLumi, `hz` its sine.
+    PoleFlare = 28
 };
 struct TownEmitter {
     static constexpr uint16_t kWorld = 0xFFFF;

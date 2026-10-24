@@ -200,7 +200,7 @@
       "wrap": 0.5
     }
   ],
-  "emitters_from": "Render_Kanturu2nd_AfterObjectMesh type 76 (GM_Kanturu_2nd.cpp:653-672) is the Ruins' type 95: a BITMAP_SPARK+1 at each of bones 0-9, Scale 7.5, light (0.1, 0.1, 0.3), added. The geometry is the Ruins' Object96's, so its sparks (snapped onto the shards) and its pink light are the Ruins' recipe's, copied. Its RENDER_CHROME7 | RENDER_DARK pass is not carried.",
+  "emitters_from": "Render_Kanturu2nd_AfterObjectMesh type 76 (GM_Kanturu_2nd.cpp:653-672) is the Ruins' type 95: a BITMAP_SPARK+1 at each of bones 0-9, Scale 7.5, light (0.1, 0.1, 0.3), added. The geometry is the Ruins' Object96's, so its sparks (snapped onto the shards) and its pink light are the Ruins' recipe's, copied. The sparks are carried but not drawn: the Relics' show has no crystal_sparks, as the Ruins' has had none since their polish. Its RENDER_CHROME7 | RENDER_DARK pass is show.crystal_chrome.",
   "emitters_snapped": "Ours: each spark moved from its bone (MuExtract rest position, up to 1.9 m off the shards) to the nearest point of the crystal's own triangles, 20% in towards that triangle's middle, so it lies on a shard (the user, 2026-10-23: \"those blue crystal effect has to be always be on crystal meshes non somewhere else\").",
   "glow": {
     "songk3crystal_R": {

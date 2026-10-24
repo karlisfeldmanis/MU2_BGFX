@@ -12,6 +12,8 @@ namespace {
 
 // Spark03 is 32 texels, so a sprite of Scale 1 is 32 units, 0.32 m, across.
 constexpr float kSheetMetres = 0.32f;
+// And flare01 is 64.
+constexpr float kFlareSheetMetres = 0.64f;
 // Ours: drawn within this of the camera's point, as the other world effects.
 constexpr float kReach = 30.0f;
 
@@ -63,20 +65,27 @@ void lendCrystalChrome(Town& town, const std::string& assetDir, const std::strin
 void CrystalSparks::open(const std::string& assetDir, const std::string& world,
                          const content::CookedTown& town, content::Textures& textures) {
     shutdown();
-    if (!worldShow(world).crystalSparks) return;
+    // The sparks where the world's show asks for them; the poles' flares wherever a recipe
+    // carries one (the Relics' Object05), the show or no.
+    const bool sparks = worldShow(world).crystalSparks;
+    std::vector<std::vector<const content::TownEmitter*>> carried(town.models.size());
+    size_t carriedCount = 0;
+    for (const content::TownEmitter& one : town.emitters) {
+        const bool spark = sparks && one.kind == content::EmitterKind::CrystalSpark;
+        if ((spark || one.kind == content::EmitterKind::PoleFlare) &&
+            one.model != content::TownEmitter::kWorld) {
+            carried[one.model].push_back(&one);
+            ++carriedCount;
+        }
+    }
+    if (carriedCount == 0) return;
     content::Showing table;
     std::string error;
     if (content::loadShowing(assetDir + "/cooked/showing/showing.mus", table, error)) {
         if (const content::EffectSheet* sheet = table.effect("spark_flash"))
             sheet_ = textures.load(assetDir + "/" + sheet->path, content::TextureRole::Albedo);
-    }
-    // Which sparks each model carries, found once.
-    std::vector<std::vector<const content::TownEmitter*>> carried(town.models.size());
-    for (const content::TownEmitter& one : town.emitters) {
-        if (one.kind == content::EmitterKind::CrystalSpark &&
-            one.model != content::TownEmitter::kWorld) {
-            carried[one.model].push_back(&one);
-        }
+        if (const content::EffectSheet* sheet = table.effect("flare"))
+            flareSheet_ = textures.load(assetDir + "/" + sheet->path, content::TextureRole::Albedo);
     }
     for (const content::TownInstance& instance : town.instances) {
         if (carried[instance.model].empty()) continue;
@@ -91,20 +100,28 @@ void CrystalSparks::open(const std::string& assetDir, const std::string& world,
                               one->at[2] * turn[2 * 4 + j] + turn[3 * 4 + j];
                 point.colour[j] = one->colour[j];
             }
-            // `high` carries MU's sprite Scale, 7.5.
-            point.halfWidth = 0.5f * one->high * kSheetMetres;
+            if (one->kind == content::EmitterKind::PoleFlare) {
+                point.flare = true;
+                point.low = one->low;
+                point.high = one->high;
+                point.hz = one->flickerHz;
+            } else {
+                // `high` carries MU's sprite Scale, 7.5.
+                point.halfWidth = 0.5f * one->high * kSheetMetres;
+            }
             points_.push_back(point);
         }
     }
     open_ = true;
-    core::logf("crystal sparks: %zu points, spark03 %s", points_.size(),
-               bgfx::isValid(sheet_) ? "yes" : "NO");
+    core::logf("crystal sparks: %zu points, spark03 %s, flare01 %s", points_.size(),
+               bgfx::isValid(sheet_) ? "yes" : "NO", bgfx::isValid(flareSheet_) ? "yes" : "NO");
 }
 
 void CrystalSparks::shutdown() {
     open_ = false;
     points_.clear();
     sheet_ = BGFX_INVALID_HANDLE;
+    flareSheet_ = BGFX_INVALID_HANDLE;
 }
 
 void CrystalSparks::update(float seconds, const float near[3]) {
@@ -113,10 +130,31 @@ void CrystalSparks::update(float seconds, const float near[3]) {
 }
 
 void CrystalSparks::gather(gfx::Effects& effects) const {
-    if (!open_ || !bgfx::isValid(sheet_)) return;
+    if (!open_) return;
     for (const Point& one : points_) {
         const float dx = one.at[0] - near_[0], dz = one.at[2] - near_[2];
         if (dx * dx + dz * dz > kReach * kReach) continue;
+        if (one.flare) {
+            // MU's pole (RenderKanturu2ndObjectVisual type 4, GM_Kanturu_2nd.cpp:338-348):
+            // fLumi = (sin(WorldTime * 0.002) + 2) / 2, the light (0.3, 0.5, 1.0) times it, a
+            // BITMAP_LIGHT (Effect/flare01, 64 texels) at Scale fLumi / 3.2, added. Its two
+            // KANTURU_2ND_EFFECT1 sprites (Object39/k_effect_01) are not carried.
+            if (!bgfx::isValid(flareSheet_)) continue;
+            const float lumi = one.low + (one.high - one.low) *
+                                             (0.5f + 0.5f * std::sin(clock_ * 6.2831853f * one.hz));
+            gfx::Sprite sprite;
+            for (int k = 0; k < 3; ++k) {
+                sprite.position[k] = one.at[k];
+                sprite.colour[k] = one.colour[k] * lumi;
+            }
+            sprite.colour[3] = 1.0f;
+            sprite.halfWidth = sprite.halfHeight = 0.5f * (lumi / 3.2f) * kFlareSheetMetres;
+            sprite.sheet = flareSheet_;
+            sprite.blend = gfx::Blend::Additive;
+            if (!effects.add(sprite)) break;
+            continue;
+        }
+        if (!bgfx::isValid(sheet_)) continue;
         // Ours, so the sparks sit in the crystal rather than on it (the user, 2026-10-23: "that
         // blue light has to be better integrated on crystal so it does not look like just
         // placed there"): MU's blue taken halfway to the crystal's own pink-violet, at its

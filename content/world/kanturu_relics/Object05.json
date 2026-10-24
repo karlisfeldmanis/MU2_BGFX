@@ -38,5 +38,43 @@
         0.997
       ]
     }
-  ]
+  ],
+  "emitters": [
+    {
+      "kind": "flare",
+      "colour": [
+        0.3,
+        0.5,
+        1.0
+      ],
+      "low": 0.5,
+      "high": 1.5,
+      "flicker_hz": 0.318,
+      "range_tiles": 0,
+      "at": [
+        0.0,
+        13.31,
+        245.25
+      ]
+    },
+    {
+      "kind": "lamp",
+      "colour": [
+        0.3,
+        0.5,
+        1.0
+      ],
+      "low": 0.5,
+      "high": 1.5,
+      "flicker_hz": 0.64,
+      "smooth_seconds": 1.57,
+      "range_tiles": 2,
+      "at": [
+        0.0,
+        13.31,
+        245.25
+      ]
+    }
+  ],
+  "emitters_from": "RenderKanturu2ndObjectVisual type 4 (GM_Kanturu_2nd.cpp:338-348): fLumi = (sin(WorldTime * 0.002) + 2) * 0.5, 0.5 to 1.5 every 3.1 s; at bone 1 (the pole's top, MuExtract export-rig of MuMain's Object05.bmd: 0, 13.3, 245.2 units, its -1 unit offset dropped) a BITMAP_LIGHT (Effect/flare01) of Scale fLumi / 3.2 lit (0.3, 0.5, 1.0) * fLumi, added: the `flare`, drawn by game/world/crystal_sparks.h. MU's two KANTURU_2ND_EFFECT1 sprites (Object39/k_effect_01) are not carried. The `lamp` is ours, marked: a small blue light over 2 tiles wandering over MU's fLumi range; MU lights nothing from the pole. (the user, 2026-10-24: \"nextwhats next\", effects 1)."
 }

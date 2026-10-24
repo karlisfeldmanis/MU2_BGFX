@@ -59,12 +59,17 @@ private:
         float at[3] = {0, 0, 0};
         float halfWidth = 1.2f;  // metres
         float colour[3] = {0.1f, 0.1f, 0.3f};
+        // A pole's flare (content::EmitterKind::PoleFlare): MU's fLumi between low and high
+        // on a sine of hz, scaling both its light and its Scale (fLumi / 3.2).
+        bool flare = false;
+        float low = 1.0f, high = 1.0f, hz = 0.0f;
     };
     std::vector<Point> points_;
     float near_[3] = {0, 0, 0};
     float clock_ = 0.0f;  // seconds, for the twinkle
     bool open_ = false;
     bgfx::TextureHandle sheet_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle flareSheet_ = BGFX_INVALID_HANDLE;  // Effect/flare01, the showing's `flare`
 };
 
 }  // namespace mu::game
