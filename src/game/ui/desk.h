@@ -135,7 +135,9 @@ public:
     // log, L, or a giver's dialog), unless he is typing in it (the user, 2026-10-22: "we need hide
     // chat when we open map list (M)", then "when quest window is opened hide chat").
     bool chatHidden() const {
-        return (minimap_.full() || travel_.up() || questLog_.up() || questDialog_.up() || rebirthing_) &&
+        // And under the market, whose cards run to the screen's foot where the chat is (the user,
+        // 2026-10-24: "when market is opened hide chat").
+        return (minimap_.full() || travel_.up() || questLog_.up() || questDialog_.up() || rebirthing_ || brokering_) &&
                !chat_.typing();
     }
     // The drop whose name plate is under this pixel, or 0. The last drawn is on top and wins.
