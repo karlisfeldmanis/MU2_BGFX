@@ -164,6 +164,24 @@ void ElectricSpike::loose(uint32_t who, const float feet[3], float way) {
     }
 }
 
+void ElectricSpike::arc(const float from[3], const float to[3], float wait) {
+    for (Zap& one : zaps_) {
+        if (one.alive) continue;
+        one = Zap{};
+        one.alive = true;
+        for (int k = 0; k < 3; ++k) {
+            one.from[k] = from[k];
+            one.to[k] = to[k];
+        }
+        one.seed = dice_;
+        unit();
+        one.wait = wait;
+        one.width = 60.0f;
+        one.bolt = true;
+        return;
+    }
+}
+
 void ElectricSpike::step(Joint& one) {
     if (one.wait > 0.0f) {
         one.wait -= 1.0f;
@@ -289,7 +307,7 @@ void ElectricSpike::gatherEffects(gfx::Effects& effects) const {
     }
     const int frame = int(clock_ * kReferenceFps);
     for (const Zap& one : zaps_) {
-        if (!one.alive) continue;
+        if (!one.alive || one.wait > 0.0f) continue;
         // Its walk, thrown again each frame: six points from the far end into the hand.
         float points[6][3];
         for (int i = 0; i < 6; ++i) {
@@ -302,8 +320,10 @@ void ElectricSpike::gatherEffects(gfx::Effects& effects) const {
                 points[i][k] = one.from[k] + (one.to[k] - one.from[k]) * t + jitter;
             }
         }
-        const float colour[3] = {0.5f, 0.5f, 1.0f};
-        ribbon(effects, points, 6, 10.0f * metre, colour, scroll);
+        const float light = one.bolt ? std::fmin(1.0f, one.left / 5.0f) : 1.0f;
+        const float colour[3] = {one.bolt ? light : 0.5f, one.bolt ? 0.8f * light : 0.5f,
+                                 one.bolt ? light : 1.0f};
+        ribbon(effects, points, 6, one.width * metre, colour, scroll);
     }
     for (const Joint& one : joints_) {
         if (!one.alive || one.tails == 0) continue;

@@ -28,6 +28,10 @@
 // as there is no party drain to draw (decision 6); the zaps' walk drawn as a jagged line re-thrown
 // each frame; keys read as a share of the clip as played.
 //
+// **Ours, for "the number comes with the visual"**: a body WebZen's table strikes off the bolt --
+// beside him, or wide of its coils -- takes a zap off the bolt into it as it is struck (`arc`): the
+// bolt's sheet and light, sixty units wide, ten frames.
+//
 // Presentation only: the blows are the realm's.
 #pragma once
 
@@ -52,6 +56,8 @@ public:
     void begin(uint32_t who, float clipSeconds);
     // The bolt let go by `who` standing at `feet`, down `way` (the realm's aim, radians).
     void loose(uint32_t who, const float feet[3], float way);
+    // A body struck off the bolt `wait` seconds on: a zap off the bolt, `from`, into it, `to`.
+    void arc(const float from[3], const float to[3], float wait);
 
     // Every frame. `grip(id, out)` his weapon hand, false for none.
     template <typename Grip>
@@ -85,6 +91,9 @@ private:
         float from[3] = {}, to[3] = {};
         float left = 10.0f;
         uint32_t seed = 0;
+        float wait = 0.0f;   // seconds before it is drawn
+        float width = 10.0f; // MU units
+        bool bolt = false;   // the bolt's colour, not the gather's
     };
     // One joint of the bolt, in MU units on its line: x across, -y ahead, z up.
     struct Joint {
@@ -163,6 +172,10 @@ void ElectricSpike::update(float seconds, Grip grip) {
     }
     for (Zap& one : zaps_) {
         if (!one.alive) continue;
+        if (one.wait > 0.0f) {
+            one.wait -= seconds;
+            continue;
+        }
         one.left -= frames;
         if (one.left <= 0.0f) one.alive = false;
     }

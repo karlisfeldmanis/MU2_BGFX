@@ -1979,15 +1979,17 @@ void Realm::fireBurst(Body& hero, const SkillRow& row, uint32_t aimedAt, float f
     // Then every monster in his sight with `gObjCalDistance(target, it) < 3`, whole tiles
     // truncated (WebZen ObjUseSkill.cpp:3755, user.cpp:7042-7053), each its own blow 500-799 ms on
     // (:3757-3762) -- every one of them: the `rand()%3` thinning at :3741 waits on a `loopcount`
-    // that never moves. No wall stops it and nothing is drawn on them (WSclient.cpp:3237-3410);
-    // the aimed one alone pays back.
+    // that never moves. No wall stops it; the aimed one alone pays back. MU draws nothing on them
+    // (WSclient.cpp:3237-3410). **Ours**: each is said, `c` 1 and its wait `b`, so the fire is
+    // drawn on it as it lands -- the user's "the number comes with the visual".
     for (const Body& one : bodies_) {
         if (!one.monster() || !one.alive() || one.id == aimedAt) continue;
         if (tables_->grid.safe(one.column(), one.row())) continue;
         const int dx = one.column() - cx, dy = one.row() - cy;
         if (dx * dx + dy * dy >= kBurstTiles * kBurstTiles) continue;
-        loose(hero, row, one.id, force, false, false,
-              burstDice_.nextInt(kBurstFirstTick, kBurstLastTick + 1));
+        const int32_t wait = burstDice_.nextInt(kBurstFirstTick, kBurstLastTick + 1);
+        say(What::Loosed, hero, row.number, wait, 1, one.id);
+        loose(hero, row, one.id, force, false, false, wait);
     }
 }
 
@@ -1999,6 +2001,10 @@ namespace {
 // (ZzzEffectJoint.cpp:2489-2582, fx/electric_spike.h). The second frame at the soonest, the first
 // it is drawn with any length: a body beside or behind him, which the table strikes and the tip
 // never passes, takes it with the bolt's first light. The number comes with the bolt, not before.
+// Behind him past this, in tiles, nothing is struck; wider of the bolt than its coils (80 units)
+// or short of where it is made (90 units ahead), a body is struck with a zap of its own.
+constexpr float kSparkBehind = 0.5f, kSparkWide = 0.8f, kSparkStart = 0.9f;
+
 int32_t sparkReaches(float along) {
     const float units = along * 100.0f;
     int frame = 2;
@@ -2047,8 +2053,20 @@ void Realm::electricSpike(Body& hero, const SkillRow& row, uint32_t aimedAt, flo
     }
     for (int i = 0; i < found; ++i) {
         const Body* one = body(victims[i]);
-        const float along = one ? (one->x - hero.x) * c + (one->y - hero.y) * s : 0.0f;
-        loose(hero, row, victims[i], force, false, victims[i] == aimedAt, sparkReaches(along));
+        if (one == nullptr) continue;
+        const float dx = one->x - hero.x, dy = one->y - hero.y;
+        const float along = dx * c + dy * s, wide = std::fabs(dy * c - dx * s);
+        // **Ours, and marked**: nothing behind him -- the user's "only frontal". The table's row
+        // behind him has no bolt to come with, and a zap drawn back to it would flare behind him.
+        if (along < -kSparkBehind) continue;
+        const int32_t wait = sparkReaches(along);
+        // A body off the bolt -- beside him, or wide of its coils -- is said, `b` its wait, so a
+        // zap off the bolt is drawn into it as it is struck: the number comes with the visual.
+        if (wide > kSparkWide || along < kSparkStart) {
+            say(What::Loosed, hero, row.number, wait, int32_t(std::lround(hero.aim * 1000.0f)),
+                one->id);
+        }
+        loose(hero, row, victims[i], force, false, victims[i] == aimedAt, wait);
     }
 }
 

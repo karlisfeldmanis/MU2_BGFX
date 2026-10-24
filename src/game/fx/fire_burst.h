@@ -34,6 +34,13 @@
 // AttackTime is read as a share of the clip as played. The heads fly in MU's units in a frame laid
 // on his line at the let-go.
 //
+// **Ours, and marked, for the user's "only frontal" and "the number comes with the visual"**: a
+// head that would pass behind his shoulders is put out there, and its fire never flies back toward
+// him (MU's circles the body it homes on for all twenty frames, and on one beside him that ring
+// wrapped round behind him); and each body
+// the splash strikes takes a burst of the trail's own fire as its blow lands (`burn`), where MU
+// draws nothing on them.
+//
 // Presentation only: the blows and their damage are the realm's.
 #pragma once
 
@@ -56,6 +63,8 @@ public:
 
     // A Fire Burst begun by `who` at `target`, its clip `clipSeconds` long.
     void begin(uint32_t who, uint32_t target, float clipSeconds);
+    // A body the splash strikes `wait` seconds on: its fire, then.
+    void burn(uint32_t whom, float wait);
 
     // Every frame. `place(id, feet, &tall, &yaw)` where a body is drawn, false for none;
     // `root(id, local, out)` where `local`, metres in his Bip01's own frame, stands in the world
@@ -76,6 +85,7 @@ private:
     static constexpr float kPieceScale = 0.5f;
     static constexpr float kFireFrames = 12.0f, kFireSize = 64.0f;
     static constexpr float kFlashFrames = 10.0f;
+    static constexpr int kBurnFires = 10;  // a splashed body's burst
 
     // A frame laid on his line at the let-go: MU's caster at its origin facing -Y, x across, z up.
     struct Line {
@@ -117,6 +127,13 @@ private:
     static constexpr int kPieces = 640;
     static constexpr int kFires = 640;
     static constexpr int kFlashes = 8;
+    static constexpr int kBurns = 32;
+    struct Burn {
+        bool alive = false;
+        uint32_t whom = 0;
+        float wait = 0.0f;  // seconds
+    };
+    Burn burns_[kBurns] = {};
 
     std::vector<EffectCorner> head_, piece_, flash_;
     bgfx::TextureHandle headSheet_ = BGFX_INVALID_HANDLE, pieceSheet_ = BGFX_INVALID_HANDLE,
@@ -136,6 +153,7 @@ private:
                float targetTall);
     void fly(Head& head, const float* there);
     void stamp(const Head& head);
+    void blaze(const float feet[3], float tall);
     // A point of the line, MU units, to world metres; and a direction of it.
     void toWorld(const Line& line, const float mu[3], float out[3]) const;
     void wayToWorld(const Line& line, const float mu[3], float out[3]) const;
@@ -184,6 +202,14 @@ void FireBurst::update(float seconds, Place place, Root root, Cue cue) {
             head.due -= 1.0f;
             fly(head, seen ? there : nullptr);
         }
+    }
+    for (Burn& one : burns_) {
+        if (!one.alive) continue;
+        one.wait -= seconds;
+        if (one.wait > 0.0f) continue;
+        one.alive = false;
+        float feet[3], tall = 1.8f, yaw = 0.0f;
+        if (place(one.whom, feet, &tall, &yaw)) blaze(feet, tall);
     }
     for (Piece& one : pieces_) {
         if (!one.alive) continue;

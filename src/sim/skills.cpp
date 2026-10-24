@@ -936,10 +936,11 @@ constexpr SkillRow kRows[kSkills] = {
     // PLAYER_SKILL_FLASH (152), let go at its frame 5.5 of 13 (ZzzCharacter.cpp:2885-2895). Whatever
     // WebZen's table marks is struck (Realm::electricSpike); Command/10 + 50 a party member near
     // him go on the band in place of Str/25 + Ene/50 (ObjAttack.cpp:3210-3220).
-    // **Ours**: forty mana where MU spends 100 AG, which this game has not; each body struck when
-    // the bolt reaches it (`flies` 40: MU's bolt is ~900 units out six frames after the let-go),
-    // where WebZen strikes them all half a second after the click; no party drain (decision 6).
-    {.number = skill::kElectricSpike, .name = "Electric Spike", .mana = 40, .reach = 10.0f, .force = 2.0f,
+    // **Ours**: 25 mana, Fire Burst's, where MU spends 100 AG, which this game has not (40 left a
+    // level-100 lord dry after three casts, the user's test of 2026-10-24); each body struck as
+    // the bolt's tip passes it (Realm::electricSpike), where WebZen strikes them all half a second
+    // after the click; no party drain (decision 6).
+    {.number = skill::kElectricSpike, .name = "Electric Spike", .mana = 25, .reach = 10.0f, .force = 2.0f,
      .coolTicks = 100, .spread = Spread::Line,
      .tells = "A bolt of lightning down a line ten tiles long toward the ground he names, through "
               "everything in it. His Command and his party near him add to it.",

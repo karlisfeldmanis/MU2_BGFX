@@ -177,7 +177,7 @@ void testDarkLord(void (*check)(bool, const char*), void (*checkEqual)(long long
         lordRealm.invoke(sim::skill::kFireBurst, ids[0]);
         int64_t letGo = -1;
         int64_t struck[4] = {-1, -1, -1, -1};
-        int loosed = 0;
+        int loosed = 0, splashed = 0;
         int64_t cooledAt = 0;
         for (int tick = 0; tick < 120; ++tick) {
             // Held where they were stood until the let-go: a monster that does not see him still
@@ -190,7 +190,9 @@ void testDarkLord(void (*check)(bool, const char*), void (*checkEqual)(long long
             lordRealm.step();
             for (const sim::Happening& one : lordRealm.happenings()) {
                 if (one.who != lordRealm.hero().id) continue;
-                if (one.what == sim::What::Loosed && one.a == sim::skill::kFireBurst) {
+                if (one.what == sim::What::Loosed && one.a == sim::skill::kFireBurst && one.c == 1) {
+                    ++splashed;
+                } else if (one.what == sim::What::Loosed && one.a == sim::skill::kFireBurst) {
                     ++loosed, letGo = tick;
                     cooledAt = lordRealm.cooling(sim::skill::kFireBurst);
                 }
@@ -203,6 +205,7 @@ void testDarkLord(void (*check)(bool, const char*), void (*checkEqual)(long long
         std::printf("  fire burst: let go %lld, struck %lld %lld %lld %lld\n", (long long)letGo,
                     (long long)struck[0], (long long)struck[1], (long long)struck[2], (long long)struck[3]);
         checkEqual(loosed, 1, "one fire is said, at the aimed body");
+        checkEqual(splashed, 2, "and each body its splash strikes, so its fire is drawn as it lands");
         check(letGo >= 0 && struck[0] > letGo && struck[0] - letGo <= 7,
               "the aimed body burns when the fire reaches it, four tiles in a third of a second");
         check(struck[1] - letGo >= 10 && struck[1] - letGo <= 15 && struck[2] - letGo >= 10 &&
@@ -273,5 +276,56 @@ void testDarkLord(void (*check)(bool, const char*), void (*checkEqual)(long long
                    "the body three tiles down the line is struck as MU's tip passes it, frame 5");
         check(struck[1] > struck[0] && struck[1] - letGo <= 5, "and the one at nine a little later");
         check(struck[2] < 0 && struck[3] < 0, "off the table, beside it and behind him, nothing");
+    }
+    // Beside him and behind him, where WebZen's table marks a body the bolt never passes: the one
+    // beside him is struck and said, so its zap is drawn; behind him nothing ("only frontal").
+    {
+        sim::Realm lordRealm;
+        check(lordRealm.raise(&lorencia, 9, 160, 60, sim::Kin::DarkLord, 100), "a level-100 Dark Lord raises");
+        check(lordRealm.learn(sim::skill::kElectricSpike), "he learns it");
+        lordRealm.unseen(true);
+        lordRealm.benchUndying(true);
+        const int hx = lordRealm.hero().column(), hy = lordRealm.hero().row();
+        const int offsets[2][2] = {{0, 1}, {-1, 0}};
+        uint32_t ids[2] = {};
+        int found = 0;
+        for (const sim::Body& one : lordRealm.bodies()) {
+            if (found == 2) break;
+            if (!one.monster() || !one.alive()) continue;
+            ids[found++] = one.id;
+        }
+        check(found == 2, "two monsters to strike");
+        const auto hold = [&] {
+            for (int i = 0; i < 2; ++i) {
+                auto* held = const_cast<sim::Body*>(lordRealm.find(ids[i]));
+                held->x = float(hx + offsets[i][0]);
+                held->y = float(hy + offsets[i][1]);
+            }
+        };
+        hold();
+        lordRealm.invokeAt(sim::skill::kElectricSpike, hx + 6, hy);
+        int64_t letGo = -1;
+        int64_t struck[2] = {-1, -1};
+        int said[2] = {0, 0};
+        for (int tick = 0; tick < 80; ++tick) {
+            if (letGo < 0) hold();
+            lordRealm.step();
+            for (const sim::Happening& one : lordRealm.happenings()) {
+                if (one.who != lordRealm.hero().id) continue;
+                const bool bolt = one.what == sim::What::Loosed && one.a == sim::skill::kElectricSpike;
+                if (bolt && one.b == 0) letGo = tick;
+                for (int i = 0; i < 2; ++i) {
+                    if (bolt && one.b > 0 && one.whom == ids[i]) ++said[i];
+                    if ((one.what == sim::What::Hit || one.what == sim::What::Missed) && one.whom == ids[i] &&
+                        struck[i] < 0) {
+                        struck[i] = tick;
+                    }
+                }
+            }
+        }
+        std::printf("  electric spike beside/behind: let go %lld, struck %lld %lld, said %d %d\n",
+                    (long long)letGo, (long long)struck[0], (long long)struck[1], said[0], said[1]);
+        check(struck[0] > letGo && said[0] == 1, "the body beside him is struck, its zap said");
+        check(struck[1] < 0 && said[1] == 0, "the one behind him is not");
     }
 }

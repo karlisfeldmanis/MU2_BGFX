@@ -181,6 +181,9 @@ New:
 1. **The box is WebZen's table**, all 36 directions, carried as 21 row bitmasks a direction (src/sim/electric_spike_box.h,
    made from `skillElect.hit` by pipeline/electric_spike_box.py) and read as `HitCheck` reads it -- the row behind him
    and the tiles beside him included: that is the rule, not a picture. Every enemy in it is struck; no cap.
+   **Changed 2026-10-24**: nothing behind him (more than half a tile back down his line) is struck -- "only
+   frontal": a hit there had no visual, and a zap back to it would flare behind him. A body beside him or wide of
+   the bolt's coils (0.8 tile) is said (`Loosed`, its wait `b`) and takes a zap off the bolt into it as it is struck.
 2. **Each body struck when the bolt reaches it**: let go at frame 5.5 of PLAYER_SKILL_FLASH's 13 keys (clip 152,
    `release` 5.5/13), the bolt ~900 units out in 6 MU frames, so `flies` 40 tiles a second. WebZen strikes them all
    500 ms after the click, which at the base speed is about the let-go.
@@ -193,7 +196,7 @@ New:
 4. **No party drain** (decision 6), and so **no wisps** from the party, which only draw it.
 5. **The rings** (two DarkLordSkill at frames 7-8, colour 0.8, 0.5, 1.0) with 1.03.35's swell and fade, set at his
    weapon hand's height and slid ahead of him -- "only frontal" -- where MU's crescent flares beside and behind.
-6. **Cooldown 5 s** (MU's own client delay; the server never checked it). **Mana 40** (ours: MU spends 0 mana and
-   100 AG, and we have no AG).
+6. **Cooldown 5 s** (MU's own client delay; the server never checked it). **Mana 25** (ours, Fire Burst's: MU spends 0 mana and
+   100 AG, and we have no AG; 40 left a level-100 lord dry after three casts in the user's test, 2026-10-24).
 7. **Learning**: level 92, energy 126, Command 340 (MU's), from the Scroll of Electric Spark at **12/24** (MU's number,
    free here) -- built with the other scrolls. The Dark Horse (85) and Fenrir (95) clips wait for the horse.

@@ -93,6 +93,40 @@ void FireBurst::clear() {
     for (Piece& one : pieces_) one = Piece{};
     for (Fire& one : fires_) one = Fire{};
     for (Flash& one : flashes_) one = Flash{};
+    for (Burn& one : burns_) one = Burn{};
+}
+
+void FireBurst::burn(uint32_t whom, float wait) {
+    for (Burn& one : burns_) {
+        if (one.alive) continue;
+        one.alive = true;
+        one.whom = whom;
+        one.wait = wait;
+        return;
+    }
+}
+
+void FireBurst::blaze(const float feet[3], float tall) {
+    // The trail's own BITMAP_FIRE+1, round the body's middle and flown outward and up from it.
+    const float metre = perUnit();
+    for (int i = 0; i < kBurnFires; ++i) {
+        for (Fire& one : fires_) {
+            if (one.alive) continue;
+            one = Fire{};
+            one.alive = true;
+            const float turn = between(0.0f, 6.2831853f);
+            const float out = between(10.0f, 40.0f) * metre;
+            one.at[0] = feet[0] + std::cos(turn) * out;
+            one.at[1] = feet[1] + tall * between(0.3f, 0.7f);
+            one.at[2] = feet[2] + std::sin(turn) * out;
+            one.way[0] = std::cos(turn) * 0.6f;
+            one.way[1] = 0.8f;
+            one.way[2] = std::sin(turn) * 0.6f;
+            one.speed = between(4.0f, 8.0f);
+            one.spin = between(0.0f, 6.2831853f);
+            break;
+        }
+    }
 }
 
 void FireBurst::begin(uint32_t who, uint32_t target, float clipSeconds) {
@@ -203,6 +237,12 @@ void FireBurst::fly(Head& head, const float* there) {
         head.at[0] += kStep * std::cos(pitch) * std::sin(yaw);
         head.at[1] -= kStep * std::cos(pitch) * std::cos(yaw);
         head.at[2] -= kStep * std::sin(pitch);
+        // Not behind his shoulders: a head homing on a body beside him circles it, and the far
+        // side of that circle is behind him (ours, "only frontal").
+        if (head.at[1] > 0.0f) {
+            head.alive = false;
+            return;
+        }
         stamp(head);
     }
     head.gravity += 0.1f;
@@ -241,6 +281,13 @@ void FireBurst::stamp(const Head& head) {
         one.alive = true;
         for (int k = 0; k < 3; ++k) one.at[k] = at[k];
         wayToWorld(head.line, heading, one.way);
+        // Never back toward him: it flies some 170 units over its twelve frames, and a head turning
+        // round a body beside him threw it back past his shoulders (ours, "only frontal").
+        const float back = one.way[0] * head.line.ahead[0] + one.way[2] * head.line.ahead[2];
+        if (back < 0.0f) {
+            one.way[0] -= back * head.line.ahead[0];
+            one.way[2] -= back * head.line.ahead[2];
+        }
         one.speed = between(32.0f, 40.0f) * 0.3f;
         one.spin = between(0.0f, 6.2831853f);
         break;

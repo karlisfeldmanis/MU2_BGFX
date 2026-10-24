@@ -1529,7 +1529,24 @@ void Play::update(double seconds) {
                     } else if (happening.a == sim::skill::kForce) {
                         // Nor Force: its piercing, waves and streaks stand at him (fx/force.h).
                     } else if (happening.a == sim::skill::kFireBurst) {
-                        // Nor Fire Burst: its heads fly from the let-go (fx/fire_burst.h).
+                        // Nor Fire Burst: its heads fly from the let-go (fx/fire_burst.h). A body
+                        // its splash strikes (`c` 1) takes its fire as the blow lands, `b` on.
+                        if (happening.c == 1) {
+                            fireBurst_.burn(happening.whom, float(happening.b) * float(kTickSeconds));
+                        }
+                    } else if (happening.a == sim::skill::kElectricSpike && happening.b > 0) {
+                        // A body struck off the bolt, `b` on: a zap into it off the nearest of
+                        // the bolt, made 90 units ahead of him at 100 up (fx/electric_spike.h).
+                        if (target && target->placed) {
+                            const float way = float(happening.c) / 1000.0f;
+                            const float ahead[3] = {std::cos(way), 0.0f, -std::sin(way)};
+                            const float tile = ground_->metresPerTile();
+                            const float dx = to[0] - caster->crown[0], dz = to[2] - caster->crown[2];
+                            const float along = std::fmax(0.9f * tile, dx * ahead[0] + dz * ahead[2]);
+                            const float off[3] = {caster->crown[0] + ahead[0] * along, feet + tile,
+                                                  caster->crown[2] + ahead[2] * along};
+                            electricSpike_.arc(off, to, float(happening.b) * float(kTickSeconds));
+                        }
                     } else if (happening.a == sim::skill::kElectricSpike) {
                         // Electric Spike's bolt down the aim the realm struck along (`c`), and
                         // sDarkElecSpike with it (fx/electric_spike.h).

@@ -134,10 +134,14 @@ the client is probably newer than both sources). A Dark Lord casts about ten in 
 1. **The X flash** is turned to his facing so both arms open forward ("only frontal"), with 1.03.35's growth and fade.
 2. **The aimed body is struck when the middle head reaches it** (`flies` 10 less the tile a bolt stops short: 0.25 s at
    three tiles, 0.35 s at four, 0.55 s at six), not as MU's server does before the swing. The splash is 10-15 ticks
-   after the let-go, every monster at whole-tile distance under 3, no wall test, nothing drawn on them.
+   after the let-go, every monster at whole-tile distance under 3, no wall test. **Changed 2026-10-24** ("the number
+   comes with the visual"): each splashed body is said (`Loosed`, `c` 1, its wait `b`) and takes ten of the trail's
+   Fire02 flames, flown out and up from its middle, as its blow lands -- MU draws nothing on them.
 3. **The spawn point** is 1.03.35's (80,0,20), the older client's, which has the working flash. Read off his Bip01 in the
    strike pose at the let-go (2026-10-24; it was 40 ahead and 130 up of ours): about 88 units ahead, 103 up.
 4. **25 mana** (MU's) and a **5 s cooldown** (100 ticks before agility's haste), for the bench to tune.
+6. **Only frontal at point-blank** (2026-10-24): a head that would pass behind his shoulders is put out there. MU's
+   heads circle the body they home on for all twenty frames, and on a body beside him that ring wrapped behind him.
 5. **MU's level 74 and energy 79** stand on the row. The scroll (12/26), Marlon (a level 1-30 quest, so not his
    Fire Burst) and Hanzo come after the spell is judged in game.
 
