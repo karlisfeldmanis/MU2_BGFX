@@ -220,7 +220,9 @@ enum class EmitterKind : uint8_t {
     // The Relics' hidden lightning boxes (MoveKanturu2ndObject types 54, 56 and 65): a bolt
     // falling 11 m into the box, a half-metre arc from its west, a 3.5 m bolt from its north;
     // game/world/ruin_effects.h.
-    VoidStrike = 30, WallArc = 31, NorthBolt = 32
+    VoidStrike = 30, WallArc = 31, NorthBolt = 32,
+    // And its Fenrir thunder boxes (type 55): a crackle flashing within 20 units, one frame in 5.
+    FenrirFlash = 33
 };
 struct TownEmitter {
     static constexpr uint16_t kWorld = 0xFFFF;

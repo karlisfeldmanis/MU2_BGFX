@@ -15,6 +15,12 @@ constexpr float kFrames = 25.0f;               // MU's reference frames a second
 constexpr float kArcOdds = 30.0f;              // rand() % 30 == 1
 constexpr float kTowerArcOdds = 20.0f;         // rand_fps_check(20)
 constexpr float kEnergySheetMetres = 64.0f * 0.01f;  // Thunder01 is 64
+constexpr float kFlareMetres = 64.0f * 0.01f;        // and flare01
+// A Fenrir flash: gone once 0.3 a frame has taken its alpha from 1 to nothing.
+constexpr float kFlashLife = (1.0f / 0.3f) / 25.0f;
+// The lightning model's size, ours: lightning_type01 is drawn as a crackle about 2 m across at
+// Scale 1, so MU's 0.3-0.5 reads as a spark of 0.6-1 m.
+constexpr float kFlashMetres = 2.0f;
 constexpr float kSpitEvery = 3.0f;             // rand_fps_check(3)
 constexpr float kUnit = 0.01f;                 // metres a MU unit
 constexpr float kSpitSheetMetres = 32.0f * kUnit;  // water is 32 texels: Scale 1 is 32 units
@@ -41,13 +47,15 @@ void RuinEffects::open(const std::string& assetDir, const std::string& world,
             spit_ = textures.load(assetDir + "/" + sheet->path, content::TextureRole::Albedo);
         if (const content::EffectSheet* sheet = table.effect("energy"))
             energy_ = textures.load(assetDir + "/" + sheet->path, content::TextureRole::Albedo);
+        if (const content::EffectSheet* sheet = table.effect("flare"))
+            flare_ = textures.load(assetDir + "/" + sheet->path, content::TextureRole::Albedo);
         thunderOpen_ = thunder_.open(assetDir, textures, table);
     }
     // The world's lightning boxes.
     for (const content::TownEmitter& one : town.emitters) {
         if (one.model != content::TownEmitter::kWorld) continue;
         if (one.kind == content::EmitterKind::VoidStrike || one.kind == content::EmitterKind::WallArc ||
-            one.kind == content::EmitterKind::NorthBolt) {
+            one.kind == content::EmitterKind::NorthBolt || one.kind == content::EmitterKind::FenrirFlash) {
             Bolt bolt;
             for (int k = 0; k < 3; ++k) bolt.at[k] = one.at[k];
             bolt.kind = one.kind;
@@ -115,6 +123,8 @@ void RuinEffects::shutdown() {
     plants_.clear();
     towers_.clear();
     bolts_.clear();
+    flashes_.clear();
+    flare_ = BGFX_INVALID_HANDLE;
     blobs_.clear();
     spit_ = BGFX_INVALID_HANDLE;
     energy_ = BGFX_INVALID_HANDLE;
@@ -154,6 +164,7 @@ void RuinEffects::update(float seconds, const float near[3]) {
         const float everyTwenty = 1.0f - std::pow(1.0f - 1.0f / 20.0f, frames);
         const float everyTen = 1.0f - std::pow(1.0f - 1.0f / 10.0f, frames);
         for (const Bolt& bolt : bolts_) {
+            if (bolt.kind == content::EmitterKind::FenrirFlash) continue;
             const bool strike = bolt.kind == content::EmitterKind::VoidStrike;
             if (!nearby(bolt.at) || unit() >= (strike ? everyTwenty : everyTen)) continue;
             float from[3] = {bolt.at[0], bolt.at[1], bolt.at[2]};
@@ -170,6 +181,21 @@ void RuinEffects::update(float seconds, const float near[3]) {
         }
         // Every arc here is pinned at both ends (target 0), so neither is asked.
         thunder_.update(seconds, [](uint32_t) { return false; }, [](uint32_t, float*) { return false; });
+    }
+    // The Fenrir thunder boxes: one flash in 5 frames each, within 20 units, gone in 4 frames.
+    for (Flash& one : flashes_) one.age += dt;
+    flashes_.erase(std::remove_if(flashes_.begin(), flashes_.end(),
+                                  [](const Flash& f) { return f.age >= kFlashLife; }),
+                   flashes_.end());
+    const float everyFive = 1.0f - std::pow(1.0f - 1.0f / 5.0f, frames);
+    for (const Bolt& bolt : bolts_) {
+        if (bolt.kind != content::EmitterKind::FenrirFlash || !nearby(bolt.at)) continue;
+        if (unit() >= everyFive || flashes_.size() >= kMostBlobs) continue;
+        Flash flash;
+        for (int k = 0; k < 3; ++k) flash.at[k] = bolt.at[k] + (unit() * 40.0f - 20.0f) * kUnit;
+        flash.size = 0.3f + 0.2f * unit();
+        flash.spin = unit() * 6.2831853f;
+        flashes_.push_back(flash);
     }
     for (Blob& one : blobs_) {
         one.age += dt;
@@ -209,6 +235,34 @@ void RuinEffects::update(float seconds, const float near[3]) {
 void RuinEffects::gather(gfx::Effects& effects) const {
     if (!open_) return;
     if (thunderOpen_) thunder_.gather(effects);
+    for (const Flash& one : flashes_) {
+        // Alpha 1 falling 0.3 a reference frame; the crackle at the model's Scale, its light
+        // (0.8, 0.8, 1.0); the flare (Scale 2, light 0.3 less) on its first frame only.
+        const float alpha = std::max(0.0f, 1.0f - 0.3f * one.age * kFrames);
+        if (bgfx::isValid(energy_)) {
+            gfx::Sprite crackle;
+            for (int k = 0; k < 3; ++k) crackle.position[k] = one.at[k];
+            crackle.colour[0] = crackle.colour[1] = 0.8f * alpha;
+            crackle.colour[2] = alpha;
+            crackle.colour[3] = 1.0f;
+            crackle.halfWidth = crackle.halfHeight = 0.5f * one.size * kFlashMetres;
+            crackle.spin = one.spin + one.age * kFrames * 0.15f;
+            crackle.sheet = energy_;
+            crackle.blend = gfx::Blend::Additive;
+            if (!effects.add(crackle)) break;
+        }
+        if (bgfx::isValid(flare_) && one.age * kFrames < 1.0f) {
+            gfx::Sprite flare;
+            for (int k = 0; k < 3; ++k) flare.position[k] = one.at[k];
+            flare.colour[0] = flare.colour[1] = 0.5f;
+            flare.colour[2] = 0.7f;
+            flare.colour[3] = 1.0f;
+            flare.halfWidth = flare.halfHeight = 0.5f * 2.0f * kFlareMetres;
+            flare.sheet = flare_;
+            flare.blend = gfx::Blend::Additive;
+            if (!effects.add(flare)) break;
+        }
+    }
     if (bgfx::isValid(energy_)) {
         // fLumi = (sin(WorldTime * 0.001) + 1) / 2: white, from nothing to full every 6.3 s.
         const float lumi = 0.5f * (std::sin(clock_) + 1.0f);

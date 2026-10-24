@@ -28,6 +28,12 @@
 //         (18, in the void), one frame in 20, from 11 m above it, 0-5 units off; type 56 (13, on
 //         the walls), one in 10, from 50 units west; type 65 (2), one in 10, from 3.5 m north.
 //         Drawn as Thunder's wide fork.
+//   Flash The Relics' Fenrir thunder boxes, kind 33 (type 55, 32): one frame in 5 a
+//         MODEL_FENRIR_THUNDER sub-type 1 (Effect/lightning_type01.bmd) within 20 units, turned at
+//         random, Scale 0.3-0.5, born at full alpha and fading 0.3 a frame (gone in 4), spinning,
+//         lit (0.8, 0.8, 1.0), with a BITMAP_LIGHT of Scale 2 lit 0.3 less on its first frame
+//         (ZzzEffect.cpp:4314-4336, MoveHandlers.cpp:6679-6710). Ours, marked: the lightning
+//         model is drawn as a Thunder01 crackle of its size, the engine drawing no effect models.
 //
 // The points are the recipes' `emitters` (kinds "arc_from", "arc_to", "spit", "tower"), the rigs' rest
 // positions in the model's frame, laid once per placement turned and scaled as MU's bones are.
@@ -84,6 +90,11 @@ private:
     struct Tower {
         float at[3] = {0, 0, 0};
     };
+    struct Flash {
+        float at[3] = {0, 0, 0};
+        float age = 0.0f;  // seconds
+        float size = 0.4f, spin = 0.0f;
+    };
     struct Bolt {
         float at[3] = {0, 0, 0};
         content::EmitterKind kind = content::EmitterKind::VoidStrike;
@@ -92,6 +103,8 @@ private:
     std::vector<Plant> plants_;
     std::vector<Tower> towers_;
     std::vector<Bolt> bolts_;
+    std::vector<Flash> flashes_;
+    bgfx::TextureHandle flare_ = BGFX_INVALID_HANDLE;  // Effect/flare01, the showing's `flare`
     float clock_ = 0.0f;  // seconds, for the towers' sparks
     bgfx::TextureHandle energy_ = BGFX_INVALID_HANDLE;  // Effect/Thunder01, the showing's `energy`
     std::vector<Blob> blobs_;

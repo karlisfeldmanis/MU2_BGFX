@@ -78,9 +78,10 @@
       "value": {
         "Object55": 30,
         "Object57": 31,
-        "Object66": 32
+        "Object66": 32,
+        "Object56": 33
       },
-      "note": "The Relics' hidden lightning boxes (MoveKanturu2ndObject, GM_Kanturu_2nd.cpp:489-520): Object55 (type 54, 18 in the void) a bolt falling 11 m into it one frame in 20; Object57 (type 56, 13 on the walls) a half-metre arc from its west one in 10; Object66 (type 65, 2) a 3.5 m bolt from its north one in 10. game/world/ruin_effects.h (the user, 2026-10-24: \"better\", effects 3)."
+      "note": "The Relics' hidden lightning boxes (MoveKanturu2ndObject, GM_Kanturu_2nd.cpp:489-520): Object55 (type 54, 18 in the void) a bolt falling 11 m into it one frame in 20; Object57 (type 56, 13 on the walls) a half-metre arc from its west one in 10; Object66 (type 65, 2) a 3.5 m bolt from its north one in 10; Object56 (type 55, 32) a Fenrir thunder flash within 20 units one in 5. game/world/ruin_effects.h (the user, 2026-10-24: \"better\", \"next\", effects 3)."
     }
   },
   "npcs": [
