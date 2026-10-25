@@ -379,6 +379,10 @@ constexpr int kDeepJewelleryFrom = 18;
 
 // Whether it is ammunition: the bow group's 7 and 15.
 bool ammunition(const content::ItemRow& row);
+// The ammunition a bow or crossbow shoots: 15 the Arrows, 7 the Bolt. By its number, since the
+// item row has no stance: the crossbows are 8-14, the Saint (16), the Divine (18) and the Great
+// Reign (19); every other number in the group is a bow, the Celestial (17) and 20-24 among them.
+int ammunitionFor(const content::ItemRow& bow);
 // Whether it is drunk for a pool: the apple and three healing potions, the three mana potions.
 bool heals(const content::ItemRow& row);
 bool restores(const content::ItemRow& row);

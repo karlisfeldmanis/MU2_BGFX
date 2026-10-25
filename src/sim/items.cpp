@@ -307,6 +307,11 @@ bool ammunition(const content::ItemRow& row) {
     return row.group == kGroupBows && (row.number == 7 || row.number == 15);
 }
 
+int ammunitionFor(const content::ItemRow& bow) {
+    const int n = bow.number;
+    return (n >= 8 && n <= 14) || n == 16 || n == 18 || n == 19 ? 7 : 15;
+}
+
 Jewel jewelOf(const content::ItemRow& row) {
     if (row.group != kGroupPotions) return Jewel::None;
     switch (row.number) {
@@ -1335,7 +1340,7 @@ bool together(const content::ItemRow& a, const content::ItemRow& b) {
     if (shooter(a) || shooter(b)) {
         const content::ItemRow& bow = shooter(a) ? a : b;
         const content::ItemRow& other = shooter(a) ? b : a;
-        return ammunition(other) && other.number == (bow.number <= 6 ? 15 : 7);
+        return ammunition(other) && other.number == ammunitionFor(bow);
     }
     if (ammunition(a) || ammunition(b)) return true;
     return !a.twoHanded() && !b.twoHanded();

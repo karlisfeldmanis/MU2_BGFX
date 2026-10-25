@@ -349,7 +349,7 @@ static bool heldTogether(const content::ItemRow& a, const content::ItemRow& b) {
     if (bowA || bowB) {
         const content::ItemRow& bow = bowA ? a : b;
         const content::ItemRow& other = bowA ? b : a;
-        return sim::ammunition(other) && other.number == (bow.number <= 6 ? 15 : 7);
+        return sim::ammunition(other) && other.number == sim::ammunitionFor(bow);
     }
     if (sim::ammunition(a) || sim::ammunition(b)) return true;
     return !a.twoHanded() && !b.twoHanded();

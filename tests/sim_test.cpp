@@ -292,6 +292,15 @@ void testSwings(const content::Tables& tables) {
     } else {
         check(false, "the Short Bow and the Crossbow are in the arms");
     }
+    // Every bow takes the Arrows and every crossbow the Bolt, by the cooked stance (a player's
+    // report, 2026-10-25: the Celestial Bow, 17, was paired with the Bolt and arrows took it off).
+    for (const content::Arm& one : tables.arms) {
+        if (!one.missile()) continue;
+        const int32_t item = tables.itemNamed(one.name);
+        if (item < 0) continue;
+        checkEqual(sim::ammunitionFor(tables.items[size_t(item)]), one.bow() ? 15 : 7,
+                   (one.label + " shoots its own ammunition").c_str());
+    }
 
     // The stat, and then the interval. A Dark Knight buys attack speed at 1/15 an agility.
     checkNear(sim::attackSpeedStat(sim::Kin::DarkKnight, 30, nullptr, nullptr), 2.0, 1e-5,
