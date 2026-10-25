@@ -111,6 +111,9 @@ def maps() -> str:
                   f'.firstWings = {flag("first_wings" in drops)}',
                   f'.secondGear = {flag("second_gear" in drops)}',
                   f'.secondClass = {flag(rules.get("second_class", False))}']
+        # Written only where a map has one, so every other row reads as before.
+        if rules.get("exp_bonus", 1.0) != 1.0:
+            fields.append(f'.expBonus = {float(rules["exp_bonus"])}')
         rows.append("    {" + ", ".join(fields) + "},")
     return (HEAD.format(block="rules", owner="maps.cpp")
             + "\nconstexpr MapRow kMaps[] = {\n" + "\n".join(rows) + "\n};\n")

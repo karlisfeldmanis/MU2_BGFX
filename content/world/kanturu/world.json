@@ -257,7 +257,8 @@
     "event": false,
     "floors": false,
     "move_order": 11,
-    "note": "Kanturu Ruins, MU's map 37, entered from Tarkan's west door (gates 125/127, the next step). arrive is the middle of the spawn gate 138's box, the camp by the door (OpenMU VersionSeasonSix Gates.cs:276-280), where a death lands too; not 126's arrival box, which overlaps the way back on three tiles (docs/worlds/kanturu-port.md 2.1). The Town Portal goes to Tarkan's town (home 8): the camp has no merchant (decision 6). Last on the M key's walk (11), so no other map's order moves. No drops yet: no breed stands here."
+    "note": "Kanturu Ruins, MU's map 37, entered from Tarkan's west door (gates 125/127, the next step). arrive is the middle of the spawn gate 138's box, the camp by the door (OpenMU VersionSeasonSix Gates.cs:276-280), where a death lands too; not 126's arrival box, which overlaps the way back on three tiles (docs/worlds/kanturu-port.md 2.1). The Town Portal goes to Tarkan's town (home 8): the camp has no merchant (decision 6). Last on the M key's walk (11), so no other map's order moves. No drops yet: no breed stands here.",
+    "exp_bonus": 1.25
   },
   "npcs": [
     {

@@ -22,10 +22,10 @@
   },
   "combat": {
     "level": 152,
-    "health": 483750,
-    "minimum_damage": 2272,
-    "maximum_damage": 2324,
-    "defense": 1458,
+    "health": 128100,
+    "minimum_damage": 1500,
+    "maximum_damage": 1577,
+    "defense": 677,
     "move_range": 3,
     "attack_range": 2,
     "view_range": 7,
@@ -34,7 +34,7 @@
     "attack_rate": 2223,
     "defense_rate": 767,
     "attack_skill": null,
-    "note": "OpenMU VersionSeasonSix (KanturuRuins.cs:466): level 98, 43000 life, 546-581, 430, 715/250. Raised past Aida (decision 3): two above the Kentauros, its numbers the Splinter Wolf's times OpenMU's ratio between the two (life 2.69, damage 1.76/1.71, defense 1.87); ranges and speeds as MU. Ours (2026-10-23)."
+    "note": "OpenMU VersionSeasonSix (KanturuRuins.cs:466): level 98, 43000 life, 546-581, 430, 715/250. Raised past Aida (decision 3): two above the Kentauros, its numbers the Splinter Wolf's times OpenMU's ratio between the two (life 2.69, damage 1.76/1.71, defense 1.87); ranges and speeds as MU. Ours (2026-10-23). Retuned 2026-10-25 for geared level-400 heroes (the user: a step harder than Aida, a steady climb from the camp): life 103,500 (Wolf) to 138,000 (Genocider), damage 1,250 to 1,680, defence 620 to 700, levels and rates kept -- about 1.3x Aida's typical time to kill on average, measured with the best pre-Kanturu kits (a scratch skill_sweep at each nest). The defence MU's scale gave (780 to 1,747) left melee and bows at the damage floor."
   },
   "why_this_one": "The Ruins' sixth breed: 9 OpenMU spots in the north-west (x 41-90, y 19-40), past the Kentauros (docs/worlds/kanturu-port.md 4.1, 4.4).",
   "mu_checklist": [

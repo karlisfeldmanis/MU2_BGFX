@@ -18,10 +18,10 @@
   },
   "combat": {
     "level": 148,
-    "health": 360000,
-    "minimum_damage": 1698,
-    "maximum_damage": 1772,
-    "defense": 1068,
+    "health": 118300,
+    "minimum_damage": 1400,
+    "maximum_damage": 1474,
+    "defense": 654,
     "move_range": 3,
     "attack_range": 1,
     "view_range": 7,
@@ -30,7 +30,7 @@
     "attack_rate": 1825,
     "defense_rate": 598,
     "attack_skill": null,
-    "note": "OpenMU VersionSeasonSix (KanturuRuins.cs:402): level 88, 32000 life, 408-443, 315, 587/195. Raised past Aida (decision 3): two above the Satyros, its numbers the Splinter Wolf's times OpenMU's ratio between the two (life 2.0, damage 1.31, defense 1.37); ranges and speeds as MU. Ours (2026-10-23)."
+    "note": "OpenMU VersionSeasonSix (KanturuRuins.cs:402): level 88, 32000 life, 408-443, 315, 587/195. Raised past Aida (decision 3): two above the Satyros, its numbers the Splinter Wolf's times OpenMU's ratio between the two (life 2.0, damage 1.31, defense 1.37); ranges and speeds as MU. Ours (2026-10-23). Retuned 2026-10-25 for geared level-400 heroes (the user: a step harder than Aida, a steady climb from the camp): life 103,500 (Wolf) to 138,000 (Genocider), damage 1,250 to 1,680, defence 620 to 700, levels and rates kept -- about 1.3x Aida's typical time to kill on average, measured with the best pre-Kanturu kits (a scratch skill_sweep at each nest). The defence MU's scale gave (780 to 1,747) left melee and bows at the damage floor."
   },
   "why_this_one": "The Ruins' fourth breed: 22 OpenMU spots in the north-east (x 116-221, y 7-59, 318-418 steps from the camp), past the Satyroi (docs/worlds/kanturu-port.md 4.1).",
   "mu_checklist": [

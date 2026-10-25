@@ -61,11 +61,12 @@ void Realm::payKill(const Body& dead, Body& earner) {
         happenings_.back().whom = dead.id;
         happenings_.back().audience = one->id;
     }
-    // The Rings of Wisdom's on top, each his own, and the game's rate (as Realm::kill's paid()).
-    // An Elite's kill is worth kEliteExperience of its breed's (sim/elite.h).
+    // The Rings of Wisdom's on top, each his own, the game's rate and the map's bonus (as
+    // Realm::kill's paid()). An Elite's kill is worth kEliteExperience of its breed's (sim/elite.h).
     const double elite = dead.elite ? double(kEliteExperience) : 1.0;
+    const double bonus = rulesOf(tables_->map).expBonus;
     const auto rated = [&](const Body& to, double experience) {
-        return int32_t(experience * elite * kExperienceRate * double(100 + to.excel.moreExperience) / 100.0);
+        return int32_t(experience * elite * kExperienceRate * bonus * double(100 + to.excel.moreExperience) / 100.0);
     };
     if (view.size() <= 1) {
         // Alone in view, or the only one left of it past the gap: his own kill's worth.
@@ -190,7 +191,7 @@ void Realm::shareKill(const Body& dead, Body& earner) {
         Body* one = body(dead.hurtBy[i]);
         For his(*this, *one);
         const double whole = double(killExperience(dead.level, one->level)) * kExperienceRate *
-                             (dead.elite ? double(kEliteExperience) : 1.0) *
+                             rulesOf(tables_->map).expBonus * (dead.elite ? double(kEliteExperience) : 1.0) *
                              double(100 + one->excel.moreExperience) / 100.0;
         gain(*one, int32_t(whole * double(dead.hurt[i]) / life));
         paidAny = true;

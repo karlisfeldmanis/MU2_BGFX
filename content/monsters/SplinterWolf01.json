@@ -26,10 +26,10 @@
   },
   "combat": {
     "level": 142,
-    "health": 180000,
-    "minimum_damage": 1290,
-    "maximum_damage": 1360,
-    "defense": 780,
+    "health": 103500,
+    "minimum_damage": 1250,
+    "maximum_damage": 1320,
+    "defense": 620,
     "move_range": 3,
     "attack_range": 2,
     "view_range": 7,
@@ -38,7 +38,7 @@
     "attack_rate": 1430,
     "defense_rate": 500,
     "attack_skill": null,
-    "note": "OpenMU VersionSeasonSix (KanturuRuins.cs:306): level 80, 16000 life, 310-340, 230, 460/163. Raised past Aida (decision 3): one step above Bloody Witch Queen (140); ranges and speeds as MU. Ours, for the user to judge in the arena (2026-10-22)."
+    "note": "OpenMU VersionSeasonSix (KanturuRuins.cs:306): level 80, 16000 life, 310-340, 230, 460/163. Raised past Aida (decision 3): one step above Bloody Witch Queen (140); ranges and speeds as MU. Ours, for the user to judge in the arena (2026-10-22). Retuned 2026-10-25 for geared level-400 heroes (the user: a step harder than Aida, a steady climb from the camp): life 103,500 (Wolf) to 138,000 (Genocider), damage 1,250 to 1,680, defence 620 to 700, levels and rates kept -- about 1.3x Aida's typical time to kill on average, measured with the best pre-Kanturu kits (a scratch skill_sweep at each nest). The defence MU's scale gave (780 to 1,747) left melee and bows at the damage floor."
   },
   "why_this_one": "The Ruins' first breed: 22 OpenMU spots on the south arc nearest the camp (x 36-189, y 196-240, 29-168 steps), the weakest of the eight, so it is the first a hero fights past the Tarkan door (docs/worlds/kanturu-port.md 4.1).",
   "mu_checklist": [

@@ -2373,10 +2373,11 @@ void Realm::kill(Body& dead, Body& killer) {
     const bool helped = helper != nullptr && helper->alive();
     Body& hero = helper != nullptr ? *helper : bodies_[heroes_[0].body];
     For credited(*this, killer.player ? killer : hero);
-    // A kill's experience at the game's rate, and the Rings of Wisdom's on top (sim::Affix).
+    // A kill's experience at the game's rate, the map's bonus (MapRow::expBonus), and the Rings
+    // of Wisdom's on top (sim::Affix).
     const auto paid = [&](const Body& to) {
         return int32_t(double(killExperience(dead.level, to.level)) * kExperienceRate *
-                       double(100 + to.excel.moreExperience) / 100.0);
+                       rulesOf(tables_->map).expBonus * double(100 + to.excel.moreExperience) / 100.0);
     };
     if (killer.warden >= 0 && helped) {
         leave(dead, hero);

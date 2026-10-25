@@ -28,10 +28,10 @@
   },
   "combat": {
     "level": 146,
-    "health": 247500,
-    "minimum_damage": 1519,
-    "maximum_damage": 1580,
-    "defense": 950,
+    "health": 113400,
+    "minimum_damage": 1350,
+    "maximum_damage": 1423,
+    "defense": 643,
     "move_range": 3,
     "attack_range": 2,
     "view_range": 7,
@@ -40,7 +40,7 @@
     "attack_rate": 1679,
     "defense_rate": 543,
     "attack_skill": null,
-    "note": "OpenMU VersionSeasonSix (KanturuRuins.cs:370): level 85, 22000 life, 365-395, 280, 540/177. Raised past Aida (decision 3): two above the Iron Rider, its numbers the Splinter Wolf's times OpenMU's ratio between the two (life 1.375, damage 1.17, defense 1.22); ranges and speeds as MU. Ours (2026-10-23)."
+    "note": "OpenMU VersionSeasonSix (KanturuRuins.cs:370): level 85, 22000 life, 365-395, 280, 540/177. Raised past Aida (decision 3): two above the Iron Rider, its numbers the Splinter Wolf's times OpenMU's ratio between the two (life 1.375, damage 1.17, defense 1.22); ranges and speeds as MU. Ours (2026-10-23). Retuned 2026-10-25 for geared level-400 heroes (the user: a step harder than Aida, a steady climb from the camp): life 103,500 (Wolf) to 138,000 (Genocider), damage 1,250 to 1,680, defence 620 to 700, levels and rates kept -- about 1.3x Aida's typical time to kill on average, measured with the best pre-Kanturu kits (a scratch skill_sweep at each nest). The defence MU's scale gave (780 to 1,747) left melee and bows at the damage floor."
   },
   "why_this_one": "The Ruins' third breed: 25 OpenMU spots on the east side (x 166-236, y 35-181, 184-330 steps from the camp), past the Iron Riders (docs/worlds/kanturu-port.md 4.1).",
   "mu_checklist": [
