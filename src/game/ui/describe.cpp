@@ -8,9 +8,11 @@
 #include <string>
 
 #include "sim/config.h"
+#include "sim/event.h"
 #include "sim/quests.h"
 #include "sim/rules.h"
 #include "sim/skills.h"
+#include "sim/square.h"
 #include "sim/wear.h"
 
 namespace mu::game {
@@ -817,6 +819,42 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         const sim::RealmConfig real;
         const sim::GateClock& gate = forCastle ? real.castle : real.square;
         const char* place = forCastle ? "Blood Castle" : "Devil Square";
+        // Which one its level makes, that one's band, and how hard it is for him (Crylos on
+        // Discord, 2026-10-25: "at least include the minimum level required"; the user:
+        // "hardeness levels like easy - normal - hard - challenging"). Any one at or below
+        // his band lets him in (Realm::castleRefusal, squareRefusal), so it is read off his own:
+        // his band's lower half Challenging, its upper Hard, one under Normal, further Easy.
+        if (const int tier = what.refinement; tier >= 1 && tier <= (forCastle ? sim::kCastles : sim::kSquares)) {
+            const int(&band)[2] = forCastle ? sim::kCastleBands[tier - 1] : sim::kSquareBands[tier - 1];
+            const int level = forCastle ? who.level
+                                        : sim::squareLevel(who.level, who.kin == sim::Kin::MagicGladiator);
+            const int own = forCastle ? sim::castleFor(level) : sim::squareFor(level);
+            // The last band has no ceiling: its lower half is read as fifty levels.
+            const int top = band[1] == 0 ? band[0] + 99 : band[1];
+            std::string say;
+            Tone tone = Tone::White;
+            if (level < band[0]) {
+                say = "needs level " + std::to_string(band[0]);
+                tone = Tone::Red;
+            } else if (tier < own - 1) {
+                say = "Easy for you";
+                tone = Tone::Green;
+            } else if (tier < own) {
+                say = "Normal for you";
+            } else if (level - band[0] < (top - band[0] + 1) / 2) {
+                say = "Challenging for you";
+                tone = Tone::Red;
+            } else {
+                say = "Hard for you";
+                tone = Tone::Orange;
+            }
+            Row line;
+            line.mark = tip::Mark::Diamond;
+            line.free = std::string(place) + " " + std::to_string(tier) + ", from level " +
+                        std::to_string(band[0]) + ": " + say;
+            line.freeTone = tone;
+            does.rows.push_back(line);
+        }
         const int64_t now = int64_t(std::time(nullptr));
         const int day = sim::daySecond(now);
         Row line;
