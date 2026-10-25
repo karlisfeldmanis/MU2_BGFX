@@ -313,30 +313,118 @@ tip::Sheet statSheet(int stat, sim::Kin kin, const int totals[5]) {
     return sheet;
 }
 
-// The Defense line's card: the parts sim::reckon adds up (Discord, denio, 2026-10-25: "When I
-// add up the defense from 5 items, I get over 400"). Both are halved, every class's (rules.cpp,
-// reckon), as the item cards print theirs; whatever the set, runes, talents and the Gladiator's
-// share add is what is left of the figure, so the rows always sum to it.
-tip::Sheet defenseSheet(sim::Kin kin, int agility, int worn, int defense) {
-    const sim::ClassRow& row = sim::rowOf(kin);
-    const double fromAgility = double(agility) * double(row.defensePerAgility);
-    const int base = int((fromAgility + double(worn)) * 0.5);
-    const int agilityPart = int(fromAgility * 0.5);
-    const int rest = defense - base;
+// What a line under a well is the sum of: his points alone (sim::reckon with no gear), then
+// whatever the gear, sets, runes and talents bring, as the figure less that, so the rows always
+// sum to what the line shows. Started from Defense (Discord, denio, 2026-10-25: "When I add up
+// the defense from 5 items, I get over 400"), then every line (the user: "can we improve also
+// other main stats with similiar manner?"). Empty for a line it has nothing to say of.
+using Parts = LineParts;
+std::string signedNumber(long long v) { return (v < 0 ? "-" : "+") + panel::commas(v < 0 ? -v : v); }
+std::string signedBand(long long lo, long long hi) { return signedNumber(lo) + " ~ " + panel::commas(hi < 0 ? -hi : hi); }
 
+Parts explain(const std::string& label, const sim::Body& hero, const sim::Realm* realm) {
+    using sim::Kin;
+    const Kin kin = hero.kin;
+    const bool elf = kin == Kin::FairyElf;
+    const bool gladiator = kin == Kin::MagicGladiator, lord = kin == Kin::DarkLord;
+    const sim::HeroPoints total = hero.totalPoints();
+    const sim::Fighter& f = hero.stats;
+    sim::Arms bareArms;
+    bareArms.archery = hero.archer != 0;
+    sim::Fighter bare;
+    int bareLife = 0;
+    sim::reckon(kin, hero.level, total, bareArms, &bare, &bareLife);
+    const std::string gear = "Gear, sets and bonuses";
+
+    Parts p;
+    p.name = label;
+    const auto add = [&](const std::string& what, const std::string& value) { p.rows.push_back({what, value}); };
+    const auto rest = [&](long long v) {
+        if (v != 0) add(gear, signedNumber(v));
+    };
+    const std::string level = "Level " + std::to_string(hero.level);
+    const std::string agility = "Agility " + panel::commas(total.agility);
+    if (label == "Damage") {
+        std::string from = "Strength " + panel::commas(total.strength);
+        if (elf) from = hero.archer != 0 ? "Agility and strength" : "Strength and agility";
+        if (gladiator || lord) from = "Strength and energy";
+        const long long lo = f.minimumDamage + f.offhandMinimumDamage, hi = f.maximumDamage + f.offhandMaximumDamage;
+        add(from, signedBand(bare.minimumDamage, bare.maximumDamage));
+        if (lo != bare.minimumDamage || hi != bare.maximumDamage) {
+            add("Weapon, " + std::string(hero.dual ? "both hands, " : "") + "gear and bonuses",
+                signedBand(lo - bare.minimumDamage, hi - bare.maximumDamage));
+        }
+        p.note = "Each blow rolls in this band, before the monster's defense.";
+    } else if (label == "Attack rate") {
+        add(lord ? "Level, agility, strength, command" : "Level, agility and strength", signedNumber((long long)bare.attackRate));
+        rest((long long)f.attackRate - (long long)bare.attackRate);
+        p.note = "Against a monster's defense rate: how often your blows land.";
+    } else if (label == "Defense") {
+        add(agility, signedNumber(bare.defense));
+        // Worn gear's share is its pieces' Defense as their cards print it; the set, runes,
+        // talents and the Gladiator's share are the rest.
+        const int base = int((double(total.agility) * double(sim::rowOf(kin).defensePerAgility) +
+                              double(hero.wornDefense)) * 0.5);
+        add("Worn gear", signedNumber(base - bare.defense));
+        if (f.defense != base) add(gladiator ? "Class, set, runes, talents" : "Set, runes, talents", signedNumber(f.defense - base));
+        p.note = "Taken off every blow you are dealt.";
+    } else if (label == "Defense rate") {
+        add(agility, signedNumber((long long)bare.defenseRate));
+        rest((long long)f.defenseRate - (long long)bare.defenseRate);
+        p.note = "Against a monster's attack rate: how often its blows miss you.";
+    } else if (label == "Attack speed" || label == "Magic speed") {
+        const int own = int(label == "Magic speed" ? sim::magicSpeedStat(kin, total.agility)
+                                                   : sim::attackSpeedStat(kin, total.agility, nullptr, nullptr));
+        add(agility, signedNumber(own));
+        if (realm) rest(realm->attackSpeed() - own);
+    } else if (label == "Life") {
+        add(level + " and vitality", signedNumber(bareLife));
+        rest(hero.maxHealth - bareLife);
+    } else if (label == "Mana") {
+        const int own = sim::maximumMana(kin, hero.level, total);
+        add(level + " and energy", signedNumber(own));
+        rest(hero.maxMana - own);
+    } else if (label == "Shield") {
+        const int stats = total.strength + total.agility + total.vitality + total.energy + total.command;
+        const int fromStats = int(1.2f * float(stats));
+        const int own = sim::maximumShield(hero.level, total, f.defense);
+        add("All your stats x 1.2", signedNumber(fromStats));
+        add("Defense", signedNumber(f.defense));
+        add(level, signedNumber(own - fromStats - f.defense));
+        // A talent's share is what is left (realm_tuning.h).
+        if (hero.maxSd != own) add("Talents", signedNumber(hero.maxSd - own));
+        p.note = "Takes blows before your life does.";
+    } else if (label == "Wizardry") {
+        add("Energy " + panel::commas(total.energy), signedBand((long long)bare.wizardMinimum, (long long)bare.wizardMaximum));
+        if ((long long)f.wizardMinimum != (long long)bare.wizardMinimum) {
+            add("Wings", signedBand((long long)f.wizardMinimum - (long long)bare.wizardMinimum,
+                                    (long long)f.wizardMaximum - (long long)bare.wizardMaximum));
+        }
+        if (f.wizardryRate > 1.0) {
+            p.note = "Your staff raises every spell by +" + std::to_string(int(std::lround((f.wizardryRate - 1.0) * 100.0))) +
+                     "% on top.";
+        }
+    } else {
+        p.name.clear();
+    }
+    return p;
+}
+
+tip::Sheet partsSheet(const Parts& p) {
     tip::Sheet sheet;
-    sheet.name = "Defense";
+    sheet.name = p.name;
     sheet.nameTone = tip::Tone::White;
     sheet.wide = kStatTipWide;
-    tip::Section parts;
-    const auto add = [&](const std::string& label, int value) {
-        parts.rows.push_back(tip::Row{label, {tip::Value{"+" + panel::commas(value), tip::Tone::White}}, "",
-                                      tip::Tone::White});
-    };
-    add("Agility " + panel::commas(agility), agilityPart);
-    add("Worn gear", base - agilityPart);
-    if (rest != 0) add(kin == sim::Kin::MagicGladiator ? "Class, set, runes, talents" : "Set, runes, talents", rest);
-    sheet.sections.push_back(parts);
+    tip::Section rows;
+    for (const auto& [what, value] : p.rows) {
+        rows.rows.push_back(tip::Row{what, {tip::Value{value, tip::Tone::White}}, "", tip::Tone::White});
+    }
+    sheet.sections.push_back(rows);
+    if (!p.note.empty()) {
+        tip::Section notes;
+        notes.rows.push_back(tip::Row{"", {}, p.note, tip::Tone::Gray});
+        sheet.sections.push_back(notes);
+    }
     return sheet;
 }
 
@@ -622,13 +710,19 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
         if (tab_ == 0 && (over_ < 0 || over_ >= wells)) {
             for (int i = 0; i < wells; ++i)
                 if (under({kWellX, tops[i], kWellW, kAttrTall})) now_.overStat = i;
-            // Agility's first line, Defense: what it is the sum of.
+            // A line under a well: what its figure is the sum of.
             const float lineStep = attrTops(wells, counts, tops, drop);
-            now_.overDefense = now_.overStat < 0 &&
-                               under({kWellX, tops[1] + kAttrTall + kLineTop, kWellW, lineStep});
+            for (int i = 0; i < wells && now_.overStat < 0 && now_.parts.well < 0; ++i) {
+                for (size_t l = 0; l < counts[i]; ++l) {
+                    if (!under({kWellX, tops[i] + kAttrTall + kLineTop + lineStep * float(l), kWellW, lineStep})) continue;
+                    now_.parts = explain(now_.lines[i][l].label, *hero, realm);
+                    if (now_.parts.name.empty()) break;
+                    now_.parts.well = i;
+                    now_.parts.line = int(l);
+                    break;
+                }
+            }
         }
-        now_.worn = hero->wornDefense;
-        now_.defense = f.defense;
         now_.totals[0] = total.strength;
         now_.totals[1] = total.agility;
         now_.totals[2] = total.vitality;
@@ -1150,14 +1244,13 @@ void Card::rebuild() {
         tip::draw(tip_, sheet, panel::scaled(x, y, {kWellX, tops[now_.overStat], kWellW, kAttrTall}),
                   now_.width, now_.height);
     }
-    if (now_.tab == 0 && now_.overDefense) {
+    if (now_.tab == 0 && now_.parts.well >= 0) {
         const size_t counts[5] = {now_.lines[0].size(), now_.lines[1].size(), now_.lines[2].size(),
                                   now_.lines[3].size(), now_.lines[4].size()};
         float tops[5];
         const float lineStep = attrTops(now_.wells, counts, tops, drop);
-        const tip::Sheet sheet = defenseSheet(now_.who->kin, now_.totals[1], now_.worn, now_.defense);
-        tip::draw(tip_, sheet,
-                  panel::scaled(x, y, {kWellX, tops[1] + kAttrTall + kLineTop, kWellW, lineStep}),
+        const float top = tops[now_.parts.well] + kAttrTall + kLineTop + lineStep * float(now_.parts.line);
+        tip::draw(tip_, partsSheet(now_.parts), panel::scaled(x, y, {kWellX, top, kWellW, lineStep}),
                   now_.width, now_.height);
     }
 }

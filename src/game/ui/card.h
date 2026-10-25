@@ -20,6 +20,15 @@
 
 namespace mu::game {
 
+// What a line on the Attributes page is the sum of, for its card (card.cpp, explain): his points
+// alone, then his gear and bonuses.
+struct LineParts {
+    int well = -1, line = -1;
+    std::string name, note;
+    std::vector<std::pair<std::string, std::string>> rows;
+    bool operator==(const LineParts&) const = default;
+};
+
 class Card {
 public:
     void open(const gfx::Interface& interface, panel::Arts* arts);
@@ -94,9 +103,8 @@ private:
         // its card is up. `totals` is what it reads, his points with the runes in.
         int overStat = -1;
         int totals[5] = {};
-        // The pointer on Agility's Defense line: its card, from his worn armour and the figure.
-        bool overDefense = false;
-        int worn = 0, defense = 0;
+        // The line under a well the pointer is on (Attributes page): its card. `well` -1 for none.
+        LineParts parts;
         bool closing = false, overClose = false;
         int step = 1;          // 1, 10 or 0 for all, as a press now spends (10 is All under ten)
         int returnable = 0;    // the points a reset would take back
