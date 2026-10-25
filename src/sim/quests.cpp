@@ -872,6 +872,10 @@ QuestRow tersiaFifth() {
     row.paid[row.paidCount++] = {.item = "Ring01", .kin = elf, .sockets = 1, .firstOnly = true};
     row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Renewal),
                                  .firstOnly = true};
+    // And the knight's Swell Life, the Orb of Greater Fortitude (the user, 2026-10-25: "put it on
+    // floor 5"): its orb asks 120, the top of floors 1-5, and the floor of undying knights pays
+    // the health. Floor 6 has his Death Stab already. It drops too, off anything of level 60 on.
+    row.paid[row.paidCount++] = {.item = "OrbSwellLife", .kin = knight, .firstOnly = true};
     row.voice = "tersia_5";  // pipeline/voice.py, VOICES["tersia"]
     return row;
 }

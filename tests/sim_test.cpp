@@ -2036,6 +2036,24 @@ void testSwellLife(const content::Tables& cooked) {
     realm.restore(record);
     check(readOrb(realm) && realm.knows(sim::skill::kSwellLife), "at 150 he reads it and knows it");
     check(!readOrb(realm), "and a second orb is refused");
+    // Tersia's fifth floor pays it to a knight, on the first clear alone (2026-10-25).
+    {
+        const sim::QuestRow& floor5 = sim::questAt(sim::questOf(sim::kTersia) + 4);
+        const int k = int(dk);
+        int first = 0, again = 0, others = 0;
+        for (int i = 0; i < floor5.paidCount; ++i) {
+            const sim::QuestItem& what = floor5.paid[i];
+            if (std::string(what.item) != "OrbSwellLife") continue;
+            first += sim::questPays(what, k, true) ? 1 : 0;
+            again += sim::questPays(what, k, false) ? 1 : 0;
+            for (sim::Kin other : {sim::Kin::DarkWizard, sim::Kin::FairyElf, sim::Kin::MagicGladiator}) {
+                others += sim::questPays(what, int(other), true) ? 1 : 0;
+            }
+        }
+        check(std::string(floor5.title) == "Knights Who Do Not Sleep" && first == 1 && again == 0 &&
+                  others == 0,
+              "Tersia's fifth floor pays a knight the orb on his first clear, and no one else");
+    }
 
     // His party: an elf beside him, a wizard far off, and a stranger beside him.
     const uint32_t knight = realm.hero().id;
