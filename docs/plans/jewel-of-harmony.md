@@ -1,6 +1,6 @@
 # Jewel of Harmony, and Kanturu's drops
 
-Plan, 2026-10-25. Nothing here is built. The user: "we need drops which amke sense for kanturu
+Plan, 2026-10-25. Step 1 built (21a4568a): the four items, dormant. The user: "we need drops which amke sense for kanturu
 monsters", picking Feather + Nova, Gemstone -> Harmony and the Golden Satyros box; then "what is
 that jewel of harmonu? how we can use it?", "lets make a plan how we implement this system", and
 "what about end game orbs and scrolls for all classes?".
@@ -15,7 +15,9 @@ carries them. The rates below are the client's `mix.bmd` where it has them, else
 **Decided (the user, 2026-10-25, answering §3's questions):**
 - Socketed items take Harmony; wings, jewellery and pets do not.
 - The item **binds** to the character when the jewel takes; removing the option does not unbind it.
-- **MU's values**, then measured on the Kanturu kits; scaled only if the sweep says they do nothing.
+- **Stronger than MU's** (the user, building step 1: "our harmony stones has to be stronger that
+  original i think"): MU's tables are the shape; how much stronger is measured on the Kanturu kits
+  in steps 2-3 and a multiplier offered to the user.
 - **Gemstone 1 in 150 kills** in the Ruins and Relics, beside the kill's own drop.
 - The +13-only options and the two PvP rate options are **dropped**; option levels run 0-11.
 - **Everything at the Chaos Machine** (the user: "chaos machine", then "Everything at the Machine"):
