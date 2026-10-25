@@ -445,7 +445,7 @@ bool Play::onDarkHorse(uint32_t id) const {
 
 int Play::ravenLevel(const sim::Satchel& bag) const {
     const sim::Held& worn = bag[sim::kWeaponLeft];
-    if (worn.empty() || worn.durability <= 0 || size_t(worn.item) >= tables_.items.size()) return 0;
+    if (worn.empty() || size_t(worn.item) >= tables_.items.size()) return 0;
     return sim::darkRaven(tables_.items[size_t(worn.item)]) ? sim::petLevel(worn) : 0;
 }
 
@@ -466,8 +466,9 @@ void Play::ravened(const sim::Happening& happening) {
         }
     }
     if (pets == nullptr) return;
-    // At its middle, a metre up, as MU aims at the target 50 over its feet.
-    const float at[3] = {target->figure.position()[0], target->figure.position()[1] + 0.5f,
+    // At its feet: the dive and the ball each aim 50 over them, as MU's do (CSPetSystem.cpp:518,
+    // ZzzEffectJoint.cpp:3854).
+    const float at[3] = {target->figure.position()[0], target->figure.position()[1],
                          target->figure.position()[2]};
     pets->ravenStrike(happening.a == 1, at);
     // The dash's gold burst off the bird as it goes (fx/raven.h); the ball waits for its charge.
@@ -570,7 +571,7 @@ void Play::otherPets(float seconds) {
         Drawn& rider = drawn_[i];
         otherPets_[i].update(seconds, rider.figure, pet, body.alive());
         otherPets_[i].raven(seconds, rider.figure, raven, tables_.grid.safe(body.column(), body.row()),
-                            body.alive(), mount == sim::kDarkHorseNumber);
+                            mount == sim::kDarkHorseNumber);
         ravenFrame(otherPets_[i], seconds);
         otherPets_[i].ride(seconds, rider.figure, mount, body.riding, horseAction(rider, mount));  // and as he dies (Play::update)
         horseBreath(otherPets_[i], seconds);

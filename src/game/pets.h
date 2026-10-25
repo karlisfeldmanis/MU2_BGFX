@@ -91,7 +91,7 @@ public:
     // **The Dark Raven** (game/pets_raven.cpp; docs/plans/dark-lord-pets/client.md section 1),
     // MuMain's CSPetSystem: `level` its level, 0 for none worn; `safe` his tile, where it perches on
     // his left hand; `horse` the Dark Horse worn, which lifts its flight to 350. After `update`.
-    void raven(float seconds, const Figure& hero, int level, bool safe, bool alive, bool horse);
+    void raven(float seconds, const Figure& hero, int level, bool safe, bool horse);
     // Its strike as the realm said it (What::Ravened, MU's C1 A8): the dash on `target`, or the
     // ball let go at it after its charge.
     void ravenStrike(bool ball, const float target[3]);

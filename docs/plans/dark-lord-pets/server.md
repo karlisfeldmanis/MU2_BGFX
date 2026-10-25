@@ -82,7 +82,7 @@ The Cmd requirement is `185 + 15*L` (`zzzitem.cpp:506-524`). It is also checked 
 **RangeAttack** (:401-492):
 - It hits the main target, then walks the owner's viewport.
 - Valid extra targets are non-summon monsters, or guild-war-enemy summons, standing **within distance < 4 of the main target**.
-- The first extra target found is always hit. Each later one has a 1/3 chance.
+- Every extra target found is hit. The code reads as "the first always, each later one 1/3", but `loopcount` is set to 0 (:409) and never raised, so the `loopcount == 0` branch (:455) takes every one (corrected 2026-10-25).
 - It stops after 4 extra hits (`HitCount > 3`).
 - The main target and the extras are all sent `criticaldamage 0`, so each takes **damage / 1.5** (:927-929).
 
@@ -300,7 +300,7 @@ Max durability is 255 (item.txt Dur column; `PetItemSerialCreateSend` fills it f
 | topic | WebZen | OpenMU | note |
 |---|---|---|---|
 | range | random mode `< 5` from the owner; modes 2/3 `< 7` | 7 for all modes (`GameLogic/Pet/RavenCommandManager.cs:21`, 298) | |
-| attack mix | random: 30% direct crit at max damage, 70% range (main + ≤ 4 extras within < 4 of the target, 1/3 each after the first, all ÷1.5); with-owner: always range; target: always direct, 30% crit | 30% range (main + ≤ 2 within 3, 3 hits cycling), 70% single, the same in every mode (:109, :139-157) | OM's split is inverted |
+| attack mix | random: 30% direct crit at max damage, 70% range (main + ≤ 4 extras within < 4 of the target, every one struck, all ÷1.5); with-owner: always range; target: always direct, 30% crit | 30% range (main + ≤ 2 within 3, 3 hits cycling), 70% single, the same in every mode (:109, :139-157) | OM's split is inverted |
 | interval | `1500 - 10*speed` on a 500 ms tick, plus 600 ms damage delay | continuous, min 100 ms (:45) | |
 | target filter | monsters only for random; Class 100–110 traps and summons excluded | guards excluded (:296) | |
 | raven wear | per raven hit, `dmg*2/100` per 800 | per *owner* hit, as weapon durability (`GameLogic/Player.cs:2027-2045`) | OM wrong |

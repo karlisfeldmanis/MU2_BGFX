@@ -57,8 +57,11 @@ float pitchToward(const float from[3], const float to[3]) {
 
 }  // namespace
 
-void Pets::raven(float seconds, const Figure& hero, int level, bool safe, bool alive, bool horse) {
-    if (level <= 0 || !ravenBody_ || !alive) {
+void Pets::raven(float seconds, const Figure& hero, int level, bool safe, bool horse) {
+    // Moved and drawn with him whether he stands or lies dead, as MU's MoveCharacter and
+    // RenderCharacter call its MovePet and RenderPet for every character (ZzzCharacter.cpp:5339,
+    // :11401).
+    if (level <= 0 || !ravenBody_) {
         ravenUp_ = false;
         ravenLevel_ = 0;
         return;

@@ -129,12 +129,12 @@ void Realm::ravenLand(Body& hero) {
     }
     const int attackRate = ravenAttackRate(level);
     // One blow on one body: rolled in its band (the top for a dash at the top), the scepter's rise,
-    // less its defence, WebZen's floor of his level/10; then the miss (MissCheck, :1756-1835).
+    // less its defence; then the miss (MissCheck, :1756-1835), the ball's cut, and last WebZen's
+    // floor of his level/10 (:931-962).
     const auto strike = [&](Body& target, bool ball) {
         int damage = top ? most : ravenDice_.nextInt(least, most + 1);
         damage += damage * rise / 100;
         damage -= target.stats.defense;
-        damage = std::max(damage, hero.level / 10);
         const float blocking = target.stats.defenseRate;
         if (float(attackRate) < blocking) {
             // The all-miss: one in twenty lands, at 30% (MODIFY_SUCCESSBLOCKING_ALLMISS).
@@ -149,7 +149,7 @@ void Realm::ravenLand(Body& hero) {
         }
         // The ball's every body at damage / 1.5 (criticaldamage 0, :927-929).
         if (ball) damage = damage * 2 / 3;
-        damage = std::max(1, damage);
+        damage = std::max({1, hero.level / 10, damage});
         // Its life, worn by its own landed hits of 50 or more (:1630-1650).
         if (damage >= kRavenWearFrom) {
             wearDown(kWeaponLeft, double(damage * 2 / 100) / double(kRavenWearTally));
@@ -172,8 +172,9 @@ void Realm::ravenLand(Body& hero) {
         strike(*first, false);
         return;
     }
-    // The ball (RangeAttack, :401-492): the target, then the monsters within 4 of it -- the first
-    // always, each after it one time in three, four at most.
+    // The ball (RangeAttack, :401-492): the target, then every monster within 4 of it, four at
+    // most. WebZen's one-in-three for each after the first never runs: its `loopcount` is never
+    // raised (:409, :455), so every one is struck.
     const Body around = *first;
     strike(*first, true);
     int more = 0;
@@ -181,7 +182,6 @@ void Realm::ravenLand(Body& hero) {
         if (more >= kRavenSplashMost) break;
         if (one.id == aimed || !one.monster() || !one.alive() || one.summoner != 0) continue;
         if (tilesApart(around, one) >= kRavenSplashReach) continue;
-        if (more > 0 && ravenDice_.nextInt(0, 3) != 0) continue;
         ++more;
         strike(one, true);
     }

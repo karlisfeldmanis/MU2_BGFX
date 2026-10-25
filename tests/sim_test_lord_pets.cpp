@@ -1,9 +1,11 @@
 // The Dark Lord's pets by their level (sim/lord_pets.h, docs/plans/dark-lord-pets/README.md): MU's
 // exp table, the share of his kills, the bleed at death, the horse's numbers by its level and the
 // Trainer's price. Run from tests/sim_test.cpp's main.
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <string>
+#include <vector>
 
 #include "content/tables.h"
 #include "sim/command.h"
@@ -194,6 +196,62 @@ void testLordPets(void (*check)(bool, const char*), void (*checkEqual)(long long
     watch(1200);
     check(dashes > 0, "in Random it strikes");
     check(ravenHits > 0, "and its blows land, his");
+
+    // The ball strikes its target and every monster within 4 of it, four at most -- WebZen's
+    // one-in-three never runs (RangeAttack's loopcount is never raised). Six rooted in a 3x3 by
+    // him, as the arena stands its breed (Play::open); he does not swing, so every blow and miss
+    // of his in a landing tick is the raven's.
+    content::Tables packed = tables;
+    content::MonsterNest nest;
+    nest.kind = packed.nests.front().kind;
+    nest.count = 6;
+    nest.x1 = 202, nest.x2 = 204, nest.y1 = 159, nest.y2 = 161;
+    packed.kinds[nest.kind].moveRange = 0;
+    packed.kinds[nest.kind].moveTicks = 1200;
+    packed.nests.assign(1, nest);
+    sim::Realm pack;
+    check(pack.raise(&packed, 5, 200, 160, sim::Kin::DarkLord, 250), "a lord raises by a pack");
+    check(pack.spend(0, 0, 0, 0, 300), "with 300 Command");
+    check(pack.moveItem(pack.give(ravenRow), sim::kWeaponLeft), "and his raven on");
+    pack.undying(true);
+    pack.command(random);
+    const auto bodyOf = [&](uint32_t id) -> const sim::Body* {
+        for (const sim::Body& one : pack.bodies()) {
+            if (one.id == id) return &one;
+        }
+        return nullptr;
+    };
+    int balls = 0, whole = 0, crowded = 0;
+    bool ball = false;
+    for (int tick = 0; tick < 3000; ++tick) {
+        std::vector<uint32_t> standing;
+        for (const sim::Body& one : pack.bodies()) {
+            if (one.monster() && one.alive() && one.summoner == 0) standing.push_back(one.id);
+        }
+        pack.step();
+        std::vector<uint32_t> struck;
+        for (const sim::Happening& h : pack.happenings()) {
+            if (h.who != pack.hero().id) continue;
+            if (h.what == sim::What::Ravened) ball = h.a == 1;
+            if ((h.what == sim::What::Hit && h.thrown) || h.what == sim::What::Missed) struck.push_back(h.whom);
+        }
+        if (!ball || struck.empty()) continue;
+        const sim::Body* aimed = bodyOf(struck.front());
+        if (aimed == nullptr) continue;
+        int near = 0;
+        for (const uint32_t id : standing) {
+            const sim::Body* one = bodyOf(id);
+            if (id == aimed->id || one == nullptr) continue;
+            const float dx = float(one->column() - aimed->column()), dy = float(one->row() - aimed->row());
+            if (int(std::sqrt(dx * dx + dy * dy)) < sim::kRavenSplashReach) ++near;
+        }
+        ++balls;
+        if (near > 1) ++crowded;
+        if (int(struck.size()) == 1 + std::min(near, sim::kRavenSplashMost)) ++whole;
+    }
+    std::printf("  the raven's ball %d times, %d by two or more\n", balls, crowded);
+    check(crowded > 0, "the ball is thrown into a pack");
+    checkEqual(whole, balls, "and each strikes its target and every monster about it, four at most");
 
     // Only the Trainer mends them, and a merchant pays a pet by its level.
     check(!sim::mendable(row) && !sim::mendable(tables.items[size_t(ravenRow)]), "no smith mends the horse or the raven");

@@ -3714,7 +3714,7 @@ void Play::update(double seconds) {
             pets_.update(float(seconds), hero->figure, pet, realm_.hero().alive());
             // And his Dark Raven, off his left hand (game/pets_raven.cpp).
             pets_.raven(float(seconds), hero->figure, ravenLevel(realm_.satchel()),
-                        tables_.grid.safe(realm_.hero().column(), realm_.hero().row()), realm_.hero().alive(),
+                        tables_.grid.safe(realm_.hero().column(), realm_.hero().row()),
                         petNumber(realm_.satchel()[sim::kMount]) == sim::kDarkHorseNumber);
             ravenFrame(pets_, float(seconds));
             // His wing, while it has life left; beating fast while he flies (game/wings.h).

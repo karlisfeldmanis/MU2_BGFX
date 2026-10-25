@@ -338,7 +338,9 @@ public:
     uint32_t setAutoDrink(int health, int mana);
     // His Dark Raven's mode, 0-3, and Target's pick (sim::RavenMode; Command::Kind::RavenMode).
     uint32_t setRavenMode(int mode, uint32_t target);
-    // His Dark Raven's level, worn in his left hand with life, or 0 (sim/lord_pets.h).
+    // His Dark Raven's level, worn in his left hand, or 0 (sim/lord_pets.h). At 0 life too: MU
+    // draws a worn raven whatever its life (CSPetSystem's RenderPet asks only that it is on), and
+    // the realm keeps one at 0 from striking.
     int ravenLevel(const sim::Satchel& bag) const;
     // A jewel let go over a thing it goes on (sim::refinable). The realm rolls and spends it;
     // this is heard and re-dressed. See Realm::refine.
