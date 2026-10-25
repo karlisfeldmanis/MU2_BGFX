@@ -1376,10 +1376,29 @@ int Realm::autoDrinkSlot(bool mana) const {
 //
 // No skill roll on a dropped piece. Its plus is `(monster level - drop level) / 3`, held to
 // the cap of nine and to the breed's MaxItemLevel.
+void Realm::leaveGemstone(const Body& dead) {
+    if (!gemstoneMap(tables_->map) || gemstoneDice_.nextInt(0, kGemstoneOdds) != 0) return;
+    for (size_t i = 0; i < tables_->items.size(); ++i) {
+        if (!gemstone(tables_->items[i])) continue;
+        Lying stone;
+        stone.what = Held{int32_t(i), 0, 1};
+        std::tie(stone.column, stone.row) = clearing(dead.column(), dead.row());
+        stone.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
+        stone.owner = mine().id;
+        stone.id = nextId_++;
+        lying_.push_back(stone);
+        say(What::Dropped, dead, int32_t(stone.id), int32_t(i), 0);
+        return;
+    }
+}
+
 void Realm::leave(const Body& dead, const Body& killer) {
-    // An Elite leaves its own spoils, and nothing of this roll: no rune (realm_elite.cpp).
+    // An Elite leaves its own spoils, and nothing of this roll: no rune (realm_elite.cpp). But
+    // the Gemstone, on its own dice as any kill's (the user, 2026-10-25: "i think elites should
+    // drop Gemstones").
     if (dead.elite) {
         eliteSpoils(dead, killer);
+        leaveGemstone(dead);
         return;
     }
     // What a kill leaves: a jewel, then an item, then Zen, then nothing.
@@ -1515,20 +1534,7 @@ void Realm::leave(const Body& dead, const Body& killer) {
         }
     }
     // The Gemstone in the Ruins and the Relics, any kill's, the same way (sim::kGemstoneOdds).
-    if (gemstoneMap(tables_->map) && gemstoneDice_.nextInt(0, kGemstoneOdds) == 0) {
-        for (size_t i = 0; i < tables_->items.size(); ++i) {
-            if (!gemstone(tables_->items[i])) continue;
-            Lying stone;
-            stone.what = Held{int32_t(i), 0, 1};
-            std::tie(stone.column, stone.row) = clearing(dead.column(), dead.row());
-            stone.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
-            stone.owner = mine().id;
-            stone.id = nextId_++;
-            lying_.push_back(stone);
-            say(What::Dropped, dead, int32_t(stone.id), int32_t(i), 0);
-            break;
-        }
-    }
+    leaveGemstone(dead);
     // The first wings in Icarus, the hero's class's, the same way (sim::kIcarusWingOdds).
     if (rulesOf(tables_->map).firstWings &&
         (wingDice_.nextInt(0, kIcarusWingOdds) == 0 || wingDemo_)) {
@@ -2803,12 +2809,13 @@ Cracked Realm::openBox(Cracked cracked, bool luck, int tier) {
 
 // The ground is swept first, so a run of a million deaths is not a million drops searched for
 // a bare tile.
-void Realm::dropFor(int level) {
+void Realm::dropFor(int level, int kind, bool elite) {
     if (!tables_) return;
     lying_.clear();
     Body dead = mine();
     dead.player = false;
-    dead.kind = -1;
+    dead.kind = kind;
+    dead.elite = elite;
     dead.level = level;
     leave(dead, mine());
 }

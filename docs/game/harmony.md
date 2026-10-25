@@ -7,7 +7,7 @@ full tables and the user's decisions). This page is how it works here.
 
 | item | MU's row | where from | stacks |
 |---|---|---|---|
-| Gemstone | 14, 41 | a kill in the Ruins or the Relics, 1 in 150, beside the kill's own drop | 20 |
+| Gemstone | 14, 41 | a kill in the Ruins or the Relics, an Elite's too, 1 in 150, beside the kill's own drop | 20 |
 | Jewel of Harmony | 14, 42 | the Chaos Machine's Refine Gemstone | 20 |
 | Lower Refining Stone | 14, 43 | the Machine's Smelt, from a plain piece | 20 |
 | Higher Refining Stone | 14, 44 | the Machine's Smelt, from an excellent piece | 20 |

@@ -17628,6 +17628,22 @@ void testHarmony(const content::Tables& tables) {
                 sim::kGemstoneOdds);
     const double want = double(kills) / sim::kGemstoneOdds;
     check(std::abs(fallen - want) < want * 0.15, "a Ruins kill leaves one one time in 150");
+    // An Elite's too, beside its own spoils (the user, 2026-10-25: "i think elites should drop
+    // Gemstones").
+    int eliteGems = 0;
+    {
+        auto at = std::make_unique<sim::Realm>();
+        for (int i = 0; i < kills; ++i) {
+            if (i % 500 == 0) {
+                at = std::make_unique<sim::Realm>();
+                at->raise(&ruins, uint32_t(313 + i), 20, 218, sim::Kin::DarkKnight, 50);
+            }
+            at->dropFor(100, 0, true);
+            for (const sim::Lying& one : at->lying()) eliteGems += sim::gemstone(ruins.items[size_t(one.what.item)]);
+        }
+    }
+    std::printf("  the Ruins' Elites: %d Gemstones off %d kills\n", eliteGems, kills);
+    check(std::abs(eliteGems - want) < want * 0.15, "and an Elite's one time in 150 too");
 }
 
 // The Ruins road's two halves: a hard-half kill (sim::kKanturuHardLevel and over) leaves more of

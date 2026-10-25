@@ -1162,7 +1162,8 @@ public:
                  uint8_t excellent = 0, uint8_t sockets = 0, const uint8_t* affixes = nullptr);
     // The tests', and no rule of MU's: a death's drop as `leave` rolls it, for a monster of
     // `level` slain by him beside him, with no hunt. What falls is in lying() and happenings().
-    void dropFor(int level);
+    // `kind` and `elite` make it one of the map's breeds, or an Elite of it.
+    void dropFor(int level, int kind = -1, bool elite = false);
 
     // ---- the merchants (sprint 7) ---------------------------------------------------------
     // The townsperson whose counter is open, as an index into Tables::folk, or -1. Opened by a
@@ -2149,6 +2150,9 @@ private:
     // when a whole point goes.
     void wearDown(int slot, double amount);
     void leave(const Body& dead, const Body& killer);
+    // The Gemstone's own roll (sim::kGemstoneOdds) on a kill in the Ruins or the Relics, an Elite's
+    // too.
+    void leaveGemstone(const Body& dead);
     // A raid minion's own spoils beside what `leave` lays (sim::kMinionJewelOdds).
     void minionSpoils(const Body& dead);
     std::pair<int, int> clearing(int column, int row) const;

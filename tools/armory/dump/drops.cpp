@@ -444,7 +444,12 @@ void eliteSpoils(const Kill& k, Model& m) {
         const double none = (1.0 - one) + (one - two) * miss + two * miss * miss;
         m.add(item, Roll{Roll::Kind::Own, "elite_jewel", 1.0 - none});
     }
-    m.notes.push("an Elite leaves its spoils at its level + kEliteLevelsUp and nothing of the ordinary roll");
+    // And the Gemstone on its own dice, as any kill's in the Ruins and the Relics (Realm::leaveGemstone).
+    if (sim::gemstoneMap(k.map)) {
+        m.add(first(t, [](const ItemRow& r) { return sim::gemstone(r); }),
+              Roll{Roll::Kind::Own, "gemstone", 1.0 / sim::kGemstoneOdds});
+    }
+    m.notes.push("an Elite leaves its spoils at its level + kEliteLevelsUp and nothing of the ordinary roll but the Gemstone");
 }
 
 // Realm::minionSpoils, for a Golden Budge Dragon of the raid, beside its leave().
