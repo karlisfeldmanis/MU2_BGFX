@@ -1,6 +1,7 @@
 # Jewel of Harmony, and Kanturu's drops
 
-Plan, 2026-10-25. Step 1 built (21a4568a): the four items, dormant. The user: "we need drops which amke sense for kanturu
+Plan, 2026-10-25. Built: step 1 (21a4568a, the four items, dormant), step 2 (8409b267, the option
+on the item, protocol 55), step 3 (bb869b7e, ad138709, it counts worn and shows on the card). The user: "we need drops which amke sense for kanturu
 monsters", picking Feather + Nova, Gemstone -> Harmony and the Golden Satyros box; then "what is
 that jewel of harmonu? how we can use it?", "lets make a plan how we implement this system", and
 "what about end game orbs and scrolls for all classes?".
@@ -16,8 +17,9 @@ carries them. The rates below are the client's `mix.bmd` where it has them, else
 - Socketed items take Harmony; wings, jewellery and pets do not.
 - The item **binds** to the character when the jewel takes; removing the option does not unbind it.
 - **Stronger than MU's** (the user, building step 1: "our harmony stones has to be stronger that
-  original i think"): MU's tables are the shape; how much stronger is measured on the Kanturu kits
-  in steps 2-3 and a multiplier offered to the user.
+  original i think"): MU's tables are the shape. **Decided at step 3 ("you decide"): every flat
+  option three times MU's (sim::kHarmonyStrength); Damage taken keeps MU's 3-5% a piece**, since
+  five pieces at MU's already take a quarter off a blow (ad138709).
 - **Gemstone 1 in 150 kills** in the Ruins and Relics, beside the kill's own drop.
 - The +13-only options and the two PvP rate options are **dropped**; option levels run 0-11.
 - **Everything at the Chaos Machine** (the user: "chaos machine", then "Everything at the Machine"):
