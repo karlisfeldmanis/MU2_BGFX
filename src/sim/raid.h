@@ -296,6 +296,9 @@ struct KitPiece {
     uint8_t excellent = 0;
     uint8_t sockets = 0;
     uint8_t powers[3] = {0, 0, 0};
+    // A Jewel of Harmony option (sim/harmony.h): its number and level, 0 for none. A kit's JSON
+    // "harmony": [number, level].
+    uint8_t harmony = 0, harmonyLevel = 0;
 };
 
 // One character of the party: class, level, points and what he wears. Read from

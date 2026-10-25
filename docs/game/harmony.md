@@ -62,6 +62,16 @@ The options, by level 0 / 6 / 11 (MU's values; ours three times, but Damage take
 
 `sim/harmony.cpp` holds every number.
 
+## How strong (measured 2026-10-25)
+
+`tests/skill_sweep KIT 37 3 5 tests/kits/harmony.json`: the Kanturu testers against their twins
+with every piece's option at level 11 (weapon Damage, a staff's Wizardry damage, armour Maximum
+life), in the Ruins. Damage an hour of the best three skills: knight +15-19%, elf +5-15%,
+gladiator +18-47%, Dark Lord +29-42%, wizard +28-68% (a flat +75 on a 156-209 band); life
++20-30%. At +9 the options stop at level 9, about three quarters of that. The raid party's heroes
+(content/raid/party.json) strike under the Ruins' defence, at its floor, where a flat add changes
+nothing.
+
 ## At the Chaos Machine (HARMONY)
 
 | service | box | chance | Zen |

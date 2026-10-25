@@ -56,6 +56,11 @@ Held kitHeld(const content::Tables& tables, int32_t item, const KitPiece& piece)
         for (int i = 0; i < put.sockets; ++i) put.powers[i] = piece.powers[i];
         if (put.excellent && wears(row)) put.durability = int16_t(maximumDurability(row, put));
     }
+    // A Harmony option only where the row draws one and its table holds it (sim/harmony.h).
+    Held trial = put;
+    trial.harmony = piece.harmony;
+    trial.harmonyLevel = uint8_t(std::min<int>(piece.harmonyLevel, kHarmonyTop));
+    if (piece.harmony != 0 && harmonyOf(row, trial)) put = trial;
     return put;
 }
 

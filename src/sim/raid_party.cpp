@@ -100,6 +100,11 @@ bool readParty(const std::string& path, std::vector<RaiderKit>* out) {
             for (int s = 0; s < put.sockets; ++s) {
                 put.powers[s] = uint8_t(sockets.at(size_t(s)).numberOr(0));
             }
+            const core::Json& harmony = piece["harmony"];
+            if (harmony.size() == 2) {
+                put.harmony = uint8_t(harmony.at(0).numberOr(0));
+                put.harmonyLevel = uint8_t(harmony.at(1).numberOr(0));
+            }
             kit.pieces.push_back(put);
         }
         out->push_back(std::move(kit));
