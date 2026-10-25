@@ -1717,53 +1717,57 @@ inline constexpr BagRow kLuckBag[] = {
     {7, 8}, {8, 8}, {9, 8}, {10, 8}, {11, 8}, {7, 10}, {8, 10}, {9, 10}, {10, 10}, {11, 10},
     {7, 11}, {8, 11}, {9, 11}, {10, 11}, {11, 11}, {7, 12}, {8, 12}, {9, 12}, {10, 12}, {11, 12},
 };
-// WebZen's eventitembag8..11.txt (0.99.60T; docs/game/kundun-box.md 2.4), each in its two
+// WebZen's eventitembag9..12.txt (0.99.60T; docs/game/kundun-box.md 2.4), each in its two
 // pools: the plain rows (`//일반아이템`) and the excellent ones (`//엑설런트`). By name off our own
-// rows; Thunder Staff is 0.75's Lightning Staff and Katache its Katana. Checked row by row against
-// the files on 2026-10-25: bag8 lists Leather Boots twice and no Vine Boots, read here as Vine.
+// rows; Thunder Staff is 0.75's Lightning Staff and Katache its Katana. **Ours, one box up** (the
+// user, 2026-10-25: "still too weak", picked "Shift MU's lists up a box"): our +1 opens MU's +2
+// bag, and so on to our +4, MU's +5; MU's +1 bag (eventitembag8) is gone. Checked row by row
+// against the files on 2026-10-25.
+// eventitembag9, the Golden Titan's.
 inline constexpr BagRow kKundunPlain1[] = {
-    {12, 15}, {14, 14}, {14, 13}, {13, 0}, {13, 1}, {13, 2}, {7, 5}, {8, 5}, {9, 5}, {10, 5},
-    {11, 5}, {7, 2}, {8, 2}, {9, 2}, {10, 2}, {11, 2}, {7, 10}, {8, 10}, {9, 10}, {10, 10},
-    {11, 10}, {6, 1}, {6, 2}, {6, 4}, {5, 0}, {5, 1}, {5, 2}, {0, 0}, {0, 2}, {0, 4}, {1, 1},
-    {1, 2}, {2, 0}, {2, 1}, {3, 2}, {4, 1}, {4, 2}, {4, 8}, {4, 9}, {4, 10},
-};
-inline constexpr BagRow kKundunExcellent1[] = {
-    {13, 8}, {13, 9}, {13, 12}, {13, 13}, {7, 5}, {8, 5}, {9, 5}, {10, 5}, {11, 5}, {7, 2},
-    {8, 2}, {9, 2}, {10, 2}, {11, 2}, {7, 10}, {8, 10}, {9, 10}, {10, 10}, {11, 10}, {6, 1},
-    {6, 2}, {6, 4}, {0, 0}, {0, 1}, {0, 2}, {0, 4}, {1, 2}, {2, 0}, {2, 1}, {3, 2}, {4, 1},
-    {4, 8}, {4, 9}, {5, 0}, {5, 1},
-};
-inline constexpr BagRow kKundunPlain2[] = {
     {12, 15}, {14, 14}, {14, 13}, {14, 16}, {13, 0}, {13, 1}, {7, 12}, {8, 12}, {9, 12},
     {10, 12}, {11, 12}, {7, 8}, {8, 8}, {9, 8}, {10, 8}, {11, 8}, {7, 7}, {8, 7}, {9, 7},
     {10, 7}, {11, 7}, {0, 10}, {0, 11}, {0, 13}, {1, 6}, {1, 7}, {2, 3}, {3, 7}, {3, 0},
     {3, 4}, {5, 3}, {4, 4}, {4, 3}, {4, 11},
 };
-inline constexpr BagRow kKundunExcellent2[] = {
+inline constexpr BagRow kKundunExcellent1[] = {
     {13, 8}, {13, 9}, {13, 12}, {13, 13}, {7, 6}, {8, 6}, {9, 6}, {10, 6}, {11, 6}, {7, 4},
     {8, 4}, {9, 4}, {10, 4}, {11, 4}, {7, 11}, {8, 11}, {9, 11}, {10, 11}, {11, 11}, {5, 2},
     {0, 10}, {0, 5}, {0, 13}, {1, 6}, {1, 7}, {2, 3}, {3, 7}, {3, 0}, {4, 11}, {4, 4}, {4, 12},
 };
-inline constexpr BagRow kKundunPlain3[] = {
+// eventitembag10, the Golden Derkon's.
+inline constexpr BagRow kKundunPlain2[] = {
     {12, 15}, {14, 14}, {14, 13}, {14, 16}, {7, 9}, {8, 9}, {9, 9}, {10, 9}, {11, 9}, {7, 13},
     {8, 13}, {9, 13}, {10, 13}, {11, 13}, {7, 7}, {8, 7}, {9, 7}, {10, 7}, {11, 7}, {0, 11},
     {0, 15}, {0, 14}, {3, 4}, {4, 5}, {4, 12}, {5, 4},
 };
-inline constexpr BagRow kKundunExcellent3[] = {
+inline constexpr BagRow kKundunExcellent2[] = {
     {13, 8}, {13, 9}, {13, 12}, {13, 13}, {7, 12}, {8, 12}, {9, 12}, {10, 12}, {11, 12},
     {7, 8}, {8, 8}, {9, 8}, {10, 8}, {11, 8}, {7, 7}, {8, 7}, {9, 7}, {10, 7}, {11, 7},
     {5, 3}, {0, 11}, {0, 15}, {1, 8}, {4, 12},
 };
 // eventitembag11, the Golden Lizard King's ("아틀란스 습격"): the Dragon, Guardian and Legendary
 // sets, Bill of Balrog; its excellents the Plate and Spirit sets.
-inline constexpr BagRow kKundunPlain4[] = {
+inline constexpr BagRow kKundunPlain3[] = {
     {12, 15}, {14, 14}, {14, 13}, {14, 16}, {7, 1}, {8, 1}, {9, 1}, {10, 1}, {11, 1}, {7, 14},
     {8, 14}, {9, 14}, {10, 14}, {11, 14}, {7, 3}, {8, 3}, {9, 3}, {10, 3}, {11, 3}, {6, 13},
     {5, 5}, {4, 14}, {4, 13}, {2, 5}, {2, 4}, {3, 9},
 };
-inline constexpr BagRow kKundunExcellent4[] = {
+inline constexpr BagRow kKundunExcellent3[] = {
     {13, 8}, {13, 9}, {13, 12}, {13, 13}, {7, 9}, {8, 9}, {9, 9}, {10, 9}, {11, 9}, {7, 13},
     {8, 13}, {9, 13}, {10, 13}, {11, 13}, {3, 4}, {0, 14}, {4, 5}, {5, 4},
+};
+// eventitembag12, the Golden Tantalos' ("칸투르의지하군단"): the Black Dragon and Storm Crow sets,
+// Staff of Destruction, Saint Crossbow, Sword of Destruction; its excellents bag11's plain list
+// without the Dragon Shield.
+inline constexpr BagRow kKundunPlain4[] = {
+    {12, 15}, {14, 14}, {14, 13}, {14, 16}, {7, 16}, {8, 16}, {9, 16}, {10, 16}, {11, 16},
+    {8, 15}, {9, 15}, {10, 15}, {11, 15}, {5, 8}, {4, 16}, {0, 16},
+};
+inline constexpr BagRow kKundunExcellent4[] = {
+    {13, 8}, {13, 9}, {13, 12}, {13, 13}, {7, 1}, {8, 1}, {9, 1}, {10, 1}, {11, 1}, {7, 14},
+    {8, 14}, {9, 14}, {10, 14}, {11, 14}, {7, 3}, {8, 3}, {9, 3}, {10, 3}, {11, 3}, {5, 5},
+    {4, 14}, {4, 13}, {2, 5}, {2, 4}, {3, 9},
 };
 // Each tier's two pools, +1 first.
 struct KundunBag {

@@ -33,6 +33,12 @@ by order:
 - **Plain levels raised, ours** (the user, 2026-10-25: "can we rise item lvls so its not so low
   lvl"; the plus, not the lists; excellent kept at +0): +5/+6, +6/+7, +7/+8, +8/+9 from the +1 to
   +4 box (`kKundunPlainLevel`, `kKundunAddLevel`), where WebZen's were +5/+6, +4/+5, +4/+5, +4.
+- **MU's lists one box up, ours** (the user, 2026-10-25: "still too weak", picked "Shift MU's
+  lists up a box"): our +1 opens bag9, +2 bag10, +3 bag11, +4 **bag12** (MU's +5: the jewels,
+  Black Dragon and Storm Crow sets, Staff of Destruction, Saint Crossbow, Sword of Destruction;
+  excellent bag11's plain list without the Dragon Shield). Bag8 is gone. The raid's +3 boxes now
+  hold bag11. The plain levels and rates above are unchanged; excellents stay +0. In §3's table
+  read each row as the box one below ours.
 
 Sources, highest first: WebZen GameServer 1.00.93 (`WZ`, under `Source/Server Side/GameServer/`,
 0.97d base unless a flag is named), MuMain (`MM`, `src/source/`), OpenMU (`OM`). The repo's
