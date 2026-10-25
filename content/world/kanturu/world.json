@@ -291,8 +291,8 @@
       "name": "Elpis",
       "figure": "Elpis",
       "at": [
-        30,
-        202
+        35,
+        216
       ],
       "look": 3,
       "note": "MU's Elpis (368), the Refinery Tower's keeper (OpenMU KanturuEvent.cs:51, 77,177 in map 39), stood in the Ruins camp because the Tower is not playable (the user, 2026-10-23: find better locations for them, then you decide): before the north ruin wall at the head of the camp, a shrine, facing the camera. Her refining is not built."
