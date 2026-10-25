@@ -27,7 +27,8 @@
     },
     "classes": [
       "knight",
-      "gladiator"
+      "gladiator",
+      "lord"
     ],
     "skill": 0
   },

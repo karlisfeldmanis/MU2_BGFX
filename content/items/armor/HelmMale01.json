@@ -29,7 +29,8 @@
       "vitality": 0
     },
     "classes": [
-      "knight"
+      "knight",
+      "lord"
     ],
     "classes_from": "The last three ints of the call are 0, 1, 0 - the Dark Knight alone. Twenty agility beside eighty strength, and the agility is the first this project has recorded on a piece of armour: the Leather, Bone and Plate sets all ask for none."
   },

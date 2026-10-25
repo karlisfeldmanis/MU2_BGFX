@@ -31,7 +31,8 @@
     "classes": [
       "knight",
       "elf",
-      "gladiator"
+      "gladiator",
+      "lord"
     ],
     "classes_from": "The last three ints of the call are the wizard, knight and elf flags, and MuWeapons.cs carries the same set from the client's side. And the Magic Gladiator, as every wizard's or knight's class-level-1 weapon is his (Version095d Weapons.cs:300-301; docs/worlds/mg-port.md).",
     "skill": 20,

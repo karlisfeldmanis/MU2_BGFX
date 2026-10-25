@@ -27,7 +27,8 @@
       "vitality": 0
     },
     "classes": [
-      "knight"
+      "knight",
+      "lord"
     ],
     "classes_from": "The last three ints of the call are 0, 1, 0 - the Dark Knight alone. A hundred and ten strength and no agility, where the Bronze set asked for eighty and twenty."
   },

@@ -33,7 +33,8 @@
       "wizard",
       "knight",
       "elf",
-      "gladiator"
+      "gladiator",
+      "lord"
     ]
   },
   "sheets": {

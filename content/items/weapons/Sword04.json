@@ -33,7 +33,8 @@
     "requires_note": "Forty agility, and it is the only sword under drop level 20 that asks for any: the Kris, the Short Sword, the Rapier and the Sword of Assassin are all strength alone. A knight who has put everything into strength cannot hold the thing that grants him Lunge, which is MU making the skill cost something other than luck.",
     "classes": [
       "knight",
-      "gladiator"
+      "gladiator",
+      "lord"
     ],
     "classes_from": "The last three ints of the call are the wizard, knight and elf flags - 0, 1, 0, the Dark Knight alone. MuWeapons.cs carries the same from the client's side: PlayerClasses.Knight. And the Magic Gladiator, as every wizard's or knight's class-level-1 weapon is his (Version095d Weapons.cs:300-301; docs/worlds/mg-port.md).",
     "skill": 20,

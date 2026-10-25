@@ -28,7 +28,8 @@
       "vitality": 0
     },
     "classes": [
-      "knight"
+      "knight",
+      "lord"
     ],
     "classes_from": "The last three ints of the call are 0, 1, 0 - the Dark Knight alone."
   },

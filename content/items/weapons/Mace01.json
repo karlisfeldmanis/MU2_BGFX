@@ -28,7 +28,8 @@
     },
     "classes": [
       "knight",
-      "gladiator"
+      "gladiator",
+      "lord"
     ],
     "classes_from": "The last three ints of the call are the wizard, knight and elf flags: 0, 1, 0. This row once read the call one column late -- damage 13-15, speed 21, durability 100, which is the strength -- and listed no classes, so anybody could hold it. And the Magic Gladiator, as every wizard's or knight's class-level-1 weapon is his (Version095d Weapons.cs:300-301; docs/worlds/mg-port.md).",
     "skill": 0,
