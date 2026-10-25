@@ -516,6 +516,8 @@ inline bool secondClassOnly(const content::ItemRow& row) { return ((row.classes 
 // falls only on a map whose rules drop it (MapRow::kanturuGear) and never from the Golden Dragon's
 // hoard or Atlans's second-class roll (the user, 2026-10-25: "Kanturu only").
 constexpr int kKanturuGearLevel = 380;
+// Its weight in an ordinary drop's pool, a row's 1 / this (Realm::leave).
+constexpr int kKanturuGearWeight = 4;
 inline bool kanturuGear(const content::ItemRow& row) { return row.needLevel >= kKanturuGearLevel; }
 // Whether it asks `kin` in particular for his second class: the bit eight above his. The Staff of
 // Kundun is the Soul Master's and the Magic Gladiator's, who has no second (OpenMU S6

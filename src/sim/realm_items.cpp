@@ -1609,12 +1609,21 @@ void Realm::leave(const Body& dead, const Body& killer) {
         // the kills deep enough to roll them -- and on that share only, or the few rows a deep
         // pool holds would make every other item a ring. ours. Drawn only where it matters.
         const bool deep = level - kGap > kDeepJewelleryFrom && runeDice_.nextBool(kDeepJewellery);
-        const int32_t item = draw([&](const content::ItemRow& r) {
+        const auto admits = [&](const content::ItemRow& r) {
             const int gap = r.group == kGroupPotions ? kPotionGap : kGap;
             return r.dropsFromMonsters() && !summoningOrb(r) && reaches(r) &&
                    (r.dropLevel >= level - gap || (deep && powered(r))) &&
                    plusOf(r) <= rate.maxPlus;
-        });
+        };
+        int32_t item = draw(admits);
+        // Kanturu's gear at a kKanturuGearWeight'th of a row's weight: kept one draw in that many,
+        // else drawn again without it (the user, 2026-10-25: "Make plain pieces rarer"; near level
+        // 150 the pool is mostly the 380 gear). Its die is thrown only where it was drawn, so
+        // every other map's log is as it was.
+        if (item >= 0 && kanturuGear(tables_->items[size_t(item)]) &&
+            dice_.nextInt(0, kKanturuGearWeight) != 0) {
+            item = draw([&](const content::ItemRow& r) { return admits(r) && !kanturuGear(r); });
+        }
         if (item < 0) return;
         const content::ItemRow& row = tables_->items[size_t(item)];
         const int plus = plusOf(row);
