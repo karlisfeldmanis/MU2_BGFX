@@ -50,7 +50,7 @@ constexpr float kLeft = 18.0f;
 constexpr float kRight = panel::kValueRight;
 
 // An attribute: its well, the lines under it, and the air before the next one.
-constexpr float kAttrTall = 19.0f, kLineStep = 10.5f, kLineTop = 3.0f, kAttrGap = 8.0f;
+constexpr float kAttrTall = 20.0f, kLineStep = 12.0f, kLineTop = 3.0f, kAttrGap = 8.0f;
 // The plus, inside the well's right end.
 constexpr float kPlusSide = 13.0f;
 // A Combat or Bonuses group: its heading, its rows, the air after it.
@@ -66,10 +66,12 @@ constexpr float kFootRight = kRight;
 constexpr float kExpTop = kResetSquare.y + kResetSquare.h + 5.0f;
 constexpr Box kBar{panel::kGridX, kExpTop + 12.0f, kFootRight - panel::kGridX, 4.0f};
 
-// Type, in units. A figure is a size above its label, so the eye runs down the numbers.
-constexpr float kClassSize = 9.0f, kNameSize = 8.5f, kFigureSize = 10.0f, kLineSize = 7.5f,
-                kSmallCaps = 6.5f, kKeySize = 9.5f, kTabSize = 7.5f,
-                kRowSize = 7.5f;
+// Type, in units. A figure is a size above its label, so the eye runs down the numbers. A size
+// up from where they were (Crylos on Discord, 2026-10-25: "increase the font size for stats its so
+// tiny"), and the lines' steps with them.
+constexpr float kClassSize = 9.0f, kNameSize = 9.5f, kFigureSize = 10.5f, kLineSize = 8.5f,
+                kSmallCaps = 7.0f, kKeySize = 9.5f, kTabSize = 7.5f,
+                kRowSize = 8.5f;
 
 constexpr uint32_t kHeading = style::kBoneHi;
 constexpr uint32_t kPlain = style::kBone2;
@@ -89,7 +91,7 @@ constexpr float kPipRadius = 1.9f, kPipPitch = 5.4f;
 // a page too long), from a name's baseline to the capitals of the effect under it, and from
 // one line of the effect to the next; the effect's type, and the share of a face's ascent its
 // capitals stand. The rule between rows, a step up from the well.
-constexpr float kRowPad = 4.5f, kRowPadLeast = 2.0f, kNoteGap = 3.5f, kNoteStep = 8.0f, kNoteSize = 6.5f,
+constexpr float kRowPad = 4.5f, kRowPadLeast = 2.0f, kNoteGap = 3.5f, kNoteStep = 9.0f, kNoteSize = 7.5f,
                 kCapShare = 0.72f;
 constexpr uint32_t kRowStroke = gfx::rgba(0.200f, 0.157f, 0.125f);
 // Where a row's words start and its figures end: 5 units in from the well's sides.
