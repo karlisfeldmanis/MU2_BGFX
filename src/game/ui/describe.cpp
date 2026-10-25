@@ -116,7 +116,8 @@ Row stat(const char* name, const std::string& text, Tone tone) {
 // The runes worn that share a rune's limit, strongest first, as Realm::redress counts them: of a
 // limited rune its copies (sim::stackMostOf), of a Bulwark or a Volley its kin too (kinOf); of a
 // stat rune every rune adding to its stat -- Lesser and Greater, Might and Ascendance -- the best
-// kStatRuneMost of them counting. An Ascendance's stat is the one he wears most runes for.
+// kStatRuneMost of them counting, of the Ascendances only the best kAscendanceMost. An
+// Ascendance's stat is the one he wears most runes for.
 // Of the runes where only the strongest worn works (Excellence::bulwarkShare, volleySide), its
 // kin and its strength among them: Bulwark, Buckler and Brace one, the three Volleys another.
 std::pair<int, int> kinOf(sim::Power power) {
@@ -139,7 +140,7 @@ RunePool poolOf(const sim::Satchel& bag, sim::Power power) {
                 : !sim::stackingOf(power).stacks ? 1
                                                    : sim::stackMostOf(power);
     if (pool.most == 0) return pool;
-    std::vector<std::pair<int, sim::Rarity>> found[4];
+    std::vector<std::pair<int, sim::Rarity>> found[4], ascended;
     for (int slot = sim::kWeaponRight; slot <= sim::kRingLeft; ++slot) {
         const sim::Held& held = bag[slot];
         if (held.empty()) continue;
@@ -153,12 +154,22 @@ RunePool poolOf(const sim::Satchel& bag, sim::Power power) {
                 }
                 continue;
             }
+            if (sim::ascendance(row->power)) {
+                ascended.push_back({sim::statShareOf(row->power).strength, row->rarity});
+                continue;
+            }
             const sim::HeroPoints its = sim::statShareOf(row->power);
             const int each[4] = {its.strength, its.agility, its.vitality, its.energy};
             for (int k = 0; k < 4; ++k) {
                 if (shares[k] && each[k]) found[k].push_back({each[k], row->rarity});
             }
         }
+    }
+    std::stable_sort(ascended.begin(), ascended.end(),
+                     [](const auto& a, const auto& b) { return a.first > b.first; });
+    if (ascended.size() > size_t(sim::kAscendanceMost)) ascended.resize(sim::kAscendanceMost);
+    for (int k = 0; k < 4; ++k) {
+        if (shares[k]) found[k].insert(found[k].end(), ascended.begin(), ascended.end());
     }
     size_t pick = 0;
     for (size_t k = 1; k < 4; ++k) {

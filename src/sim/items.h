@@ -966,7 +966,8 @@ constexpr int64_t kSpiritDelayTicks = 40;  // rand()%2000 ms, the realm's twenty
 // str"), then 'lets keep only +10 and +30': Might is strength, Grace agility, Vigor vitality,
 // Insight energy, Ascendance all four, at 10 percent (Lesser) and 30 (Greater). Every class's, in
 // any socket -- Ascendance a weapon's alone (the user, 2026-10-05: 'runes which increase all
-// stats only on weapons'). The share is of
+// stats only on weapons'), and a shield's since 2026-10-25 (Discord #67): see kAscendanceMost.
+// The share is of
 // the points he has spent, summed over every rune worn, and is added on top of them for all that
 // a point buys (Body::totalPoints) but never for what an item asks to be worn: a rune that let
 // the piece it sits in be worn would hold itself up. The tiers are mine: a single stat at 10 is
@@ -1001,6 +1002,17 @@ Power onceKinOf(Power power);
 // The stat runes': the best four for each stat, Might and Ascendance alike -- six were +180%,
 // far above every other limited rune's top (2026-10-24).
 constexpr int kStatRuneMost = 4;
+// **Ascendance, Lesser and Greater together: three worn count, the strongest**, and no more than
+// two are set in a weapon and one in a shield (`settable`). Two swords held four where a staff or
+// a bow held three, +120% all stats to +90% (Discord #67, 2026-10-25; the user: "lets allow
+// Ascendance max 3 runes, 2 on weapons and 1 on shield"). A weapon set with three before keeps
+// them, and still counts three at most.
+constexpr int kAscendanceMost = 3;
+constexpr int kAscendanceInWeapon = 2;
+constexpr int kAscendanceInShield = 1;
+inline bool ascendance(Power power) {
+    return power == Power::LesserAscendance || power == Power::GreaterAscendance;
+}
 // A rune paid to the Magic Gladiator that he may not set -- a Legendary of the knight's or the
 // wizard's, from a giver's path -- comes as its weaker kin he may: Arcane Echo as Faint Echo,
 // Pyroblaster as Scorch, Whirlwind as Eddy, Fireburst as Sparkburst, Hellfire as Brimstone,

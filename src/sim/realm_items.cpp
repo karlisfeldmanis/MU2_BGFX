@@ -688,16 +688,32 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
         }
     }
     // The stat runes, in any socket of anything worn, summed (sim::statShareOf) -- the best
-    // sim::kStatRuneMost for each stat, Might and Ascendance alike.
+    // sim::kStatRuneMost for each stat, Might and Ascendance alike -- of the Ascendances only the
+    // strongest sim::kAscendanceMost.
     hero.runeShare = HeroPoints{};
     {
         int shares[4][(kRingLeft + 1) * kMostSockets];
         int counts[4] = {};
+        int ascended[(kRingLeft + 1) * kMostSockets];
+        int ascents = 0;
         for (int slot = kWeaponRight; slot <= kRingLeft; ++slot) {
             if (!rowAt(slot)) continue;
             for (int at = 0; at < std::min<int>(kit[slot].sockets, kMostSockets); ++at) {
                 const PowerRow* power = powerOf(kit[slot].powers[at]);
-                if (!power) continue;
+                if (power && ascendance(power->power)) {
+                    ascended[ascents++] = statShareOf(power->power).strength;
+                }
+            }
+        }
+        std::sort(ascended, ascended + ascents, std::greater<int>());
+        for (int i = 0; i < std::min(ascents, kAscendanceMost); ++i) {
+            for (int k = 0; k < 4; ++k) shares[k][counts[k]++] = ascended[i];
+        }
+        for (int slot = kWeaponRight; slot <= kRingLeft; ++slot) {
+            if (!rowAt(slot)) continue;
+            for (int at = 0; at < std::min<int>(kit[slot].sockets, kMostSockets); ++at) {
+                const PowerRow* power = powerOf(kit[slot].powers[at]);
+                if (!power || ascendance(power->power)) continue;
                 const HeroPoints share = statShareOf(power->power);
                 const int each[4] = {share.strength, share.agility, share.vitality, share.energy};
                 for (int k = 0; k < 4; ++k) {

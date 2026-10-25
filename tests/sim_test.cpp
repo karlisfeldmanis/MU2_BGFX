@@ -11028,7 +11028,28 @@ void testRunes(const content::Tables& tables) {
         check(sim::settable(tables, ascend, held(serpent, 1, 0), dk, true) &&
                   !sim::settable(tables, ascend, held(plate, 1, 0), dk, true) &&
                   !(ring >= 0 && sim::settable(tables, ascend, held(ring, 1, 0), dk, true)),
-              "Ascendance goes in a weapon alone, not armour or a ring");
+              "Ascendance goes in a weapon, not armour or a ring");
+        // Two a weapon and one a shield, three worn counting (sim::kAscendanceMost; Discord #67,
+        // 2026-10-25: two swords held four where a staff held three).
+        {
+            const int shield = tables.itemAt(6, 0);
+            check(shield >= 0, "a Small Shield is cooked");
+            sim::Held one = held(serpent, 3, 0), two = held(serpent, 3, 0);
+            one.powers[0] = uint8_t(sim::Power::GreaterAscendance);
+            two.powers[0] = uint8_t(sim::Power::GreaterAscendance);
+            two.powers[1] = uint8_t(sim::Power::LesserAscendance);
+            check(sim::settable(tables, ascend, one, dk, true) &&
+                      !sim::settable(tables, ascend, two, dk, true),
+                  "a weapon takes a second Ascendance, not a third");
+            if (shield >= 0) {
+                sim::Held guard = held(shield, 2, 0);
+                check(sim::settable(tables, ascend, guard, dk, true), "a shield takes one");
+                guard.powers[0] = uint8_t(sim::Power::LesserAscendance);
+                check(!sim::settable(tables, ascend, guard, dk, true), "and not a second");
+            }
+            check(!sim::stackingOf(sim::Power::GreaterAscendance).says.empty(),
+                  "and its tooltip says the limit");
+        }
         // The second class's since 2026-10-07, with Hellfire and Evil Spirit.
         check(!sim::settable(tables, ascend, held(serpent, 1, 0), dk, false),
               "and only by a second class");
@@ -11163,6 +11184,17 @@ void testRunes(const content::Tables& tables) {
             checkEqual(mighty.hero().runeShare.strength,
                        sim::kStatRuneMost * sim::statShareOf(sim::Power::GreaterMight).strength,
                        "eight Greater Mights and a Lesser are four Greaters' strength");
+            // Two swords set with three Greater Ascendances each, as before 2026-10-25: three count.
+            const uint8_t ascents[3] = {uint8_t(sim::Power::GreaterAscendance),
+                                        uint8_t(sim::Power::GreaterAscendance),
+                                        uint8_t(sim::Power::GreaterAscendance)};
+            sim::Realm twin;
+            twin.raise(&tables, 7, 190, 110, dk, 200);
+            twin.give(serpent, sim::kWeaponRight, 0, -1, false, 0, 0, 3, ascents);
+            twin.give(serpent, sim::kWeaponLeft, 0, -1, false, 0, 0, 3, ascents);
+            checkEqual(twin.hero().runeShare.agility,
+                       sim::kAscendanceMost * sim::statShareOf(sim::Power::GreaterAscendance).agility,
+                       "six Greater Ascendances worn are three's");
             check(sim::stackingOf(sim::Power::KeenEye).stacks &&
                       !sim::stackingOf(sim::Power::Frenzy).stacks,
                   "and their tooltips say which stack");

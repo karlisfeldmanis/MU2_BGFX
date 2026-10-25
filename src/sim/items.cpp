@@ -611,7 +611,11 @@ const PowerRow* powerOf(uint8_t power) {
         {Power::Thunder, "Thunder", "+20% lightning damage", kEveryClass, kHeld, Rarity::Rare},
         {Power::Tempest, "Tempest", "+20% wind damage", kEveryClass, kHeld, Rarity::Rare},
         // The stat runes (sim::statShareOf), every class's and every socket's -- but the all-stats
-        // pair, a weapon's socket alone (the user, 2026-10-05).
+        // pair, a weapon's socket alone (the user, 2026-10-05), and a shield's since 2026-10-25, two a
+        // weapon and one a shield, three worn at most (kAscendanceMost): two weapons held four
+        // where a staff or a bow held three (Discord #67, "bk or mg can have +120% using 2
+        // swords, but dw and elf not"; the user: "lets allow Ascendance max 3 runes, 2 on
+        // weapons and 1 on shield").
         {Power::LesserMight, "Lesser Might", "+10% strength", kEveryClass, kAny, Rarity::Rare},
         {Power::GreaterMight, "Greater Might", "+30% strength", kEveryClass, kAny, Rarity::Epic},
         {Power::LesserGrace, "Lesser Grace", "+10% agility", kEveryClass, kAny, Rarity::Rare},
@@ -622,9 +626,9 @@ const PowerRow* powerOf(uint8_t power) {
         {Power::GreaterInsight, "Greater Insight", "+30% energy", kEveryClass, kAny,
          Rarity::Epic},
         {Power::LesserAscendance, "Lesser Ascendance", "+10% all stats", kEveryClass,
-         kInWeapon, Rarity::Epic},
+         kInWeapon | kInShield, Rarity::Epic},
         {Power::GreaterAscendance, "Greater Ascendance", "+30% all stats", kEveryClass,
-         kInWeapon, Rarity::Legendary, true},
+         kInWeapon | kInShield, Rarity::Legendary, true},
         // The Common runes (sim/items.h kCinderChance...), each a Legendary's faint copy.
         // The knight's and the wizard's Common and Epic runes are the Magic Gladiator's too.
         {Power::Cinder, "Cinder", "5% on hit: a small ring of fire bursts around you",
@@ -746,6 +750,11 @@ Stacking stackingOf(Power power) {
         case Power::Plague:
         case Power::PlagueArrows: return {true, "Stacks, up to 50%"};
         default: break;
+    }
+    if (ascendance(power)) {
+        return {true, "Up to " + std::to_string(kAscendanceMost) + " worn: " +
+                          std::to_string(kAscendanceInWeapon) + " a weapon, " +
+                          std::to_string(kAscendanceInShield) + " a shield"};
     }
     if (statShareOf(power).strength || statShareOf(power).agility ||
         statShareOf(power).vitality || statShareOf(power).energy) {
@@ -937,6 +946,15 @@ bool settable(const content::Tables& tables, const Held& jewel, const Held& targ
     if (power == nullptr || !power->takenBy(kin, second)) return false;
     const content::ItemRow& row = tables.items[size_t(target.item)];
     if (!socketsFit(row) || freeSocket(target) < 0) return false;
+    // Ascendance, either tier: two a weapon, one a shield (kAscendanceInWeapon).
+    if (ascendance(power->power)) {
+        int set = 0;
+        for (int at = 0; at < std::min<int>(target.sockets, kMostSockets); ++at) {
+            const PowerRow* one = powerOf(target.powers[at]);
+            if (one && ascendance(one->power)) ++set;
+        }
+        if (set >= (row.shield() ? kAscendanceInShield : kAscendanceInWeapon)) return false;
+    }
     // One of a `once` rune a thing (PowerRow::once): Frenzy, which two in one pair of boots
     // stacked past what the game can carry. However many he wears, its stacks stop at five. And
     // one of a kin where only the strongest works: no Buckler beside a Bulwark (onceKinOf).
