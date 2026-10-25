@@ -182,4 +182,31 @@ void testElites(void (*checkOf)(bool, const char*),
         std::sort(kinds.begin(), kinds.end());
         check(std::adjacent_find(kinds.begin(), kinds.end()) == kinds.end(), "a map's Elites are different breeds");
     }
+
+    // Kanturu's golden ones (sim::goldenOn): the Ruins' first Elite always a Satyros and the
+    // Relics' a Twin Tale, the other never that breed; across seeds.
+    struct Golden { const char* world; uint32_t map; int column, row; };
+    for (const auto& [world, map, column, row] : {Golden{"kanturu", 37, 20, 218}, Golden{"kanturu_relics", 38, 77, 105}}) {
+        content::Tables tables;
+        if (!content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/" + world + "/" + world + ".mur", tables, error)) {
+            check(false, "Kanturu's tables load");
+            continue;
+        }
+        const int32_t golden = sim::goldenOn(map);
+        check(golden != 0 && sim::goldenBoxOn(map) == 4, "a golden breed, leaving a Box of Kundun +4");
+        int goldens = 0, others = 0, raised = 0;
+        for (uint32_t seed = 1; seed <= 6; ++seed) {
+            sim::Realm realm;
+            realm.raise(&tables, seed, column, row, sim::Kin::DarkKnight, 400);
+            for (const sim::Body& one : realm.bodies()) {
+                if (!one.elite || !one.alive()) continue;
+                ++raised;
+                if (tables.kinds[size_t(one.kind)].number == golden) ++goldens;
+                else ++others;
+            }
+        }
+        std::printf("  %s: %d Elites over six seeds, %d golden\n", world, raised, goldens);
+        checkEqual(goldens, 6, "every seed stands the one golden Elite");
+        checkEqual(others, 6 * (sim::elitesOn(map) - 1), "and the rest are other breeds");
+    }
 }

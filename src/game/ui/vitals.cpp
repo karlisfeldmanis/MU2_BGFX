@@ -11,6 +11,7 @@
 #include "game/ui/panel.h"
 #include "game/ui/tip.h"
 #include "game/play.h"
+#include "sim/elite.h"
 #include "sim/quests.h"
 
 namespace mu::game {
@@ -603,7 +604,10 @@ void Vitals::rebuild(const Play& play, const Readout& r) {
     const float edge = std::max(1.0f, std::round(kEdge * unit));
 
     // The name, centred over the bar. Just the name: the level went, twice (Vitals.Title).
-    const std::string& name = play.realm().tables()->kinds[size_t(beast->kind)].label;
+    // A map's golden Elite is named so (sim::goldenOn): the Golden Satyros, the Golden Twin Tale.
+    const content::MonsterKind& kind = play.realm().tables()->kinds[size_t(beast->kind)];
+    const bool golden = beast->elite && kind.number == sim::goldenOn(play.realm().tables()->map);
+    const std::string name = golden ? "Golden " + kind.label : kind.label;
     const float nameSize = points(kNameTall * unit);
     const float nameTop = bar.y - (kGap + kNameTall) * unit;
     type(canvas_, std::round(r.x - face.measure(nameSize, name) * 0.5f),

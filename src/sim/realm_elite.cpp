@@ -50,10 +50,15 @@ void Realm::riseElite(Body& elite) {
     // another standing Elite of the map already is ("elite monsters could be last 3 strongest on
     // each map not just 1 type"); then one of its nests, and a tile inside that nest's box away
     // from the town, the guards and the gates.
+    // A map with a golden breed (sim::goldenOn): its first Elite is always that breed, and the
+    // others never are.
     const std::vector<content::MonsterNest>& nests = tables_->nests;
+    const int32_t golden = goldenOn(tables_->map);
+    const bool first = !eliteSlots_.empty() && &bodies_[size_t(eliteSlots_.front())] == &elite;
     std::vector<uint32_t> breeds;
     for (const content::MonsterNest& nest : nests) {
         if (nest.kind >= tables_->kinds.size() || !mayBeElite(tables_->kinds[nest.kind].number)) continue;
+        if (golden != 0 && (tables_->kinds[nest.kind].number == golden) != first) continue;
         if (std::find(breeds.begin(), breeds.end(), nest.kind) == breeds.end()) breeds.push_back(nest.kind);
     }
     std::sort(breeds.begin(), breeds.end(), [&](uint32_t a, uint32_t b) {
@@ -123,7 +128,8 @@ void Realm::riseElite(Body& elite) {
     // no nest.
     elite.nest = -1;
     raiseBeast(elite);
-    core::logf("elite: an Elite %s (level %d, %d health) at (%d, %d) on map %u", kind.label.c_str(),
+    core::logf("elite: an Elite %s%s (level %d, %d health) at (%d, %d) on map %u",
+               kind.number == golden ? "Golden " : "", kind.label.c_str(),
                elite.level, elite.maxHealth, column, row, tables_->map);
 }
 
@@ -185,7 +191,7 @@ void Realm::eliteSpoils(const Body& dead, const Body& killer) {
             }
         }
     };
-    Held spoils[kEliteMostPieces + 2];
+    Held spoils[kEliteMostPieces + 3];
     int count = 0;
     const int pieces = eliteDice_.nextInt(kEliteLeastPieces, kEliteMostPieces + 1);
     // Which of them are excellent: one always, a second sometimes (-1 for none).
@@ -215,6 +221,15 @@ void Realm::eliteSpoils(const Body& dead, const Body& killer) {
             while (what.sockets < mostSocketsOf(row) && eliteDice_.nextBool(kMoreSocketChance)) ++what.sockets;
         }
         spoils[count++] = what;
+    }
+    // The golden one's Box of Kundun (sim::goldenBoxOn), always.
+    if (const int box = goldenBoxOn(tables_->map);
+        box > 0 && tables_->kinds[size_t(dead.kind)].number == goldenOn(tables_->map)) {
+        for (size_t i = 0; i < tables_->items.size(); ++i) {
+            if (!boxOfKundun(tables_->items[i])) continue;
+            spoils[count++] = Held{int32_t(i), int16_t(box), 1};
+            break;
+        }
     }
     // The jewels: the Bless, the Soul or the Chaos -- never the Life, never a rune.
     const auto jewel = [](const content::ItemRow& r) { return refiningJewel(r) && jewelOf(r) != Jewel::Life; };

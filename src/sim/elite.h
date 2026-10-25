@@ -28,10 +28,18 @@ namespace mu::sim {
 // not kill in 40 s. High where the breeds are weak, low where they are already huge. Each
 // doubled on 2026-10-21 (the user: "elite monsters has to be stronger, more hp and better exc
 // drops").
+// Kanturu's first Elite is its golden one (the user, 2026-10-25: "Golden Satyros and Golden Twin
+// Tale ... As Kanturu's Elites", "dont make annoucnment for that just use elite system", "for ruins
+// we need elites"): MU's golden monsters of the 2009 renewal (WZ EledoradoEvent.cpp:887-975), a
+// breed of the map gilded, which always leaves a Box of Kundun of `goldenBox` (gObjMonster.cpp:
+// 4253-4267) beside the Elite's spoils. `golden` is that breed's MU number; the map's other
+// Elites never draw it, so an Elite of that breed is the golden one.
 struct EliteMap {
     uint32_t map;
     int count;
     float life;
+    int32_t golden = 0;
+    int goldenBox = 0;
 };
 constexpr EliteMap kEliteMaps[] = {
     {0, 1, 16.0f},  // Lorencia: the Lich 255 -> 4,080
@@ -43,6 +51,9 @@ constexpr EliteMap kEliteMaps[] = {
     {8, 2, 4.0f},   // Tarkan: the Beam Knight 25,000 -> 100,000
     {10, 1, 4.0f},  // Icarus: the Phantom Knight 41,000 -> 164,000
     {33, 2, 3.0f},  // Aida: the Bloody Death Rider 165,000 -> 495,000
+    // Kanturu: the golden one and one of the strongest three.
+    {37, 2, 3.0f, 353, 4},  // the Ruins: the Golden Satyros 113,400 -> 340,200; the Genocider 538,200
+    {38, 2, 3.0f, 359, 4},  // the Relics: the Golden Twin Tale
 };
 // The bosses, which are never made Elites: an Elite is an ordinary breed made strong. MU's
 // numbers: the Gorgon, the Ice Queen, the Balrog, the Hydra, Zaikan, the Death Beam Knight, the
@@ -59,6 +70,19 @@ constexpr int kEliteStrongest = 3;
 inline int elitesOn(uint32_t map) {
     for (const EliteMap& row : kEliteMaps) {
         if (row.map == map) return row.count;
+    }
+    return 0;
+}
+// The map's golden breed by MU number, 0 for none, and the Box of Kundun tier it always leaves.
+inline int32_t goldenOn(uint32_t map) {
+    for (const EliteMap& row : kEliteMaps) {
+        if (row.map == map) return row.golden;
+    }
+    return 0;
+}
+inline int goldenBoxOn(uint32_t map) {
+    for (const EliteMap& row : kEliteMaps) {
+        if (row.map == map) return row.goldenBox;
     }
     return 0;
 }
