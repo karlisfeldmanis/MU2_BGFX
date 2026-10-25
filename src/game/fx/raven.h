@@ -26,7 +26,8 @@
 //
 // MU's own: the counts, the colours, the speeds and lives; a particle a texel a unit
 // (ZzzEffectParticle.cpp:8922-8935). Ours: each joint drawn as a strip from its tail to its head
-// (as fx/drain's strands), its tails a fixed length; the ball's 15 spread about the bird rather than
+// (as fx/drain's strands), its tails a fixed length; the sparks at half MU's size and the charge's light
+// and the spirits' heads at a third (the user's "too large"); the ball's 15 spread about the bird rather than
 // on mesh 1's vertices; MODEL_AIR_FORCE's puffs at its head as it dives (:747-756) wait for
 // Skill/AirForce.bmd to be cooked. Presentation only: the realm struck on its own tick
 // (What::Ravened, What::Hit). Pools sized once; a frame allocates nothing.

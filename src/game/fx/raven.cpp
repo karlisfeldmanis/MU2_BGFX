@@ -22,6 +22,10 @@ constexpr float kStreakWide = 30.0f, kSpiritWide = 20.0f, kFlareWide = 40.0f;
 // A particle is its texels wide at Scale 1: Spark03 32, flare01 64.
 constexpr float kSparkTexels = 32.0f, kGlowTexels = 64.0f;
 constexpr float kGlowScale = 1.3f;
+// Ours: the sparks at half MU's size and the charge's light and the spirits' heads at a third --
+// at MU's they swamped the bird (the user, 2026-10-25: "sparkles from bird is to large"), as Aida's
+// sparks were (fx/aida_sparks.h).
+constexpr float kSparkSize = 0.5f, kGlowSize = 1.0f / 3.0f, kHeadSize = 1.0f / 3.0f;
 // How far back its tail is drawn, in frames of its flight. Ours.
 constexpr float kTail = 4.0f;
 // The ball's spirits: every 22nd of mesh 1's 96 triangles, three vertices each.
@@ -306,11 +310,11 @@ void RavenShow::gather(gfx::Effects& effects) const {
         if (!one.alive) continue;
         const float left = one.life - one.age;
         if (one.kind == kSpark) {
-            if (bgfx::isValid(spark_)) dot(effects, spark_, one.at, kSparkTexels * one.scale * 0.5f * kUnit, kSparkLight, one.light);
+            if (bgfx::isValid(spark_)) dot(effects, spark_, one.at, kSparkTexels * one.scale * 0.5f * kUnit * kSparkSize, kSparkLight, one.light);
             continue;
         }
         if (one.kind == kGlow) {
-            if (bgfx::isValid(light_)) dot(effects, light_, one.at, kGlowTexels * kGlowScale * 0.5f * kUnit, kGlowLight, 1.0f);
+            if (bgfx::isValid(light_)) dot(effects, light_, one.at, kGlowTexels * kGlowScale * 0.5f * kUnit * kGlowSize, kGlowLight, 1.0f);
             continue;
         }
         // Its light down over its last frames: a streak's over all ten, a flare's ten, a spirit's
@@ -325,7 +329,7 @@ void RavenShow::gather(gfx::Effects& effects) const {
         strip(effects, sheet, one.was, one.at, wide * 0.5f, light, fade);
         // A spirit's head: a light and a shine of 2 x life/10 + 2.
         if (one.kind == kSpirit && bgfx::isValid(light_)) {
-            const float half = (2.0f * left / 10.0f + 2.0f) * 0.08f;
+            const float half = (2.0f * left / 10.0f + 2.0f) * 0.08f * kHeadSize;
             dot(effects, light_, one.at, half, kSpiritLight, fade);
             if (bgfx::isValid(shiny_)) dot(effects, shiny_, one.at, half * 0.6f, kSpiritLight, fade);
         }
