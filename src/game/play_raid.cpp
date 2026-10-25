@@ -563,12 +563,14 @@ int Play::horseAction(const Drawn& rider, int mount) const {
     const bool riderSkill = mount == 3 && rider.swinging > 0.0f && swung != nullptr && !swung->wizardry &&
                             !swung->onSelf() && swung->arrows == 0;
     // And the Dark Horse's stomp, its clip 3, while he plays Earthshake's 87 (GOBoid.cpp:338-342):
-    // said here as 7, which Pets::ride turns into the horse's 3.
-    if (mount == 4 && rider.swinging > 0.0f && rider.castSkill == sim::skill::kEarthshake) return 7;
-    return riderSkill                                       ? 6
-           : rider.swinging > 0.0f && rider.castSkill == 0 ? 3
-           : galloping                                     ? 2
-                                                           : 0;
+    // said here as 7, which Pets::ride turns into the horse's 3. What the swing was thrown with is
+    // swingSkill: castSkill is spent the moment the clip starts (Play::update), so it read 0 on
+    // every swing -- a spell's horse butted and the stomp never came.
+    if (mount == 4 && rider.swinging > 0.0f && rider.swingSkill == sim::skill::kEarthshake) return 7;
+    return riderSkill                                        ? 6
+           : rider.swinging > 0.0f && rider.swingSkill == 0 ? 3
+           : galloping                                      ? 2
+                                                            : 0;
 }
 
 // The other players' pets and mounts, as the hero's in Play::update and their wings above: each
