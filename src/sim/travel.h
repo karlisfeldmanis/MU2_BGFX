@@ -29,7 +29,7 @@ struct TravelRow {
     const char* key;       // what a save calls it (game/save.cpp), never renamed: not its index
 };
 
-inline constexpr int kTravels = 17;
+inline constexpr int kTravels = 18;
 const TravelRow& travelAt(int index);
 // The row a save's key names, or -1.
 int travelIndexOf(const std::string& key);

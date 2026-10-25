@@ -186,6 +186,9 @@ bool Realm::acceptQuest(int index) {
     one.completions = completions;
     one.life = life;
     if (index == kSkyDoor) discover(int32_t(kIcarusMap));
+    // And Kanturu as the Keeper sends him to Elpis (the user, 2026-10-25: "we need that kanturu is
+    // on map usable with M"), as Icarus opens with The Sky Door.
+    if (index == kKantursGate) discover(37);
     openChained();
     say(What::QuestTaken, mine(), index);
     return true;
