@@ -220,6 +220,19 @@ public:
     // Whether `owner` has a guard standing.
     bool guarding(uint32_t owner) const;
 
+    // **Swell Life standing on a body** (the user, 2026-10-25: "1", MU's own glow): MU's
+    // BITMAP_LIGHT subtype 1 on each body with eBuff_Life throws, every frame, two orange
+    // (1, 0.5, 0.1) BITMAP_LIGHT particles at subtype 4 off two of seven upper-body bones -- index
+    // n and 6 - n of g_byUpperBoneLocation {25, 26, 27, 20, 34, 35, 36}, his arms and neck
+    // (ZzzEffect.cpp:34, :7004-7024). Each lives ten frames, climbs by a pace that gains 5.7-9.5
+    // units a frame, shrinks 0.04-0.08 of its scale of two and loses its light by 1/1.35 a
+    // frame (ZzzEffectParticle.cpp:3196-3201, :8058-8082): embers streaming up off his shoulders
+    // and arms. `points` are those bones in the world this frame, `count` of them.
+    // **Ours**: an ember stays where it was born and climbs from there rather than riding its
+    // bone; it is a soft round dot (ember_soft.png) and not MU's rayed flare01; and its size is
+    // judged on shots (kEmberAcross), not MU's sprite scale.
+    void swell(const float (*points)[3], int count, float seconds, float metresPerTile);
+
     // Ages every burst on MU's clock. `seconds` is the frame's own.
     void update(float seconds);
     // `eye` is the camera's position in world metres, which the edge-on fade is taken from.
@@ -241,6 +254,9 @@ public:
     static constexpr int kBursts = 24;
     // Room for two skills read inside a second of each other; a third's puffs are not drawn.
     static constexpr int kPuffs = 64;
+    // Swell Life's embers: two a reference frame, ten frames each, so twenty a body; room for a
+    // party of five and a few more in sight. One with none free is not drawn.
+    static constexpr int kEmbers = 192;
 
 private:
     struct Joint {
@@ -275,6 +291,21 @@ private:
         float spin = 0.0f;
         float turns = 0.0f;    // radians a tick
     };
+
+    // One of Swell Life's embers. Times in reference frames, lengths in world metres.
+    struct Ember {
+        bool living = false;
+        float at[3] = {0.0f, 0.0f, 0.0f};  // where it was born
+        float age = 0.0f;
+        float climb = 0.0f;  // metres over where it was born
+        float pace = 0.0f;   // metres a frame it climbs by, gaining every frame
+        float scale = 2.0f;  // MU's Scale, two at birth
+        float per = 0.01f;
+    };
+    Ember embers_[kEmbers];
+    float emberDebt_ = 0.0f;  // embers owed by the frames fed so far
+    void gatherEmbers(gfx::Effects& effects) const;
+    bgfx::TextureHandle light_ = BGFX_INVALID_HANDLE;  // the embers' soft dot
 
     // Where joint `j` of `b` was `back` ticks ago, as an offset from the feet.
     static void at(const Burst& b, const Joint& j, float back, float out[3]);

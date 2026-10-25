@@ -3274,6 +3274,32 @@ void Play::update(double seconds) {
         }
     }
     setShine_.update(float(seconds), ground_ ? ground_->metresPerTile() : 1.0f);
+    // Swell Life standing on a player drawn: MU's embers off his arms and neck (Aura::swell),
+    // in g_byUpperBoneLocation's order -- right hand to upper arm, the neck, left upper arm to
+    // hand -- so its pair n and 6 - n fall on the two sides of him.
+    if (ground_ && isOpen()) {
+        const std::vector<sim::Body>& bodies = realm_.bodies();
+        for (size_t i = 0; i < bodies.size() && i < drawn_.size(); ++i) {
+            const sim::Body& body = bodies[i];
+            const Drawn& drawn = drawn_[i];
+            if (!body.player || !body.alive() || body.swellUntil <= realm_.tick() ||
+                drawn.id != body.id || !drawn.placed || !drawn.visible) {
+                continue;
+            }
+            const FigureBody* look = drawn.figure.body();
+            if (!look) continue;
+            const int bones[7] = {look->armBones[0], look->armBones[1], look->armBones[2],
+                                  look->neckBone,    look->armBones[5], look->armBones[4],
+                                  look->armBones[3]};
+            const float origin[3] = {0.0f, 0.0f, 0.0f};
+            float points[7][3];
+            int lit = 0;
+            for (int bone : bones) {
+                if (bone >= 0 && drawn.figure.pointOn(bone, origin, points[lit])) ++lit;
+            }
+            aura_.swell(points, lit, float(seconds), ground_->metresPerTile());
+        }
+    }
     warp_.update(float(seconds));
     // The Rebirth rite (fx/rite.h): its show, and the hero held on his knee through it -- MU's
     // PLAYER_RESPECT1, player.muc's clip 217 whatever its label says (a kneel on one knee, the

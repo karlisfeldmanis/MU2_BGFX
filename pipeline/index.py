@@ -450,6 +450,9 @@ EFFECTS = {
     # black, 64 square. Not Flare.OZJ, which is the Energy Ball's. The Chain Scorpion carries
     # one on the tip of its tail in its own colour - see Entry.Glints and ChainScorpion01.
     "light": "effects/light/flare01.png",
+    # Ours: a clean soft dot, a gaussian with no rays, for Swell Life's embers (fx/aura.h,
+    # Aura::swell), where flare01's star cross read as busy sparkles (2026-10-25).
+    "ember_soft": "effects/light/ember_soft.png",
 
     # BITMAP_FLARE+1, which ZzzOpenData loads from Effect/Flare02.jpg with GL_REPEAT
     # (ZzzOpenData.cpp:5320): a white streak across the middle of 64 square. The four bands
