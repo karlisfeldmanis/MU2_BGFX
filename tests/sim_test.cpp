@@ -6838,6 +6838,12 @@ void testExcellent(const content::Tables& tables) {
     const sim::Blow blow = sim::strike(attacker, defender, dice);
     check(blow.hit && blow.excellent && !blow.critical, "an excellent hit wins over a critical");
     checkEqual(blow.rolled, 24, "and is 1.2 x the top of the band");
+    // With critical damage it takes that too, and never falls under the critical it beat.
+    attacker.criticalDamage = 30;
+    sim::Random furyDice(7);
+    const sim::Blow furious = sim::strike(attacker, defender, furyDice);
+    checkEqual(furious.rolled, 30, "an excellent hit with +30% critical damage is 1.5 x the top");
+    attacker.criticalDamage = 0;
     // And the damage decrease, after the overrate and before the floor.
     attacker.excellentChance = 0.0;
     attacker.criticalChance = 1.0;

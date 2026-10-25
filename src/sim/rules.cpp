@@ -13,6 +13,13 @@ double hitChance(float attackRate, float defenseRate) {
     return 0.03;
 }
 
+// An excellent hit's top: OpenMU's 1.2 and the critical damage on it too, so that an excellent
+// hit is always a fifth over the critical it beats (Piddy on Discord, 2026-10-25: "your
+// excellent damage is always lower than your critical damage"). x1.2 exactly with none.
+static int excellentTop(int top, int criticalDamage) {
+    return int(double(top) * (1.2 + criticalDamage / 100.0));
+}
+
 // Steps 5 to 7, which a swing and a spell share: everything after the defence is taken off.
 static void settle(Blow& blow, int damage, const Fighter& attacker, const Fighter& defender);
 
@@ -31,7 +38,7 @@ Blow strike(const Fighter& attacker, const Fighter& defender, Random& dice) {
     // later season. The draw happens only when there is a chance to draw against; hoisting it
     // out of that condition consumes a number and shifts every later draw in the run.
     // And the excellent hit after it, in OpenMU's order: both are drawn, the excellent wins
-    // (AttackableExtensions.cs:82-113), `baseMaxDamage * 1.2`. Drawn only when there is a chance,
+    // (AttackableExtensions.cs:82-113), `baseMaxDamage * 1.2`, and ours the critical damage too. Drawn only when there is a chance,
     // for the same reason.
     const bool critical =
         attacker.criticalChance > 0.0 && dice.nextBool(attacker.criticalChance);
@@ -39,7 +46,7 @@ Blow strike(const Fighter& attacker, const Fighter& defender, Random& dice) {
         attacker.excellentChance > 0.0 && dice.nextBool(attacker.excellentChance);
     if (excellent) {
         blow.excellent = true;
-        blow.rolled = int(double(attacker.maximumDamage) * 1.2);
+        blow.rolled = excellentTop(attacker.maximumDamage, attacker.criticalDamage);
     } else if (critical) {
         blow.critical = true;
         blow.rolled = attacker.maximumDamage * (100 + attacker.criticalDamage) / 100;
@@ -56,7 +63,7 @@ Blow strike(const Fighter& attacker, const Fighter& defender, Random& dice) {
     // each hand, so a run without one draws what it always drew.
     if (attacker.offhandMaximumDamage > 0) {
         const int low = attacker.offhandMinimumDamage, high = attacker.offhandMaximumDamage;
-        blow.rolled += excellent  ? int(double(high) * 1.2)
+        blow.rolled += excellent  ? excellentTop(high, attacker.criticalDamage)
                        : critical ? high * (100 + attacker.criticalDamage) / 100
                        : high > low ? dice.nextInt(low, high + 1)
                                     : low;
@@ -96,7 +103,7 @@ Blow cast(const Fighter& attacker, const Fighter& defender, int skillDamage, Ran
     if (excellent) {
         blow.excellent = true;
         blow.rolled = high;
-        damage = int(double(high - defense) * 1.2);
+        damage = excellentTop(high - defense, attacker.criticalDamage);
     } else if (critical) {
         blow.critical = true;
         blow.rolled = high * (100 + attacker.criticalDamage) / 100;

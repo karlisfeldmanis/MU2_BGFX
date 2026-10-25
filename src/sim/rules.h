@@ -242,7 +242,8 @@ double hitChance(float attackRate, float defenseRate);
 // (`skillDamage + skillDamage / 2`, integer halves). The band is then `(base + skill) *
 // wizardryRate`, truncated. Defence is taken BEFORE the excellent and critical multipliers here,
 // which is the one ordering difference from a swing: an excellent spell is
-// `(top - defence) * 1.2` where an excellent swing is `top * 1.2 - defence`. Everything after
+// `(top - defence) * 1.2` where an excellent swing is `top * 1.2 - defence` (each with the
+// critical damage on the 1.2, `excellentTop` in rules.cpp). Everything after
 // -- the overrate, the armour's decrease, the level floor, damageTaken -- is the swing's own.
 // The same draws in the same order as `strike`.
 Blow cast(const Fighter& attacker, const Fighter& defender, int skillDamage, Random& dice);
