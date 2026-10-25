@@ -1,6 +1,6 @@
 # Kanturu's quests: Kantur's Gate and The Ruins of Kantur
 
-Written 2026-10-25, **not built**. Step 5 of opening the Ruins (the user: "step 5"). The shape is
+Written 2026-10-25, **built the same day** (8233863c): quests 28 and 29, `testKantursGate`, protocol 53 / kept layout 18. Voices not yet made. Step 5 of opening the Ruins (the user: "step 5"). The shape is
 Atlans's, Tarkan's and Aida's (docs/game/lirien-quest.md, tarkan-quest.md, aida-quest.md): a hook
 with no kills, handed in to the next world's giver, then that giver's map clear.
 
