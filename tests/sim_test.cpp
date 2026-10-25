@@ -954,7 +954,7 @@ void testItems(const content::Tables& tables) {
     // the three gamble arms (Spear12, Bow25, Staff34). A count
     // rather than a list, because what it is guarding is the cook -- a
     // recipe that stops being picked up is a row the shelf silently cannot sell.
-    checkEqual(long(tables.items.size()), 401, "401 item rows cooked");
+    checkEqual(long(tables.items.size()), 403, "403 item rows cooked");
     // And Noria's three shops sell only what is cooked: Elf Lala, Eo the Craftsman and Potion
     // Girl Amy, every offer a row (the user, 2026-09-28: "fill Noria's vendors").
     // And Lumen's, whose Guardian Angel and Imp are ours (the user, 2026-09-30: "put imp and
@@ -12563,6 +12563,56 @@ void testDinorant(const content::Tables& tables) {
     check(realm.hero().riding, "he rides it off a safe tile");
 }
 
+// The Dark Horse (13/4, docs/game/mount.md): the Dark Lord's mount, at WebZen's rules and a
+// horse's level 1 (sim::kHorseLevel). Refused to the other classes and below 220.
+void testDarkHorse(const content::Tables& tables) {
+    std::printf("the dark horse\n");
+    const int horn = tables.itemAt(13, 4);
+    check(horn >= 0, "the Dark Horse is in the table");
+    if (horn < 0) return;
+    const content::ItemRow& row = tables.items[size_t(horn)];
+    checkEqual(sim::placeOf(row), int(sim::kMount), "it goes in the mount's slot");
+    check(!row.dropsFromMonsters(), "and never drops");
+    check(!sim::timedPet(row), "it wears, it is not timed");
+    checkEqual(sim::asks(row, 0, false).level, 220, "it asks 218 + 2 a horse level, 220");
+    const sim::PetPower power = sim::petPower(row);
+    check(power.mount && power.taken == 0.85 && power.takenToll == 1 && power.keeps,
+          "ridden, 85% of each blow for 1 life, kept dead at none");
+    checkEqual(sim::horseDefense(100), 12, "defence 5 + 100/20 + 2");
+    checkEqual(sim::buyingPrice(row, 0, 1, false, 0, 0), int64_t(2000000), "2,000,000 a level");
+    checkEqual(sim::sellingPrice(row, 0, 1, false, 0, 0), int64_t(666600), "a third back");
+    sim::Wearer lord;
+    lord.kin = sim::Kin::DarkLord;
+    lord.level = 220;
+    sim::Held held;
+    held.item = horn;
+    held.durability = 255;
+    check(sim::fits(tables, lord, held), "a level 220 lord may ride it");
+    lord.level = 219;
+    check(!sim::fits(tables, lord, held), "a level 219 lord may not");
+    sim::Wearer knight;
+    knight.kin = sim::Kin::DarkKnight;
+    knight.level = 400;
+    check(!sim::fits(tables, knight, held), "nor a knight at any level");
+    {
+        sim::Realm realm;
+        check(realm.raise(&tables, 5, 200, 160, sim::Kin::DarkKnight, 300), "a knight raises");
+        const int carried = realm.give(horn);
+        check(carried >= 0 && !realm.moveItem(carried, sim::kMount), "the horse will not go on him");
+    }
+    sim::Realm realm;
+    check(realm.raise(&tables, 5, 200, 160, sim::Kin::DarkLord, 250), "a lord raises");
+    realm.step();
+    const int bare = realm.hero().stats.defense;
+    const int agility = realm.hero().totalPoints().agility;
+    check(realm.give(horn, sim::kMount) == sim::kMount, "and wears the horse");
+    realm.step();
+    check(realm.hero().riding, "he rides it off a safe tile");
+    // Halved with the armour's (ObjCalCharacter.cpp:1183, rules.cpp's `* 0.5`).
+    const int rise = realm.hero().stats.defense - bare;
+    check(std::abs(rise - sim::horseDefense(agility) / 2) <= 1, "his defence rises by half the horse's");
+}
+
 // Fire Breath (sim/skills.cpp, fx/firebreath.h): the horn's skill, not learned. A knight knows it
 // while the Horn of Dinorant is worn and nobody else does; it leaves no bit in the save; and on a
 // hunt he throws it from three tiles, where it flies and lands.
@@ -15891,6 +15941,7 @@ int main() {
     testPetDay(tables);
     testMount(tables);
     testDinorant(tables);
+    testDarkHorse(tables);
     testFireBreath(tables);
     testPoisonOnce();
     testWishDropsOnWalk(tables);

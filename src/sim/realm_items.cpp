@@ -639,7 +639,11 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
         hero.pet.dealt *= one.dealt;
         hero.pet.health += one.health;
         hero.pet.lifeCost += one.lifeCost;
+        hero.pet.takenToll += one.takenToll;
         hero.pet.mount = hero.pet.mount || one.mount;
+        // The Dark Horse's defence, beside the armour's and never worn down with it
+        // (ObjCalCharacter.cpp:1082-1090; sim::horseDefense).
+        if (darkHorse(*row)) hero.wornDefense += horseDefense(hero.totalPoints().agility);
     }
     // Kinship lifts the price and keeps the gift (sim/items.h).
     if (hero.excel.kinship) {
@@ -1806,8 +1810,15 @@ void Realm::wearOnTaken(int took) {
         if (pet.empty() || pet.durability <= 0) continue;
         if (timedPet(tables_->items[size_t(pet.item)])) continue;
         const PetPower power = petPower(tables_->items[size_t(pet.item)]);
-        wearDown(slot, uncut * power.wear);
+        // A tally's hit counts whole, as the Dark Horse's WORD does (sim::PetPower::wearTally).
+        wearDown(slot, power.wearTally > 0 ? std::floor(uncut * power.wear + 1.0) / double(power.wearTally)
+                                           : uncut * power.wear);
         if (me().bag[slot].durability > 0) continue;
+        // Dead, and kept: its powers go (rearm skips a pet at nought) and it stays in its slot.
+        if (power.keeps) {
+            lostOne = true;
+            continue;
+        }
         const int32_t lost = me().bag[slot].item;
         me().bag.lift(slot);
         say(What::PetLost, mine(), lost);

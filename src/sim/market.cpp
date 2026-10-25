@@ -309,6 +309,10 @@ int64_t buyingPrice(const content::ItemRow& row, int refinement, int pieces, boo
     // scrolls (ItemPriceCalculator.cs:486-498) -- 12,200 for the Angel, 22,000 for the Imp.
     // A ring and a pendant on the same branch, times one and its option (WebZen's
     // `Gold += Gold * m_Option3` for AT_LIFE_REGENERATION, zzzitem.cpp:2532).
+    // The Dark Horse is priced by its level, 2,000,000 a level, and sold for a third (WebZen
+    // CItem::PetValue, zzzitem.cpp; BUGFIX_SELL_PRICE_OF_DARKLOAD_PETS_20050310): 2,000,000 at
+    // the level 1 every horse is here (sim::kHorseLevel).
+    if (darkHorse(row)) return round(int64_t(kHorseLevel) * 2000000);
     if (row.group == kPets) {
         const int64_t dropLevel = row.dropLevel + refinement * 3;
         const int64_t base = dropLevel * dropLevel * dropLevel + 100;

@@ -66,6 +66,9 @@ Needs asks(const content::ItemRow& row, int refinement, bool excellent) {
     n.level = row.needLevel + (firstWing(row)    ? 4 * std::max(0, refinement)
                                : secondWing(row) ? 5 * std::max(0, refinement)
                                                  : 0);
+    // The Dark Horse asks 218 + 2 a horse level (WebZen zzzitem.cpp:580-583, MuMain's card
+    // GIPetManager.cpp:684-686): 220 for the level 1 every horse is here.
+    if (darkHorse(row)) n.level = row.needLevel + 2 * kHorseLevel;
     n.strength = ask(row.needStrength, 3);
     n.agility = ask(row.needAgility, 3);
     n.energy = ask(row.needEnergy, 4);
@@ -132,9 +135,28 @@ PetPower petPower(const content::ItemRow& row) {
         power.taken = 0.9;
         power.lifeCost = 1;
         power.wear = 1.0 / 200.0;
+    } else if (row.number == kDarkHorseNumber) {
+        // The Dark Horse, **the Dark Lord's, 0.99's and not 0.75's**. gObjDarkHorse is the
+        // horn worn with life left (ObjAttack.cpp:3805-3820): each blow it reaches takes 1 of
+        // his life, and while that leaves him any the blow is cut to `100 - (30 + level)/2` in a
+        // hundred, 85 at level 1 (:1345-1361). gObjSpriteDamage counts `damage x 2/10 / 10 + 1`
+        // into m_DurabilitySmall, a WORD, and a point of life goes each 1500 (user.cpp:
+        // 10632-10650); at 0 it is dead (`return; // dead`), kept for the Trainer to raise.
+        power.mount = true;
+        power.taken = double(100 - (30 + kHorseLevel) / 2) / 100.0;
+        power.takenToll = 1;
+        power.wear = 2.0 / 100.0;
+        power.wearTally = 1500;
+        power.keeps = true;
     }
     return power;
 }
+
+bool darkHorse(const content::ItemRow& row) {
+    return row.group == kGroupPets && row.number == kDarkHorseNumber;
+}
+
+int horseDefense(int agility) { return 5 + agility / 20 + 2 * kHorseLevel; }
 
 bool timedPet(const content::ItemRow& row) {
     return row.group == kGroupPets && row.number >= 0 && row.number <= 2;
@@ -920,6 +942,8 @@ int placeOf(const content::ItemRow& row) {
     if (ring(row)) return kRingRight;
     if (pendant(row)) return kAmulet;
     if (row.group == kGroupPets && (row.number == 2 || row.number == 3)) return kMount;
+    // And the Dark Horse, a helper in MU's slot 8 too (CreatePet; gObjIsItemPut), here the mount's.
+    if (darkHorse(row)) return kMount;
     if (row.group == kGroupPets && row.number <= 1) return kPet;
     // The 1st level wings, EQUIPMENT_WING (OpenMU Version075 Wings.cs, ItemSlot 7).
     if (anyWing(row)) return kWings;

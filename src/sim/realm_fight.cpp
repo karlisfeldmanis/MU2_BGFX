@@ -255,6 +255,12 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     // And what it cost the gear, on the health it took and nothing else: a blow the shield
     // soaked whole wears nothing, as a miss wears nothing (OpenMU reads HitInfo.HealthDamage).
     if (wound > 0) {
+        // The Dark Horse's toll: 1 of his life a blow it cuts (WebZen ObjAttack.cpp:1345-1361,
+        // `lpTargetObj->Life -= 1`). There it may lay him at 0 and then cut nothing; here, as
+        // the Imp's price, never his last point, since nought is dead in this realm -- ours.
+        if (target.player && target.pet.takenToll > 0 && target.health > target.pet.takenToll) {
+            target.health -= target.pet.takenToll;
+        }
         if (target.player) wearOnTaken(wound);
         if (attacker.player && !passive) wearOnLanded(target.stats.defense);
     }

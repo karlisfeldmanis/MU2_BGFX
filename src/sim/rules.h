@@ -35,6 +35,9 @@ constexpr int kGladiatorPointsPerLevel = 7;
 //   Horn of Uniria  nothing but the ride (kRideFactor), wears damage x 1/10 / 10 (docs/game/mount.md)
 //   Horn of Dinorant the ride, damage dealt x1.15 for 1 of his own life a blow and taken x0.9,
 //                   wears damage x 1/200 (0.95d's, not 0.75's)
+//   Dark Horse      the Dark Lord's ride, taken x(100 - (30 + level)/2)% for 1 of his own life a
+//                   blow taken, defence + 5 + Agility/20 + 2 a level (Realm::rearm), wears
+//                   (damage x 2/100 + 1) a hit into a tally of 1500 a point (0.99's, not 0.75's)
 struct PetPower {
     double taken = 1.0;  // on every blow he takes, after the floor and only above 1
     double dealt = 1.0;  // on every blow he lands, after the floor
@@ -42,6 +45,11 @@ struct PetPower {
     int lifeCost = 0;    // his own life, paid on every blow he lands that `dealt` lifts
     double wear = 0.0;   // the pet's life lost per point of damage he takes
     bool mount = false;  // ridden: he rides off a safe tile (Body::riding)
+    int takenToll = 0;   // his own life, paid on every blow he takes (the Dark Horse's 1)
+    // A hit's wear counted whole -- floor(damage x wear) + 1 -- into a tally of this many to a
+    // point of the pet's life, where 0 is `wear` a point of damage as it falls (the Dark Horse's).
+    int wearTally = 0;
+    bool keeps = false;  // at nought it is kept, dead, not destroyed (the Dark Horse)
 };
 
 struct Excellence {

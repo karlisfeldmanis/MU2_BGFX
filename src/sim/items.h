@@ -136,9 +136,19 @@ int placeOf(const content::ItemRow& row);
 bool offHanded(const content::ItemRow& row, Kin kin);
 // Whether it may be worn in `slot`: where placeOf puts it, or the left hand by offHanded.
 bool placesIn(const content::ItemRow& row, Kin kin, int slot);
-// A pet's powers (sim::PetPower): the Guardian Angel 13/0, the Imp 13/1 and the Horns of Uniria
-// 13/2 and Dinorant 13/3. Nothing for any other row, and nothing -- the caller's to check -- for one whose life is gone.
+// A pet's powers (sim::PetPower): the Guardian Angel 13/0, the Imp 13/1, the Horns of Uniria
+// 13/2 and Dinorant 13/3, and the Dark Horse 13/4. Nothing for any other row, and nothing -- the caller's to check -- for one whose life is gone.
 PetPower petPower(const content::ItemRow& row);
+// **The Dark Horse** (13/4, docs/game/mount.md), the Dark Lord's mount: OpenMU VersionSeasonSix
+// Items/Pets.cs:66-73 for the row, WebZen 1.00.93 for what it does. It has a level, 1 to 50
+// (MAX_DARK_HORSE_LEVEL), which nothing here raises yet: every horse is the level it is born at,
+// m_PetItem_Level = 1 (zzzitem.cpp:95), wherever a rule reads one.
+constexpr int kDarkHorseNumber = 4;
+constexpr int kHorseLevel = 1;
+bool darkHorse(const content::ItemRow& row);
+// What it adds to the rider's defence while it has life: 5 + Agility/20 + 2 a level, the whole
+// of his agility (WebZen ObjCalCharacter.cpp:1082-1090, `Dexterity` there).
+int horseDefense(int agility);
 // **The Guardian Angel, the Imp and the Horn of Uniria are timed** (the user, 2026-10-21: "i
 // want that its time based 24 hours", then "make imp and gurdian angle not 24 hours but 2
 // hours", and Uniria a day as well; then "we need that imp and angel is for 12 hours"): not worn down by blows and never mended, but gone
