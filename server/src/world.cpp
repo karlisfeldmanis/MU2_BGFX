@@ -390,6 +390,11 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
             sim::Realm scratch;
             if (scratch.raise(&g_items, seeds(), said.column, said.row, kin, g_kitLevel)) {
                 sim::outfit(scratch, said.weapon, said.shield);
+                for (const sim::RaiderKit& kit : g_kitFile) {  // --kit-file
+                    if (kit.kin != kin) continue;
+                    scratch.benchDressHero(kit);
+                    break;
+                }
                 for (const auto& [stem, plus] : g_kitItems) {
                     if (stem == "Zen") {  // Zen+N: his purse
                         scratch.earn(plus);

@@ -29,6 +29,7 @@
 #include "host.h"
 #include "broker.h"
 #include "economy.h"
+#include "sim/raid_party.h"
 
 #include <cmath>
 #include <iterator>
@@ -315,12 +316,19 @@ int main(int argc, char** argv) {
                 if (sim::skillIndexOf(skill) >= 0) g_kitTeach.push_back(skill);
                 at = comma + 1;
             }
+        } else if (a == "--kit-file" && i + 1 < argc) {
+            const char* path = argv[++i];
+            if (!sim::readParty(path, &g_kitFile)) {
+                std::fprintf(stderr, "--kit-file: %s does not read\n", path);
+                return 2;
+            }
+            g_kitLevel = std::max(g_kitLevel, 1);  // a kit character, raised and then dressed
         } else if (a == "--square-period" && i + 1 < argc) {
             // Charon's gate every S seconds for S/2, not two-hourly (a test).
             const int s = std::max(2, std::atoi(argv[++i]));
             config.square = {s, s / 2, s / 2};
         } else {
-            std::fprintf(stderr, "usage: mu2_server [--port N] [--assets DIR] [--store FILE] [--accounts HOST:PORT] [--launcher-only] [--region NAME] [--castle-period S] [--square-period S] [--kit LEVEL:STEM+N,...] [--kit-done Q,...] [--kit-teach SKILL,...] [--storm] [--invasion] [--map-cap N] [--speed N] [--market-serve PORT | --market-at HOST:PORT] [--market-key HEX]\n");
+            std::fprintf(stderr, "usage: mu2_server [--port N] [--assets DIR] [--store FILE] [--accounts HOST:PORT] [--launcher-only] [--region NAME] [--castle-period S] [--square-period S] [--kit LEVEL:STEM+N,...] [--kit-done Q,...] [--kit-teach SKILL,...] [--kit-file KITS.json] [--storm] [--invasion] [--map-cap N] [--speed N] [--market-serve PORT | --market-at HOST:PORT] [--market-key HEX]\n");
             return 2;
         }
     }

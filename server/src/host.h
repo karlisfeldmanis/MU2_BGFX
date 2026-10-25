@@ -160,6 +160,11 @@ inline std::vector<int> g_kitDone;
 // --kit-teach: the skills a kit character is born knowing (a test: a Dark Lord's spells before
 // their scrolls are made).
 inline std::vector<int> g_kitTeach;
+// --kit-file KITS.json (2026-10-25, a geared hero to try Kanturu's Ruins on): a new character of
+// a class the file has a kit for wears it as the raid's heroes do (Realm::benchDressHero) -- its
+// level, points, second class, skills and every piece with its options and sockets. The file is
+// content/raid/party.json's shape (sim/raid_party.h); the first kit of his class is his.
+inline std::vector<sim::RaiderKit> g_kitFile;
 // The most players in one copy of a map before the next is opened (`--map-cap N`): where the
 // client's own cost tells -- every client steps the whole map -- about 100 by the measurement of
 // 2026-10-08 (docs/sprints/24-the-quiet-line.md).
