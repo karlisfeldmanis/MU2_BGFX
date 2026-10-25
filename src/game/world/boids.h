@@ -94,8 +94,9 @@ struct Airs {
     // The two calls' sound events, rolled independently; an empty one is never rolled for. The
     // bird's two, or the Dungeon bat's one (SOUND_BAT01).
     std::string call[2] = {"bird_1", "bird_2"};
-    // Blood Castle's crow: one roll a frame in 128, heard only while the tile under it is a
-    // safe zone, the castle's court (GOBoid.cpp:1495-1501). 0 / false keep the bird's.
+    // Blood Castle's crow: one roll a frame in 128, heard while HE stands in the safe zone, the
+    // castle's court (GOBoid.cpp:1226, 1495-1501), a quarter as often elsewhere (ours, Boids::
+    // update). 0 / false keep the bird's.
     float callEvery = 0.0f;
     int callRolls = 0;
     bool callsOverSafe = false;
@@ -132,6 +133,9 @@ public:
     void glow(gfx::Effects& effects);
 
     bool isOpen() const { return body_ != nullptr || scurry_.isOpen(); }
+    // Whether its birds cast: MU draws no boid's shadow in Heaven (RenderBoids, GOBoid.cpp:1586),
+    // whose boids are its dragons.
+    bool castsShadow() const { return !flight_.isDragon(); }
     // --birds-now: the sky's FIRST flock arrives on the next frame rather than 20 to 90
     // seconds in. For a review run, which is a few seconds long. One-shot; see Flight::hurry.
     void hurry() { flight_.hurry(); }

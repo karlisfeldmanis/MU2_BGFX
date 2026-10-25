@@ -50,7 +50,8 @@
       "life": 100,
       "trail": true,
       "drawn": 0.55,
-      "note": "MoveFishs' WD_8TARKAN arm, MODEL_BUG01 + 1 (GOBoid.cpp:1726-1733); drawn at 0.55 (the user, 2026-10-05: 'make thos bugs smaller')."
+      "note": "MoveFishs' WD_8TARKAN arm, MODEL_BUG01 + 1 (GOBoid.cpp:1726-1733); drawn at 0.55 (the user, 2026-10-05: 'make thos bugs smaller').",
+      "keeps_out": true
     },
     "desert_vents": {
       "note": "game/world/desert_vents.h."

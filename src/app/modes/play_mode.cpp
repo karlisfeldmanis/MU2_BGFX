@@ -1989,10 +1989,11 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     }
     // The birds cast as well. MU gives every boid outside Heaven a shadow of its own:
     // RenderBoids ends each bird with RenderBodyShadow, laid on the terrain under it at a
-    // fifth black (GOBoid.cpp). Here the sun's split carries it like any other caster.
+    // fifth black (GOBoid.cpp:1586). Here the sun's split carries it like any other caster; Icarus's
+    // dragons cast none.
     if (!world_.played().invasionStorm()) {
         world_.boids().gather(townDrawables_);
-        if (casters) world_.boids().gather(townCasters_);
+        if (casters && world_.boids().castsShadow()) world_.boids().gather(townCasters_);
     }
     // The Dungeon's traps, posed and drawn with the scenery they stand among.
     {

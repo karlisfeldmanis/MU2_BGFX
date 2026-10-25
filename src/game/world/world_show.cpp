@@ -125,6 +125,7 @@ void readShow(const core::Json& show, WorldShow& out) {
     crawl.readInto("squeaks", &row.squeaks);
     crawl.readInto("trail", &row.trail);
     readFloat(crawl, "drawn", &row.drawn);
+    crawl.readInto("keeps_out", &row.keepsOut);
 
     out.bubbles = named(show, "bubbles");
     out.doors = named(show, "doors");

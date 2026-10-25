@@ -185,12 +185,13 @@ void Boids::update(float seconds, const float hero[3], bool walking, bool indoor
         for (int i = 0; i < called; ++i) {
             const int event = calls[i].which == 0 ? call1_ : call2_;
             if (event >= 0 && airs_.callsOverSafe) {
+                // MU's test is on HIS tile, not the crow's (GOBoid.cpp:1226, :1497): crows caw
+                // while he stands in the court. Away from it a quarter as often, one call in four
+                // kept -- ours: MU's are silent there (the user, 2026-10-02, of the crows over the
+                // bridge: 'lets do it i like it').
                 const float perTile = std::max(ground.metresPerTile(), 0.001f);
-                const int c = int(std::floor(calls[i].at[0] / perTile));
-                const int r = int(std::floor(-calls[i].at[2] / perTile));
-                // Off the court a quarter as often, one call in four kept -- ours: MU caws only
-                // over the court (the user, 2026-10-02, of the crows over the bridge: 'lets do it
-                // i like it').
+                const int c = int(std::floor(hero[0] / perTile));
+                const int r = int(std::floor(-hero[2] / perTile));
                 const bool safe = c >= 0 && r >= 0 && c < ground.size() && r < ground.size() &&
                                   (ground.attributesAt(c, r) & content::kSafeZone) != 0;
                 if (!safe && (offCourt_++ & 3) != 0) continue;

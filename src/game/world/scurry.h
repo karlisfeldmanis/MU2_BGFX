@@ -57,6 +57,9 @@ struct CrawlRow {
     // Drawn at this of MU's Scale, its motion still MU's. Ours: Tarkan's scarabs at 0.55, about
     // 20 cm for MU's 35 (the user, 2026-10-05: 'make thos bugs smaller').
     float drawn = 1.0f;
+    // Tarkan's and Aida's: born only on a bare or TW_CHARACTER tile, and turned about at the safe
+    // zone or the void (GOBoid.cpp:1689-1693, 1830-1841). False: the Dungeon rat's, any floor.
+    bool keepsOut = false;
 };
 
 class Scurry {
@@ -97,6 +100,8 @@ private:
 
     void spawn(Rat& rat, const float hero[3], const content::Ground& ground);
     void flock(Rat& rat, float factor);
+    // Whether it may be born at (x, z), and whether it may run there (CrawlRow::keepsOut).
+    bool bornOn(const content::Ground& ground, float x, float z) const;
     bool floor(const content::Ground& ground, float x, float z) const;
     float random01();
 

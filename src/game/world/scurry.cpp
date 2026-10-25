@@ -127,13 +127,24 @@ void Scurry::shutdown() {
 bool Scurry::floor(const content::Ground& ground, float x, float z) const {
     const float perTile = std::max(ground.metresPerTile(), 0.001f);
     const int column = int(std::floor(x / perTile)), row = int(std::floor(-z / perTile));
-    return (ground.attributesAt(column, row) & 0xFFu) < kNoGround;
+    const uint16_t wall = ground.attributesAt(column, row);
+    // MU's test is the whole word's: exactly the safe zone, or at or past TW_NOGROUND.
+    if (row_.keepsOut) return wall != content::kSafeZone && wall < kNoGround;
+    return (wall & 0xFFu) < kNoGround;
+}
+
+bool Scurry::bornOn(const content::Ground& ground, float x, float z) const {
+    if (!row_.keepsOut) return floor(ground, x, z);
+    const float perTile = std::max(ground.metresPerTile(), 0.001f);
+    const int column = int(std::floor(x / perTile)), row = int(std::floor(-z / perTile));
+    const uint16_t wall = ground.attributesAt(column, row);
+    return wall == 0 || wall == content::kCharacter;
 }
 
 void Scurry::spawn(Rat& rat, const float hero[3], const content::Ground& ground) {
     const float x = hero[0] + (random01() * 2.0f - 1.0f) * kSpawnBox;
     const float z = hero[2] + (random01() * 2.0f - 1.0f) * kSpawnBox;
-    if (!floor(ground, x, z)) return;  // the client's draw missed the floor: next frame
+    if (!bornOn(ground, x, z)) return;  // the client's draw missed the floor: next frame
     rat = Rat{};
     rat.position[0] = x;
     rat.position[1] = ground.heightAt(x, z);

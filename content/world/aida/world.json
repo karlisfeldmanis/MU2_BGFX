@@ -59,7 +59,8 @@
       "life": 100,
       "trail": true,
       "drawn": 0.55,
-      "note": "MoveFishs' scarabs, MODEL_BUG01 + 1, Tarkan's numbers (GOBoid.cpp:1726-1733); Aida is not exempt from the 3-slot cap (:1668-1675), so 3; drawn at Tarkan's 0.55."
+      "note": "MoveFishs' scarabs, MODEL_BUG01 + 1, Tarkan's numbers (GOBoid.cpp:1726-1733); Aida is not exempt from the 3-slot cap (:1668-1675), so 3; drawn at Tarkan's 0.55.",
+      "keeps_out": true
     },
     "small_fires": {
       "note": "Object68's small fires on rocks and ruins (type 67, GMAida.cpp:239-242; game/world/small_fires.h)."
