@@ -588,7 +588,7 @@ const PowerRow* powerOf(uint8_t power) {
          "Evil Spirit hits: 20% chance to poison for 3% of max life every 3 s",
          kEveryClass, kInWeapon | kInShield | kInJewellery, Rarity::Epic},
         {Power::PlagueArrows, "Plague Arrows",
-         "Skillshot arrows: 20% chance each to poison for 3% of max life every 3 s",
+         "Multi-Shot arrows: 20% chance each to poison for 3% of max life every 3 s",
          kElfOnly,
          kInWeapon, Rarity::Epic},
         {Power::Kinship, "Kinship",
@@ -644,10 +644,10 @@ const PowerRow* powerOf(uint8_t power) {
          "5% when a monster misses you: small spirits strike monsters around you",
          kEveryClass, kInShield | kInJewellery, Rarity::Common},
         // Multi-Shot's three tiers (sim::kBarrageDamage...), the elf's weapon alone.
-        {Power::LesserBarrage, "Lesser Barrage", "Skillshot +15% damage", kElfOnly, kInWeapon,
+        {Power::LesserBarrage, "Lesser Barrage", "Multi-Shot +15% damage", kElfOnly, kInWeapon,
          Rarity::Rare},
-        {Power::Barrage, "Barrage", "Skillshot +30% damage", kElfOnly, kInWeapon, Rarity::Epic},
-        {Power::GreaterBarrage, "Greater Barrage", "Skillshot +50% damage", kElfOnly, kInWeapon,
+        {Power::Barrage, "Barrage", "Multi-Shot +30% damage", kElfOnly, kInWeapon, Rarity::Epic},
+        {Power::GreaterBarrage, "Greater Barrage", "Multi-Shot +50% damage", kElfOnly, kInWeapon,
          Rarity::Legendary},
         // The weaker kin of the lone Legendaries (sim/items.h kSparkburst...), every one
         // first-class, and the knight's and the wizard's the Magic Gladiator's too.

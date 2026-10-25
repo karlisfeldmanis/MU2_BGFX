@@ -509,7 +509,7 @@ constexpr SkillRow kRows[kSkills] = {
     // once a cast already, so on a lone body the fan is now the weaker blow and her plain shot
     // the single-target one; on a crowd it is still every body in nine tiles of three lanes.
     // Ours.
-    {.number = skill::kSkillshot, .name = "Skillshot", .mana = 5, .reach = 9.0f, .force = 0.75f,
+    {.number = skill::kSkillshot, .name = "Multi-Shot", .mana = 5, .reach = 9.0f, .force = 0.75f,
      .spread = Spread::Fan,
      .tells = "Three arrows loosed in a fan at a body up to nine tiles off, each flying on "
               "through everything in its way, at three quarters of a plain shot. Each body is "
