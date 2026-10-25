@@ -1,0 +1,142 @@
+{
+  "item": "GloveMale26",
+  "mu_name": "Light Plate Gloves",
+  "mu_name_from": "OpenMU VersionSeasonSix's CreateGloves (openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:260); the model is Player/GloveMale26.bmd, which MuMain's OpenItems loads for it (MuMain/src/source/Engine/Object/ZzzOpenData.cpp:213).",
+  "profile": "armour",
+  "stats": {
+    "call": "CreateGloves(25, \"Light Plate Gloves\", 42, 12, 7, 42, 0, 70, 20, 0, 0, 0, 0, 1, 0)",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:260",
+    "call_note": "CreateGloves(number, name, dropLevel, defense, attackSpeed, durability, levelRequirement, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel, magicGladiatorClassLevel, darkLordClassLevel, summonerClassLevel), openmu/src/Persistence/Initialization/Items/ArmorInitializerBase.cs:234.",
+    "number": 25,
+    "drop_level": 42,
+    "defense": 12,
+    "attack_speed": 7,
+    "durability": 42,
+    "drops_from_monsters": true,
+    "group": 10,
+    "slot": 5,
+    "width": 2,
+    "height": 2,
+    "requires": {
+      "level": 0,
+      "strength": 70,
+      "agility": 20,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "lord"
+    ]
+  },
+  "sheets": {
+    "gloves_17": "lightplate_gloves_17.png"
+  },
+  "why_this_one": "The Dark Lord's first set, Light Plate (docs/plans/dark-lord.md section 7; OpenMU's rows, drop 42-62, lords only). The user, 2026-10-25: 'Scepters and DL gear', then 'next'.",
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py under MU's own names with a lightplate_ prefix, MU's _17 names being generic: dark steel plate lacquered blue-green, trimmed in silver.",
+  "sheet_materials": {
+    "gloves_17": "painted_steel"
+  },
+  "material_note": "painted_steel with the cast grain for the plate, the shading painted on, as the other sets.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, shallow for the gloss, as the other sets.",
+  "effects_note": "MuMain has no render arm for MODEL_LIGHT_PLATE_* (no glow, no chrome pass, no sprite; grep of _enum.h:1667 and MODEL_HELM..BOOTS + 25). Its refine colour is PartObjectColor 11, (0.35, 0.35, 0.6) (ZzzObject.cpp:6739, 6789; src/game/shine.cpp); its full set the generic aura (fx/set_shine).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 65,
+      "area": 1596.5,
+      "along": [
+        -7.0,
+        9.0
+      ],
+      "mu_uv": [
+        0.051,
+        0.016,
+        0.951,
+        0.792
+      ],
+      "bake_uv": [
+        0.171,
+        0.005,
+        0.616,
+        0.605
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 14,
+      "area": 983.2,
+      "along": [
+        -15.4,
+        8.5
+      ],
+      "mu_uv": [
+        0.075,
+        0.694,
+        0.63,
+        1.104
+      ],
+      "bake_uv": [
+        0.006,
+        0.496,
+        0.957,
+        0.794
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 65,
+      "area": 1596.3,
+      "along": [
+        -7.0,
+        9.0
+      ],
+      "mu_uv": [
+        0.051,
+        0.016,
+        0.951,
+        0.792
+      ],
+      "bake_uv": [
+        0.005,
+        0.006,
+        0.83,
+        0.482
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 14,
+      "area": 983.3,
+      "along": [
+        -15.4,
+        8.5
+      ],
+      "mu_uv": [
+        0.075,
+        0.694,
+        0.63,
+        1.104
+      ],
+      "bake_uv": [
+        0.006,
+        0.619,
+        0.679,
+        0.995
+      ]
+    }
+  ]
+}

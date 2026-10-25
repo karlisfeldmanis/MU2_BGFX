@@ -91,6 +91,7 @@ int colourOf(int group, int number) {
             case 22: return 17;  // Dark Soul
             case 23: return 11;  // Hurricane
             case 24: return 16;  // Red Spirit
+            case 25: return 11;  // Light Plate (ZzzObject.cpp:6739)
             default: return 0;
         }
     }

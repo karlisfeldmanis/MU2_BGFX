@@ -1,0 +1,253 @@
+{
+  "item": "ArmorMale26",
+  "mu_name": "Light Plate Armor",
+  "mu_name_from": "OpenMU VersionSeasonSix's CreateArmor (openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:142); the model is Player/ArmorMale26.bmd, which MuMain's OpenItems loads for it (MuMain/src/source/Engine/Object/ZzzOpenData.cpp:213).",
+  "profile": "armour",
+  "stats": {
+    "call": "CreateArmor(25, 3, 2, 3, \"Light Plate Armor\", 62, 25, 42, 0, 70, 20, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0)",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:142",
+    "call_note": "CreateArmor(number, slot, width, height, name, dropLevel, defense, durability, levelRequirement, strengthRequirement, agilityRequirement, energyRequirement, vitalityRequirement, leadershipRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel, magicGladiatorClassLevel, darkLordClassLevel, summonerClassLevel, ragefighterClassLevel, isShield), openmu/src/Persistence/Initialization/Items/ArmorInitializerBase.cs:367.",
+    "number": 25,
+    "slot": 3,
+    "width": 2,
+    "height": 3,
+    "drop_level": 62,
+    "defense": 25,
+    "durability": 42,
+    "drops_from_monsters": true,
+    "group": 8,
+    "requires": {
+      "level": 0,
+      "strength": 70,
+      "agility": 20,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "lord"
+    ]
+  },
+  "sheets": {
+    "upper_17": "lightplate_upper_17.png",
+    "lower_17": "lightplate_lower_17.png"
+  },
+  "why_this_one": "The Dark Lord's first set, Light Plate (docs/plans/dark-lord.md section 7; OpenMU's rows, drop 42-62, lords only). The user, 2026-10-25: 'Scepters and DL gear', then 'next'.",
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py under MU's own names with a lightplate_ prefix, MU's _17 names being generic: dark steel plate lacquered blue-green, trimmed in silver.",
+  "sheet_materials": {
+    "upper_17": "painted_steel",
+    "lower_17": "painted_steel"
+  },
+  "material_note": "painted_steel with the cast grain for the plate, the shading painted on, as the other sets.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, shallow for the gloss, as the other sets.",
+  "effects_note": "MuMain has no render arm for MODEL_LIGHT_PLATE_* (no glow, no chrome pass, no sprite; grep of _enum.h:1667 and MODEL_HELM..BOOTS + 25). Its refine colour is PartObjectColor 11, (0.35, 0.35, 0.6) (ZzzObject.cpp:6739, 6789; src/game/shine.cpp); its full set the generic aura (fx/set_shine).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 18,
+      "area": 2434.7,
+      "along": [
+        -13.4,
+        12.7
+      ],
+      "mu_uv": [
+        0.005,
+        0.09,
+        0.473,
+        0.993
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.956,
+        0.422
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 18,
+      "area": 2434.7,
+      "along": [
+        -13.4,
+        12.7
+      ],
+      "mu_uv": [
+        0.005,
+        0.09,
+        0.473,
+        0.993
+      ],
+      "bake_uv": [
+        0.216,
+        0.216,
+        0.934,
+        0.606
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 108,
+      "area": 6370.7,
+      "along": [
+        -17.6,
+        17.8
+      ],
+      "mu_uv": [
+        0.095,
+        0.01,
+        0.671,
+        0.966
+      ],
+      "bake_uv": [
+        0.009,
+        0.008,
+        0.762,
+        0.804
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 27,
+      "area": 1773.8,
+      "along": [
+        -10.2,
+        7.5
+      ],
+      "mu_uv": [
+        0.547,
+        0.073,
+        0.871,
+        0.504
+      ],
+      "bake_uv": [
+        0.126,
+        0.027,
+        0.92,
+        0.822
+      ]
+    },
+    {
+      "island": 4,
+      "material": "painted_steel",
+      "triangles": 10,
+      "area": 404.1,
+      "along": [
+        -8.7,
+        7.4
+      ],
+      "mu_uv": [
+        0.529,
+        0.671,
+        0.987,
+        0.896
+      ],
+      "bake_uv": [
+        0.009,
+        0.824,
+        0.248,
+        0.941
+      ]
+    },
+    {
+      "island": 5,
+      "material": "painted_steel",
+      "triangles": 40,
+      "area": 2340.9,
+      "along": [
+        -15.3,
+        14.2
+      ],
+      "mu_uv": [
+        0.029,
+        0.586,
+        0.987,
+        0.977
+      ],
+      "bake_uv": [
+        0.008,
+        0.009,
+        0.407,
+        0.898
+      ]
+    },
+    {
+      "island": 6,
+      "material": "painted_steel",
+      "triangles": 40,
+      "area": 2340.9,
+      "along": [
+        -15.3,
+        14.2
+      ],
+      "mu_uv": [
+        0.029,
+        0.586,
+        0.987,
+        0.977
+      ],
+      "bake_uv": [
+        0.378,
+        0.009,
+        0.728,
+        0.862
+      ]
+    },
+    {
+      "island": 7,
+      "material": "painted_steel",
+      "triangles": 10,
+      "area": 404.1,
+      "along": [
+        -8.7,
+        7.4
+      ],
+      "mu_uv": [
+        0.529,
+        0.671,
+        0.987,
+        0.896
+      ],
+      "bake_uv": [
+        0.555,
+        0.875,
+        0.795,
+        0.992
+      ]
+    },
+    {
+      "island": 8,
+      "material": "painted_steel",
+      "triangles": 27,
+      "area": 1773.8,
+      "along": [
+        -10.2,
+        7.5
+      ],
+      "mu_uv": [
+        0.547,
+        0.073,
+        0.871,
+        0.504
+      ],
+      "bake_uv": [
+        0.414,
+        0.66,
+        0.885,
+        0.93
+      ]
+    }
+  ]
+}
