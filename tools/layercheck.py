@@ -59,7 +59,10 @@ ALLOWED = {
     "game": {"core", "content", "sim", "net", "client", "gfx", "game"},
     # The studio's panels and the cook's client (docs/plans/order-plan.md §9c): below app, beside game.
     "studio": {"core", "content", "gfx", "studio"},
-    "app": {"core", "content", "sim", "net", "client", "gfx", "game", "studio", "app"},
+    # The launcher (docs/plans/launcher.md): its own program, and the crash, bug and graphics
+    # reports the game sends through it. Its window is gfx; its downloads and sign-in the wire.
+    "launcher": {"core", "gfx", "net", "launcher"},
+    "app": {"core", "content", "sim", "net", "client", "gfx", "game", "studio", "launcher", "app"},
     # The server program, in server/src/ and not src/ (the user, 2026-10-07: "we need that server
     # source is also in /server folder"): the rules and what they read, never a screen or the
     # client. Nothing under src/ may include it -- no layer above lists it.

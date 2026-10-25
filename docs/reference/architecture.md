@@ -47,6 +47,7 @@ a sentence is not a gate.
 | `client` | `core`, `content`, `sim`, `net` | `gfx`, `game`, `app` | the client's line to the realm: `Link`, `LocalLink`, `RemoteLink`, `AccountLink` |
 | `gfx` | `core`, `content` | `sim`, `net`, `game`, `app` | window, views, renderer, effects, overlay, interface |
 | `game` | `core`, `content`, `sim`, `net`, `client`, `gfx` | `app` | play, world, town, figures, the windows, the effects |
+| `launcher` | `core`, `gfx`, `net` | `content`, `sim`, `client`, `game`, `app` | the launcher program, and the crash, bug and graphics reports the game sends |
 | `app` | everything under `src/` | — | application, modes, bootstrap |
 | `server` (`server/src/`) | `core`, `content`, `sim`, `net` | `gfx`, `game`, `app` | the world host, sessions, accounts, party, chat, the store |
 | `tools` (`tools/`) | `core`, `content`, `sim`, `net`, `client` | `gfx`, `game`, `app` | the bots, the raid stats, the cook's C++ |
