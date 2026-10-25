@@ -566,41 +566,38 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                 Tone::White);
         }
     }
-    // What the Armor comes to on the character's Defense: half, as sim::reckon halves every
-    // class's (a player summed his five pieces' Armor to 408 against a sheet's 253, Discord,
-    // denio, 2026-10-25).
-    const auto halfOn = [&](int armor) {
-        if (armor > 1) rail("+" + std::to_string(armor / 2), Tone::Gray, "to your Defense, armor counts half");
-    };
+    // A piece's defence as it lands on the character's Defense: half, as sim::reckon halves
+    // every class's. MU prints the whole and its sheet the half, and a player summed his five
+    // pieces to 408 against a sheet's 253 (Discord, denio, 2026-10-25), so the card prints the
+    // half: "92 Armor" is "46 Defense", and a .5 where the whole is odd.
+    const auto half = [](int whole) { return decimal(float(whole) * 0.5f); };
     const bool worn = row.armour() || row.shield();
     const int defense = worn ? row.defense + sim::defenseBonus(row.shield(), plus) +
                                    (what.excellent != 0 ? sim::excellentDefense(row) : 0)
                              : 0;
     if (worn) {
-        sheet.hero.value = std::to_string(defense);
+        sheet.hero.value = half(defense);
         sheet.hero.tone = lifted;
-        sheet.hero.word = "Armor";
+        sheet.hero.word = "Defense";
         const int refined = sim::defenseBonus(row.shield(), plus);
         const int excellent = what.excellent != 0 ? sim::excellentDefense(row) : 0;
-        if (refined > 0 || excellent > 0) rail(std::to_string(row.defense), Tone::White, "base");
+        if (refined > 0 || excellent > 0) rail(half(row.defense), Tone::White, "base");
         if (refined > 0) {
-            rail("+" + std::to_string(refined), Tone::Yellow, "refined to +" + std::to_string(plus));
+            rail("+" + half(refined), Tone::Yellow, "refined to +" + std::to_string(plus));
         }
-        if (excellent > 0) rail("+" + std::to_string(excellent), Tone::Green, "excellent");
-        halfOn(defense);
+        if (excellent > 0) rail("+" + half(excellent), Tone::Green, "excellent");
     }
     // A wing's defence, 3 a plus on a 1st, 2 on a 2nd (sim::wingDefense).
     if (sim::anyWing(row)) {
         const int defense = sim::wingDefense(row, plus);
-        sheet.hero.value = std::to_string(defense);
+        sheet.hero.value = half(defense);
         sheet.hero.tone = lifted;
-        sheet.hero.word = "Armor";
+        sheet.hero.word = "Defense";
         if (defense > row.defense) {
-            rail(std::to_string(row.defense), Tone::White, "base");
-            rail("+" + std::to_string(defense - row.defense), Tone::Yellow,
+            rail(half(row.defense), Tone::White, "base");
+            rail("+" + half(defense - row.defense), Tone::Yellow,
                  "refined to +" + std::to_string(plus));
         }
-        halfOn(defense);
     }
     if (row.defenseRate > 0) {
         // Its refinement too, on the armour's table, as `Realm::rearm` adds it: a +9 shield's
@@ -1029,7 +1026,10 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                 }
             } else if (sim::jewellery(row)) rolled("", "Automatic HP recovery +" + value + "%");
             else if (row.shield()) rolled("", "Additional defense rate +" + value);
-            else if (row.armour()) rolled("", "Additional defense +" + value);
+            else if (row.armour()) {
+                // Halved as the headline is.
+                rolled("", "Additional defense +" + decimal(float(sim::optionValue(row, what.option)) * 0.5f));
+            }
             else if (sim::staffPower(row)) rolled("", "Additional Wizardry Dmg +" + value);
             else rolled("", "Additional Dmg +" + value);
         }
@@ -1524,7 +1524,9 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         const sim::Held& on = bag[slot];
         const content::ItemRow& theirs = tables.items[size_t(on.item)];
         const float mine = swingOf(row, what), hisDamage = swingOf(theirs, on);
-        const float ours = float(armourOf(row, what)), hisDefense = float(armourOf(theirs, on));
+        // Defence halved as the headline prints it.
+        const float ours = float(armourOf(row, what)) * 0.5f,
+                    hisDefense = float(armourOf(theirs, on)) * 0.5f;
         const float hisRise = sim::staffPower(theirs) ? staffRise(theirs.magicPower, on.refinement)
                                                     : 0.0f;
         const auto by = [](float ours, float his, const char* unit, std::string& delta, int& way) {
@@ -1534,7 +1536,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         };
         if (sheet.hero.word == "Damage" && (mine > 0.0f || hisDamage > 0.0f)) {
             by(mine, hisDamage, "", sheet.hero.delta, sheet.hero.deltaWay);
-        } else if (sheet.hero.word == "Armor" && (ours > 0.0f || hisDefense > 0.0f)) {
+        } else if (sheet.hero.word == "Defense" && (ours > 0.0f || hisDefense > 0.0f)) {
             by(ours, hisDefense, "", sheet.hero.delta, sheet.hero.deltaWay);
         }
         if (rise > 0.0f || hisRise > 0.0f) {

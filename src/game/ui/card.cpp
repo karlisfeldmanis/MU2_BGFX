@@ -313,11 +313,10 @@ tip::Sheet statSheet(int stat, sim::Kin kin, const int totals[5]) {
     return sheet;
 }
 
-// The Defense line's card: the parts sim::reckon adds up, so a player who sums his pieces' Armor
-// sees where the other half went (Discord, denio, 2026-10-25: "When I add up the defense from 5
-// items, I get over 400"). The halving is every class's (rules.cpp, reckon); whatever the set,
-// runes, talents and the Gladiator's share add is what is left of the figure, so the rows always
-// sum to it.
+// The Defense line's card: the parts sim::reckon adds up (Discord, denio, 2026-10-25: "When I
+// add up the defense from 5 items, I get over 400"). Both are halved, every class's (rules.cpp,
+// reckon), as the item cards print theirs; whatever the set, runes, talents and the Gladiator's
+// share add is what is left of the figure, so the rows always sum to it.
 tip::Sheet defenseSheet(sim::Kin kin, int agility, int worn, int defense) {
     const sim::ClassRow& row = sim::rowOf(kin);
     const double fromAgility = double(agility) * double(row.defensePerAgility);
@@ -334,15 +333,10 @@ tip::Sheet defenseSheet(sim::Kin kin, int agility, int worn, int defense) {
         parts.rows.push_back(tip::Row{label, {tip::Value{"+" + panel::commas(value), tip::Tone::White}}, "",
                                       tip::Tone::White});
     };
-    const int per = int(std::lround(1.0 / double(row.defensePerAgility)));
-    add("Agility " + panel::commas(agility) + " / " + std::to_string(per) + " / 2", agilityPart);
-    add("Armor " + panel::commas(worn) + " / 2", base - agilityPart);
+    add("Agility " + panel::commas(agility), agilityPart);
+    add("Worn gear", base - agilityPart);
     if (rest != 0) add(kin == sim::Kin::MagicGladiator ? "Class, set, runes, talents" : "Set, runes, talents", rest);
     sheet.sections.push_back(parts);
-    tip::Section notes;
-    notes.rows.push_back(tip::Row{"", {}, "Armor and agility count half, for every class, as in MU: a piece "
-                                          "showing 92 Armor adds 46 here.", tip::Tone::Gray});
-    sheet.sections.push_back(notes);
     return sheet;
 }
 
