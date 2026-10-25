@@ -1232,7 +1232,38 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                 stacks.values.push_back({std::to_string(worn) + "/" + std::to_string(most) + " worn",
                                          worn >= most ? Tone::Yellow : Tone::Gray, false, "", 0});
             }
+            // Ascendance's own limits (sim::kAscendanceMost): three worn, Lesser and Greater
+            // together, and how many go in each thing -- the two-handed rule said in words, since
+            // why a bow takes a third is not something a player would guess (the user,
+            // 2026-10-25: "we should explain that 2-hand rule").
+            if (sim::ascendance(power->power)) {
+                int worn = 0;
+                for (int slot = sim::kWeaponRight; slot <= sim::kRingLeft; ++slot) {
+                    const sim::Held& h = bag[slot];
+                    for (int at = 0; !h.empty() && at < std::min<int>(h.sockets, sim::kMostSockets);
+                         ++at) {
+                        const sim::PowerRow* one = sim::powerOf(h.powers[at]);
+                        if (one && sim::ascendance(one->power)) ++worn;
+                    }
+                }
+                const int most = sim::kAscendanceMost;
+                stacks = stat("Stacks", "Up to " + std::to_string(most), Tone::White);
+                stacks.values.push_back({std::to_string(worn) + "/" + std::to_string(most) + " worn",
+                                         worn >= most ? Tone::Yellow : Tone::Gray, false, "", 0});
+            }
             carries.rows.push_back(stacks);
+            if (sim::ascendance(power->power)) {
+                carries.rows.push_back(stat(
+                    "Limit",
+                    std::to_string(sim::kAscendanceInWeapon) + " per weapon, " +
+                        std::to_string(sim::kAscendanceInShield) + " per shield",
+                    Tone::Yellow));
+                Row hands;
+                hands.free = std::to_string(sim::kAscendanceInTwoHanded) +
+                             " in a two-handed weapon or bow, which leaves no hand for a shield";
+                hands.freeTone = Tone::Gray;
+                carries.rows.push_back(hands);
+            }
             Row how;
             how.free = "Drop it on an item with an empty socket";
             how.freeTone = Tone::Gray;
