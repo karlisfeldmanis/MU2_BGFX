@@ -39,6 +39,10 @@ the rules below. Where this disagrees with an older quest doc's reward section, 
    kept layout 14); gear and runes stay the first clear's.
 11. **Experience is priced on the curve.** A first clear pays about one to two levels at its own
    level, a repeat a third of one; past 256 the curve climbs steeply, so Aida's are 12M and 3M.
+12. **Gear is paid at +0, never upgraded.** Every weapon, piece and shield a quest pays comes
+   +0 with Luck, its option (kQuestOption) and its sockets -- no +5, +7 or more (the user,
+   2026-10-25: "only +0 and +luck +opt and socket"). Where no better item of a class is built,
+   the step is the next item of its own line, never a plus on the last one.
 
 ## The acts
 
@@ -50,11 +54,11 @@ the rules below. Where this disagrees with an older quest doc's reward section, 
 | IV | Lirien (Atlans) | 70-100 | DK Lighting Sword and Crescent Axe, DW Legendary Staff (1H), Elf Aquagold Crossbow (2 sockets) | -- | **First Legendary**: DK Twister, DW Arcane Echo, Elf Frost Arrow; Epic: Eddy / Scorch / Plague Arrows; **Buckler** (DK, DW) | first **Jewel of Life**, 2 Soul, Box of Kundun +2; Aqua Beam |
 | V | Tersia, floors 1-5 | 80-120 | -- | **Set B**: DK Dragon, DW Legendary, Elf Guardian. A piece a floor: helm, gloves, boots (2), pants, armour | Greater Vigor; class Greater stat + Kinship; Second Wind; Bloodwell; Renewal | LT1 **Horn of Uniria every clear**; LT2 Ring of Poison (socket); LT4 Ring of Wealth (purple), Slash; LT5 **Dragon Shield / Legendary Shield +5 (2 sockets)** (Elf: Ring of Ice), Swell Life (DK, 2026-10-25) |
 | V | Tersia, floors 6-7 | 120-160 | Balrog: Elf Chaos Nature Bow (3 sockets); DK and DW 2 Bless + 2 Soul instead | -- | LT6: Meteor / Spirit Plague / Scatter Volley; Balrog: **Wrath** + Stormcall | LT6 Death Stab, Penetration; Balrog: Ring of Wisdom (legendary), Rageful Blow, Inferno, Summon +5 (Bali), Chaos, Box of Kundun +2. No Dinorant (2026-10-21: the machine makes one) |
-| VI | the Keeper (Tarkan): Kantur's Legion | 100-160 | DK Sword of Destruction +7 and Crystal Sword +7, DW Staff of Resurrection +7, Elf Saint Crossbow (3 sockets; first class only) | -- | DK Immolate + Ice + **Twin Guard**; DW Inferno + Thunder; Elf **Greater Barrage** + Glacier | Pendant of Fury (legendary); Life, Chaos, Feather, Box of Kundun +3 every clear |
-| VI | the Keeper: Kantur's Captain (2nd class and MG only) | 200+ | BK Knight Blade +7 and Daybreak +7, SM Staff of Kundun, ME **Stinger Bow**, MG Dark Reign Blade +7 (3 sockets) | **The 2nd class's shield** (2 sockets): Crimson Glory, Guardian Shield, Frost Barrier, Salamander Shield | -- | Life, Feather |
+| VI | the Keeper (Tarkan): Kantur's Legion | 100-160 | DK Sword of Destruction and Crystal Sword, DW Staff of Resurrection, Elf Saint Crossbow (3 sockets; first class only) | -- | DK Immolate + Ice + **Twin Guard**; DW Inferno + Thunder; Elf **Greater Barrage** + Glacier | Pendant of Fury (legendary); Life, Chaos, Feather, Box of Kundun +3 every clear |
+| VI | the Keeper: Kantur's Captain (2nd class and MG only) | 200+ | BK Knight Blade and Daybreak, SM Staff of Kundun, ME **Stinger Bow**, MG Dark Reign Blade (3 sockets) | **The 2nd class's shield** (2 sockets): Crimson Glory, Guardian Shield, Frost Barrier, Salamander Shield | -- | Life, Feather |
 | VII | Tersia, Icarus: Sky Door, Phoenix | 160-200 | Phoenix: DK Dark Breaker, DW Dragon Soul Staff, Elf Celestial Bow (3 sockets, 2nd class) | **Set C (2nd class)**: Dark Phoenix, Grand Soul, Divine. Sky Door gloves+boots, Phoenix helm+pants. **Magic Gladiator: Storm Crow** gloves, boots, pants, armour | Sky Door: Greater Ascendance, **element runes** (DK and Elf Tempest; DW Tempest + Venom); Phoenix: Evil Spirit, Bulwark (DK, with the Dark Breaker) | Sky Door: Cometfall (SM), Summon +6 (Alquamos); Feathers, Life, Chaos, Box of Kundun +3 |
 | VIII | Sevina | 200 | -- | the treasure: Set C's armour | trial: Second Wind. Treasure: **Whirlwind / Pyroblaster / Piercing Volley** | DW: Grand Soul Shield; 10 Firecrackers each part |
-| IX | Peia, the Seed Master (Aida) | 300+ | First clear, +7 (3 sockets, any rank): DK Flamberge +8 and **Beuroba**, DW **Chromatic Staff**, Elf **Air Lyn Bow**; MG the spear or the staff by his path | -- | Greater Wellspring | 12M experience first, 3M a repeat; Life, Chaos, 2 Bless, 2 Soul, Box of Kundun +3 |
+| IX | Peia, the Seed Master (Aida) | 300+ | First clear (3 sockets, any rank): DK Flamberge and **Beuroba**, DW **Chromatic Staff**, Elf **Air Lyn Bow**; MG the spear or the staff by his path | -- | Greater Wellspring | 12M experience first, 3M a repeat; Life, Chaos, 2 Bless, 2 Soul, Box of Kundun +3 |
 
 The Magic Gladiator walks the knight's or the wizard's path (Melee / Magic) as before; helms
 and second-class things filter out for him, and runes he cannot set come as their weaker kin

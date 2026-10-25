@@ -910,12 +910,12 @@ QuestRow tersiaFifth() {
                                  .firstOnly = true};  // Guardian
     row.paid[row.paidCount++] = {.item = "Shield14", .kin = knight, .sockets = 1,
                                  .firstOnly = true};  // Dragon Shield
-    row.paid[row.paidCount++] = {.item = "Shield22", .plus = 5, .kin = int8_t(Kin::DarkLord), .sockets = 1,
-                                 .firstOnly = true};  // Cross Shield +5
+    row.paid[row.paidCount++] = {.item = "Shield22", .kin = int8_t(Kin::DarkLord), .sockets = 1,
+                                 .firstOnly = true};  // Cross Shield
     // The wizard's Legendary Shield again, raised to +5 with two sockets over Devias's, as the
     // weapons climb by their plus where no better one is built (2026-10-09).
-    row.paid[row.paidCount++] = {.item = "Shield15", .plus = 5, .kin = wizard, .sockets = 2,
-                                 .firstOnly = true};  // Legendary Shield +5
+    row.paid[row.paidCount++] = {.item = "Shield15", .kin = wizard, .sockets = 2,
+                                 .firstOnly = true};  // Legendary Shield
     row.paid[row.paidCount++] = {.item = "Ring01", .kin = elf, .sockets = 1, .firstOnly = true};
     row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Renewal),
                                  .firstOnly = true};
@@ -1190,8 +1190,8 @@ QuestRow tersiaPhoenix() {
     // Crow's pants and armour, which make his four whole.
     row.paid[row.paidCount++] = {.item = "Sword18", .kin = knight, .sockets = 3,
                                  .firstOnly = true};  // Dark Breaker
-    row.paid[row.paidCount++] = {.item = "Mace13", .plus = 9, .kin = int8_t(Kin::DarkLord), .sockets = 3,
-                                 .firstOnly = true};  // Great Lord Scepter +9: none between it and the 380s
+    row.paid[row.paidCount++] = {.item = "Mace16", .kin = int8_t(Kin::DarkLord), .sockets = 3,
+                                 .firstOnly = true};  // Shining Scepter
     row.paid[row.paidCount++] = {.item = "Staff10", .kin = wizard, .sockets = 3,
                                  .firstOnly = true};  // Dragon Soul Staff
     row.paid[row.paidCount++] = {.item = "Bow18", .kin = elf, .sockets = 3,
@@ -1736,14 +1736,14 @@ QuestRow kantursLegion() {
     int n = 0;
     // **And a two-hander** (the user, 2026-10-22): the knight is paid both, the two-hander the one
     // nearest the one-hander's NPC price (Marlon's row says why).
-    row.paid[n++] = {.item = "Sword17", .plus = 7, .kin = knight, .sockets = 3,
-                     .firstOnly = true, .rank = Rank::First};  // Sword of Destruction +7
-    row.paid[n++] = {.item = "Mace06", .plus = 7, .kin = knight, .sockets = 3,
-                     .firstOnly = true, .rank = Rank::First};  // Crystal Sword +7
-    row.paid[n++] = {.item = "Mace11", .plus = 7, .kin = int8_t(Kin::DarkLord), .sockets = 3,
-                     .firstOnly = true};  // Great Scepter +7
-    row.paid[n++] = {.item = "Staff07", .plus = 7, .kin = wizard, .sockets = 3,
-                     .firstOnly = true, .rank = Rank::First};  // Staff of Resurrection +7
+    row.paid[n++] = {.item = "Sword17", .kin = knight, .sockets = 3,
+                     .firstOnly = true, .rank = Rank::First};  // Sword of Destruction
+    row.paid[n++] = {.item = "Mace06", .kin = knight, .sockets = 3,
+                     .firstOnly = true, .rank = Rank::First};  // Crystal Sword
+    row.paid[n++] = {.item = "Mace11", .kin = int8_t(Kin::DarkLord), .sockets = 3,
+                     .firstOnly = true};  // Great Scepter
+    row.paid[n++] = {.item = "Staff07", .kin = wizard, .sockets = 3,
+                     .firstOnly = true, .rank = Rank::First};  // Staff of Resurrection
     row.paid[n++] = {.item = "CrossBow17", .kin = elf, .sockets = 3,
                      .firstOnly = true, .rank = Rank::First};  // Saint Crossbow
     row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Burn),
@@ -1830,14 +1830,14 @@ QuestRow kantursCaptain() {
     int n = 0;
     // **And a two-hander** (the user, 2026-10-22): the knight is paid both, the two-hander the one
     // nearest the one-hander's NPC price (Marlon's row says why).
-    row.paid[n++] = {.item = "Sword21", .plus = 7, .kin = knight, .sockets = 3,
-                     .firstOnly = true, .rank = Rank::Second};  // Knight Blade +7, the BK's
-    row.paid[n++] = {.item = "Sword25", .plus = 7, .kin = knight, .sockets = 3,
-                     .firstOnly = true, .rank = Rank::Second};  // Daybreak +7, the BK's
-    row.paid[n++] = {.item = "Sword22", .plus = 7, .kin = knight, .sockets = 3,
-                     .firstOnly = true, .rank = Rank::Second};  // Dark Reign Blade +7, the MG's
-    row.paid[n++] = {.item = "Mace13", .plus = 7, .kin = int8_t(Kin::DarkLord), .sockets = 3,
-                     .firstOnly = true};  // Great Lord Scepter +7
+    row.paid[n++] = {.item = "Sword21", .kin = knight, .sockets = 3,
+                     .firstOnly = true, .rank = Rank::Second};  // Knight Blade, the BK's
+    row.paid[n++] = {.item = "Sword25", .kin = knight, .sockets = 3,
+                     .firstOnly = true, .rank = Rank::Second};  // Daybreak, the BK's
+    row.paid[n++] = {.item = "Sword22", .kin = knight, .sockets = 3,
+                     .firstOnly = true, .rank = Rank::Second};  // Dark Reign Blade, the MG's
+    row.paid[n++] = {.item = "Mace12", .kin = int8_t(Kin::DarkLord), .sockets = 3,
+                     .firstOnly = true};  // Lord Scepter
     row.paid[n++] = {.item = "Staff12", .kin = wizard, .sockets = 3, .firstOnly = true,
                      .rank = Rank::Second};  // Staff of Kundun, +0 (+7 too much, the user)
     // The Muse Elf's the Stinger Bow (drop level 134) since the reward audit (2026-10-22): the
@@ -2055,16 +2055,16 @@ QuestRow seedMastersClearing() {
     // knight's Beuroba is a two-hander, so the Flamberge comes beside it (the Captain's rule);
     // the Magic Gladiator takes the spear on the knight's path and the staff on the wizard's. The
     // Flamberge a plus higher, so the pair sell alike (Beuroba +7 361,600, Flamberge +8 348,000).
-    row.paid[n++] = {.item = "Sword27", .plus = 8, .kin = knight, .sockets = 3,
-                     .firstOnly = true};  // Flamberge +8, the knight's one-hander
-    row.paid[n++] = {.item = "Spear12", .plus = 7, .kin = knight, .sockets = 3,
-                     .firstOnly = true};  // Beuroba +7
-    row.paid[n++] = {.item = "Mace13", .plus = 11, .kin = int8_t(Kin::DarkLord), .sockets = 3,
-                     .firstOnly = true};  // Great Lord Scepter +11: the Soleil asks 380
-    row.paid[n++] = {.item = "Staff34", .plus = 7, .kin = wizard, .sockets = 3,
-                     .firstOnly = true};  // Chromatic Staff +7
-    row.paid[n++] = {.item = "Bow25", .plus = 7, .kin = elf, .sockets = 3,
-                     .firstOnly = true};  // Air Lyn Bow +7
+    row.paid[n++] = {.item = "Sword27", .kin = knight, .sockets = 3,
+                     .firstOnly = true};  // Flamberge, the knight's one-hander
+    row.paid[n++] = {.item = "Spear12", .kin = knight, .sockets = 3,
+                     .firstOnly = true};  // Beuroba
+    row.paid[n++] = {.item = "Mace13", .kin = int8_t(Kin::DarkLord), .sockets = 3,
+                     .firstOnly = true};  // Great Lord Scepter
+    row.paid[n++] = {.item = "Staff34", .kin = wizard, .sockets = 3,
+                     .firstOnly = true};  // Chromatic Staff
+    row.paid[n++] = {.item = "Bow25", .kin = elf, .sockets = 3,
+                     .firstOnly = true};  // Air Lyn Bow
     row.paidCount = n;
     return row;
 }
@@ -2183,18 +2183,18 @@ QuestRow ruinsOfKantur() {
     // drops. The Gladiator's Volcano has no helm, so his are the armour and the pants. Dragon
     // Knight is the Blade Knight's alone, so it filters out for him as every second-class piece
     // does (sim::questPaysHero).
-    row.paid[n++] = {.item = "ArmorMale30", .plus = 7, .kin = knight, .sockets = 2, .firstOnly = true};
-    row.paid[n++] = {.item = "HelmMale30", .plus = 7, .kin = knight, .sockets = 2, .firstOnly = true};
-    row.paid[n++] = {.item = "ArmorMale34", .plus = 7, .kin = int8_t(Kin::DarkLord), .sockets = 2,
-                     .firstOnly = true};  // Sunlight +7
-    row.paid[n++] = {.item = "HelmMale34", .plus = 7, .kin = int8_t(Kin::DarkLord), .sockets = 2,
+    row.paid[n++] = {.item = "ArmorMale30", .kin = knight, .sockets = 2, .firstOnly = true};
+    row.paid[n++] = {.item = "HelmMale30", .kin = knight, .sockets = 2, .firstOnly = true};
+    row.paid[n++] = {.item = "ArmorMale34", .kin = int8_t(Kin::DarkLord), .sockets = 2,
+                     .firstOnly = true};  // Sunlight
+    row.paid[n++] = {.item = "HelmMale34", .kin = int8_t(Kin::DarkLord), .sockets = 2,
                      .firstOnly = true};
-    row.paid[n++] = {.item = "ArmorMale31", .plus = 7, .kin = wizard, .sockets = 2, .firstOnly = true};
-    row.paid[n++] = {.item = "HelmMale31", .plus = 7, .kin = wizard, .sockets = 2, .firstOnly = true};
-    row.paid[n++] = {.item = "ArmorMale32", .plus = 7, .kin = elf, .sockets = 2, .firstOnly = true};
-    row.paid[n++] = {.item = "HelmMale32", .plus = 7, .kin = elf, .sockets = 2, .firstOnly = true};
-    row.paid[n++] = {.item = "ArmorMale33", .plus = 7, .kin = gladiator, .sockets = 2, .firstOnly = true};
-    row.paid[n++] = {.item = "PantMale33", .plus = 7, .kin = gladiator, .sockets = 2, .firstOnly = true};
+    row.paid[n++] = {.item = "ArmorMale31", .kin = wizard, .sockets = 2, .firstOnly = true};
+    row.paid[n++] = {.item = "HelmMale31", .kin = wizard, .sockets = 2, .firstOnly = true};
+    row.paid[n++] = {.item = "ArmorMale32", .kin = elf, .sockets = 2, .firstOnly = true};
+    row.paid[n++] = {.item = "HelmMale32", .kin = elf, .sockets = 2, .firstOnly = true};
+    row.paid[n++] = {.item = "ArmorMale33", .kin = gladiator, .sockets = 2, .firstOnly = true};
+    row.paid[n++] = {.item = "PantMale33", .kin = gladiator, .sockets = 2, .firstOnly = true};
     row.paidCount = n;
     return row;
 }

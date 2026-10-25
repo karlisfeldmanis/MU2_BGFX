@@ -935,4 +935,19 @@ void testDarkLord(void (*check)(bool, const char*), void (*checkEqual)(long long
         // unfairness"): twelve on these quests and Tersia 6's Frenzy, the wizard's twelve.
         checkEqual(runes, 12, "twelve runes on his geared quests");
     }
+    // **No quest pays upgraded gear** (the user, 2026-10-25: "only +0 and +luck +opt and socket"):
+    // every class's weapon, piece and shield at +0; the plus on a box, ring, pendant, Spirit or orb
+    // names what it is and stays.
+    {
+        int upgraded = 0;
+        for (int q = 0; q < sim::kQuests; ++q) {
+            const sim::QuestRow& row = sim::questAt(q);
+            for (int p = 0; p < row.paidCount + row.choiceCount; ++p) {
+                const sim::QuestItem& what = p < row.paidCount ? row.paid[p] : row.choices[p - row.paidCount];
+                const int32_t at = what.item ? lorencia.itemNamed(what.item) : -1;
+                upgraded += at >= 0 && lorencia.items[size_t(at)].group <= 11 && what.plus > 0 ? 1 : 0;
+            }
+        }
+        checkEqual(upgraded, 0, "no quest pays a weapon, piece or shield above +0");
+    }
 }

@@ -5595,7 +5595,10 @@ void testSkills(const content::Tables& tables) {
                 least = std::min(least, value);
                 most = std::max(most, value);
             }
-            if (most > 0) pricedAlike &= most * 4 <= least * 5;
+            // Within three fifths since every reward is +0 (the user, 2026-10-25: "only +0 and
+            // +luck +opt and socket"): no knight's two-hander sits nearer the Knight Blade or the
+            // Flamberge, and both are paid, bound, never a pick between them.
+            if (most > 0) pricedAlike &= most * 5 <= least * 8;
         }
         check(pricedAlike, "and the two sell for about the same");
         // Though bound, as a quest pays them, they fetch almost nothing (the user, 2026-10-22).

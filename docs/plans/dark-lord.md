@@ -133,9 +133,10 @@ reaches 24 rows and the Phoenix 25 with his).
 | Seed Master, Aida | as everyone |
 
 **Built 2026-10-25** (the gear and the shared runes): every row above that pays a piece or a
-scepter, with the knight's sockets and plus; the Ruins' Sunlight armour + mask +7 beside them.
-Balanced the same day (the user: "balance unfairness"): the Phoenix pays the Great Lord Scepter
-+9 (the Lord Scepter was a step down from the Captain's +7) and Seed Master +11 (the Soleil asks
+scepter, with the knight's sockets and plus; the Ruins' Sunlight armour + mask beside them.
+Balanced the same day (the user: "balance unfairness"), and every reward at +0 (the user: "only
++0 and +luck +opt and socket", docs/game/quest-rewards.md rule 12): his scepters climb by the
+line itself -- Legion Great, Captain Lord, Phoenix Shining, Seed Master Great Lord (the Soleil asks
 380); where the knight is paid a knight-only rune he is paid a shared one of its slot -- Spite,
 Frenzy, Wrath, Thunder, Ironskin, Inferno, Bloodwell, Keen Eye -- 13 runes to the wizard's 12. Not paid: the Scroll of Fire Burst (born known), his own
 runes (Firebrand, Tremor, Earthbreaker... -- phase 7, they do not exist yet; the knight-only runes
