@@ -423,6 +423,18 @@ void Realm::raidTick() {
     Body& dragon = bodies_[size_t(invasion_.slot)];
     if (raid_.stage == RaidStage::None) {
         if (!dragon.alive() || invasion_.phase != InvasionPhase::Standing) return;
+        // A landing is a new fight: nothing of the last one's carries over -- a `departing` left
+        // set by the first dragon to fly off had every later one in that world flown away on the
+        // tick after it landed (the players, 2026-10-25: "it says dragon invasion there is no
+        // dragon"). Its players were laid as it came (InvasionInstance::tick); the serial and the
+        // last "Immune" run on.
+        const int players = raid_.players;
+        const uint32_t serial = raid_.serial;
+        const int64_t immuneSaidAt = raid_.immuneSaidAt;
+        raid_ = RaidState{};
+        raid_.players = players;
+        raid_.serial = serial;
+        raid_.immuneSaidAt = immuneSaidAt;
         raid_.landedAt = tick_;
         raid_.nextMove = tick_ + kRiseIdleTicks + kMoveEvery / 2;
         raid_.nextFireball = tick_ + kRiseIdleTicks + kDragonFireballEvery;

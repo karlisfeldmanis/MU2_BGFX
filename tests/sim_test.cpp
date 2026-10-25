@@ -779,6 +779,14 @@ void testRaid(const content::Tables& tables) {
         }
         check(left && idle.invasionPhase() == sim::InvasionPhase::Quiet,
               "not killed in its time, it flies away and the invasion ends");
+        // And the next one lands and stays: the last one's leaving does not carry over (the
+        // players, 2026-10-25: every dragon after a world's first was gone a tick after landing).
+        check(idle.invade(true), "after one flew away, another invasion begins");
+        for (int i = 0; i < 40 && idle.raidStage() == sim::RaidStage::None; ++i) idle.step();
+        for (int i = 0; i < 200; ++i) idle.step();
+        check(idle.invader()->alive() && !idle.raidDeparting() &&
+                  idle.invasionPhase() == sim::InvasionPhase::Standing,
+              "the next dragon stands after the last flew away");
     }
 
     // Struck, it stays past its first three minutes: the party's blows are a fight begun.
