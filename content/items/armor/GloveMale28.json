@@ -1,0 +1,144 @@
+{
+  "item": "GloveMale28",
+  "mu_name": "Dark Steel Gloves",
+  "mu_name_from": "OpenMU VersionSeasonSix's CreateGloves (openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:262); the model is Player/GloveMale28.bmd, which MuMain's OpenItems loads for it (MuMain/src/source/Engine/Object/ZzzOpenData.cpp:213).",
+  "profile": "armour",
+  "stats": {
+    "call": "CreateGloves(27, \"Dark Steel Gloves\", 75, 21, 5, 70, 0, 84, 22, 0, 0, 0, 0, 1, 0)",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:262",
+    "call_note": "CreateGloves(number, name, dropLevel, defense, attackSpeed, durability, levelRequirement, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel, magicGladiatorClassLevel, darkLordClassLevel, summonerClassLevel), openmu/src/Persistence/Initialization/Items/ArmorInitializerBase.cs:234.",
+    "number": 27,
+    "drop_level": 75,
+    "defense": 21,
+    "attack_speed": 5,
+    "durability": 70,
+    "drops_from_monsters": true,
+    "group": 10,
+    "slot": 5,
+    "width": 2,
+    "height": 2,
+    "requires": {
+      "level": 0,
+      "strength": 84,
+      "agility": 22,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "lord"
+    ]
+  },
+  "sheets": {
+    "Kgpp": "kgpp.png",
+    "hide": "hide_player.png"
+  },
+  "why_this_one": "The Dark Lord's third set, Dark Steel (docs/plans/dark-lord-gear.md batch 2; OpenMU's rows, drop 75-96, lords only; Sky Door and Phoenix pay it). The user, 2026-10-25: 'we need missing Dark lord items', 'do it'.",
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py under MU's own names (Kmpp, Kupp, Klpp, Kgpp, Kbpp: blackened steel with gold lion crests); hide is Player/hide (9x9 black), MU's caps over the openings.",
+  "sheet_materials": {
+    "Kgpp": "painted_steel",
+    "hide": "painted_steel"
+  },
+  "material_note": "painted_steel with the cast grain for the plate, the shading painted on, as Light Plate and Adamantine.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, shallow for the gloss, as the other sets.",
+  "effects_note": "MuMain has no render arm for MODEL_DARK_STEEL_* (no glow, no chrome pass, no sprite; grep of MODEL_HELM..BOOTS + 27, docs/plans/dark-lord-gear.md). Its refine colour is PartObjectColor 10, (0.75, 0.65, 0.5) (ZzzObject.cpp:6739-6765, 6788-6818; src/game/shine.cpp); its full set the generic aura (fx/set_shine).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 78,
+      "area": 1847.8,
+      "along": [
+        -6.9,
+        9.1
+      ],
+      "mu_uv": [
+        -2.895,
+        -0.008,
+        1.617,
+        7.159
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.996,
+        0.714
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 78,
+      "area": 1847.7,
+      "along": [
+        -6.9,
+        9.1
+      ],
+      "mu_uv": [
+        -2.895,
+        -0.008,
+        1.617,
+        7.159
+      ],
+      "bake_uv": [
+        0.004,
+        0.25,
+        0.996,
+        0.714
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 7,
+      "area": 280.2,
+      "along": [
+        -19.4,
+        -2.7
+      ],
+      "mu_uv": [
+        0.491,
+        0.388,
+        0.769,
+        0.843
+      ],
+      "bake_uv": [
+        0.428,
+        0.495,
+        0.806,
+        0.595
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 7,
+      "area": 280.2,
+      "along": [
+        -19.4,
+        -2.7
+      ],
+      "mu_uv": [
+        0.491,
+        0.388,
+        0.769,
+        0.843
+      ],
+      "bake_uv": [
+        0.497,
+        0.495,
+        0.876,
+        0.595
+      ]
+    }
+  ]
+}

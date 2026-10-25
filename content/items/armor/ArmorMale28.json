@@ -1,0 +1,277 @@
+{
+  "item": "ArmorMale28",
+  "mu_name": "Dark Steel Armor",
+  "mu_name_from": "OpenMU VersionSeasonSix's CreateArmor (openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:144); the model is Player/ArmorMale28.bmd, which MuMain's OpenItems loads for it (MuMain/src/source/Engine/Object/ZzzOpenData.cpp:213).",
+  "profile": "armour",
+  "stats": {
+    "call": "CreateArmor(27, 3, 2, 3, \"Dark Steel Armor\", 96, 43, 70, 0, 84, 22, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0)",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:144",
+    "call_note": "CreateArmor(number, slot, width, height, name, dropLevel, defense, durability, levelRequirement, strengthRequirement, agilityRequirement, energyRequirement, vitalityRequirement, leadershipRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel, magicGladiatorClassLevel, darkLordClassLevel, summonerClassLevel, ragefighterClassLevel, isShield), openmu/src/Persistence/Initialization/Items/ArmorInitializerBase.cs:367.",
+    "number": 27,
+    "slot": 3,
+    "width": 2,
+    "height": 3,
+    "drop_level": 96,
+    "defense": 43,
+    "durability": 70,
+    "drops_from_monsters": true,
+    "group": 8,
+    "requires": {
+      "level": 0,
+      "strength": 84,
+      "agility": 22,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "lord"
+    ]
+  },
+  "sheets": {
+    "Klpp": "klpp.png",
+    "Kupp": "kupp.png",
+    "hide": "hide_player.png"
+  },
+  "why_this_one": "The Dark Lord's third set, Dark Steel (docs/plans/dark-lord-gear.md batch 2; OpenMU's rows, drop 75-96, lords only; Sky Door and Phoenix pay it). The user, 2026-10-25: 'we need missing Dark lord items', 'do it'.",
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py under MU's own names (Kmpp, Kupp, Klpp, Kgpp, Kbpp: blackened steel with gold lion crests); hide is Player/hide (9x9 black), MU's caps over the openings.",
+  "sheet_materials": {
+    "Klpp": "painted_steel",
+    "Kupp": "painted_steel",
+    "hide": "painted_steel"
+  },
+  "material_note": "painted_steel with the cast grain for the plate, the shading painted on, as Light Plate and Adamantine.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, shallow for the gloss, as the other sets.",
+  "effects_note": "MuMain has no render arm for MODEL_DARK_STEEL_* (no glow, no chrome pass, no sprite; grep of MODEL_HELM..BOOTS + 27, docs/plans/dark-lord-gear.md). Its refine colour is PartObjectColor 10, (0.75, 0.65, 0.5) (ZzzObject.cpp:6739-6765, 6788-6818; src/game/shine.cpp); its full set the generic aura (fx/set_shine).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 116,
+      "area": 7046.0,
+      "along": [
+        -17.6,
+        17.8
+      ],
+      "mu_uv": [
+        0.004,
+        0.159,
+        0.689,
+        0.993
+      ],
+      "bake_uv": [
+        0.01,
+        0.009,
+        0.947,
+        0.991
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 27,
+      "area": 1783.2,
+      "along": [
+        -10.2,
+        7.5
+      ],
+      "mu_uv": [
+        0.695,
+        0.637,
+        0.965,
+        0.995
+      ],
+      "bake_uv": [
+        0.046,
+        0.01,
+        0.838,
+        0.872
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 27,
+      "area": 1783.2,
+      "along": [
+        -10.2,
+        7.5
+      ],
+      "mu_uv": [
+        0.695,
+        0.637,
+        0.965,
+        0.995
+      ],
+      "bake_uv": [
+        0.381,
+        0.677,
+        0.796,
+        0.88
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 30,
+      "area": 2093.0,
+      "along": [
+        -14.6,
+        14.3
+      ],
+      "mu_uv": [
+        0.111,
+        0.004,
+        0.993,
+        0.99
+      ],
+      "bake_uv": [
+        0.282,
+        0.01,
+        0.931,
+        0.692
+      ]
+    },
+    {
+      "island": 4,
+      "material": "painted_steel",
+      "triangles": 30,
+      "area": 2093.0,
+      "along": [
+        -14.6,
+        14.3
+      ],
+      "mu_uv": [
+        0.111,
+        0.004,
+        0.993,
+        0.99
+      ],
+      "bake_uv": [
+        0.01,
+        0.014,
+        0.723,
+        0.979
+      ]
+    },
+    {
+      "island": 5,
+      "material": "painted_steel",
+      "triangles": 26,
+      "area": 1004.4,
+      "along": [
+        11.2,
+        17.3
+      ],
+      "mu_uv": [
+        0.381,
+        0.015,
+        0.925,
+        0.431
+      ],
+      "bake_uv": [
+        0.735,
+        0.256,
+        0.969,
+        0.971
+      ]
+    },
+    {
+      "island": 6,
+      "material": "painted_steel",
+      "triangles": 10,
+      "area": 313.3,
+      "along": [
+        -16.2,
+        15.1
+      ],
+      "mu_uv": [
+        0.009,
+        0.008,
+        0.552,
+        0.119
+      ],
+      "bake_uv": [
+        0.5,
+        0.206,
+        0.979,
+        0.927
+      ]
+    },
+    {
+      "island": 7,
+      "material": "painted_steel",
+      "triangles": 38,
+      "area": 2848.6,
+      "along": [
+        -17.2,
+        15.1
+      ],
+      "mu_uv": [
+        0.138,
+        0.014,
+        0.996,
+        0.706
+      ],
+      "bake_uv": [
+        0.186,
+        0.503,
+        0.41,
+        0.868
+      ]
+    },
+    {
+      "island": 8,
+      "material": "painted_steel",
+      "triangles": 10,
+      "area": 313.3,
+      "along": [
+        -16.2,
+        15.1
+      ],
+      "mu_uv": [
+        0.009,
+        0.008,
+        0.552,
+        0.119
+      ],
+      "bake_uv": [
+        0.011,
+        0.897,
+        0.531,
+        0.979
+      ]
+    },
+    {
+      "island": 9,
+      "material": "painted_steel",
+      "triangles": 38,
+      "area": 2848.6,
+      "along": [
+        -17.2,
+        15.1
+      ],
+      "mu_uv": [
+        0.138,
+        0.014,
+        0.996,
+        0.706
+      ],
+      "bake_uv": [
+        0.533,
+        0.382,
+        0.894,
+        0.808
+      ]
+    }
+  ]
+}
