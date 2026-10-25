@@ -14,7 +14,7 @@ with `pipeline/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Sword01 | arm | 2026-10-12 12:48 | awaiting |  |
 | Pad | set | 2026-09-21 17:58 | passed | wizard's own silver head shows under the winged gilt band (keeps_head, 6 parts); olive-and-gold cloth jerkin stays dielectric, brass gloves/boots/pant plates read gilt; flat gold wings are MU's cards; rebuilt after the flip fix |
 | Vine | set | 2026-09-21 18:15 | passed | elf's own blonde head under the vine circlet (keeps_head); dark warm leather with the vine raised in the same brown; skin reads as skin, hip blades as bone; rebuilt after the flip fix |
-| Sword02 | arm | 2026-09-21 19:13 | passed | steel 0.4 on this flat blade: grey steel with MU's paint legible, soft sheen at noon; no longer black |
+| Sword02 | arm | 2026-10-25 17:56 | passed | the user in the studio on the mini, 2026-10-25: art unchanged since its 2026-09-21 pass (the darklord merge only gave it the Dark Lord's class); grey steel blade |
 | Leather | set | 2026-09-21 18:56 | passed | dark olive-black hide with MU's painted pale ridges, dielectric at 0.75; face and bare arms in skin; rebuilt after the flip fix |
 | Sword03 | arm | 2026-09-21 18:59 | passed | thin blade bright steel at noon, cup guard catches a highlight into dusk, wrap grip reads |
 | Sword04 | arm | 2026-10-06 10:25 | awaiting |  |
@@ -30,9 +30,9 @@ with `pipeline/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Mace01 | arm | 2026-09-21 19:43 | passed | studio sheet: spiked head steel from most angles, a sun glint at noon and the fire's at dusk, wooden haft reads |
 | Mace02 | arm | 2026-09-21 19:44 | passed | studio sheet: spiked ball bright steel at every angle, the fire's streak on the collar at dusk 90 deg; no rig in MU's data, rigid |
 | Spear03 | arm | 2026-09-21 19:53 | passed | studio sheet: gold vamplate flared white at noon at brass 0.44; brass 0.6 spreads it; shaft reads gold toward the light, dark away (accepted). The 'mu2' in the report is the glb's slot name, the islands are brass |
-| Bow01 | arm | 2026-09-21 19:56 | passed | studio sheet (row 1 is now the moonlit default): red-brown wood limbs, pale fletching and grip band read, no blowouts under dusk's sun; string and arrow in bind pose (held-item clip owed) |
+| Bow01 | arm | 2026-10-18 20:06 | awaiting |  |
 | Bow02 | arm | 2026-09-21 19:58 | passed | studio sheet: red wood limbs with dark recurve tips, red grip wrap and pale fletching read in the moonlit default and dusk's sun, no blowouts; 'nocked' is export_gltf's arrow part, wood; bind pose (clip owed) |
-| CrossBow01 | arm | 2026-09-21 20:00 | passed | studio sheet: orange-red stock, steel limbs and bolt, iron string frame read; the flat steel butt plate goes pale sky-grey from behind but does not bloom (physical, accepted); bind pose (clip owed) |
+| CrossBow01 | arm | 2026-10-18 21:27 | awaiting |  |
 | Arrows01 | arm | 2026-09-21 20:06 | passed | studio sheet: MU's crossed-card case reads as warm wood; the bolts are MU's dark grey (91,90,90) on thin cards and stay dark -- steel 0.45 was tried and changed nothing, reverted |
 | Arrows02 | arm | 2026-09-21 20:07 | passed | studio sheet: red-brown leather quiver, cream fletching and tan shafts at the mouth read in the moonlit default and dusk; no metal, no faults |
 | Staff01 | arm | 2026-09-21 20:13 | passed | studio sheet: crossbar and horns bloomed into glowing bars under dusk's sun at brass 0.45; brass 0.6 keeps the gold and MU's dark mottling, blown pixels 164 -> 0 |
@@ -326,17 +326,90 @@ with `pipeline/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Sword21 | arm | 2026-10-10 18:24 | passed | re-cooked after its chrome pass; looked at on the bench and in a fight |
 | Sword22 | arm | 2026-10-10 18:24 | passed | re-cooked after its chrome pass; looked at on the bench and in a fight |
 | Staff12 | arm | 2026-10-10 18:24 | passed | re-cooked after its chrome pass; looked at on the bench and in a fight |
-| Bow20 | arm | 2026-10-10 19:27 | passed | glows at MU's 0.002 breath |
+| Bow20 | arm | 2026-10-18 21:24 | awaiting |  |
 | Axe05 | arm | 2026-10-10 19:34 | awaiting |  |
 | Carriage02 | world | 2026-10-11 00:16 | awaiting |  |
 | Carriage01 | world | 2026-10-11 00:17 | awaiting |  |
 | Carriage04 | world | 2026-10-11 00:18 | awaiting |  |
 | Cannon03 | world | 2026-10-11 00:19 | awaiting |  |
 | HouseEtc02 | world | 2026-10-11 00:22 | awaiting |  |
-| Mace09 | arm | 2026-10-25 00:47 | awaiting |  |
-| Mace11 | arm | 2026-10-25 15:17 | awaiting |  |
-| Mace10 | arm | 2026-10-25 15:21 | awaiting |  |
-| Mace12 | arm | 2026-10-25 15:24 | awaiting |  |
-| Male26 | set | 2026-10-25 15:46 | awaiting |  |
-| Mace13 | arm | 2026-10-25 16:33 | awaiting |  |
-| Mace16 | arm | 2026-10-25 16:40 | awaiting |  |
+| Mace09 | arm | 2026-10-25 17:49 | passed | the user in the studio on the mini, 2026-10-25: dark blue steel head, blue-painted edges, streaked shaft; reviewed build copied from LATKARFELMAC's darklord |
+| Mace11 | arm | 2026-10-25 17:52 | passed | the user in the studio on the mini, 2026-10-25: flared silver blades with deep blue fins and glowing blue lines, banded shaft; reviewed build copied from LATKARFELMAC's darklord |
+| Mace10 | arm | 2026-10-25 17:50 | passed | the user in the studio on the mini, 2026-10-25: steel-blue swept blades with eye gems, dark wrapped grip, blue-edged crystal pommel; reviewed build copied from LATKARFELMAC's darklord |
+| Mace12 | arm | 2026-10-25 17:53 | passed | the user in the studio on the mini, 2026-10-25: ice-blue crystal crown with red-orange glowing veins, navy shaft with gold bands; reviewed build copied from LATKARFELMAC's darklord |
+| Male26 | set | 2026-10-25 17:47 | passed | the user in the studio on the mini, 2026-10-25: dark navy plate with blue highlights, white-faced blue mask with fins, the five parts matching; reviewed build copied from LATKARFELMAC's darklord |
+| Mace13 | arm | 2026-10-25 17:54 | passed | the user in the studio on the mini, 2026-10-25: jagged dark purple-grey shard head with silver edges, thin dark shaft, claw end; reviewed build copied from LATKARFELMAC's darklord |
+| Mace16 | arm | 2026-10-25 17:56 | passed | the user in the studio on the mini, 2026-10-25: bronze-gold with dark streaks along the blades, no glow or chrome -- passed as it is; reviewed build copied from LATKARFELMAC's darklord |
+| HelmClass01 | figure | 2026-10-15 23:52 | awaiting |  |
+| ArmorClass01 | figure | 2026-10-16 09:19 | awaiting |  |
+| PantClass01 | figure | 2026-10-15 21:53 | awaiting |  |
+| GloveClass01 | figure | 2026-10-15 21:56 | awaiting |  |
+| BootClass01 | figure | 2026-10-15 21:58 | awaiting |  |
+| HelmClass201 | figure | 2026-10-15 23:54 | awaiting |  |
+| ArmorClass201 | figure | 2026-10-15 22:03 | awaiting |  |
+| PantClass201 | figure | 2026-10-15 22:08 | awaiting |  |
+| GloveClass201 | figure | 2026-10-15 22:14 | awaiting |  |
+| BootClass201 | figure | 2026-10-15 22:19 | awaiting |  |
+| HelmClass02 | figure | 2026-10-15 22:30 | awaiting |  |
+| ArmorClass02 | figure | 2026-10-15 22:33 | awaiting |  |
+| PantClass02 | figure | 2026-10-15 22:36 | awaiting |  |
+| GloveClass02 | figure | 2026-10-15 22:39 | awaiting |  |
+| BootClass02 | figure | 2026-10-15 22:42 | awaiting |  |
+| HelmClass202 | figure | 2026-10-15 22:45 | awaiting |  |
+| ArmorClass202 | figure | 2026-10-15 22:48 | awaiting |  |
+| PantClass202 | figure | 2026-10-15 22:51 | awaiting |  |
+| GloveClass202 | figure | 2026-10-15 22:53 | awaiting |  |
+| BootClass202 | figure | 2026-10-15 22:56 | awaiting |  |
+| HelmClass03 | figure | 2026-10-16 00:01 | awaiting |  |
+| ArmorClass03 | figure | 2026-10-16 00:04 | awaiting |  |
+| PantClass03 | figure | 2026-10-16 00:07 | awaiting |  |
+| GloveClass03 | figure | 2026-10-16 00:09 | awaiting |  |
+| BootClass03 | figure | 2026-10-16 00:12 | awaiting |  |
+| HelmClass04 | figure | 2026-10-16 00:14 | awaiting |  |
+| ArmorClass04 | figure | 2026-10-16 00:17 | awaiting |  |
+| PantClass04 | figure | 2026-10-16 00:20 | awaiting |  |
+| GloveClass04 | figure | 2026-10-16 00:23 | awaiting |  |
+| BootClass04 | figure | 2026-10-16 00:25 | awaiting |  |
+| Bow07 | arm | 2026-10-18 21:22 | awaiting |  |
+| Sword32 | arm | 2026-10-22 16:33 | awaiting |  |
+| Sword25 | arm | 2026-10-22 16:38 | awaiting |  |
+| Staff14 | arm | 2026-10-22 16:41 | awaiting |  |
+| Bow23 | arm | 2026-10-22 17:37 | awaiting |  |
+| Sword26 | arm | 2026-10-22 17:49 | awaiting |  |
+| Mace17 | arm | 2026-10-22 17:53 | awaiting |  |
+| Sword27 | arm | 2026-10-22 18:23 | awaiting |  |
+| Bow24 | arm | 2026-10-22 17:22 | awaiting |  |
+| Sword28 | arm | 2026-10-22 17:25 | awaiting |  |
+| Staff31 | arm | 2026-10-22 17:28 | awaiting |  |
+| Sword29 | arm | 2026-10-22 17:32 | awaiting |  |
+| Staff32 | arm | 2026-10-22 18:14 | awaiting |  |
+| Shield18 | arm | 2026-10-22 18:48 | awaiting |  |
+| Shield19 | arm | 2026-10-22 18:52 | awaiting |  |
+| Shield20 | arm | 2026-10-22 19:12 | awaiting |  |
+| Shield21 | arm | 2026-10-22 18:59 | awaiting |  |
+| Male30 | set | 2026-10-22 19:42 | awaiting |  |
+| Male31 | set | 2026-10-22 19:51 | awaiting |  |
+| Male32 | set | 2026-10-22 20:00 | awaiting |  |
+| Male33 | set | 2026-10-22 20:06 | awaiting |  |
+| Sword23 | arm | 2026-10-22 20:10 | awaiting |  |
+| Sword24 | arm | 2026-10-22 20:13 | awaiting |  |
+| Bow22 | arm | 2026-10-22 20:15 | awaiting |  |
+| Staff13 | arm | 2026-10-22 20:40 | awaiting |  |
+| Male35 | set | 2026-10-22 22:28 | awaiting |  |
+| Male36 | set | 2026-10-22 22:36 | awaiting |  |
+| Male37 | set | 2026-10-22 22:44 | awaiting |  |
+| Male38 | set | 2026-10-23 11:04 | awaiting |  |
+| Male21 | set | 2026-10-23 10:49 | awaiting |  |
+| Male47 | set | 2026-10-23 12:08 | awaiting |  |
+| Male53 | set | 2026-10-23 11:52 | awaiting |  |
+| Male49 | set | 2026-10-23 10:58 | awaiting |  |
+| Male51 | set | 2026-10-23 00:27 | awaiting |  |
+| Male46 | set | 2026-10-23 12:02 | awaiting |  |
+| Male48 | set | 2026-10-23 10:31 | awaiting |  |
+| Male50 | set | 2026-10-23 07:55 | awaiting |  |
+| Spear12 | arm | 2026-10-23 09:54 | awaiting |  |
+| Bow25 | arm | 2026-10-23 09:57 | awaiting |  |
+| Staff34 | arm | 2026-10-23 10:00 | awaiting |  |
+| Sword19 | arm | 2026-10-23 10:06 | awaiting |  |
+| NewFace05 | figure | 2026-10-23 16:15 | awaiting |  |
+| Elpis | figure | 2026-10-25 13:59 | awaiting |  |
