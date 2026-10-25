@@ -561,7 +561,7 @@ void Lobby::rebuild() {
         const float guildWide = guilded ? markSide + markGap + face.measure(guildPx, one.guild) : 0.0f;
         // A tab sits across the top edge: the words come down by its lower half.
         const float tabRoom = one.rebirths > 0 ? std::round(7.0f * u) : 0.0f;
-        const float bodyH = std::round(54.0f * u) + tabRoom, footH = guilded ? std::round(24.0f * u) : 0.0f;
+        const float bodyH = std::round(50.0f * u) + tabRoom, footH = guilded ? std::round(24.0f * u) : 0.0f;
         const float plateW = std::round(std::max({nameWide, subWide, guildWide, 130.0f * u}) + 40.0f * u);
         const float plateH = bodyH + footH;
         const Box plate{std::round(view_.plate[one.slot][0] - plateW * 0.5f),
@@ -575,7 +575,7 @@ void Lobby::rebuild() {
         const uint32_t card = gfx::rgba(0.063f, 0.055f, 0.047f, 0.95f);
         tip::panel(canvas_, plate, radius, card, card);
         // The name and the class line, under the tab's lower half when it has one.
-        const float nameBase = std::round(plate.y + tabRoom + 26.0f * u);
+        const float nameBase = std::round(plate.y + tabRoom + 22.0f * u);
         const float nameX = std::round(plate.midX() - nameWide * 0.5f);
         const uint32_t nameInk = picked ? sheet::ink::kTitle : sheet::ink::kFigure;
         if (gothic) {
@@ -586,7 +586,7 @@ void Lobby::rebuild() {
         } else {
             sheet::printed(canvas_, nameX, nameBase, namePx, nameInk, name);
         }
-        tip::tracked(canvas_, std::round(plate.midX() - subWide * 0.5f), std::round(plate.y + tabRoom + 45.0f * u),
+        tip::tracked(canvas_, std::round(plate.midX() - subWide * 0.5f), std::round(plate.y + tabRoom + 41.0f * u),
                      linePx, 0.12f, picked ? sheet::ink::kGold : sheet::ink::kMark, sub, 1.0f);
         if (guilded) {
             // The footer: darker, its top square under a hairline, its foot the card's corners.
@@ -614,9 +614,17 @@ void Lobby::rebuild() {
             tip::panel(canvas_, tab.grown(line), 3.0f * u + line, gold, gold);
             tip::panel(canvas_, tab, 3.0f * u, gfx::rgba(0.255f, 0.090f, 0.078f, 1.0f),
                        gfx::rgba(0.200f, 0.070f, 0.060f, 1.0f));
-            const float baseline = std::round(tab.y + tab.h * 0.5f + tabFace->ascent(size) * 0.5f);
-            canvas_.lettered(*tabFace, controls::wordTexture(), std::round(tab.midX() - wide * 0.5f), baseline,
-                             size, track, gfx::rgba(0.949f, 0.812f, 0.525f, 1.0f), words);
+            // Centred on the ink, not the advances, both ways: the capitals' side bearings and the
+            // face's ascent over the cap height set the words right of and under the middle.
+            const float k = tabFace->emScale(size);
+            const gfx::FaceGlyph* first = tabFace->glyph(words.front());
+            const gfx::FaceGlyph* last = tabFace->glyph(words.back());
+            const float inkLeft = first ? first->x0 * k : 0.0f;
+            const float inkRight = last ? wide - last->advance * k + last->x1 * k : wide;
+            const float cap = first ? -first->y0 * k : tabFace->ascent(size);
+            const float baseline = std::round(tab.y + (tab.h + cap) * 0.5f);
+            canvas_.lettered(*tabFace, controls::wordTexture(), std::round(tab.midX() - (inkLeft + inkRight) * 0.5f),
+                             baseline, size, track, gfx::rgba(0.949f, 0.812f, 0.525f, 1.0f), words);
         }
     }
 
