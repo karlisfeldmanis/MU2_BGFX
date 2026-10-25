@@ -1637,7 +1637,10 @@ void Play::update(double seconds) {
                         // down his aim (`c`), made six frames before the spikes so it breaks three
                         // after them, as MU's WeaponLevel 19 driver (GOBoid.cpp:764-768).
                         const float at[3] = {caster->crown[0], feet, caster->crown[2]};
-                        const float wait = float(happening.b) * float(kTickSeconds);
+                        // Raised a spike's rise early (Earthshake::kRiseSeconds), so the rock stands
+                        // as the numbers land on the realm's tick, the jolt and the crater with it.
+                        const float wait = std::max(0.0f, float(happening.b) * float(kTickSeconds) -
+                                                              Earthshake::kRiseSeconds);
                         earthshake_.strike(happening.who, at, wait);
                         const float way = float(happening.c) / 1000.0f;
                         fury_.cast(happening.who, at, std::atan2(std::cos(way), -std::sin(way)),

@@ -56,6 +56,11 @@ public:
     void gatherEffects(gfx::Effects& effects, float daylight) const;
     uint32_t lights(gfx::PointLight* out, uint32_t max) const;
     float quakeDegrees() const { return quake_; }
+    // How long a spike takes from fully sunk to standing: its clip's first key at 0.3 a reference
+    // frame (`sunk`). Play raises the rings this much before the realm's strike, so the rock is up
+    // as the numbers come rather than still underground (the user, 2026-10-25: "check
+    // synhronisation" -- the numbers led the spikes by 0.13 s, and the jolt with them).
+    static constexpr float kRiseSeconds = 1.0f / (0.3f * 25.0f);
     QuakeFor quakeFor;
     void clear();
 
