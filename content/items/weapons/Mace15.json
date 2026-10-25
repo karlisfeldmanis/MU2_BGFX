@@ -1,0 +1,313 @@
+{
+  "item": "Mace15",
+  "mu_name": "Soleil Scepter",
+  "mu_name_from": "MODEL_SOLEIL_SCEPTER (MODEL_MACE + 14), loaded from Item/HDK_Mace.bmd (ZzzOpenData.cpp:1097). Ours is Mace15 by the index-plus-one rule. Group 2 number 14 in OpenMU S6 Weapons.cs:196.",
+  "profile": "weapon",
+  "stats": {
+    "call": "CreateWeapon(2, 14, 0, 66, 1, 4, true, \"Soleil Scepter\", 146, 130, 153, 40, 95, 84, 380, 80, 15, 0, 0, 0, 0, 0, 0, 1, 0, 0)",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Weapons.cs:196",
+    "call_note": "CreateWeapon(group, number, slot, skillNumber, width, height, dropsFromMonsters, name, dropLevel, minimumDamage, maximumDamage, attackSpeed, durability, magicPower, levelRequirement, strengthRequirement, agilityRequirement, energyRequirement, vitalityRequirement, wizardClass, knightClass, elfClass, magicGladiatorClass, darkLordClass, summonerClass, ragefighterClass), openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Weapons.cs:304.",
+    "group": 2,
+    "number": 14,
+    "slot": 0,
+    "skill": 66,
+    "width": 1,
+    "height": 4,
+    "drops_from_monsters": true,
+    "drop_level": 146,
+    "minimum_damage": 130,
+    "maximum_damage": 153,
+    "attack_speed": 40,
+    "durability": 95,
+    "magic_power": 84,
+    "requires": {
+      "level": 380,
+      "strength": 80,
+      "agility": 15,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "lord"
+    ]
+  },
+  "sheets": {
+    "dark": "soleil_dark.png"
+  },
+  "why_this_one": "The Dark Lord's 380 scepter, Sunlight's pair: Kanturu gear by its level (sim::kanturuGear) (docs/plans/dark-lord-gear.md; lords only). The user, 2026-10-25: 'we need missing Dark lord items', 'make missing peices'.",
+  "stance": "sword",
+  "stance_from": "Width 1: a one-handed scepter stands PLAYER_STOP_SWORD, as every one-handed mace here and as MuMain has him (ZzzCharacter.cpp:345-350).",
+  "two_handed": false,
+  "sheet_from": "Data/Item/dark.OZJ, decoded with pipeline/decode_texture.py as soleil_dark.png (MU's name is generic): gold and black.",
+  "sheet_materials": {
+    "dark": "painted_steel"
+  },
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "chrome": [
+    {
+      "slot": "dark",
+      "image": "chrome06",
+      "uv": "mesh",
+      "where": "over",
+      "light": 0.6,
+      "scrolls_per_second": -0.2,
+      "axis": "uv"
+    }
+  ],
+  "chrome_from": "RenderPartObjectBody's arm with the Sylph Wind Bow (ZzzObject.cpp:7644-7666): mesh 0, then again RENDER_BRIGHT with BITMAP_CHROME6, U and V both (WorldTime % 4000)*0.0002 - 0.3: a gold sheen drifting across it (scrolls_per_second -0.2 on both axes, minus the rate), at Bow22's 0.6 for our bloom. pipeline/chrome_sheets.py.",
+  "effects_note": "Shine colour 22 (ZzzObject.cpp:6632). Held: orange (1, 0.3, 0) shinies and a light at (0, -100, 0) on bone 0 and two small shinies at (0, 100, 0), every scale rolled each frame (ZzzCharacter.cpp:7106-7128; fx/held_lights SoleilScepter).",
+  "rig_note": "Mace15.rig.json from export-rig of HDK_Mace.bmd: three bones, one still key; kept for bone 0.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 40,
+      "area": 860.4,
+      "along": [
+        41.0,
+        60.2
+      ],
+      "mu_uv": [
+        0.252,
+        0.504,
+        0.623,
+        0.986
+      ],
+      "bake_uv": [
+        0.01,
+        0.01,
+        0.747,
+        0.958
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 42,
+      "area": 865.3,
+      "along": [
+        41.0,
+        60.2
+      ],
+      "mu_uv": [
+        0.252,
+        0.504,
+        0.623,
+        0.986
+      ],
+      "bake_uv": [
+        0.01,
+        0.01,
+        0.97,
+        0.892
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 112,
+      "area": 3652.5,
+      "along": [
+        -100.5,
+        100.1
+      ],
+      "mu_uv": [
+        0.702,
+        0.0,
+        0.99,
+        0.993
+      ],
+      "bake_uv": [
+        0.152,
+        0.011,
+        0.886,
+        0.929
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 24,
+      "area": 149.3,
+      "along": [
+        -109.3,
+        -85.4
+      ],
+      "mu_uv": [
+        0.308,
+        0.031,
+        0.66,
+        0.985
+      ],
+      "bake_uv": [
+        0.282,
+        0.01,
+        0.915,
+        0.925
+      ]
+    },
+    {
+      "island": 4,
+      "material": "painted_steel",
+      "triangles": 24,
+      "area": 149.3,
+      "along": [
+        -109.3,
+        -85.4
+      ],
+      "mu_uv": [
+        0.308,
+        0.031,
+        0.66,
+        0.985
+      ],
+      "bake_uv": [
+        0.01,
+        0.155,
+        0.663,
+        0.966
+      ]
+    },
+    {
+      "island": 5,
+      "material": "painted_steel",
+      "triangles": 24,
+      "area": 149.3,
+      "along": [
+        -109.3,
+        -85.4
+      ],
+      "mu_uv": [
+        0.308,
+        0.031,
+        0.66,
+        0.985
+      ],
+      "bake_uv": [
+        0.211,
+        0.011,
+        0.97,
+        0.974
+      ]
+    },
+    {
+      "island": 6,
+      "material": "painted_steel",
+      "triangles": 24,
+      "area": 149.3,
+      "along": [
+        -109.3,
+        -85.4
+      ],
+      "mu_uv": [
+        0.308,
+        0.031,
+        0.66,
+        0.985
+      ],
+      "bake_uv": [
+        0.133,
+        0.011,
+        0.913,
+        0.99
+      ]
+    },
+    {
+      "island": 7,
+      "material": "painted_steel",
+      "triangles": 32,
+      "area": 1189.4,
+      "along": [
+        67.9,
+        128.3
+      ],
+      "mu_uv": [
+        0.015,
+        0.007,
+        0.597,
+        0.982
+      ],
+      "bake_uv": [
+        0.01,
+        0.01,
+        0.798,
+        0.452
+      ]
+    },
+    {
+      "island": 8,
+      "material": "painted_steel",
+      "triangles": 32,
+      "area": 1190.6,
+      "along": [
+        67.9,
+        128.3
+      ],
+      "mu_uv": [
+        0.015,
+        0.007,
+        0.597,
+        0.982
+      ],
+      "bake_uv": [
+        0.042,
+        0.01,
+        0.352,
+        0.702
+      ]
+    },
+    {
+      "island": 9,
+      "material": "painted_steel",
+      "triangles": 32,
+      "area": 1190.6,
+      "along": [
+        67.9,
+        128.3
+      ],
+      "mu_uv": [
+        0.015,
+        0.007,
+        0.597,
+        0.982
+      ],
+      "bake_uv": [
+        0.19,
+        0.011,
+        0.457,
+        0.872
+      ]
+    },
+    {
+      "island": 10,
+      "material": "painted_steel",
+      "triangles": 32,
+      "area": 1189.4,
+      "along": [
+        67.9,
+        128.3
+      ],
+      "mu_uv": [
+        0.015,
+        0.007,
+        0.597,
+        0.982
+      ],
+      "bake_uv": [
+        0.011,
+        0.196,
+        0.743,
+        0.744
+      ]
+    }
+  ]
+}

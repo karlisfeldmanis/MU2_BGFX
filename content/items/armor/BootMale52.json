@@ -1,0 +1,100 @@
+{
+  "item": "BootMale52",
+  "mu_name": "Phaewang Boots",
+  "mu_name_from": "OpenMU VersionSeasonSix's CreateBoots (openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:341); the model is Player/BootMale52.bmd, which MuMain's OpenItems loads for it (MuMain/src/source/Engine/Object/ZzzOpenData.cpp:274).",
+  "profile": "armour",
+  "stats": {
+    "call": "CreateBoots(51, \"Phaewang Boots\", 98, 38, 0, 86, 0, 105, 38, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0)",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:341",
+    "call_note": "CreateBoots(number, name, dropLevel, defense, walkSpeed, durability, levelRequirement, strengthRequirement, agilityRequirement, energyRequirement, vitalityRequirement, leadershipRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel, magicGladiatorClassLevel, darkLordClassLevel, summonerClassLevel, ragefighterClassLevel), openmu/src/Persistence/Initialization/Items/ArmorInitializerBase.cs:299.",
+    "number": 51,
+    "drop_level": 98,
+    "defense": 38,
+    "walk_speed": 0,
+    "durability": 86,
+    "drops_from_monsters": true,
+    "group": 11,
+    "slot": 6,
+    "width": 2,
+    "height": 2,
+    "requires": {
+      "level": 380,
+      "strength": 105,
+      "agility": 38,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "lord"
+    ]
+  },
+  "sheets": {
+    "Item5001_Boot": "item5001_boot.png"
+  },
+  "why_this_one": "The Dark Lord's Paewang set (docs/plans/dark-lord-gear.md batch 5; OpenMU's rows, drop 98-132, lords only). The user, 2026-10-25: 'we need missing Dark lord items', 'make missing peices'. Level 380 (MuMain's item.bmd; the user picked it for Paewang), so Kanturu gear through sim::kanturuGear.",
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py under MU's own names, lower-cased: red lacquer traced in gold; skinClass305 the face under the helm.",
+  "sheet_materials": {
+    "Item5001_Boot": "painted_steel",
+    "item5001_boot": "painted_steel"
+  },
+  "material_note": "painted_steel with the cast grain for the plate, the shading painted on, as the Dark Lord's other sets.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, shallow for the gloss, as the other sets.",
+  "effects_note": "MuMain has no render arm for MODEL_*  + 51 (the socket sets' loop) (no glow, no chrome pass, no sprite; docs/plans/dark-lord-gear.md). Its refine colour is PartObjectColor 40, (0.7, 0.2, 0.2) (ZzzObject.cpp:6739-6765, 6788-6818; src/game/shine.cpp); its full set the generic aura (fx/set_shine).",
+  "level_note": "MuMain's item.bmd asks 380, OpenMU 0; the user, 2026-10-25, picked 380: Kanturu gear.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 126,
+      "area": 4917.6,
+      "along": [
+        -12.3,
+        26.2
+      ],
+      "mu_uv": [
+        0.023,
+        0.024,
+        0.988,
+        0.982
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.864,
+        0.972
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 126,
+      "area": 4917.6,
+      "along": [
+        -12.3,
+        26.2
+      ],
+      "mu_uv": [
+        0.023,
+        0.024,
+        0.988,
+        0.982
+      ],
+      "bake_uv": [
+        0.012,
+        0.078,
+        0.993,
+        0.978
+      ]
+    }
+  ]
+}

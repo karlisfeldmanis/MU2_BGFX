@@ -1,0 +1,207 @@
+{
+  "item": "PantMale34",
+  "mu_name": "Sunlight Pants",
+  "mu_name_from": "OpenMU VersionSeasonSix's CreateArmor (openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:209); the model is Player/HDK_PantMale05.bmd, which MuMain's OpenItems loads for it (MuMain/src/source/Engine/Object/ZzzOpenData.cpp:222). Ours is PantMale34 by the index-plus-one rule (MU's number 33).",
+  "profile": "armour",
+  "stats": {
+    "call": "CreateArmor(33, 4, 2, 2, \"Sunlight Pants\", 140, 52, 82, 380, 62, 16, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0)",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:209",
+    "call_note": "CreateArmor(number, slot, width, height, name, dropLevel, defense, durability, levelRequirement, strengthRequirement, agilityRequirement, energyRequirement, vitalityRequirement, leadershipRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel, magicGladiatorClassLevel, darkLordClassLevel, summonerClassLevel, ragefighterClassLevel, isShield), openmu/src/Persistence/Initialization/Items/ArmorInitializerBase.cs:367.",
+    "number": 33,
+    "slot": 4,
+    "width": 2,
+    "height": 2,
+    "drop_level": 140,
+    "defense": 52,
+    "durability": 82,
+    "drops_from_monsters": true,
+    "group": 9,
+    "requires": {
+      "level": 380,
+      "strength": 62,
+      "agility": 16,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "lord"
+    ]
+  },
+  "sheets": {
+    "dark400_lower": "dark400_lower.png"
+  },
+  "why_this_one": "The Dark Lord's Sunlight set (docs/plans/dark-lord-gear.md batch 6; OpenMU's rows, drop 110-147, lords only). The user, 2026-10-25: 'we need missing Dark lord items', 'make missing peices'. Level 380 (MuMain's item.bmd; the user picked it for Paewang), so Kanturu gear through sim::kanturuGear.",
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py under MU's own names, lower-cased: bright gold plate.",
+  "sheet_materials": {
+    "dark400_lower": "painted_steel"
+  },
+  "material_note": "painted_steel with the cast grain for the plate, the shading painted on, as the Dark Lord's other sets.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, shallow for the gloss, as the other sets.",
+  "effects_note": "MuMain has no render arm for MODEL_SUNLIGHT_* (no glow, no chrome pass, no sprite; docs/plans/dark-lord-gear.md). Its refine colour is PartObjectColor 22, (0.45, 0.45, 0.23) (ZzzObject.cpp:6739-6765, 6788-6818; src/game/shine.cpp); its full set the generic aura (fx/set_shine). MU also lays a +10/+11 boots aura on the 380 sets (ZzzCharacter.cpp:11004-11030), which fx/set_shine has for none of them yet.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 31,
+      "area": 1944.0,
+      "along": [
+        -13.5,
+        24.0
+      ],
+      "mu_uv": [
+        0.009,
+        0.451,
+        0.891,
+        0.989
+      ],
+      "bake_uv": [
+        0.157,
+        0.008,
+        0.624,
+        0.408
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 14,
+      "area": 1123.9,
+      "along": [
+        -12.0,
+        22.0
+      ],
+      "mu_uv": [
+        0.404,
+        0.538,
+        0.783,
+        0.992
+      ],
+      "bake_uv": [
+        0.053,
+        0.489,
+        0.961,
+        0.878
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 8,
+      "area": 1085.4,
+      "along": [
+        -11.6,
+        21.5
+      ],
+      "mu_uv": [
+        0.015,
+        0.487,
+        0.087,
+        0.58
+      ],
+      "bake_uv": [
+        0.302,
+        0.008,
+        0.391,
+        0.055
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 31,
+      "area": 1944.0,
+      "along": [
+        -13.5,
+        24.0
+      ],
+      "mu_uv": [
+        0.009,
+        0.451,
+        0.891,
+        0.989
+      ],
+      "bake_uv": [
+        0.008,
+        0.253,
+        0.565,
+        0.642
+      ]
+    },
+    {
+      "island": 4,
+      "material": "painted_steel",
+      "triangles": 14,
+      "area": 1123.9,
+      "along": [
+        -12.0,
+        22.0
+      ],
+      "mu_uv": [
+        0.404,
+        0.538,
+        0.783,
+        0.992
+      ],
+      "bake_uv": [
+        0.438,
+        0.715,
+        0.932,
+        0.989
+      ]
+    },
+    {
+      "island": 5,
+      "material": "painted_steel",
+      "triangles": 8,
+      "area": 1085.4,
+      "along": [
+        -11.6,
+        21.5
+      ],
+      "mu_uv": [
+        0.015,
+        0.487,
+        0.087,
+        0.58
+      ],
+      "bake_uv": [
+        0.078,
+        0.074,
+        0.398,
+        0.37
+      ]
+    },
+    {
+      "island": 6,
+      "material": "painted_steel",
+      "triangles": 98,
+      "area": 7739.4,
+      "along": [
+        -10.4,
+        21.5
+      ],
+      "mu_uv": [
+        0.018,
+        0.02,
+        0.986,
+        0.485
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.947,
+        0.992
+      ]
+    }
+  ]
+}

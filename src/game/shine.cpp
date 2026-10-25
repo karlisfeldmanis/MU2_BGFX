@@ -98,6 +98,8 @@ int colourOf(int group, int number) {
     if (group == 2 && number == 10) return 12;                   // GREAT_SCEPTER (:6592); LORD's 0
     if (group == 2 && number == 12) return 16;                   // GREAT_LORD_SCEPTER (:6612)
     if (group == 2 && number == 15) return 28;                   // SHINING_SCEPTER (:6648)
+    if (group == 2 && number == 14) return 22;                   // SOLEIL_SCEPTER (:6632)
+    if (group == 2 && number == 17) return 40;                   // ABSOLUTE_SCEPTER (:6678)
     if (group == 6 && number == 21) return 30;                   // CROSS_SHIELD (:6686)
     if (group >= 7 && group <= 11) {
         switch (number) {

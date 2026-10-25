@@ -242,10 +242,13 @@ public:
         GreatLordScepter,
         ShiningScepter,
         CrossShield,
+        DivineScepter,
+        SoleilScepter,
+        AbsoluteScepter,
     };
     // The Stinger Bow's 44 bones, each with its light (ZzzCharacter.cpp:7972-7999).
     static constexpr int kMostPoints = 44;
-    static constexpr Item kItems[55] = {Item::SaintCrossbow,   Item::GrandSoulShield,
+    static constexpr Item kItems[58] = {Item::SaintCrossbow,   Item::GrandSoulShield,
                                         Item::DragonSpear,     Item::DragonSoulStaff,
                                         Item::ElementalMace,   Item::GreatReignCrossbow,
                                         Item::ThunderBlade,    Item::LegendaryShield,
@@ -272,7 +275,8 @@ public:
                                         Item::BattleScepter,   Item::MasterScepter,
                                         Item::GreatScepter,    Item::LordScepter,
                                         Item::GreatLordScepter, Item::ShiningScepter,
-                                        Item::CrossShield};
+                                        Item::CrossShield,     Item::DivineScepter,
+                                        Item::SoleilScepter,   Item::AbsoluteScepter};
 
     bool open(const std::string& assetDir, content::Textures& textures,
               const content::Showing& table);
@@ -303,6 +307,8 @@ private:
     bgfx::TextureHandle flare_ = BGFX_INVALID_HANDLE;  // Flare02, BITMAP_FLARE + 1
     bgfx::TextureHandle thunder_ = BGFX_INVALID_HANDLE;  // BITMAP_JOINT_THUNDER
     bgfx::TextureHandle lightning_ = BGFX_INVALID_HANDLE;  // BITMAP_LIGHTNING + 1, lightning2
+    bgfx::TextureHandle mega_[3] = {BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE,
+                                    BGFX_INVALID_HANDLE};  // BITMAP_LIGHTNING_MEGA1..3
     std::vector<Held> held_;
     // MU's per-frame rolls, held between its frames: RenderCharacter's and RenderLinkObject's.
     float handLuminosity_ = 0.85f;

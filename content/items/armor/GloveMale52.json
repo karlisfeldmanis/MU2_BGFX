@@ -1,0 +1,144 @@
+{
+  "item": "GloveMale52",
+  "mu_name": "Paewang Gloves",
+  "mu_name_from": "OpenMU VersionSeasonSix's CreateGloves (openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:286); the model is Player/GloveMale52.bmd, which MuMain's OpenItems loads for it (MuMain/src/source/Engine/Object/ZzzOpenData.cpp:274).",
+  "profile": "armour",
+  "stats": {
+    "call": "CreateGloves(51, \"Paewang Gloves\", 101, 34, 7, 86, 0, 105, 38, 0, 0, 0, 0, 1, 0)",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:286",
+    "call_note": "CreateGloves(number, name, dropLevel, defense, attackSpeed, durability, levelRequirement, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel, magicGladiatorClassLevel, darkLordClassLevel, summonerClassLevel), openmu/src/Persistence/Initialization/Items/ArmorInitializerBase.cs:234.",
+    "number": 51,
+    "drop_level": 101,
+    "defense": 34,
+    "attack_speed": 7,
+    "durability": 86,
+    "drops_from_monsters": true,
+    "group": 10,
+    "slot": 5,
+    "width": 2,
+    "height": 2,
+    "requires": {
+      "level": 380,
+      "strength": 105,
+      "agility": 38,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "lord"
+    ]
+  },
+  "sheets": {
+    "Item5001_Glove": "item5001_glove.png"
+  },
+  "why_this_one": "The Dark Lord's Paewang set (docs/plans/dark-lord-gear.md batch 5; OpenMU's rows, drop 98-132, lords only). The user, 2026-10-25: 'we need missing Dark lord items', 'make missing peices'. Level 380 (MuMain's item.bmd; the user picked it for Paewang), so Kanturu gear through sim::kanturuGear.",
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py under MU's own names, lower-cased: red lacquer traced in gold; skinClass305 the face under the helm.",
+  "sheet_materials": {
+    "Item5001_Glove": "painted_steel",
+    "item5001_glove": "painted_steel"
+  },
+  "material_note": "painted_steel with the cast grain for the plate, the shading painted on, as the Dark Lord's other sets.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, shallow for the gloss, as the other sets.",
+  "effects_note": "MuMain has no render arm for MODEL_*  + 51 (the socket sets' loop) (no glow, no chrome pass, no sprite; docs/plans/dark-lord-gear.md). Its refine colour is PartObjectColor 40, (0.7, 0.2, 0.2) (ZzzObject.cpp:6739-6765, 6788-6818; src/game/shine.cpp); its full set the generic aura (fx/set_shine).",
+  "level_note": "MuMain's item.bmd asks 380, OpenMU 0; the user, 2026-10-25, picked 380: Kanturu gear.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 58,
+      "area": 2052.4,
+      "along": [
+        -8.1,
+        8.4
+      ],
+      "mu_uv": [
+        0.027,
+        0.027,
+        0.978,
+        0.561
+      ],
+      "bake_uv": [
+        0.472,
+        0.008,
+        0.88,
+        0.782
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 58,
+      "area": 2052.4,
+      "along": [
+        -8.1,
+        8.4
+      ],
+      "mu_uv": [
+        0.027,
+        0.027,
+        0.978,
+        0.561
+      ],
+      "bake_uv": [
+        0.489,
+        0.008,
+        0.945,
+        0.8
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 90,
+      "area": 2202.0,
+      "along": [
+        -9.0,
+        9.0
+      ],
+      "mu_uv": [
+        0.019,
+        0.429,
+        0.985,
+        0.979
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.986,
+        0.907
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 90,
+      "area": 2202.0,
+      "along": [
+        -9.0,
+        9.0
+      ],
+      "mu_uv": [
+        0.019,
+        0.429,
+        0.985,
+        0.979
+      ],
+      "bake_uv": [
+        0.014,
+        0.403,
+        0.992,
+        0.952
+      ]
+    }
+  ]
+}

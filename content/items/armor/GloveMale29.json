@@ -1,0 +1,99 @@
+{
+  "item": "GloveMale29",
+  "mu_name": "Dark Master Gloves",
+  "mu_name_from": "OpenMU VersionSeasonSix's CreateGloves (openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:263); the model is Player/GloveMale29.bmd, which MuMain's OpenItems loads for it (MuMain/src/source/Engine/Object/ZzzOpenData.cpp:213).",
+  "profile": "armour",
+  "stats": {
+    "call": "CreateGloves(28, \"Dark Master Gloves\", 89, 29, 4, 78, 0, 80, 21, 0, 0, 0, 0, 1, 0)",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:263",
+    "call_note": "CreateGloves(number, name, dropLevel, defense, attackSpeed, durability, levelRequirement, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel, magicGladiatorClassLevel, darkLordClassLevel, summonerClassLevel), openmu/src/Persistence/Initialization/Items/ArmorInitializerBase.cs:234.",
+    "number": 28,
+    "drop_level": 89,
+    "defense": 29,
+    "attack_speed": 4,
+    "durability": 78,
+    "drops_from_monsters": true,
+    "group": 10,
+    "slot": 5,
+    "width": 2,
+    "height": 2,
+    "requires": {
+      "level": 0,
+      "strength": 80,
+      "agility": 21,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "lord"
+    ]
+  },
+  "sheets": {
+    "KSgp": "ksgp.png"
+  },
+  "why_this_one": "The Dark Lord's Dark Master set (docs/plans/dark-lord-gear.md batch 4; OpenMU's rows, drop 89-117, lords only). The user, 2026-10-25: 'we need missing Dark lord items', 'make missing peices'.",
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py under MU's own names, lower-cased: navy scale traced in gold; KSup2 the cut-out mail.",
+  "sheet_materials": {
+    "KSgp": "painted_steel",
+    "ksgp": "painted_steel"
+  },
+  "material_note": "painted_steel with the cast grain for the plate, the shading painted on, as the Dark Lord's other sets.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, shallow for the gloss, as the other sets.",
+  "effects_note": "MuMain has no render arm for MODEL_DARK_MASTER_* (no glow, no chrome pass, no sprite; docs/plans/dark-lord-gear.md). Its refine colour is PartObjectColor 15, (0.2, 0.3, 0.6) (ZzzObject.cpp:6739-6765, 6788-6818; src/game/shine.cpp); its full set the generic aura (fx/set_shine).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 78,
+      "area": 2056.7,
+      "along": [
+        -15.7,
+        10.9
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.996,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.006,
+        0.829,
+        0.828
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 78,
+      "area": 2056.5,
+      "along": [
+        -15.7,
+        10.9
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.996,
+        0.999
+      ],
+      "bake_uv": [
+        0.018,
+        0.006,
+        0.995,
+        0.995
+      ]
+    }
+  ]
+}

@@ -1,0 +1,211 @@
+{
+  "item": "HelmMale34",
+  "mu_name": "Sunlight Mask",
+  "mu_name_from": "OpenMU VersionSeasonSix's CreateArmor (openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:94); the model is Player/HDK_HelmMale05.bmd, which MuMain's OpenItems loads for it (MuMain/src/source/Engine/Object/ZzzOpenData.cpp:233). Ours is HelmMale34 by the index-plus-one rule (MU's number 33).",
+  "profile": "armour",
+  "stats": {
+    "call": "CreateArmor(33, 2, 2, 2, \"Sunlight Mask\", 130, 46, 82, 380, 62, 16, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0)",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:94",
+    "call_note": "CreateArmor(number, slot, width, height, name, dropLevel, defense, durability, levelRequirement, strengthRequirement, agilityRequirement, energyRequirement, vitalityRequirement, leadershipRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel, magicGladiatorClassLevel, darkLordClassLevel, summonerClassLevel, ragefighterClassLevel, isShield), openmu/src/Persistence/Initialization/Items/ArmorInitializerBase.cs:367.",
+    "number": 33,
+    "slot": 2,
+    "width": 2,
+    "height": 2,
+    "drop_level": 130,
+    "defense": 46,
+    "durability": 82,
+    "drops_from_monsters": true,
+    "group": 7,
+    "requires": {
+      "level": 380,
+      "strength": 62,
+      "agility": 16,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "lord"
+    ]
+  },
+  "sheets": {
+    "level_man02": "lightplate_level_man02.png",
+    "hair_R": "lightplate_hair_r.png",
+    "dark400_helmet": "dark400_helmet.png"
+  },
+  "why_this_one": "The Dark Lord's Sunlight set (docs/plans/dark-lord-gear.md batch 6; OpenMU's rows, drop 110-147, lords only). The user, 2026-10-25: 'we need missing Dark lord items', 'make missing peices'. Level 380 (MuMain's item.bmd; the user picked it for Paewang), so Kanturu gear through sim::kanturuGear.",
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py under MU's own names, lower-cased: bright gold plate.",
+  "sheet_materials": {
+    "dark400_helmet": "painted_steel",
+    "hair_R": "hair",
+    "hair_r": "hair",
+    "level_man02": "skin"
+  },
+  "material_note": "painted_steel with the cast grain for the plate, the shading painted on, as the Dark Lord's other sets.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, shallow for the gloss, as the other sets.",
+  "effects_note": "MuMain has no render arm for MODEL_SUNLIGHT_* (no glow, no chrome pass, no sprite; docs/plans/dark-lord-gear.md). Its refine colour is PartObjectColor 22, (0.45, 0.45, 0.23) (ZzzObject.cpp:6739-6765, 6788-6818; src/game/shine.cpp); its full set the generic aura (fx/set_shine). MU also lays a +10/+11 boots aura on the 380 sets (ZzzCharacter.cpp:11004-11030), which fx/set_shine has for none of them yet.",
+  "tiled": true,
+  "tiled_why": "An added sheet needs its own material (Wing04, Helper01): the hair_R shell, which MU draws added.",
+  "additive": [
+    "hair_R"
+  ],
+  "additive_from": "A texture named _R is MuMain's Bright mesh (TextureScript.cpp:31-40), RenderBody making it its own BlendMesh (ZzzBMD.cpp:2236-2242): the white hair drawn added.",
+  "glow": {
+    "hair_R": {
+      "pulse": [
+        0.1,
+        0.7
+      ],
+      "pulse_rate": "slow"
+    }
+  },
+  "glow_note": "A Dark Lord's helm lights its blend mesh at sin(WorldTime*0.001)*0.1 + 0.7 (ZzzCharacter.cpp:9608-9610): the hair breathing between 0.6 and 0.8.",
+  "separate_meshes": true,
+  "separate_meshes_why": "The hair shell, the face and the mask are three meshes; kept apart so the hair is not welded into the head.",
+  "cull": false,
+  "cull_from": "As HelmClass05: MU's hair is flat single-sided fins, and culled they wink out as the head turns.",
+  "face_note": "level_man02 and hair_R are MuMain's same Player sheets as Light Plate's, so this helm reuses lightplate_level_man02.png and lightplate_hair_r.png (pixel-identical).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 94,
+      "area": 1435.5,
+      "along": [
+        -11.7,
+        19.2
+      ],
+      "mu_uv": [
+        0.018,
+        0.022,
+        0.978,
+        0.962
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.86,
+        0.941
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 15,
+      "area": 103.8,
+      "along": [
+        5.5,
+        12.1
+      ],
+      "mu_uv": [
+        0.021,
+        0.475,
+        0.313,
+        0.984
+      ],
+      "bake_uv": [
+        0.78,
+        0.009,
+        0.985,
+        0.399
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 15,
+      "area": 103.8,
+      "along": [
+        5.5,
+        12.1
+      ],
+      "mu_uv": [
+        0.021,
+        0.475,
+        0.313,
+        0.984
+      ],
+      "bake_uv": [
+        0.017,
+        0.721,
+        0.992,
+        0.986
+      ]
+    },
+    {
+      "island": 3,
+      "material": "hair",
+      "triangles": 68,
+      "area": 1580.5,
+      "along": [
+        -11.9,
+        18.8
+      ],
+      "mu_uv": [
+        0.086,
+        0.135,
+        0.871,
+        0.867
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.36,
+        0.268
+      ]
+    },
+    {
+      "island": 4,
+      "material": "hair",
+      "triangles": 68,
+      "area": 1510.7,
+      "along": [
+        -11.4,
+        18.3
+      ],
+      "mu_uv": [
+        0.766,
+        0.762,
+        0.966,
+        0.994
+      ],
+      "bake_uv": [
+        0.01,
+        0.009,
+        0.276,
+        0.092
+      ]
+    },
+    {
+      "island": 5,
+      "material": "skin",
+      "triangles": 49,
+      "area": 673.1,
+      "along": [
+        -4.6,
+        13.4
+      ],
+      "mu_uv": [
+        0.673,
+        0.764,
+        0.757,
+        0.985
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.345,
+        0.511
+      ]
+    }
+  ]
+}

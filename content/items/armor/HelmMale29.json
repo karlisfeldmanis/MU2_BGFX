@@ -1,0 +1,212 @@
+{
+  "item": "HelmMale29",
+  "mu_name": "Dark Master Mask",
+  "mu_name_from": "OpenMU VersionSeasonSix's CreateArmor (openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:90); the model is Player/HelmMale29.bmd, which MuMain's OpenItems loads for it (MuMain/src/source/Engine/Object/ZzzOpenData.cpp:213).",
+  "profile": "armour",
+  "stats": {
+    "call": "CreateArmor(28, 2, 2, 2, \"Dark Master Mask\", 106, 34, 78, 0, 80, 21, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0)",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:90",
+    "call_note": "CreateArmor(number, slot, width, height, name, dropLevel, defense, durability, levelRequirement, strengthRequirement, agilityRequirement, energyRequirement, vitalityRequirement, leadershipRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel, magicGladiatorClassLevel, darkLordClassLevel, summonerClassLevel, ragefighterClassLevel, isShield), openmu/src/Persistence/Initialization/Items/ArmorInitializerBase.cs:367.",
+    "number": 28,
+    "slot": 2,
+    "width": 2,
+    "height": 2,
+    "drop_level": 106,
+    "defense": 34,
+    "durability": 78,
+    "drops_from_monsters": true,
+    "group": 7,
+    "requires": {
+      "level": 0,
+      "strength": 80,
+      "agility": 21,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "lord"
+    ]
+  },
+  "sheets": {
+    "level_man02": "lightplate_level_man02.png",
+    "hair_R": "lightplate_hair_r.png",
+    "KShp": "kshp.png"
+  },
+  "why_this_one": "The Dark Lord's Dark Master set (docs/plans/dark-lord-gear.md batch 4; OpenMU's rows, drop 89-117, lords only). The user, 2026-10-25: 'we need missing Dark lord items', 'make missing peices'.",
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py under MU's own names, lower-cased: navy scale traced in gold; KSup2 the cut-out mail.",
+  "sheet_materials": {
+    "KShp": "painted_steel",
+    "kshp": "painted_steel",
+    "hair_R": "hair",
+    "hair_r": "hair",
+    "level_man02": "skin"
+  },
+  "material_note": "painted_steel with the cast grain for the plate, the shading painted on, as the Dark Lord's other sets.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, shallow for the gloss, as the other sets.",
+  "effects_note": "MuMain has no render arm for MODEL_DARK_MASTER_* (no glow, no chrome pass, no sprite; docs/plans/dark-lord-gear.md). Its refine colour is PartObjectColor 15, (0.2, 0.3, 0.6) (ZzzObject.cpp:6739-6765, 6788-6818; src/game/shine.cpp); its full set the generic aura (fx/set_shine).",
+  "tiled": true,
+  "tiled_why": "An added sheet needs its own material (Wing04, Helper01): the hair_R shell, which MU draws added.",
+  "additive": [
+    "hair_R"
+  ],
+  "additive_from": "A texture named _R is MuMain's Bright mesh (TextureScript.cpp:31-40), RenderBody making it its own BlendMesh (ZzzBMD.cpp:2236-2242): the white hair drawn added.",
+  "glow": {
+    "hair_R": {
+      "pulse": [
+        0.1,
+        0.7
+      ],
+      "pulse_rate": "slow"
+    }
+  },
+  "glow_note": "A Dark Lord's helm lights its blend mesh at sin(WorldTime*0.001)*0.1 + 0.7 (ZzzCharacter.cpp:9608-9610): the hair breathing between 0.6 and 0.8.",
+  "separate_meshes": true,
+  "separate_meshes_why": "The hair shell, the face and the mask are three meshes; kept apart so the hair is not welded into the head.",
+  "cull": false,
+  "cull_from": "As HelmClass05: MU's hair is flat single-sided fins, and culled they wink out as the head turns.",
+  "face_note": "level_man02 and hair_R are MuMain's same Player sheets as Light Plate's, so this helm reuses lightplate_level_man02.png and lightplate_hair_r.png (pixel-identical).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "hair",
+      "triangles": 64,
+      "area": 1358.9,
+      "along": [
+        -11.9,
+        14.3
+      ],
+      "mu_uv": [
+        0.035,
+        0.368,
+        0.916,
+        0.919
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.468,
+        0.229
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 6,
+      "area": 63.0,
+      "along": [
+        7.5,
+        15.9
+      ],
+      "mu_uv": [
+        0.119,
+        0.02,
+        0.904,
+        0.253
+      ],
+      "bake_uv": [
+        0.071,
+        0.006,
+        0.507,
+        0.489
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 58,
+      "area": 1033.0,
+      "along": [
+        1.0,
+        17.1
+      ],
+      "mu_uv": [
+        0.005,
+        0.119,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.063,
+        0.992,
+        0.994
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 6,
+      "area": 63.0,
+      "along": [
+        7.5,
+        15.9
+      ],
+      "mu_uv": [
+        0.119,
+        0.02,
+        0.904,
+        0.253
+      ],
+      "bake_uv": [
+        0.16,
+        0.007,
+        0.773,
+        0.569
+      ]
+    },
+    {
+      "island": 4,
+      "material": "skin",
+      "triangles": 49,
+      "area": 673.1,
+      "along": [
+        -4.6,
+        13.4
+      ],
+      "mu_uv": [
+        0.673,
+        0.764,
+        0.757,
+        0.985
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.514,
+        0.597
+      ]
+    },
+    {
+      "island": 5,
+      "material": "skin",
+      "triangles": 64,
+      "area": 1285.1,
+      "along": [
+        -11.4,
+        14.0
+      ],
+      "mu_uv": [
+        0.768,
+        0.829,
+        0.966,
+        0.994
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.407,
+        0.471
+      ]
+    }
+  ]
+}

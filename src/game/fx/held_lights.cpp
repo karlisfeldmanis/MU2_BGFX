@@ -17,6 +17,15 @@ constexpr float kSize = 0.25f;
 constexpr float kLight = 0.45f;
 // MU's CreateSprite scale over a 64-texel sheet, in metres, halved for a half width.
 constexpr float halfOf(float scale) { return 0.5f * scale * 64.0f * kUnit * kSize; }
+// One of MU's rand() rolls in a held sprite: the reference frame's number (or a second's) and a
+// salt, hashed, so gather() stays const and each roll is its own (the Shining Scepter's way).
+uint32_t rolled(uint32_t frame, uint32_t salt) {
+    uint32_t h = (frame + salt * 0x9E3779B9u) * 2654435761u;
+    h ^= h >> 15;
+    h *= 2246822519u;
+    h ^= h >> 13;
+    return h;
+}
 
 uint32_t roll(uint32_t& seed) {
     seed = seed * 1664525u + 1013904223u;
@@ -85,7 +94,7 @@ uint32_t HeldLights::lights(gfx::PointLight* out, uint32_t max) const {
     for (const Held& one : held_) {
         const bool heliacal = one.item == Item::HeliacalSword;
         const bool archangel = one.item == Item::DivineSword || one.item == Item::DivineStaff ||
-                               one.item == Item::DivineCrossbow;
+                               one.item == Item::DivineCrossbow || one.item == Item::DivineScepter;
         if ((!heliacal && !archangel) || one.count < 1 || count >= max) continue;
         // The grip is each one's last point.
         const float* grip = one.at[one.count - 1];
@@ -158,6 +167,9 @@ const char* HeldLights::mesh(Item item) {
         case Item::GreatLordScepter: return "Mace13";
         case Item::ShiningScepter: return "Mace16";
         case Item::CrossShield: return "Shield22";
+        case Item::DivineScepter: return "Mace14";
+        case Item::SoleilScepter: return "Mace15";
+        case Item::AbsoluteScepter: return "Mace18";
     }
     return "";
 }
@@ -629,6 +641,27 @@ int HeldLights::points(Item item, float out[kMostPoints][3]) {
             }
             return 10;
         }
+        case Item::DivineScepter:
+            // saint.bmd's one bone, Object04, at rest: the middle of the shaft.
+            out[0][0] = out[0][1] = out[0][2] = 0.0f;
+            return 1;
+        case Item::SoleilScepter: {
+            // (0, -100, 0) and (0, 100, 0) on HDK_Mace.bmd's bone 0 at rest: up the head, then
+            // down at the foot.
+            static const float kPoints[2][3] = {{0.0f, 0.0f, 100.0f}, {0.0f, 0.0f, -100.0f}};
+            for (int i = 0; i < 2; ++i) {
+                for (int k = 0; k < 3; ++k) out[i][k] = kPoints[i][k] * kUnit;
+            }
+            return 2;
+        }
+        case Item::AbsoluteScepter: {
+            // zx01 and zx02 of Mace_18.bmd at rest (bones 3 and 4): the foot and the head.
+            static const float kBones[2][3] = {{0.0f, 0.0f, -69.0f}, {0.0f, 0.0f, 109.1f}};
+            for (int i = 0; i < 2; ++i) {
+                for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
+            }
+            return 2;
+        }
     }
     return 0;
 }
@@ -649,6 +682,9 @@ bool HeldLights::open(const std::string& assetDir, content::Textures& textures,
     flare_ = take("pierce");
     thunder_ = take("joint_thunder");
     lightning_ = take("lightning_2");
+    mega_[0] = take("lightning_mega_1");
+    mega_[1] = take("lightning_mega_2");
+    mega_[2] = take("lightning_mega_3");
     open_ = bgfx::isValid(light_);
     return open_;
 }
@@ -1202,6 +1238,51 @@ void HeldLights::gather(gfx::Effects& effects) const {
                 const float lumi = std::fabs(std::sin(clock_)) + 0.1f;
                 for (int i = 0; i < 4; ++i) put(light_, one.at[i], halfOf(1.2f), 0.2f * lumi, 0.2f * lumi, 0.8f * lumi);
                 for (int i = 4; i < 10; ++i) put(light_, one.at[i], halfOf(1.4f), 0.2f * lumi, 0.6f * lumi, 0.6f * lumi);
+                break;
+            }
+            case Item::DivineScepter: {
+                // ZzzCharacter.cpp:7649-7661: a light at 2 in the hand's roll of (1, 0.3, 0.1), and
+                // one frame in three a grey (0.4) shiny at 0.6.
+                const float l = handLuminosity_;
+                put(light_, one.at[0], halfOf(2.0f), l, 0.3f * l, 0.1f * l);
+                if (rolled(crackleFrame_, 0) % 3u == 0u) put(shiny_, one.at[0], halfOf(0.6f), 0.4f, 0.4f, 0.4f);
+                break;
+            }
+            case Item::SoleilScepter: {
+                // ZzzCharacter.cpp:7106-7128: orange (1, 0.3, 0) -- two shinies and a light at the
+                // head, two small shinies at the foot, every scale rolled each frame.
+                if (one.count < 2) break;
+                const float big = float(rolled(crackleFrame_, 1) % 10u) / 20.0f + 1.4f;
+                put(shiny_, one.at[0], halfOf(big), 1.0f, 0.3f, 0.0f);
+                put(shiny_, one.at[0], halfOf(big - 0.3f), 1.0f, 0.3f, 0.0f);
+                put(light_, one.at[0], halfOf(float(rolled(crackleFrame_, 2) % 10u) / 20.0f + 1.3f), 1.0f, 0.3f, 0.0f);
+                const float small = float(rolled(crackleFrame_, 3) % 8u) / 20.0f + 0.4f;
+                put(shiny_, one.at[1], halfOf(small), 1.0f, 0.3f, 0.0f);
+                put(shiny_, one.at[1], halfOf(small - 0.2f), 1.0f, 0.3f, 0.0f);
+                break;
+            }
+            case Item::AbsoluteScepter: {
+                // ZzzCharacter.cpp:7930-7971: at each point a violet (0.6, 0.5, 0.8) light at a
+                // rolled scale, a shiny breathing |sin(WorldTime*0.0008)|*0.8 + 0.2, and one of the
+                // three lightning sheets, its sheet and its jitter (+-5) rolled each second.
+                if (one.count < 2) break;
+                const float lumi = std::fabs(std::sin(clock_ * 0.8f)) * 0.8f + 0.2f;
+                const uint32_t second = uint32_t(clock_);
+                const bgfx::TextureHandle mega = mega_[rolled(second, 4) % 3u];
+                static const float kLight[2][2] = {{1.0f, 0.1f}, {1.5f, 0.2f}};  // base, step of 10
+                static const float kShiny[2] = {0.5f, 1.0f};
+                static const float kMega[2][2] = {{0.3f, 0.01f}, {0.4f, 0.02f}};  // base, step of 11
+                for (int p = 0; p < 2; ++p) {
+                    put(light_, one.at[p], halfOf(kLight[p][0] + kLight[p][1] * float(rolled(crackleFrame_, 5 + p) % 10u)),
+                        0.6f, 0.5f, 0.8f);
+                    put(shiny_, one.at[p], halfOf(kShiny[p]), 0.6f * lumi, 0.5f * lumi, 0.8f * lumi);
+                    float at[3];
+                    for (int k = 0; k < 3; ++k) {
+                        at[k] = one.at[p][k] + (float(rolled(second, 7 + 3 * p + k) % 10u) - 5.0f) * kUnit;
+                    }
+                    put(mega, at, halfOf(kMega[p][0] + kMega[p][1] * float(rolled(crackleFrame_, 13 + p) % 11u)),
+                        0.8f, 0.8f, 0.8f);
+                }
                 break;
             }
         }

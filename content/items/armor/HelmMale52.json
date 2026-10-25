@@ -1,0 +1,235 @@
+{
+  "item": "HelmMale52",
+  "mu_name": "Paewang Mask",
+  "mu_name_from": "OpenMU VersionSeasonSix's CreateArmor (openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:109); the model is Player/HelmMale52.bmd, which MuMain's OpenItems loads for it (MuMain/src/source/Engine/Object/ZzzOpenData.cpp:267).",
+  "profile": "armour",
+  "stats": {
+    "call": "CreateArmor(51, 2, 2, 2, \"Paewang Mask\", 111, 44, 86, 0, 105, 38, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0)",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:109",
+    "call_note": "CreateArmor(number, slot, width, height, name, dropLevel, defense, durability, levelRequirement, strengthRequirement, agilityRequirement, energyRequirement, vitalityRequirement, leadershipRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel, magicGladiatorClassLevel, darkLordClassLevel, summonerClassLevel, ragefighterClassLevel, isShield), openmu/src/Persistence/Initialization/Items/ArmorInitializerBase.cs:367.",
+    "number": 51,
+    "slot": 2,
+    "width": 2,
+    "height": 2,
+    "drop_level": 111,
+    "defense": 44,
+    "durability": 86,
+    "drops_from_monsters": true,
+    "group": 7,
+    "requires": {
+      "level": 380,
+      "strength": 105,
+      "agility": 38,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "lord"
+    ]
+  },
+  "sheets": {
+    "Item5001_Helm": "item5001_helm.png",
+    "hair_R": "lightplate_hair_r.png",
+    "skinClass305": "skinclass305.png"
+  },
+  "why_this_one": "The Dark Lord's Paewang set (docs/plans/dark-lord-gear.md batch 5; OpenMU's rows, drop 98-132, lords only). The user, 2026-10-25: 'we need missing Dark lord items', 'make missing peices'. Level 380 (MuMain's item.bmd; the user picked it for Paewang), so Kanturu gear through sim::kanturuGear.",
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py under MU's own names, lower-cased: red lacquer traced in gold; skinClass305 the face under the helm.",
+  "sheet_materials": {
+    "Item5001_Helm": "painted_steel",
+    "item5001_helm": "painted_steel",
+    "hair_R": "hair",
+    "hair_r": "hair",
+    "skinClass305": "skin",
+    "skinclass305": "skin"
+  },
+  "material_note": "painted_steel with the cast grain for the plate, the shading painted on, as the Dark Lord's other sets.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, shallow for the gloss, as the other sets.",
+  "effects_note": "MuMain has no render arm for MODEL_*  + 51 (the socket sets' loop) (no glow, no chrome pass, no sprite; docs/plans/dark-lord-gear.md). Its refine colour is PartObjectColor 40, (0.7, 0.2, 0.2) (ZzzObject.cpp:6739-6765, 6788-6818; src/game/shine.cpp); its full set the generic aura (fx/set_shine).",
+  "level_note": "MuMain's item.bmd asks 380, OpenMU 0; the user, 2026-10-25, picked 380: Kanturu gear.",
+  "tiled": true,
+  "tiled_why": "An added sheet needs its own material (Wing04, Helper01): the hair_R shell, which MU draws added.",
+  "additive": [
+    "hair_R"
+  ],
+  "additive_from": "A texture named _R is MuMain's Bright mesh (TextureScript.cpp:31-40), RenderBody making it its own BlendMesh (ZzzBMD.cpp:2236-2242): the white hair drawn added.",
+  "glow": {
+    "hair_R": {
+      "pulse": [
+        0.1,
+        0.7
+      ],
+      "pulse_rate": "slow"
+    }
+  },
+  "glow_note": "A Dark Lord's helm lights its blend mesh at sin(WorldTime*0.001)*0.1 + 0.7 (ZzzCharacter.cpp:9608-9610): the hair breathing between 0.6 and 0.8.",
+  "separate_meshes": true,
+  "separate_meshes_why": "The hair shell, the face and the mask are three meshes; kept apart so the hair is not welded into the head.",
+  "cull": false,
+  "cull_from": "As HelmClass05: MU's hair is flat single-sided fins, and culled they wink out as the head turns.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "hair",
+      "triangles": 106,
+      "area": 1209.8,
+      "along": [
+        -11.9,
+        14.6
+      ],
+      "mu_uv": [
+        0.014,
+        0.045,
+        0.835,
+        0.989
+      ],
+      "bake_uv": [
+        0.334,
+        0.031,
+        0.857,
+        0.291
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 126,
+      "area": 1893.2,
+      "along": [
+        -7.6,
+        17.1
+      ],
+      "mu_uv": [
+        0.014,
+        0.02,
+        0.983,
+        0.984
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.936,
+        0.968
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 25,
+      "area": 212.6,
+      "along": [
+        5.0,
+        16.1
+      ],
+      "mu_uv": [
+        0.017,
+        0.329,
+        0.573,
+        0.98
+      ],
+      "bake_uv": [
+        0.009,
+        0.488,
+        0.833,
+        0.885
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 25,
+      "area": 212.6,
+      "along": [
+        5.0,
+        16.1
+      ],
+      "mu_uv": [
+        0.017,
+        0.329,
+        0.573,
+        0.98
+      ],
+      "bake_uv": [
+        0.645,
+        0.008,
+        0.993,
+        0.365
+      ]
+    },
+    {
+      "island": 4,
+      "material": "skin",
+      "triangles": 8,
+      "area": 216.3,
+      "along": [
+        -6.9,
+        2.5
+      ],
+      "mu_uv": [
+        0.827,
+        0.753,
+        0.925,
+        0.847
+      ],
+      "bake_uv": [
+        0.009,
+        0.013,
+        0.361,
+        0.417
+      ]
+    },
+    {
+      "island": 5,
+      "material": "skin",
+      "triangles": 70,
+      "area": 867.4,
+      "along": [
+        -4.6,
+        14.7
+      ],
+      "mu_uv": [
+        0.505,
+        0.764,
+        0.755,
+        0.996
+      ],
+      "bake_uv": [
+        0.009,
+        0.713,
+        0.566,
+        0.869
+      ]
+    },
+    {
+      "island": 6,
+      "material": "skin",
+      "triangles": 106,
+      "area": 1167.1,
+      "along": [
+        -11.6,
+        14.5
+      ],
+      "mu_uv": [
+        0.759,
+        0.791,
+        0.981,
+        0.994
+      ],
+      "bake_uv": [
+        0.809,
+        0.58,
+        0.964,
+        0.97
+      ]
+    }
+  ]
+}

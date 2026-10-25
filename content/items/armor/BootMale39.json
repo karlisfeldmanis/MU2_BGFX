@@ -1,0 +1,274 @@
+{
+  "item": "BootMale39",
+  "mu_name": "Glorious Boots",
+  "mu_name_from": "OpenMU VersionSeasonSix's CreateBoots (openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:328); the model is Player/CW_BootMale05.bmd, which MuMain's OpenItems loads for it (MuMain/src/source/Engine/Object/ZzzOpenData.cpp:235). Ours is BootMale39 by the index-plus-one rule (MU's number 38).",
+  "profile": "armour",
+  "stats": {
+    "call": "CreateBoots(38, \"Glorious Boots\", 98, 29, 0, 74, 0, 80, 21, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0)",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:328",
+    "call_note": "CreateBoots(number, name, dropLevel, defense, walkSpeed, durability, levelRequirement, strengthRequirement, agilityRequirement, energyRequirement, vitalityRequirement, leadershipRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel, magicGladiatorClassLevel, darkLordClassLevel, summonerClassLevel, ragefighterClassLevel), openmu/src/Persistence/Initialization/Items/ArmorInitializerBase.cs:299.",
+    "number": 38,
+    "drop_level": 98,
+    "defense": 29,
+    "walk_speed": 0,
+    "durability": 74,
+    "drops_from_monsters": true,
+    "group": 11,
+    "slot": 6,
+    "width": 2,
+    "height": 2,
+    "requires": {
+      "level": 0,
+      "strength": 80,
+      "agility": 21,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "lord"
+    ]
+  },
+  "sheets": {
+    "dark350boots": "dark350boots.png"
+  },
+  "why_this_one": "The Dark Lord's Glorious set (docs/plans/dark-lord-gear.md batch 3; OpenMU's rows, drop 91-105, lords only). The user, 2026-10-25: 'we need missing Dark lord items', 'make missing peices'.",
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py under MU's own names, lower-cased: black lacquer under gold.",
+  "sheet_materials": {
+    "dark350boots": "painted_steel"
+  },
+  "material_note": "painted_steel with the cast grain for the plate, the shading painted on, as the Dark Lord's other sets.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, shallow for the gloss, as the other sets.",
+  "effects_note": "MuMain has no render arm for MODEL_GLORIOUS_* (no glow, no chrome pass, no sprite; docs/plans/dark-lord-gear.md). Its refine colour is PartObjectColor 28, (0.45, 0.45, 0.23) (ZzzObject.cpp:6739-6765, 6788-6818; src/game/shine.cpp); its full set the generic aura (fx/set_shine).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 40,
+      "area": 2558.7,
+      "along": [
+        -11.7,
+        14.3
+      ],
+      "mu_uv": [
+        0.018,
+        0.036,
+        0.513,
+        0.987
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.659,
+        0.665
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 28,
+      "area": 1071.5,
+      "along": [
+        -8.6,
+        26.2
+      ],
+      "mu_uv": [
+        0.29,
+        0.022,
+        0.925,
+        0.329
+      ],
+      "bake_uv": [
+        0.009,
+        0.008,
+        0.529,
+        0.952
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 40,
+      "area": 2558.7,
+      "along": [
+        -11.7,
+        14.3
+      ],
+      "mu_uv": [
+        0.018,
+        0.036,
+        0.513,
+        0.987
+      ],
+      "bake_uv": [
+        0.061,
+        0.008,
+        0.458,
+        0.752
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 28,
+      "area": 1071.5,
+      "along": [
+        -8.6,
+        26.2
+      ],
+      "mu_uv": [
+        0.29,
+        0.022,
+        0.925,
+        0.329
+      ],
+      "bake_uv": [
+        0.009,
+        0.397,
+        0.992,
+        0.992
+      ]
+    },
+    {
+      "island": 4,
+      "material": "painted_steel",
+      "triangles": 37,
+      "area": 1405.5,
+      "along": [
+        -0.8,
+        19.4
+      ],
+      "mu_uv": [
+        0.385,
+        0.022,
+        0.983,
+        0.855
+      ],
+      "bake_uv": [
+        0.161,
+        0.008,
+        0.801,
+        0.461
+      ]
+    },
+    {
+      "island": 5,
+      "material": "painted_steel",
+      "triangles": 3,
+      "area": 72.2,
+      "along": [
+        1.7,
+        8.3
+      ],
+      "mu_uv": [
+        0.367,
+        0.341,
+        0.395,
+        0.384
+      ],
+      "bake_uv": [
+        0.009,
+        0.021,
+        0.209,
+        0.212
+      ]
+    },
+    {
+      "island": 6,
+      "material": "painted_steel",
+      "triangles": 16,
+      "area": 530.5,
+      "along": [
+        -6.0,
+        15.8
+      ],
+      "mu_uv": [
+        0.606,
+        0.663,
+        0.989,
+        0.984
+      ],
+      "bake_uv": [
+        0.299,
+        0.733,
+        0.959,
+        0.959
+      ]
+    },
+    {
+      "island": 7,
+      "material": "painted_steel",
+      "triangles": 37,
+      "area": 1405.5,
+      "along": [
+        -0.8,
+        19.4
+      ],
+      "mu_uv": [
+        0.385,
+        0.022,
+        0.983,
+        0.855
+      ],
+      "bake_uv": [
+        0.184,
+        0.127,
+        0.805,
+        0.808
+      ]
+    },
+    {
+      "island": 8,
+      "material": "painted_steel",
+      "triangles": 3,
+      "area": 72.2,
+      "along": [
+        1.7,
+        8.3
+      ],
+      "mu_uv": [
+        0.367,
+        0.341,
+        0.395,
+        0.384
+      ],
+      "bake_uv": [
+        0.032,
+        0.036,
+        0.222,
+        0.073
+      ]
+    },
+    {
+      "island": 9,
+      "material": "painted_steel",
+      "triangles": 16,
+      "area": 530.4,
+      "along": [
+        -6.0,
+        15.8
+      ],
+      "mu_uv": [
+        0.606,
+        0.663,
+        0.989,
+        0.984
+      ],
+      "bake_uv": [
+        0.818,
+        0.009,
+        0.986,
+        0.305
+      ]
+    }
+  ]
+}
