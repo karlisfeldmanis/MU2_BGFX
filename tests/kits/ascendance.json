@@ -1,5 +1,5 @@
 {
- "from": "Discord #67, 2026-10-25: each kit of content/raid/party.json and tests/kits/sweep.json as it is, and with Ascendance set as sim::settable allows since b60670c4 -- two Greater a weapon beside its first damage rune, one in a shield; the Gladiator, never promoted, two Lesser.",
+ "from": "Discord #67, 2026-10-25: each kit of content/raid/party.json and tests/kits/sweep.json as it is, and with Ascendance set as sim::settable allows since b60670c4 -- two Greater a weapon beside its first damage rune, one in a shield; the Gladiator, never promoted, two Lesser. Since the two-handed rule (a bow, a crossbow, a spear or a great weapon holds three), Bran, Ysolde and Faela also as *Asc3: three Greater and no damage rune.",
  "party": [
   {
    "name": "Dirk",
@@ -661,6 +661,108 @@
    ]
   },
   {
+   "name": "BranAsc3",
+   "role": "melee",
+   "class": "knight",
+   "second": true,
+   "level": 400,
+   "points": {
+    "strength": 1084,
+    "agility": 510,
+    "vitality": 386,
+    "energy": 40
+   },
+   "potions": 20,
+   "skills": [
+    18,
+    43,
+    42,
+    41,
+    22
+   ],
+   "wear": [
+    {
+     "slot": "helm",
+     "item": "HelmMale18",
+     "plus": 11,
+     "luck": true,
+     "option": 3,
+     "sockets": [
+      30
+     ]
+    },
+    {
+     "slot": "armour",
+     "item": "ArmorMale18",
+     "plus": 11,
+     "luck": true,
+     "option": 3,
+     "sockets": [
+      7
+     ]
+    },
+    {
+     "slot": "pants",
+     "item": "PantMale18",
+     "plus": 11,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "gloves",
+     "item": "GloveMale18",
+     "plus": 11,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "boots",
+     "item": "BootMale18",
+     "plus": 11,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "right",
+     "item": "Spear11",
+     "plus": 11,
+     "luck": true,
+     "option": 3,
+     "excellent": 5,
+     "sockets": [
+      38,
+      38,
+      38
+     ]
+    },
+    {
+     "slot": "wings",
+     "item": "Wing06",
+     "plus": 11,
+     "luck": true
+    },
+    {
+     "slot": "pet",
+     "item": "Helper02"
+    },
+    {
+     "slot": "amulet",
+     "item": "NecklaceFury",
+     "plus": 11
+    },
+    {
+     "slot": "ring_right",
+     "item": "Ring01",
+     "plus": 11
+    },
+    {
+     "slot": "ring_left",
+     "item": "RingLeech",
+     "plus": 11
+    }
+   ]
+  },
+  {
    "name": "Morwen",
    "role": "wizard",
    "class": "wizard",
@@ -1086,6 +1188,108 @@
    ]
   },
   {
+   "name": "YsoldeAsc3",
+   "role": "wizard",
+   "class": "wizard",
+   "second": true,
+   "level": 400,
+   "points": {
+    "strength": 370,
+    "agility": 171,
+    "vitality": 395,
+    "energy": 1140
+   },
+   "potions": 20,
+   "skills": [
+    16,
+    14,
+    2,
+    9
+   ],
+   "wear": [
+    {
+     "slot": "helm",
+     "item": "HelmMale19",
+     "plus": 11,
+     "luck": true,
+     "option": 3,
+     "sockets": [
+      36
+     ]
+    },
+    {
+     "slot": "armour",
+     "item": "ArmorMale19",
+     "plus": 11,
+     "luck": true,
+     "option": 3,
+     "excellent": 3,
+     "sockets": [
+      7
+     ]
+    },
+    {
+     "slot": "pants",
+     "item": "PantMale19",
+     "plus": 11,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "gloves",
+     "item": "GloveMale19",
+     "plus": 11,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "boots",
+     "item": "BootMale19",
+     "plus": 11,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "right",
+     "item": "Staff09",
+     "plus": 11,
+     "luck": true,
+     "option": 3,
+     "excellent": 5,
+     "sockets": [
+      38,
+      38,
+      38
+     ]
+    },
+    {
+     "slot": "wings",
+     "item": "Wing05",
+     "plus": 11,
+     "luck": true
+    },
+    {
+     "slot": "pet",
+     "item": "Helper02"
+    },
+    {
+     "slot": "amulet",
+     "item": "Necklace02",
+     "plus": 11
+    },
+    {
+     "slot": "ring_right",
+     "item": "Ring01",
+     "plus": 11
+    },
+    {
+     "slot": "ring_left",
+     "item": "RingWisdom",
+     "plus": 11
+    }
+   ]
+  },
+  {
    "name": "Faela",
    "role": "archer",
    "class": "elf",
@@ -1258,6 +1462,108 @@
      "option": 3,
      "sockets": [
       5,
+      38,
+      38
+     ]
+    },
+    {
+     "slot": "wings",
+     "item": "Wing04",
+     "plus": 11,
+     "luck": true
+    },
+    {
+     "slot": "pet",
+     "item": "Helper02"
+    },
+    {
+     "slot": "amulet",
+     "item": "NecklaceFury",
+     "plus": 11
+    },
+    {
+     "slot": "ring_right",
+     "item": "Ring01",
+     "plus": 11
+    },
+    {
+     "slot": "ring_left",
+     "item": "RingLeech",
+     "plus": 11
+    }
+   ]
+  },
+  {
+   "name": "FaelaAsc3",
+   "role": "archer",
+   "class": "elf",
+   "second": true,
+   "level": 400,
+   "points": {
+    "strength": 293,
+    "agility": 1309,
+    "vitality": 363,
+    "energy": 112
+   },
+   "potions": 20,
+   "skills": [
+    26,
+    27,
+    28,
+    52,
+    24
+   ],
+   "wear": [
+    {
+     "slot": "helm",
+     "item": "HelmMale20",
+     "plus": 11,
+     "luck": true,
+     "option": 3,
+     "sockets": [
+      32
+     ]
+    },
+    {
+     "slot": "armour",
+     "item": "ArmorMale20",
+     "plus": 11,
+     "luck": true,
+     "option": 3,
+     "excellent": 3,
+     "sockets": [
+      7
+     ]
+    },
+    {
+     "slot": "pants",
+     "item": "PantMale20",
+     "plus": 11,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "gloves",
+     "item": "GloveMale20",
+     "plus": 11,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "boots",
+     "item": "BootMale20",
+     "plus": 11,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "right",
+     "item": "Bow18",
+     "plus": 11,
+     "luck": true,
+     "option": 3,
+     "sockets": [
+      38,
       38,
       38
      ]

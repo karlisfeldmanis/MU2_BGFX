@@ -1007,9 +1007,12 @@ constexpr int kStatRuneMost = 4;
 // two are set in a weapon and one in a shield (`settable`). Two swords held four where a staff or
 // a bow held three, +120% all stats to +90% at the time (Discord #67, 2026-10-25; the user: "lets allow
 // Ascendance max 3 runes, 2 on weapons and 1 on shield"). A weapon set with three before keeps
-// them, and still counts three at most.
+// them, and still counts three at most. **A two-handed weapon holds all three** -- a bow, a
+// crossbow, a spear, a great sword or staff -- having no other hand to hold the third (the user,
+// 2026-10-25: "make first tests then we tune", after the sweep in tests/kits/ascendance.json).
 constexpr int kAscendanceMost = 3;
 constexpr int kAscendanceInWeapon = 2;
+constexpr int kAscendanceInTwoHanded = 3;
 constexpr int kAscendanceInShield = 1;
 inline bool ascendance(Power power) {
     return power == Power::LesserAscendance || power == Power::GreaterAscendance;

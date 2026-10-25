@@ -753,7 +753,8 @@ Stacking stackingOf(Power power) {
     }
     if (ascendance(power)) {
         return {true, "Up to " + std::to_string(kAscendanceMost) + " worn: " +
-                          std::to_string(kAscendanceInWeapon) + " a weapon, " +
+                          std::to_string(kAscendanceInWeapon) + " a weapon (" +
+                          std::to_string(kAscendanceInTwoHanded) + " two-handed), " +
                           std::to_string(kAscendanceInShield) + " a shield"};
     }
     if (statShareOf(power).strength || statShareOf(power).agility ||
@@ -954,14 +955,18 @@ bool settable(const content::Tables& tables, const Held& jewel, const Held& targ
     if (power == nullptr || !power->takenBy(kin, second)) return false;
     const content::ItemRow& row = tables.items[size_t(target.item)];
     if (!socketsFit(row) || freeSocket(target) < 0) return false;
-    // Ascendance, either tier: two a weapon, one a shield (kAscendanceInWeapon).
+    // Ascendance, either tier: two a weapon, three a two-handed one, one a shield
+    // (kAscendanceInWeapon).
     if (ascendance(power->power)) {
         int set = 0;
         for (int at = 0; at < std::min<int>(target.sockets, kMostSockets); ++at) {
             const PowerRow* one = powerOf(target.powers[at]);
             if (one && ascendance(one->power)) ++set;
         }
-        if (set >= (row.shield() ? kAscendanceInShield : kAscendanceInWeapon)) return false;
+        const int most = row.shield()       ? kAscendanceInShield
+                         : row.twoHanded() ? kAscendanceInTwoHanded
+                                           : kAscendanceInWeapon;
+        if (set >= most) return false;
     }
     // One of a `once` rune a thing (PowerRow::once): Frenzy, which two in one pair of boots
     // stacked past what the game can carry. However many he wears, its stacks stop at five. And

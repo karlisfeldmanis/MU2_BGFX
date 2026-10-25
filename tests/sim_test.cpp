@@ -11041,6 +11041,14 @@ void testRunes(const content::Tables& tables) {
             check(sim::settable(tables, ascend, one, dk, true) &&
                       !sim::settable(tables, ascend, two, dk, true),
                   "a weapon takes a second Ascendance, not a third");
+            const int bow = tables.itemNamed("Bow18");
+            check(bow >= 0 && tables.items[size_t(bow)].twoHanded(), "a two-handed bow is cooked");
+            if (bow >= 0) {
+                sim::Held both = held(bow, 3, 0);
+                both.powers[0] = both.powers[1] = uint8_t(sim::Power::GreaterAscendance);
+                const sim::Kin elf = sim::Kin::FairyElf;
+                check(sim::settable(tables, ascend, both, elf, true), "a two-handed one a third");
+            }
             if (shield >= 0) {
                 sim::Held guard = held(shield, 2, 0);
                 check(sim::settable(tables, ascend, guard, dk, true), "a shield takes one");
