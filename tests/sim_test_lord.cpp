@@ -900,7 +900,7 @@ void testDarkLord(void (*check)(bool, const char*), void (*checkEqual)(long long
                                 "tersia_3", "tersia_4", "tersia_5", "lirien_halls", "kanturs_legion",
                                 "kanturs_captain", "tersia_sky_door", "tersia_phoenix",
                                 "seed_masters_clearing", "ruins_of_kantur"};
-        int paid = 0, unworn = 0, quests = 0;
+        int paid = 0, unworn = 0, quests = 0, runes = 0, unready = 0;
         for (const char* key : geared) {
             int here = 0;
             for (int q = 0; q < sim::kQuests; ++q) {
@@ -910,7 +910,15 @@ void testDarkLord(void (*check)(bool, const char*), void (*checkEqual)(long long
                     const sim::QuestItem& what = row.paid[p];
                     if (what.kin != int8_t(sim::Kin::DarkLord)) continue;
                     const std::string item = what.item;
+                    runes += item == "Jewel22" ? 1 : 0;
                     if (item == "Jewel22" || item.rfind("Scroll", 0) == 0 || item == "Spirit") continue;
+                    // A weapon he can hold the day it is paid, as the others' are: no 380 scepter
+                    // before the 380 sets.
+                    const int32_t at = lorencia.itemNamed(what.item);
+                    unready += at >= 0 && lorencia.items[size_t(at)].group == 2 &&
+                                       lorencia.items[size_t(at)].needLevel > row.minLevel
+                                   ? 1
+                                   : 0;
                     ++here;
                     unworn += wears(what.item) && what.firstOnly ? 0 : 1;
                 }
@@ -921,5 +929,10 @@ void testDarkLord(void (*check)(bool, const char*), void (*checkEqual)(long long
         checkEqual(quests, 17, "every quest that gears the knight gears the Dark Lord");
         checkEqual(paid, 26, "twenty-six pieces, scepters to Sunlight");
         checkEqual(unworn, 0, "each his to wear, on the first clear");
+        checkEqual(unready, 0, "and no scepter asks a level past its quest's");
+        // The knight's own runes are not his; a shared one of the same slot and weight stands in
+        // where the knight is paid one, until his own are made (the user, 2026-10-25: "balance
+        // unfairness"): twelve on these quests and Tersia 6's Frenzy, the wizard's twelve.
+        checkEqual(runes, 12, "twelve runes on his geared quests");
     }
 }

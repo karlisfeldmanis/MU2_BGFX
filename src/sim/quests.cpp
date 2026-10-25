@@ -162,6 +162,8 @@ QuestRow marlon() {
     // Echo. They were Stormcall (Epic) and Arcane Echo itself (Legendary) until 2026-10-09.
     row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Gust),
                      .firstOnly = true};
+    row.paid[n++] = {.item = "Jewel22", .kin = int8_t(Kin::DarkLord), .power = uint8_t(Power::Spite),
+                     .firstOnly = true};
     // And the bleed's Common, Graze, so that family is taught weak first too (the reward audit,
     // 2026-10-22: no quest taught Graze to Hemorrhage). The Falchion's one socket takes one of the
     // two; the other waits for Devin's two.
@@ -956,6 +958,8 @@ QuestRow tersiaSixth() {
     // beside Penetration.
     row.paid[row.paidCount++] = {.item = "Jewel22", .kin = knight,
                                  .power = uint8_t(Power::Meteor), .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = int8_t(Kin::DarkLord), .power = uint8_t(Power::Frenzy),
+                                 .firstOnly = true};
     row.paid[row.paidCount++] = {.item = "Jewel22", .kin = wizard,
                                  .power = uint8_t(Power::Plague), .firstOnly = true};
     row.paid[row.paidCount++] = {.item = "Jewel22", .kin = elf,
@@ -1186,8 +1190,8 @@ QuestRow tersiaPhoenix() {
     // Crow's pants and armour, which make his four whole.
     row.paid[row.paidCount++] = {.item = "Sword18", .kin = knight, .sockets = 3,
                                  .firstOnly = true};  // Dark Breaker
-    row.paid[row.paidCount++] = {.item = "Mace12", .kin = int8_t(Kin::DarkLord), .sockets = 3,
-                                 .firstOnly = true};  // Lord Scepter
+    row.paid[row.paidCount++] = {.item = "Mace13", .plus = 9, .kin = int8_t(Kin::DarkLord), .sockets = 3,
+                                 .firstOnly = true};  // Great Lord Scepter +9: none between it and the 380s
     row.paid[row.paidCount++] = {.item = "Staff10", .kin = wizard, .sockets = 3,
                                  .firstOnly = true};  // Dragon Soul Staff
     row.paid[row.paidCount++] = {.item = "Bow18", .kin = elf, .sockets = 3,
@@ -1223,6 +1227,8 @@ QuestRow tersiaPhoenix() {
                                  .firstOnly = true};
     row.paid[row.paidCount++] = {.item = "Jewel22", .kin = knight,
                                  .power = uint8_t(Power::Bulwark), .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = int8_t(Kin::DarkLord), .power = uint8_t(Power::KeenEye),
+                                 .firstOnly = true};
     row.paid[row.paidCount++] = {.item = "MagicBox08", .plus = 3};  // a Box of Kundun +3
     row.voice = "tersia_9";  // pipeline/voice.py, VOICES["tersia"]
     return row;
@@ -1556,11 +1562,15 @@ QuestRow lirienHalls() {
                      .firstOnly = true};  // Aquagold Crossbow
     row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Twister),
                      .firstOnly = true};
+    row.paid[n++] = {.item = "Jewel22", .kin = int8_t(Kin::DarkLord), .power = uint8_t(Power::Wrath),
+                     .firstOnly = true};
     row.paid[n++] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::Echo),
                      .firstOnly = true};
     row.paid[n++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::Frost),
                      .firstOnly = true};
     row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Eddy),
+                     .firstOnly = true};
+    row.paid[n++] = {.item = "Jewel22", .kin = int8_t(Kin::DarkLord), .power = uint8_t(Power::Thunder),
                      .firstOnly = true};
     row.paid[n++] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::Scorch),
                      .firstOnly = true};
@@ -1570,6 +1580,8 @@ QuestRow lirienHalls() {
     // knight's and the wizard's: the ladder's "Buckler before Bulwark", which no quest paid until
     // the reward audit (2026-10-22). It lets the Crescent Axe pick hold its guard.
     row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Buckler),
+                     .firstOnly = true};
+    row.paid[n++] = {.item = "Jewel22", .kin = int8_t(Kin::DarkLord), .power = uint8_t(Power::Ironskin),
                      .firstOnly = true};
     row.paid[n++] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::Buckler),
                      .firstOnly = true};
@@ -1736,7 +1748,11 @@ QuestRow kantursLegion() {
                      .firstOnly = true, .rank = Rank::First};  // Saint Crossbow
     row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Burn),
                      .firstOnly = true};  // Immolate
+    row.paid[n++] = {.item = "Jewel22", .kin = int8_t(Kin::DarkLord), .power = uint8_t(Power::Inferno),
+                     .firstOnly = true};
     row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Ice),
+                     .firstOnly = true};
+    row.paid[n++] = {.item = "Jewel22", .kin = int8_t(Kin::DarkLord), .power = uint8_t(Power::Bloodwell),
                      .firstOnly = true};
     row.paid[n++] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::Inferno),
                      .firstOnly = true};
@@ -2043,8 +2059,8 @@ QuestRow seedMastersClearing() {
                      .firstOnly = true};  // Flamberge +8, the knight's one-hander
     row.paid[n++] = {.item = "Spear12", .plus = 7, .kin = knight, .sockets = 3,
                      .firstOnly = true};  // Beuroba +7
-    row.paid[n++] = {.item = "Mace15", .plus = 8, .kin = int8_t(Kin::DarkLord), .sockets = 3,
-                     .firstOnly = true};  // Soleil Scepter +8
+    row.paid[n++] = {.item = "Mace13", .plus = 11, .kin = int8_t(Kin::DarkLord), .sockets = 3,
+                     .firstOnly = true};  // Great Lord Scepter +11: the Soleil asks 380
     row.paid[n++] = {.item = "Staff34", .plus = 7, .kin = wizard, .sockets = 3,
                      .firstOnly = true};  // Chromatic Staff +7
     row.paid[n++] = {.item = "Bow25", .plus = 7, .kin = elf, .sockets = 3,
