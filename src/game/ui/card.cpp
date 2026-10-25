@@ -34,12 +34,12 @@ using gfx::Box;
 
 // The head's rows, in MU's panel units.
 constexpr float kIdTop = 45.0f;
-constexpr float kKeysTop = 61.0f, kKeysTall = 30.0f;
-constexpr float kTabsTop = 99.0f, kTabsTall = 16.0f;
+constexpr float kKeysTop = 61.0f, kKeysTall = 25.0f;
+constexpr float kTabsTop = kKeysTop + kKeysTall + 8.0f, kTabsTall = 16.0f;
 constexpr int kTabCount = 3;
 const char* const kTabWords[kTabCount] = {"Attributes", "Combat", "Bonuses"};
 // The page between the tabs' floor and the foot's rule.
-constexpr float kBodyTop = 122.0f;
+constexpr float kBodyTop = kTabsTop + 23.0f;
 // And where it must end: four units over the foot's rule.
 constexpr float kBodyBottom = panel::kFootRule - 4.0f;
 
@@ -826,12 +826,12 @@ void Card::rebuild() {
         while (caps > 5.0f &&
                controls::capsWidth(caps * k, now_.keys[i].label, 0.04f) > (keyW - 9.0f) * k)
             caps -= 0.25f;
-        controls::caps(canvas_, x + cx * k, at(kKeysTop + 7.0f, kSmallCaps), caps * k, kQuiet,
+        controls::caps(canvas_, x + cx * k, at(kKeysTop + 4.5f, kSmallCaps), caps * k, kQuiet,
                        now_.keys[i].label, 0.04f);
         float size = kKeySize;
         while (size > 6.5f && controls::labelWidth(size * k, now_.keys[i].value) > (keyW - 10.0f) * k)
             size -= 0.5f;
-        left(cx, kKeysTop + 13.5f, size, kHeading, now_.keys[i].value);
+        left(cx, kKeysTop + 11.0f, size, kHeading, now_.keys[i].value);
     }
 
     const float drop = dropFor(now_.points);
