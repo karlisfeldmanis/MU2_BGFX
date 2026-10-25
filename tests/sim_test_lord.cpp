@@ -7,6 +7,7 @@
 
 #include "content/tables.h"
 #include "net/wire.h"
+#include "sim/quests.h"
 #include "sim/realm.h"
 #include "sim/rules.h"
 #include "sim/skills.h"
@@ -773,5 +774,113 @@ void testDarkLord(void (*check)(bool, const char*), void (*checkEqual)(long long
               "for MU's ten seconds, before his agility's haste");
         lordRealm.invokeAt(sim::skill::kEarthshake, hx + 6, hy);
         checkEqual(loosedIn(40), 0, "pressed again while it cools, nothing");
+    }
+
+    // ---- his five scrolls (content/items/misc/Scroll*.json) ---------------------------------------
+    // MU's level and energy (20 + raw x level x 4 / 100) and Command (OpenMU Orbs.cs:57-61), the
+    // cooked rows once the tables cook has run, else made here as the recipes say.
+    {
+        struct Scroll { const char* name; int number, skill, level, energy, command; const char* paidBy; };
+        const Scroll scrolls[5] = {
+            {"ScrollFireBurst", 26, sim::skill::kFireBurst, 74, 79, 0, nullptr},
+            {"ScrollCriticalDamage", 23, sim::skill::kCriticalDamage, 82, 102, 300, "The White Silence"},
+            {"ScrollElectricSpike", 24, sim::skill::kElectricSpike, 92, 126, 340, "The Catacombs"},
+            {"ScrollSummon", 30, sim::skill::kSummon, 98, 153, 400, "The Red Floor"},
+            {"ScrollFireScream", 35, sim::skill::kFireScream, 102, 150, 70, "The Pit"},
+        };
+        content::Tables tables = lorencia;
+        int32_t at[5] = {};
+        bool made = false;
+        for (int i = 0; i < 5; ++i) {
+            const Scroll& s = scrolls[i];
+            at[i] = tables.itemAt(12, s.number);
+            if (at[i] >= 0) {
+                const content::ItemRow& row = tables.items[size_t(at[i])];
+                check(row.name == s.name && row.teaches == s.skill && row.teachesLevel == s.level &&
+                          row.teachesEnergy == s.energy && row.teachesCommand == s.command &&
+                          row.dropLevel == s.level && row.needLevel == s.level &&
+                          row.classes == (1 << int(sim::Kin::DarkLord)) && row.height == 2 &&
+                          row.dropsFromMonsters(),
+                      "a cooked Dark Lord scroll: its skill, MU's level, energy and Command, his, dropped");
+                continue;
+            }
+            content::ItemRow row;
+            row.name = s.name;
+            row.group = 12;
+            row.number = s.number;
+            row.dropLevel = row.needLevel = s.level;
+            row.height = 2;
+            row.durability = 1;
+            row.classes = 1 << int(sim::Kin::DarkLord);
+            row.teaches = s.skill;
+            row.teachesLevel = s.level;
+            row.teachesEnergy = s.energy;
+            row.teachesCommand = s.command;
+            tables.items.push_back(row);
+            at[i] = int32_t(tables.items.size() - 1);
+            made = true;
+        }
+        if (made) std::printf("  (the Dark Lord's scrolls not cooked: made here as their recipes say)\n");
+
+        // The Scroll of Summon: level 98, energy 153, Command 400.
+        const auto lordAt = [&](int level, int energy, int command) {
+            sim::Realm r;
+            r.raise(&tables, 0, 130, 130, sim::Kin::DarkLord, level);
+            sim::HeroRecord record = r.record();
+            record.points.energy = energy;
+            record.points.command = command;
+            r.restore(record);
+            return r;
+        };
+        const auto reads = [&](sim::Realm& r, int i) {
+            const int slot = r.give(at[i]);
+            return slot >= 0 && r.useItem(slot);
+        };
+        {
+            sim::Realm low = lordAt(98, 153, 399);
+            check(!reads(low, 3) && !low.knows(sim::skill::kSummon), "Summon refused at 399 Command");
+            sim::Realm young = lordAt(97, 153, 400);
+            check(!reads(young, 3), "and at level 97");
+            sim::Realm weak = lordAt(98, 152, 400);
+            check(!reads(weak, 3), "and at 152 energy");
+            sim::Realm knight;
+            knight.raise(&tables, 0, 130, 130, sim::Kin::DarkKnight, 400);
+            check(!reads(knight, 3), "and never a knight's");
+            sim::Realm ready = lordAt(98, 153, 400);
+            check(reads(ready, 3) && ready.knows(sim::skill::kSummon), "at 98, 153 and 400 he learns Summon");
+        }
+        {
+            sim::Realm burst = lordAt(74, 79, 25);
+            check(reads(burst, 0) && burst.knows(sim::skill::kFireBurst), "Fire Burst asks no Command");
+        }
+
+        // Paid by the quests on a Dark Lord's first clear, to nobody else; Fire Burst by none.
+        for (int i = 0; i < 5; ++i) {
+            int first = 0, again = 0, others = 0;
+            const char* title = "";
+            for (int q = 0; q < sim::kQuests; ++q) {
+                const sim::QuestRow& row = sim::questAt(q);
+                for (int p = 0; p < row.paidCount; ++p) {
+                    const sim::QuestItem& what = row.paid[p];
+                    if (std::string(what.item) != scrolls[i].name) continue;
+                    title = row.title;
+                    const int lord = int(sim::Kin::DarkLord);
+                    first += sim::questFirst(row, lord, 0) && sim::questPays(what, lord, true) ? 1 : 0;
+                    again += sim::questPays(what, lord, false) ? 1 : 0;
+                    for (sim::Kin other : {sim::Kin::DarkKnight, sim::Kin::DarkWizard, sim::Kin::FairyElf,
+                                           sim::Kin::MagicGladiator}) {
+                        others += sim::questPays(what, int(other), true) ? 1 : 0;
+                    }
+                }
+            }
+            if (!scrolls[i].paidBy) {
+                checkEqual(first + again + others, 0, "no quest pays the Scroll of Fire Burst");
+                continue;
+            }
+            check(std::string(title) == scrolls[i].paidBy && first == 1 && again == 0 && others == 0,
+                  "a Dark Lord scroll paid on his first clear of its quest, and to no one else");
+        }
+        check(sim::questNative(sim::questAt(sim::questOf(406)), int(sim::Kin::DarkLord)),
+              "the Dark Lord is native on Devin's quest, as the knight is");
     }
 }

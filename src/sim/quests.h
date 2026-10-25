@@ -171,8 +171,13 @@ struct QuestRow {
 // The Magic Gladiator is native wherever the knight or the wizard is, on a quest open to
 // strangers: born in Lorencia, Marlon's is his (the user, 2026-10-07: 'mg start in lorencia, that
 // means he will do lorencia quest'). Not a class change's treasure, whose row is one class's alone.
+// And the Dark Lord wherever the knight is, the same way (docs/plans/dark-lord.md section 6): paid
+// his own rows (his scrolls) and what every class is paid, never the knight's things.
 inline bool questNative(const QuestRow& row, int kin) {
     if ((row.natives >> kin) & 1u) return true;
+    if (kin == int(Kin::DarkLord)) {
+        return row.strangers && ((row.natives >> int(Kin::DarkKnight)) & 1u) != 0;
+    }
     constexpr uint8_t kMeleeOrMagic =
         uint8_t((1u << int(Kin::DarkKnight)) | (1u << int(Kin::DarkWizard)));
     return kin == int(Kin::MagicGladiator) && row.strangers && (row.natives & kMeleeOrMagic) != 0;

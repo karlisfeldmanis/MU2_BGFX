@@ -1,0 +1,253 @@
+{
+  "item": "ScrollFireBurst",
+  "mu_name": "Scroll of Fire Burst",
+  "mu_name_from": "OpenMU VersionSeasonSix/Items/Orbs.cs:57, CreateOrb(21, SkillNumber...) -- \"Scroll of Fire Burst\" (OpenMU spells it \"FireBurst\"). MuMain loads all five Dark Lord scrolls on one model, Data/Item/SkillScroll (ZzzOpenData.cpp:1061-1065).",
+  "why_this_one": "The only way the Dark Lord learns Fire Burst (docs/plans/dark-lord-spells/fire-burst.md). Group 12 number 26 is ours: MU's 21 is our Orb of Multi-Shot. 23, 24 and 26 were kept free for the Dark Lord's scrolls (docs/plans/dark-lord-spells/fire-burst.md section 6).\n\nDrop only: Marlon's quest is a level 1-30 one, far under its 74 (docs/plans/dark-lord-spells/fire-burst.md section 7.5). No shop sells it, as in MU (the user, 2026-10-25: MU drops and the plan's quests).",
+  "stats": {
+    "note": "A Dark Lord scroll's row: OpenMU's CreateOrb shape -- 1 x 2, durability one, dropped by monsters.",
+    "group": 12,
+    "number": 26,
+    "drop_level": 74,
+    "drops_from_monsters": true,
+    "width": 1,
+    "height": 2,
+    "durability": 1,
+    "durability_note": "One. One reading.",
+    "value": 115000,
+    "classes": [
+      "lord"
+    ],
+    "classes_from": "The Dark Lord's alone (OpenMU's CreateOrb(..., DarkLord); the skill is his, sim::skillFor).",
+    "requires": {
+      "level": 74,
+      "strength": 0,
+      "agility": 0,
+      "energy": 20,
+      "vitality": 0
+    },
+    "requires_note": "Level 74, MU's (the skill row's needLevel in sim/skills.cpp, and the skill block below). The energy is MU's raw 20 (OpenMU VersionSeasonSix/Items/Orbs.cs:57), which sim::asks scales as WebZen does, 20 + 20 x 74 x 4 / 100 = 79, the number the skill block asks."
+  },
+  "skill": {
+    "note": "What the scroll teaches. Read once and gone.",
+    "number": 61,
+    "name": "Fire Burst",
+    "tells": "Three fires flung at one body up to six tiles off; everything within three tiles of it burns half a second later. His energy multiplies it.",
+    "tells_from": "The skill's own line in sim/skills.cpp, kept letter for letter.",
+    "level_requirement": 74,
+    "energy_requirement": 79,
+    "energy_from": "MU's raw 20 through WebZen's skill formula (MagicDamage.cpp:663-677), 20 + 20 x 74 x 4 / 100 = 79; docs/plans/dark-lord-spells/fire-burst.md.",
+    "value": 115000,
+    "level_from": "MU's 74, as on the skill's row (sim/skills.cpp needLevel)."
+  },
+  "profile": "weapon",
+  "profile_note": "As the books and the orbs: a small object in the bag and on the ground.",
+  "mesh_from": "content/items/misc/ScrollFireBurst.obj is MuMain's Data/Item/skillScroll.bmd (MuExtract export-obj): three meshes, the scroll itself (dkScroll, 74 triangles) and two flat cards over it (dkScroll_R and dkScroll2_R, 2 each). SkillScroll01-04.bmd beside it are other files that nothing loads for these rows. The other four scrolls borrow this one's mesh.",
+  "sheets": {
+    "dkScroll": "dkscroll.png",
+    "dkScroll_R": "dkscroll_r.png",
+    "dkScroll2_R": "dkscroll2_r.png"
+  },
+  "sheet_from": "Data/Item/dkScroll.OZJ, dkScroll_R.OZJ and dkScroll2_R.OZJ (64x64 each) from MuMain, decoded by pipeline/decode_texture.py.",
+  "sheet_note": "dkScroll: a grey cloth sheet framed in gold between two copper rollers. dkScroll_R: four rows of blue runes on black. dkScroll2_R: a blue lion's head on black.",
+  "sheet_materials": {
+    "dkScroll": "cloth"
+  },
+  "material_note": "cloth: most of the one painted island is the grey sheet; the gold frame and the rollers are painted on it. The two _R cards are glows and take no material.",
+  "cutout": false,
+  "cutout_from": "No alpha in any of the three .OZJ.",
+  "glow": {
+    "dkScroll_R": {
+      "pulse": [
+        0.5,
+        0.5
+      ],
+      "pulse_rate": "slow"
+    },
+    "dkScroll2_R": {
+      "pulse": [
+        -0.5,
+        0.5
+      ],
+      "pulse_rate": "slow"
+    }
+  },
+  "glow_note": "ZzzObject.cpp:9745-9757: mesh 0 drawn plain; mesh 1 (the runes) RENDER_BRIGHT at BlendMeshLight = sin(WorldTime*0.001)*0.5 + 0.5, and mesh 2 (the lion) RENDER_BRIGHT at 1 minus that -- the two breathing against each other. Pulse [0.5, 0.5] and [-0.5, 0.5] at the slow rate (WorldTime*0.001). Nothing else of MuMain's draws on these rows: no held light, no shine colour.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "cloth",
+      "triangles": 12,
+      "area": 4046.3,
+      "along": [
+        -6.7,
+        4.1
+      ],
+      "mu_uv": [
+        0.195,
+        -0.083,
+        0.999,
+        1.003
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.912,
+        0.994
+      ]
+    },
+    {
+      "island": 1,
+      "material": "cloth",
+      "triangles": 15,
+      "area": 316.6,
+      "along": [
+        -6.4,
+        6.4
+      ],
+      "mu_uv": [
+        -0.001,
+        0.15,
+        0.177,
+        1.008
+      ],
+      "bake_uv": [
+        0.189,
+        0.006,
+        0.825,
+        0.881
+      ]
+    },
+    {
+      "island": 2,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 2396.4,
+      "along": [
+        2.9,
+        2.9
+      ],
+      "mu_uv": [
+        0.195,
+        -0.083,
+        0.999,
+        1.001
+      ],
+      "bake_uv": [
+        0.376,
+        0.006,
+        0.733,
+        0.488
+      ]
+    },
+    {
+      "island": 3,
+      "material": "cloth",
+      "triangles": 15,
+      "area": 316.6,
+      "along": [
+        -6.4,
+        6.4
+      ],
+      "mu_uv": [
+        -0.001,
+        0.15,
+        0.177,
+        1.008
+      ],
+      "bake_uv": [
+        0.28,
+        0.399,
+        0.825,
+        0.881
+      ]
+    },
+    {
+      "island": 4,
+      "material": "cloth",
+      "triangles": 15,
+      "area": 317.9,
+      "along": [
+        -7.2,
+        5.6
+      ],
+      "mu_uv": [
+        -0.001,
+        0.15,
+        0.177,
+        1.008
+      ],
+      "bake_uv": [
+        0.006,
+        0.5,
+        0.451,
+        0.881
+      ]
+    },
+    {
+      "island": 5,
+      "material": "cloth",
+      "triangles": 15,
+      "area": 317.9,
+      "along": [
+        -7.2,
+        5.6
+      ],
+      "mu_uv": [
+        -0.001,
+        0.15,
+        0.177,
+        1.008
+      ],
+      "bake_uv": [
+        0.097,
+        0.5,
+        0.542,
+        0.881
+      ]
+    },
+    {
+      "island": 6,
+      "material": "steel",
+      "triangles": 2,
+      "area": 2396.4,
+      "along": [
+        5.5,
+        5.5
+      ],
+      "mu_uv": [
+        0.195,
+        -0.083,
+        0.999,
+        1.001
+      ],
+      "bake_uv": [
+        0.554,
+        0.5,
+        0.605,
+        0.568
+      ]
+    },
+    {
+      "island": 7,
+      "material": "steel",
+      "triangles": 2,
+      "area": 2396.4,
+      "along": [
+        4.9,
+        4.9
+      ],
+      "mu_uv": [
+        0.195,
+        -0.083,
+        0.999,
+        1.001
+      ],
+      "bake_uv": [
+        0.554,
+        0.58,
+        0.605,
+        0.648
+      ]
+    }
+  ]
+}

@@ -375,6 +375,8 @@ QuestRow devin() {
     // and went to the Pit (2026-10-09).
     row.paid[n++] = {.item = "Book05", .kin = wizard, .firstOnly = true};      // Scroll of Flame
     row.paid[n++] = {.item = "Gem05", .plus = 3, .kin = elf, .firstOnly = true};  // Elite Yeti
+    // And the Dark Lord's Critical Damage (docs/plans/dark-lord.md section 6); it asks level 82.
+    row.paid[n++] = {.item = "ScrollCriticalDamage", .kin = int8_t(Kin::DarkLord), .firstOnly = true};
     row.paid[n++] = {.item = "Jewel01", .count = 3};  // Jewels of Bless
     row.paid[n++] = {.item = "Jewel02"};              // a Jewel of Soul
     row.paid[n++] = {.item = "MagicBox01"};           // a Box of Luck
@@ -465,6 +467,8 @@ QuestRow catacombs() {
     row.paid[n++] = {.item = "Gem01", .kin = knight, .firstOnly = true};  // Orb of Twisting Slash
     // And the wizard his crowd spell beside it (2026-10-07): Twister.
     row.paid[n++] = {.item = "Book08", .kin = wizard, .firstOnly = true};  // Scroll of Twister
+    row.paid[n++] = {.item = "ScrollElectricSpike", .kin = int8_t(Kin::DarkLord),
+                     .firstOnly = true};  // the Dark Lord's, level 92
     row.paid[n++] = {.item = "Jewel01", .count = 3};  // Jewels of Bless
     row.paidCount = n;
     return row;
@@ -601,6 +605,8 @@ QuestRow pit() {
     // "dont give orb of penetrion at dungeonn3 as reward, its too soon").
     row.paid[n++] = {.item = "OrbCyclone", .kin = knight, .firstOnly = true};
     row.paid[n++] = {.item = "Book10", .kin = wizard, .firstOnly = true};  // Hellfire
+    row.paid[n++] = {.item = "ScrollFireScream", .kin = int8_t(Kin::DarkLord),
+                     .firstOnly = true};  // the Dark Lord's, level 102
     row.paid[n++] = {.item = "Jewel01", .count = 3};  // Jewels of Bless
     row.paid[n++] = {.item = "Jewel02"};              // Jewel of Soul
     row.paid[n++] = {.item = "MagicBox08", .plus = 1};  // a Box of Kundun +1, off the Gorgon
@@ -826,6 +832,8 @@ QuestRow tersiaFourth() {
                                  .affixes = {uint8_t(Affix::Wisdom), uint8_t(Affix::Fortune)}};
     // And the knight's Slash, the Halls' until 2026-10-09: its orb asks level 104, this floor's.
     row.paid[row.paidCount++] = {.item = "OrbSlash", .kin = knight, .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "ScrollSummon", .kin = int8_t(Kin::DarkLord),
+                                 .firstOnly = true};  // the Dark Lord's, level 98
     row.voice = "tersia_4";  // pipeline/voice.py, VOICES["tersia"]
     return row;
 }

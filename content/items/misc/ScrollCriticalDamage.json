@@ -1,0 +1,46 @@
+{
+  "item": "ScrollCriticalDamage",
+  "mu_name": "Scroll of Critical Damage",
+  "mu_name_from": "OpenMU VersionSeasonSix/Items/Orbs.cs:59, CreateOrb(23, SkillNumber...) -- \"Scroll of Critical Damage\". MuMain loads all five Dark Lord scrolls on one model, Data/Item/SkillScroll (ZzzOpenData.cpp:1061-1065).",
+  "why_this_one": "The only way the Dark Lord learns Critical Damage (docs/plans/dark-lord-spells/critical-damage.md). Group 12 number 23, MU's own.\n\nDrops, and Apostle Devin pays it to a Dark Lord's first clear (docs/plans/dark-lord.md section 6), as he pays the knight the Orb of Cyclone above that quest's level. No shop sells it, as in MU (the user, 2026-10-25: MU drops and the plan's quests).",
+  "mesh": "ScrollFireBurst",
+  "mesh_note": "No geometry of its own: MuMain loads all five Dark Lord scrolls from the one Data/Item/SkillScroll model (ZzzOpenData.cpp:1061-1065), so this names the one the pipeline builds, ScrollFireBurst.",
+  "stats": {
+    "note": "A Dark Lord scroll's row: OpenMU's CreateOrb shape -- 1 x 2, durability one, dropped by monsters.",
+    "group": 12,
+    "number": 23,
+    "drop_level": 82,
+    "drops_from_monsters": true,
+    "width": 1,
+    "height": 2,
+    "durability": 1,
+    "durability_note": "One. One reading.",
+    "value": 220000,
+    "classes": [
+      "lord"
+    ],
+    "classes_from": "The Dark Lord's alone (OpenMU's CreateOrb(..., DarkLord); the skill is his, sim::skillFor).",
+    "requires": {
+      "level": 82,
+      "strength": 0,
+      "agility": 0,
+      "energy": 25,
+      "vitality": 0
+    },
+    "requires_note": "Level 82, MU's (the skill row's needLevel in sim/skills.cpp, and the skill block below). The energy is MU's raw 25 (OpenMU VersionSeasonSix/Items/Orbs.cs:59), which sim::asks scales as WebZen does, 20 + 25 x 82 x 4 / 100 = 102, the number the skill block asks."
+  },
+  "skill": {
+    "note": "What the scroll teaches. Read once and gone.",
+    "number": 64,
+    "name": "Critical Damage",
+    "tells": "Every critical and excellent hit harder, his and his party's near him, by his Command and energy, for a minute and more.",
+    "tells_from": "The skill's own line in sim/skills.cpp, kept letter for letter.",
+    "level_requirement": 82,
+    "energy_requirement": 102,
+    "energy_from": "MU's raw 25 through WebZen's skill formula (MagicDamage.cpp:663-677), 20 + 25 x 82 x 4 / 100 = 102; docs/plans/dark-lord-spells/critical-damage.md.",
+    "value": 220000,
+    "level_from": "MU's 82, as on the skill's row (sim/skills.cpp needLevel).",
+    "command_requirement": 300,
+    "command_from": "MU's Leadership 300 (OpenMU VersionSeasonSix/Items/Orbs.cs:59), asked whole at the read (Realm::useItem)."
+  }
+}

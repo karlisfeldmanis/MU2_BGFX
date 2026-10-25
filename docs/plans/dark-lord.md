@@ -183,6 +183,7 @@ There is no "Great Lord" armour set in MU; it is only a scepter. Ancient sets Ag
 | Crest of Monarch | Loch's Feather +1, draws `Quest05.bmd` |
 | Dark Horse, Dark Raven, two Spirits | see §4; `DarkHorseSoul.bmd` for the Spirit |
 | Scrolls x6 | one model `skillScroll.bmd` (dkScroll sheets); MU's numbers 12/21-24 clash with Skillshot and Darkness, take free ones |
+| | **Built 2026-10-25**: content/items/misc/Scroll*.json -- Fire Burst 12/26, Critical Damage 12/23, Electric Spike 12/24, Summon 12/30, Fire Scream 12/35; MU's level, energy and Command (tables v11 `teachesCommand`); drop at MU's drop levels and paid by Devin, the Catacombs, the Pit and Tersia 4 (he is native where the knight is); no shop. Chaotic Diseier stays a rune's blow (decision 8) |
 | Fruit of Command | only if Command is a stat |
 
 Cooks: wardrobe (new gear), every world's tables (new items), figures (new body), showing (new sounds),

@@ -71,10 +71,12 @@ float turn(uint32_t id) {
 // down along -(1, 0, 1) and is never turned in play (only the bench orbits). +45 stood every
 // one edge-on. Front or back by the id, the two faces being
 // one, and up to 15 degrees either way so a few of them do not look laid out. Ours.
-float facingCamera(uint32_t id) {
+// And the Dark Lord's scrolls, front on alone (`eitherFace` false): their two glowing cards are
+// on the sheet's face, and from behind the cloth hides them (content/items/misc/ScrollFireBurst).
+float facingCamera(uint32_t id, bool eitherFace = true) {
     const uint32_t h = id * 2654435761u;
     const float jitter = (float(h % 3001u) / 3000.0f - 0.5f) * 2.0f * (15.0f / 180.0f) * bx::kPi;
-    const float face = (h >> 20) & 1u ? bx::kPi : 0.0f;
+    const float face = eitherFace && ((h >> 20) & 1u) ? bx::kPi : 0.0f;
     return -0.25f * bx::kPi + face + jitter;
 }
 
@@ -243,7 +245,11 @@ void Litter::buildItem(const sim::Lying& one, Drop& drop) {
 
     float toCentre[16], yaw[16], place[16], a[16];
     bx::mtxTranslate(toCentre, -centre[0], -centre[1], -centre[2]);
-    drop.yaw = sim::jewelOf(row) == sim::Jewel::Life ? facingCamera(one.id) : turn(one.id);
+    // The Dark Lord's scrolls: group 12's only two-cell rows (describe.cpp's "Scroll").
+    const bool lordScroll = row.group == 12 && row.height == 2;
+    drop.yaw = sim::jewelOf(row) == sim::Jewel::Life ? facingCamera(one.id)
+               : lordScroll                          ? facingCamera(one.id, false)
+                                                     : turn(one.id);
     bx::mtxRotateY(yaw, drop.yaw);
     bx::mtxTranslate(place, x, y, z);
     drop.at[0] = x;

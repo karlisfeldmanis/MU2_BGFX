@@ -2894,6 +2894,9 @@ def main() -> None:
                     "level_requirement": int(teaches.get("level_requirement", 0)),
                     "energy_requirement": int(teaches.get("energy_requirement", 0)),
                 }
+                # The Command a Dark Lord's scroll asks, MU's Leadership; carried where set.
+                if int(teaches.get("command_requirement", 0)):
+                    entry["skill"]["command_requirement"] = int(teaches["command_requirement"])
                 # And its name, and one line of what it does in play. Both are for the
                 # tooltip: a scroll whose row says only "number 8" can be priced and dropped
                 # but not read, and "Scroll of Twister" in the name line is not an answer to

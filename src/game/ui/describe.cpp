@@ -85,7 +85,9 @@ std::string kindOf(const content::ItemRow& row) {
     if (sim::creation(row)) return "Epic jewel";
     if (row.group == 15) return "Scroll";
     if (sim::anyWing(row)) return sim::secondWing(row) ? "2nd level wings" : "Wings";
-    if (row.group == 12) return "Orb";
+    // The Dark Lord's scrolls sit among the orbs, MU's 12/21-24 and 35, and alone there stand
+    // two cells tall (content/items/misc/Scroll*.json).
+    if (row.group == 12) return row.height == 2 ? "Scroll" : "Orb";
     switch (row.group) {
         case sim::kGroupHelms: return "Helm";
         case sim::kGroupArmours: return "Armor";

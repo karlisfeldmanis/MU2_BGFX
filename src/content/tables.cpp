@@ -17,10 +17,11 @@ constexpr uint32_t kSimHz = 20;
 // 4 the items and version 5 the townsfolk (sprint 7); version 6 gave an item its defence rate,
 // version 7 what a scroll or an orb teaches, and version 8 one line of what the item itself
 // does, and version 9 the perches -- what can be sat on or leant against; version 10 dropped a
-// breed's respawn, which nothing read (the realm's is rules.drops.regen). There is no version 1
+// breed's respawn, which nothing read (the realm's is rules.drops.regen), and version 11 the
+// Command a scroll asks (the Dark Lord's). There is no version 1
 // anywhere but in a stale build directory, and the reader says so rather than reading a file
 // whose fields have moved under it.
-constexpr uint32_t kVersion = 10;
+constexpr uint32_t kVersion = 11;
 
 }  // namespace
 
@@ -173,11 +174,12 @@ bool parseTables(const std::vector<uint8_t>& bytes, Tables& out, std::string& er
         reader.readString(row.teachesName);
         reader.readString(row.teachesTells);
         reader.readString(row.tells);
-        int32_t teaches[3] = {};
+        int32_t teaches[4] = {};
         reader.take(teaches, sizeof(teaches));
         row.teaches = teaches[0];
         row.teachesLevel = teaches[1];
         row.teachesEnergy = teaches[2];
+        row.teachesCommand = teaches[3];
         int32_t f[21] = {};
         reader.take(f, sizeof(f));
         row.group = f[0];

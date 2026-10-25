@@ -1,0 +1,46 @@
+{
+  "item": "ScrollFireScream",
+  "mu_name": "Scroll of Fire Scream",
+  "mu_name_from": "OpenMU VersionSeasonSix/Items/Orbs.cs:61, CreateOrb(35, SkillNumber...) -- \"Scroll of Fire Scream\". MuMain loads all five Dark Lord scrolls on one model, Data/Item/SkillScroll (ZzzOpenData.cpp:1061-1065).",
+  "why_this_one": "The only way the Dark Lord learns Fire Scream (docs/plans/dark-lord-spells/fire-scream.md). Group 12 number 35, MU's own.\n\nDrops, and the Pit quest pays it to a Dark Lord's first clear (docs/plans/dark-lord.md section 6). No shop sells it, as in MU (the user, 2026-10-25: MU drops and the plan's quests).",
+  "mesh": "ScrollFireBurst",
+  "mesh_note": "No geometry of its own: MuMain loads all five Dark Lord scrolls from the one Data/Item/SkillScroll model (ZzzOpenData.cpp:1061-1065), so this names the one the pipeline builds, ScrollFireBurst.",
+  "stats": {
+    "note": "A Dark Lord scroll's row: OpenMU's CreateOrb shape -- 1 x 2, durability one, dropped by monsters.",
+    "group": 12,
+    "number": 35,
+    "drop_level": 102,
+    "drops_from_monsters": true,
+    "width": 1,
+    "height": 2,
+    "durability": 1,
+    "durability_note": "One. One reading.",
+    "value": 300000,
+    "classes": [
+      "lord"
+    ],
+    "classes_from": "The Dark Lord's alone (OpenMU's CreateOrb(..., DarkLord); the skill is his, sim::skillFor).",
+    "requires": {
+      "level": 102,
+      "strength": 0,
+      "agility": 0,
+      "energy": 32,
+      "vitality": 0
+    },
+    "requires_note": "Level 102, MU's (the skill row's needLevel in sim/skills.cpp, and the skill block below). The energy is MU's raw 32 (OpenMU VersionSeasonSix/Items/Orbs.cs:61), which sim::asks scales as WebZen does, 20 + 32 x 102 x 4 / 100 = 150, the number the skill block asks."
+  },
+  "skill": {
+    "note": "What the scroll teaches. Read once and gone.",
+    "number": 78,
+    "name": "Fire Scream",
+    "tells": "Three lanes of fire along the ground ahead of him, through everything they reach. Now and then a blow bursts on what stands round it.",
+    "tells_from": "The skill's own line in sim/skills.cpp, kept letter for letter.",
+    "level_requirement": 102,
+    "energy_requirement": 150,
+    "energy_from": "MU's raw 32 through WebZen's skill formula (MagicDamage.cpp:663-677), 20 + 32 x 102 x 4 / 100 = 150; docs/plans/dark-lord-spells/fire-scream.md. WebZen's server then asks none for Fire Scream; the client's 150 is kept (the dossier's 7.7).",
+    "value": 300000,
+    "level_from": "MU's 102, as on the skill's row (sim/skills.cpp needLevel).",
+    "command_requirement": 70,
+    "command_from": "MU's Leadership 70 (OpenMU VersionSeasonSix/Items/Orbs.cs:61), asked whole at the read (Realm::useItem)."
+  }
+}

@@ -2213,7 +2213,7 @@ def cook_tables(world, out_dir):
                 u16 len + a line of what the ITEM does -- "" on every row a column already
                 states, and see pipeline/index.py for which six carry one -- then
                 (version 7) i32 the skill's number, its level requirement, its energy
-                requirement, and then
+                requirement, (version 11) its Command requirement, and then
                 i32 group, number, drop level, width, height, minimum damage, maximum
                 damage, attack speed, defense, magic power, durability, classes (as the
                 arms), then the requirement's RAW level, strength, agility, energy,
@@ -2477,9 +2477,10 @@ def cook_tables(world, out_dir):
                      # column cannot state: the Ale, the Antidote, the Town Portal Scroll and
                      # the three jewels. Empty on everything else. See pipeline/index.py.
                      write_string(str(one.get("tells") or "")) +
-                     struct.pack("<3i", int(teaches.get("number") or 0),
+                     struct.pack("<4i", int(teaches.get("number") or 0),
                                  int(teaches.get("level_requirement") or 0),
-                                 int(teaches.get("energy_requirement") or 0)) +
+                                 int(teaches.get("energy_requirement") or 0),
+                                 int(teaches.get("command_requirement") or 0)) +
                      struct.pack("<21i", int(stats["group"]), int(stats["number"]),
                                  int(stats.get("drop_level") or 0),
                                  int(stats.get("width") or 1), int(stats.get("height") or 1),
@@ -2500,7 +2501,7 @@ def cook_tables(world, out_dir):
             for (npc, name, figure, x, y, look) in FOLK_VERSION075.get(number, [])]
 
     gate = entry.get("gates", {}).get("safe", {})
-    blob = struct.pack("<4sIIIIIIIIII4i", b"MU2R", 10, SIM_HZ, len(kinds), len(spawns), len(arms),
+    blob = struct.pack("<4sIIIIIIIIII4i", b"MU2R", 11, SIM_HZ, len(kinds), len(spawns), len(arms),
                        len(actions), len(items), len(folk), number, size,
                        int(gate.get("x1", 0)), int(gate.get("y1", 0)), int(gate.get("x2", 0)),
                        int(gate.get("y2", 0)))
@@ -3397,7 +3398,12 @@ def cook_wardrobe(out_dir, texcook, threads):
     rows = {}
     for one in index.get("objects", []):
         glb = one.get("glb", "")
-        if not glb or one.get("kind") not in ("armor", "weapon", "shield", "wing"):
+        # And a misc item with a glow: read from its glb, a glow draws whole and never pulses
+        # (content::Mesh::load), so its cooked mesh here carries the pulse -- the Dark Lord's
+        # scrolls' two breathing cards (ScrollFireBurst), the Invisibility Cloak, the Devil's Eye.
+        # Its row joins no suit, arm or wing below; game/item_models.cpp reads it by name.
+        misc_glow = one.get("kind") == "misc" and one.get("glow")
+        if not glb or (one.get("kind") not in ("armor", "weapon", "shield", "wing") and not misc_glow):
             continue
         name = os.path.splitext(os.path.basename(glb))[0]
         full = os.path.join(ASSETS, glb)

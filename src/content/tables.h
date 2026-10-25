@@ -114,6 +114,8 @@ struct ItemRow {
     // is a different thing -- a skill it grants while it is held.
     int32_t teaches = 0;
     int32_t teachesLevel = 0, teachesEnergy = 0;
+    // And the Command it asks (MU's Leadership): the Dark Lord's scrolls alone, 0 elsewhere.
+    int32_t teachesCommand = 0;
     std::string teachesName, teachesTells;
     // One line of what the ITEM does, for the rows whose whole point is a thing no column
     // states: the Ale, the Antidote, the Town Portal Scroll and the three jewels. Empty on
