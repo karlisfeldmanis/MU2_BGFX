@@ -102,6 +102,12 @@ struct Recipe {
     // climb starting a breath after the last has run out, as a +11 set's ribbon does
     // (game/fx/set_shine.cpp). Only the first lap flashes the circle.
     bool loops = false;
+    // **One strip turned to the eye** in place of MU's fixed cross (ours, 2026-10-25): a
+    // ring of crosses laid in the facing goes edge-on over most of its round from this
+    // camera, and the edge-on fade left two short arcs on one side -- the user, of Swell
+    // Life's cast: "do you see that aura is cuted/croped?". Each segment's strip lies across
+    // the path and the view, so the whole ring reads from any angle.
+    bool faces = false;
 };
 
 // MU's level-up: fifteen flares on a ring of forty, climbing away and dimming. The circle is
@@ -135,10 +141,18 @@ inline constexpr Recipe kBarrier{3,    50.0f, 12.0f, 100.0f, 1.6f, 1.6f, 19.0f, 
 // eBuff_Attack. Eight ribbons spread evenly round a ring wider than she is, thrown once at the
 // cast (the shape a learned skill had until 2026-09-29): a slower green-white climb
 // for a wound closing, a quicker red-orange one for her blows hardening.
-inline constexpr Recipe kMending{8,    34.0f, 30.0f, 22.0f, 12.0f, 16.0f, 12.0f, 0.0f,
-                                 true, false, false, {0.45f, 1.70f, 0.60f}};
-inline constexpr Recipe kMight{8,    44.0f, 34.0f, 16.0f, 20.0f, 22.0f, 10.0f, 0.0f,
-                               true, false, false, {2.20f, 0.55f, 0.15f}};
+// Both on one strip turned to the eye (Recipe::faces) since 2026-10-25, the user of Swell Life's
+// cast, which borrows kMight's until its own is drawn: "do you see that aura is cuted/croped?",
+// "also ribons going to high". A ring of 34 and of 44 ran through the body, which hid half of
+// it, and the climbs -- 12-16 and 20-22 units a tick -- went to 300 units and more, well over his
+// head. Now a ring of 70 clears him all round, and each climbs to about his crown (170) over
+// its life, as the guard's ribbons stop there (kGuarding).
+inline constexpr Recipe kMending{8,    70.0f, 30.0f, 22.0f, 7.5f, 7.5f, 12.0f, 0.0f,
+                                 true, false, false, {0.45f, 1.70f, 0.60f},
+                                 {0.4f, 0.6f, 1.0f}, 0.15f, 2.0f, 0.0f, 0.0f, false, false, false, true};
+inline constexpr Recipe kMight{8,    70.0f, 34.0f, 16.0f, 10.5f, 10.5f, 10.0f, 0.0f,
+                               true, false, false, {2.20f, 0.55f, 0.15f},
+                               {0.4f, 0.6f, 1.0f}, 0.15f, 2.0f, 0.0f, 0.0f, false, false, false, true};
 // The Dark Phoenix's shield going up, ours: WebZen raises it every six seconds and MuMain
 // answers with the wizard's Soul Barrier buff on the bird (ZzzCharacter.cpp:4976-4979), whose
 // look this game does not draw. Ten ember-red ribbons round a ring the bird's width, rising

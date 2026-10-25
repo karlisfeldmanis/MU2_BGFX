@@ -429,8 +429,23 @@ void Aura::gather(gfx::Effects& effects, const content::Ground& ground,
                 const float back = over + length * float(s) / float(steps);
                 at(b, j, back, p1);
                 const float u1 = (length - (back - over)) / length;
-                segment(p0, p1, up, u0, u1, true);        // the upright strip
-                segment(p0, p1, b.across, u0, u1, false); // and the flat one across it
+                if (b.r.faces) {
+                    // One strip across the path and the view (Recipe::faces): the tangent
+                    // crossed with the line to the eye, so it is never seen edge-on.
+                    const float t[3] = {p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2]};
+                    float v[3];
+                    for (int d = 0; d < 3; ++d) v[d] = eye[d] - (b.feet[d] + (p0[d] + p1[d]) * 0.5f);
+                    float axis[3] = {t[1] * v[2] - t[2] * v[1], t[2] * v[0] - t[0] * v[2],
+                                     t[0] * v[1] - t[1] * v[0]};
+                    const float al = std::sqrt(axis[0] * axis[0] + axis[1] * axis[1] + axis[2] * axis[2]);
+                    if (al > 1e-6f) {
+                        for (float& a : axis) a /= al;
+                        segment(p0, p1, axis, u0, u1, false);
+                    }
+                } else {
+                    segment(p0, p1, up, u0, u1, true);        // the upright strip
+                    segment(p0, p1, b.across, u0, u1, false); // and the flat one across it
+                }
                 std::copy(p1, p1 + 3, p0);
                 u0 = u1;
             }
