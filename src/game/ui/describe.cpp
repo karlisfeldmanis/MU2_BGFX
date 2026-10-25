@@ -9,6 +9,7 @@
 
 #include "sim/config.h"
 #include "sim/event.h"
+#include "sim/lord_pets.h"
 #include "sim/quests.h"
 #include "sim/rules.h"
 #include "sim/skills.h"
@@ -604,7 +605,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         // card read its +0 block (Discord #66, 2026-10-25).
         const int block = row.defenseRate + sim::defenseBonus(false, plus) +
                           (what.excellent != 0 ? sim::excellentBlock(row) : 0);
-        does.rows.push_back(stat("Block rate", std::to_string(block),
+        does.rows.push_back(stat("Defense rate", std::to_string(block),
                                  what.excellent != 0 ? Tone::Blue : Tone::White));
     }
     // A staff's magic power, the one line MU prints for it, and the percentage it comes to --
@@ -774,7 +775,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         }
     }
     if (row.group == sim::kGroupPets && !sim::jewellery(row)) {
-        const sim::PetPower power = sim::petPower(row);
+        const sim::PetPower power = sim::petPower(row, what);
         const auto say = [&](const std::string& words) {
             Row line;
             line.free = words;
@@ -786,14 +787,24 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             say("Absorb " + std::to_string(int(std::lround((1.0 - power.taken) * 100.0))) +
                 "% of Damage");
         }
-        if (power.health > 0) say("Max HP +" + std::to_string(power.health) + " increased");
+        if (power.health > 0) say("Max life +" + std::to_string(power.health));
         // The Dark Horse's: its level and its defence (MuMain GIPetManager.cpp:697-698; WebZen
         // ObjCalCharacter.cpp:1082-1090, sim::horseDefense), off the reader's own agility and
         // halved with the armour's as the character window shows it (:1183), and the life its
         // cut asks of him (ObjAttack.cpp:1345-1361).
+        // Its level and exp as MU's card puts them first (GIPetManager.cpp:595-769, "Exp : %u/%u",
+        // "Level : %d"): the exp it has against the next level's start (sim/lord_pets.h).
+        if (sim::levelledPet(row)) {
+            const int level = sim::petLevel(what);
+            say("Level " + std::to_string(level));
+            say(level >= sim::kPetTopLevel
+                    ? "Exp " + std::to_string(sim::petExp(what))
+                    : "Exp " + std::to_string(sim::petExp(what)) + " / " +
+                          std::to_string(sim::petExpAt(level + 1)));
+        }
         if (sim::darkHorse(row)) {
-            say("Level " + std::to_string(sim::kHorseLevel));
-            say("Defense +" + std::to_string(sim::horseDefense(who.totals.agility) / 2) + ", rising with Agility");
+            say("Defense +" + std::to_string(sim::horseDefense(who.totals.agility, sim::petLevel(what)) / 2) +
+                ", rising with Agility");
         }
         if (power.takenToll > 0) {
             Row line;
@@ -1012,26 +1023,28 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         if (what.option > 0) {
             const std::string value = std::to_string(sim::optionValue(row, what.option));
             // A ring's and a pendant's is AT_LIFE_REGENERATION, MuMain's "Automatic HP recovery".
+            // Every line in the character sheet's words, not MU's (the user, 2026-10-25, "Clean
+            // names": Life not HP, Damage not Dmg, Defense rate not Block rate).
             // A wing's by its kind: the Elf's life regeneration, Heaven's wizardry, Satan's damage.
             if (sim::anyWing(row)) {
                 const std::string worth = std::to_string(sim::wingOptionValue(row, what));
                 switch (sim::wingOption(row, what.wing)) {
                     case sim::WingOption::Regeneration:
-                        rolled("", "Automatic HP recovery +" + worth + "%");
+                        rolled("", "Life regeneration +" + worth + "%");
                         break;
                     case sim::WingOption::Wizardry:
-                        rolled("", "Additional Wizardry Dmg +" + worth);
+                        rolled("", "Wizardry +" + worth);
                         break;
-                    case sim::WingOption::Damage: rolled("", "Additional Dmg +" + worth); break;
+                    case sim::WingOption::Damage: rolled("", "Damage +" + worth); break;
                 }
-            } else if (sim::jewellery(row)) rolled("", "Automatic HP recovery +" + value + "%");
-            else if (row.shield()) rolled("", "Additional defense rate +" + value);
+            } else if (sim::jewellery(row)) rolled("", "Life regeneration +" + value + "%");
+            else if (row.shield()) rolled("", "Defense rate +" + value);
             else if (row.armour()) {
                 // Halved as the headline is.
-                rolled("", "Additional defense +" + decimal(float(sim::optionValue(row, what.option)) * 0.5f));
+                rolled("", "Defense +" + decimal(float(sim::optionValue(row, what.option)) * 0.5f));
             }
-            else if (sim::staffPower(row)) rolled("", "Additional Wizardry Dmg +" + value);
-            else rolled("", "Additional Dmg +" + value);
+            else if (sim::staffPower(row)) rolled("", "Wizardry +" + value);
+            else rolled("", "Damage +" + value);
         }
         // A 2nd wing's extras in MuMain's words (GT 740-742, docs/reference/mu-tooltip-lines.md), its
         // numbers WebZen's: 50 and 5 a plus (zzzitem.cpp:3039-3044).
@@ -1039,10 +1052,10 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                                                   sim::kWingIgnoreDefense))) {
             const std::string extra = std::to_string(sim::kWingExtraBase +
                                                      sim::kWingExtraPerPlus * what.refinement);
-            if (what.wing & sim::kWingMaxLife) rolled("", "HP +" + extra + " increased");
-            if (what.wing & sim::kWingMaxMana) rolled("", "Mana +" + extra + " increased");
+            if (what.wing & sim::kWingMaxLife) rolled("", "Max life +" + extra);
+            if (what.wing & sim::kWingMaxMana) rolled("", "Max mana +" + extra);
             if (what.wing & sim::kWingIgnoreDefense) {
-                rolled("", "Ignore opponent's defensive power by 3%");
+                rolled("", "Ignore defense chance +3%");
             }
         }
         // And the excellent ones last, in their bit order, as SetItemAttributes adds them.
@@ -1214,8 +1227,8 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             first = false;
             pieces.rows.push_back(line);
         };
-        step("3 pieces", "Defense Rate", sim::kSetDefenseRate, on >= sim::kSetFewPieces);
-        step("4 pieces", "Max HP", sim::kSetHealth, on >= sim::kSetMostPieces);
+        step("3 pieces", "Defense rate", sim::kSetDefenseRate, on >= sim::kSetFewPieces);
+        step("4 pieces", "Max life", sim::kSetHealth, on >= sim::kSetMostPieces);
         step("5 pieces", "Defense", sim::kSetDefense, all);
         // The excellent step only on an excellent piece (the user, 2026-10-05: 'dont show all
         // excelence def bonus, there is no point if user does not have the item'), as what it
@@ -1453,7 +1466,9 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     // with how far short, when it is not: a card read for a second should have the one line that
     // stops you wearing it be the one that shouts. MU prints them white and only the failures
     // red; the card goes one step quieter on the ones you meet.
-    const sim::Needs asked = sim::asks(row, plus, what.excellent != 0);
+    // A Dark Horse asks by its level (sim::asks over the Held).
+    const sim::Needs asked =
+        sim::levelledPet(row) ? sim::asks(row, what) : sim::asks(row, plus, what.excellent != 0);
     const sim::Needs owed = sim::shortOf(asked, who.level, who.points);
     // One class line, and none when every class may: the allowed ones in mu.db's order, the
     // wizard, the elf, the knight, the gladiator -- green when yours is among them and red when
@@ -1509,6 +1524,10 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     if (!(row.teaches > 0 && row.teachesEnergy > 0)) require("Energy", asked.energy, owed.energy);
     if (row.teaches > 0 && row.teachesEnergy > 0) {
         require("Energy", row.teachesEnergy, std::max(0, row.teachesEnergy - who.points.energy));
+    }
+    // And a Dark Lord's scroll's Command, as Realm::useItem asks it.
+    if (row.teaches > 0) {
+        require("Command", row.teachesCommand, std::max(0, row.teachesCommand - who.points.command));
     }
     // ---- against what he has on ---------------------------------------------------------------
     // MU2's comparison, marked there as the project's: it hangs off the figure it belongs to --

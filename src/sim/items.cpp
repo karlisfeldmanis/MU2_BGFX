@@ -432,7 +432,7 @@ std::string excellentLine(const content::ItemRow& row, int bit) {
     // twice MU's (2026-10-06).
     static const char* const kDefense[kExcellentOptions] = {
         "Zen from kills +80%",
-        "Defense success rate +20%",
+        "Defense rate +20%",
         "Reflect damage +10%",
         "Damage decrease +8%",
         "Max mana +8%",
