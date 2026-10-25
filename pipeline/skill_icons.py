@@ -153,6 +153,35 @@ SKILLS = {
     48: ("Dark Knight", "Swell Life"),
 }
 
+#: Skills that are ours, not MU's, and so have no cell on any MU sheet (0.75's, MuMain's or
+#: S17's newui_skill, skill2 and skill3 were all looked through, 2026-10-25). Each is a
+#: portrait in the summon cells' manner (30-36: the creature's head and shoulders on a
+#: gradient panel inside a dark rim), cut with --portrait from a render of its own model
+#: (the armory's thumbnail, out/armory/cache/thumbs/<hash>.webp, 512 px on alpha).
+#: number -> (class, name, panel top, panel bottom, crop of the 512 render as x, y, width).
+PORTRAITS = {
+    # Summon Alquamos, the elf's seventh (src/sim/skills.cpp): its glow is cyan, so the panel
+    # is a deep indigo rather than Bali's lavender, which would wash it out.
+    37: ("Fairy Elf", "Summon Alquamos", (58, 52, 120), (8, 10, 26), (150, 50, 260)),
+}
+
+
+def portrait(number: int, picture: Path, size: tuple[int, int] = CELL) -> "Image.Image":
+    """A summon-style cell: `picture` cropped to the cell's shape over a gradient, a dark rim."""
+    _, _, top, bottom, (x, y, w) = PORTRAITS[number]
+    h = w * size[1] // size[0]
+    figure = Image.open(picture).convert("RGBA").crop((x, y, x + w, y + h)).resize(size, Image.LANCZOS)
+    panel = Image.new("RGBA", size)
+    for row in range(size[1]):
+        t = row / (size[1] - 1)
+        colour = tuple(round(a + (b - a) * t) for a, b in zip(top, bottom)) + (255,)
+        panel.paste(colour, (0, row, size[0], row + 1))
+    panel.alpha_composite(figure)
+    rim = Image.new("RGBA", size, (14, 10, 9, 255))
+    rim.paste(Image.new("RGBA", (size[0] - 4, size[1] - 4), (28, 24, 23, 255)), (2, 2))
+    rim.paste(panel.crop((3, 3, size[0] - 3, size[1] - 3)), (3, 3))
+    return rim.convert("RGB")
+
 
 #: MuMain's own sheet, and the second way in. MuDream's 1024 repaint is the better picture and
 #: stays the default, but it lives inside another application's container and macOS refuses to
@@ -210,7 +239,19 @@ def main() -> None:
                         help="where that sheet is, if pipeline/fetch_mumain.sh has not been run")
     parser.add_argument("--only", type=int, nargs="+", default=[],
                         help="cut only these skill numbers, leaving every other icon alone")
+    parser.add_argument("--portrait", nargs=2, metavar=("NUMBER", "PICTURE"),
+                        help="draw one of PORTRAITS from a render of its model (see PORTRAITS)")
     args = parser.parse_args()
+
+    if args.portrait:
+        number, picture = int(args.portrait[0]), Path(args.portrait[1])
+        if number not in PORTRAITS:
+            sys.exit(f"skill {number} is not in PORTRAITS")
+        args.out.mkdir(parents=True, exist_ok=True)
+        target = args.out / f"skill_{number}.png"
+        portrait(number, picture).save(target, optimize=True)
+        print(f"  {target.name:<14} {PORTRAITS[number][1]:<20} portrait of {picture.name}")
+        return
 
     wanted = {n: SKILLS[n] for n in args.only} if args.only else SKILLS
     for number in args.only:

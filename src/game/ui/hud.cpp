@@ -166,6 +166,7 @@ const char* summonArt(int32_t skill) {
         case 32: return "skill_32";
         case 33: return "skill_33";
         case 34: return "skill_34";
+        case 37: return "skill_37";
         default: return "skill_35";
     }
 }
