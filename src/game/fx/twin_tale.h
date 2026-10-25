@@ -21,8 +21,16 @@
 //   units across, 50 along and 100 up off its point, losing 0.013 of scale and 0.05 of alpha a
 //   frame, its light by 1/1.02 (ZzzEffectParticle.cpp:1114-1121, 5253-5266).
 //
-// **Ours**: the hair's beams as a streak of JointEnergy01 from each tip to the chest of what it
-// attacks, held six frames and fading with its start kept on the tip, not MU's travelling joint; smoke and water at a third of
+//   The joint's sub 0 (ZzzEffectJoint.cpp:210-226, 2991-2999, 3237-3364; ZzzAI.cpp:134-145):
+//   LifeTime 120, eight tails, Velocity 3, moving Velocity units a frame along its heading; for
+//   its first twenty frames its heading turns 10 degrees a frame and it rises 6, then Velocity
+//   climbs 5 a frame to 30 and MoveHumming turns it up to Velocity degrees a frame at what it
+//   attacks + 120 up, slowing 10 a frame when inside 70 units it turns more than 20, and it is
+//   gone inside 35 units of it.
+//
+// **Ours**: the hair's beams as MU's flying joint, a ribbon of JointEnergy01 through its eight
+// tails at a third of MU's width (the user, 2026-10-25: "you decide", over the still streak
+// it was), its heading starting from the tip toward what it attacks; smoke and water at a third of
 // MU's size, the user's measure for monster sprites; the marks and clouds at MU's own size, as they
 // lie on the ground. Not carried: the MODEL_SKILL_INFERNO sub 9 it dies in, and the energy ring
 // MU lays under it only in the Maya battle (map 39). MU's numbers are per reference frame, 25 a
@@ -83,10 +91,13 @@ private:
         bool water = false;
     };
     struct Beam {
-        uint32_t id = 0;  // whose hair, and which: its start follows that tip
-        int hair = 0;
-        float from[3] = {0, 0, 0};
+        uint32_t id = 0;  // whose hair: its mark follows what that one attacks
+        float at[3] = {0, 0, 0};
         float to[3] = {0, 0, 0};
+        float yaw = 0.0f, pitch = 0.0f;  // degrees: its heading
+        float velocity = 3.0f;           // MU units a reference frame, and degrees it may turn
+        float tail[8][3] = {};
+        int tails = 0;
         float age = 0.0f, fade = 1.0f;
     };
 
@@ -97,6 +108,7 @@ private:
     std::vector<Mark> marks_;
     std::vector<Puff> puffs_;
     std::vector<Beam> beams_;
+    float beamStep_ = 0.0f;  // what of a reference frame the tails are owed
     uint32_t seed_ = 0x7a1e2b93u;
     bgfx::TextureHandle spark_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle cloud_ = BGFX_INVALID_HANDLE;

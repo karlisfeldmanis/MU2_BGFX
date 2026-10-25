@@ -17,7 +17,8 @@ constexpr float kMarkHalf = 0.5f;         // RenderTerrainAlphaBitmap's size 1, 
 constexpr float kMarkLift = 0.03f;
 constexpr float kMarkEvery = 0.5f;        // seconds
 constexpr float kBeamHalf = 15.0f * kUnit * 0.33f;
-constexpr float kBeamFrames = 6.0f;
+constexpr float kBeamFrames = 120.0f;  // the joint's LifeTime
+constexpr float kBeamRise = 20.0f;     // frames it spirals up before it turns home
 constexpr float kChest = 1.2f;
 constexpr float kWalkGreen[3] = {0.6f, 1.0f, 0.4f};
 constexpr float kHitSmoke[3] = {0.4f, 0.9f, 0.6f};
@@ -27,7 +28,15 @@ constexpr float kBeamLight[3] = {0.6f, 1.0f, 0.6f};
 constexpr const char* kHair[2] = {"Bone24", "Bone32"};  // Twintail_Hair24, _Hair32
 constexpr size_t kMostMarks = 200;
 constexpr size_t kMostPuffs = 1200;
-constexpr size_t kMostBeams = 64;
+constexpr size_t kMostBeams = 160;
+constexpr float kDegree = 0.01745329f;
+
+// From `angle` a step of at most `most` degrees toward `toward`, the short way round.
+float turnToward(float angle, float toward, float most) {
+    float d = std::fmod(toward - angle + 540.0f, 360.0f) - 180.0f;
+    d = std::clamp(d, -most, most);
+    return angle + d;
+}
 
 }  // namespace
 
@@ -106,10 +115,6 @@ void TwinTale::watch(uint32_t id, const Figure& figure, bool walking, bool hair,
     float tips[2][3];
     bool has[2];
     for (int k = 0; k < 2; ++k) has[k] = one.hair[k] >= 0 && figure.pointOn(one.hair[k], origin, tips[k]);
-    // A beam already out stays on its tip as the hair whips (the user saw them left hanging).
-    for (Beam& beam : beams_)
-        if (beam.id == id && has[beam.hair])
-            for (int i = 0; i < 3; ++i) beam.from[i] = tips[beam.hair][i];
 
     // Walking: a mark under one hair, then the other, every half second.
     if (walking && !dying) {
@@ -134,6 +139,11 @@ void TwinTale::watch(uint32_t id, const Figure& figure, bool walking, bool hair,
         chest[0] = target[0];
         chest[1] = target[1] + kChest;
         chest[2] = target[2];
+        // Its bolts already out home on where that one stands now, as MU's copy the target's
+        // position each frame.
+        for (Beam& beam : beams_)
+            if (beam.id == id)
+                for (int i = 0; i < 3; ++i) beam.to[i] = chest[i];
     }
     for (one.owed += seconds / kFrame; one.owed >= 1.0f; one.owed -= 1.0f) {
         if (dying) {
@@ -157,16 +167,16 @@ void TwinTale::watch(uint32_t id, const Figure& figure, bool walking, bool hair,
             continue;
         }
         if (!hair || !target) continue;
-        // The Hair Attack: each tip, one frame in two, a streak at what it attacks.
+        // The Hair Attack: each tip, one frame in two, a bolt at what it attacks.
         for (int k = 0; k < 2; ++k) {
             if (!has[k] || unit() >= 0.5f || beams_.size() >= kMostBeams) continue;
             Beam beam;
             beam.id = id;
-            beam.hair = k;
             for (int i = 0; i < 3; ++i) {
-                beam.from[i] = tips[k][i];
+                beam.at[i] = tips[k][i];
                 beam.to[i] = chest[i];
             }
+            beam.yaw = std::atan2(chest[0] - tips[k][0], chest[2] - tips[k][2]) / kDegree;
             beam.fade = fade;
             beams_.push_back(beam);
         }
@@ -214,9 +224,49 @@ void TwinTale::update(float seconds) {
                                     return p.age >= p.life || p.alpha <= 0.0f || p.scale <= 0.0f;
                                 }),
                  puffs_.end());
-    for (Beam& one : beams_) one.age += frames;
+    // The bolts: MU's joint sub 0, a tail point laid each reference frame.
+    beamStep_ += frames;
+    const bool lay = beamStep_ >= 1.0f;
+    if (lay) beamStep_ = std::fmod(beamStep_, 1.0f);
+    for (Beam& one : beams_) {
+        one.age += frames;
+        if (one.age <= kBeamRise) {
+            one.yaw += 10.0f * frames;
+            one.at[1] += 6.0f * kUnit * frames;
+        } else {
+            one.velocity = std::min(30.0f, one.velocity + 5.0f * frames);
+            const float dx = one.to[0] - one.at[0], dz = one.to[2] - one.at[2];
+            const float across = std::sqrt(dx * dx + dz * dz);
+            const float turn = one.velocity * frames;
+            const float was = one.yaw;
+            one.yaw = turnToward(one.yaw, std::atan2(dx, dz) / kDegree, turn);
+            one.pitch = turnToward(one.pitch, std::atan2(one.to[1] - one.at[1], across) / kDegree, turn);
+            // Close and turning hard, it slows, so it strikes instead of circling.
+            const float dy = one.to[1] - one.at[1];
+            if (across * across + dy * dy <= 0.70f * 0.70f && std::fabs(one.yaw - was) > 20.0f &&
+                one.velocity >= 20.0f)
+                one.velocity -= 10.0f * frames;
+        }
+        const float step = one.velocity * kUnit * frames;
+        const float flat = std::cos(one.pitch * kDegree);
+        one.at[0] += std::sin(one.yaw * kDegree) * flat * step;
+        one.at[2] += std::cos(one.yaw * kDegree) * flat * step;
+        one.at[1] += std::sin(one.pitch * kDegree) * step;
+        if (lay) {
+            for (int t = std::min(one.tails, 7); t > 0; --t)
+                for (int i = 0; i < 3; ++i) one.tail[t][i] = one.tail[t - 1][i];
+            for (int i = 0; i < 3; ++i) one.tail[0][i] = one.at[i];
+            one.tails = std::min(8, one.tails + 1);
+        }
+    }
     beams_.erase(std::remove_if(beams_.begin(), beams_.end(),
-                                [](const Beam& b) { return b.age >= kBeamFrames; }),
+                                [](const Beam& b) {
+                                    if (b.age >= kBeamFrames) return true;
+                                    if (b.age <= kBeamRise) return false;
+                                    float d = 0.0f;
+                                    for (int i = 0; i < 3; ++i) d += (b.to[i] - b.at[i]) * (b.to[i] - b.at[i]);
+                                    return d <= 0.35f * 0.35f;
+                                }),
                  beams_.end());
 }
 
@@ -269,44 +319,50 @@ void TwinTale::gather(gfx::Effects& effects) const {
     }
     if (!bgfx::isValid(energy_)) return;
     for (const Beam& one : beams_) {
-        const float light = (1.0f - one.age / kBeamFrames) * one.fade;
-        float along[3] = {one.to[0] - one.from[0], one.to[1] - one.from[1], one.to[2] - one.from[2]};
-        const float far = std::sqrt(along[0] * along[0] + along[1] * along[1] + along[2] * along[2]);
-        if (far < 0.05f) continue;
-        for (float& a : along) a /= far;
-        // Across: flat (perpendicular to the beam on the ground) and up, two crossed quads.
-        float flat[3] = {along[2], 0.0f, -along[0]};
-        const float flen = std::sqrt(flat[0] * flat[0] + flat[2] * flat[2]);
-        if (flen > 1e-4f) {
-            flat[0] /= flen;
-            flat[2] /= flen;
-        } else {
-            flat[0] = 1.0f;
-        }
-        const float lift[3] = {0.0f, 1.0f, 0.0f};
-        for (const float* width : {static_cast<const float*>(flat), static_cast<const float*>(lift)}) {
-            gfx::Sprite sprite;
-            sprite.placed = true;
-            for (int k = 0; k < 3; ++k) {
-                sprite.corner[0][k] = one.from[k] - width[k] * kBeamHalf;
-                sprite.corner[1][k] = one.to[k] - width[k] * kBeamHalf;
-                sprite.corner[2][k] = one.to[k] + width[k] * kBeamHalf;
-                sprite.corner[3][k] = one.from[k] + width[k] * kBeamHalf;
-                sprite.position[k] = 0.5f * (one.from[k] + one.to[k]);
-                sprite.colour[k] = kBeamLight[k] * light;
+        // Its ribbon through the tails, the head first; each piece two crossed quads (flat
+        // across it and up), dimmer toward the tail's end.
+        for (int t = 0; t + 1 < one.tails; ++t) {
+            const float* from = one.tail[t + 1];
+            const float* to = one.tail[t];
+            float along[3] = {to[0] - from[0], to[1] - from[1], to[2] - from[2]};
+            const float far = std::sqrt(along[0] * along[0] + along[1] * along[1] + along[2] * along[2]);
+            if (far < 1e-3f) continue;
+            for (float& a : along) a /= far;
+            float flat[3] = {along[2], 0.0f, -along[0]};
+            const float flen = std::sqrt(flat[0] * flat[0] + flat[2] * flat[2]);
+            if (flen > 1e-4f) {
+                flat[0] /= flen;
+                flat[2] /= flen;
+            } else {
+                flat[0] = 1.0f;
             }
-            sprite.cornerUv[0][0] = 0.0f;
-            sprite.cornerUv[0][1] = 0.0f;
-            sprite.cornerUv[1][0] = 1.0f;
-            sprite.cornerUv[1][1] = 0.0f;
-            sprite.cornerUv[2][0] = 1.0f;
-            sprite.cornerUv[2][1] = 1.0f;
-            sprite.cornerUv[3][0] = 0.0f;
-            sprite.cornerUv[3][1] = 1.0f;
-            sprite.colour[3] = 1.0f;
-            sprite.sheet = energy_;
-            sprite.blend = gfx::Blend::Additive;
-            effects.add(sprite);
+            const float lift[3] = {0.0f, 1.0f, 0.0f};
+            const float light = (1.0f - float(t) / 8.0f) * one.fade;
+            for (const float* width : {static_cast<const float*>(flat), static_cast<const float*>(lift)}) {
+                gfx::Sprite sprite;
+                sprite.placed = true;
+                for (int k = 0; k < 3; ++k) {
+                    sprite.corner[0][k] = from[k] - width[k] * kBeamHalf;
+                    sprite.corner[1][k] = to[k] - width[k] * kBeamHalf;
+                    sprite.corner[2][k] = to[k] + width[k] * kBeamHalf;
+                    sprite.corner[3][k] = from[k] + width[k] * kBeamHalf;
+                    sprite.position[k] = 0.5f * (from[k] + to[k]);
+                    sprite.colour[k] = kBeamLight[k] * light;
+                }
+                const float u0 = float(t + 1) / 8.0f, u1 = float(t) / 8.0f;
+                sprite.cornerUv[0][0] = u0;
+                sprite.cornerUv[0][1] = 0.0f;
+                sprite.cornerUv[1][0] = u1;
+                sprite.cornerUv[1][1] = 0.0f;
+                sprite.cornerUv[2][0] = u1;
+                sprite.cornerUv[2][1] = 1.0f;
+                sprite.cornerUv[3][0] = u0;
+                sprite.cornerUv[3][1] = 1.0f;
+                sprite.colour[3] = 1.0f;
+                sprite.sheet = energy_;
+                sprite.blend = gfx::Blend::Additive;
+                effects.add(sprite);
+            }
         }
     }
 }
