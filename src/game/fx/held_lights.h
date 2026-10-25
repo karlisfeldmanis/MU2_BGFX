@@ -163,6 +163,17 @@
 //         L*(0.2, 0.1, 3) at (-15, 0, 0) and (10, 0, 0) on bone 1, the head; at the second two
 //         BITMAP_SHINY + 1 at 0.6, grey sin(WorldTime*0.001)*0.5 + 0.5. MU turns them, here they
 //         stand.
+//   And the next three (2026-10-25):
+//     MODEL_MASTER_SCEPTER (:7596-7612): on bones 2-5 (MU's loop skips bone 1) at (-10, 0, 0),
+//         BITMAP_LIGHT at 1 in S*(0.6, 0.8, 1), S = sin(WorldTime*0.002)*0.35 + 0.65; on bone 4,
+//         the centre, BITMAP_SHINY + 1 at 0.6 in 0.5 grey.
+//     MODEL_GREAT_SCEPTER (:7614-7631): S = sin(WorldTime*0.001)*0.5 + 0.7; on bone 2, the
+//         pommel, BITMAP_LIGHT at 1.5 and BITMAP_SHINY + 1 at S*0.5, both in S*(1, 0.8, 0.6); on
+//         bone 1 at (S*-10, 0, 0), riding the shaft with S, BITMAP_LIGHT at 0.7 and two
+//         BITMAP_SHINY + 1 at 0.5 and 0.4 in (0.6, 0.8, 1).
+//     MODEL_LORD_SCEPTER (:7633-7647): in (1, 0.6, 0.3), BITMAP_LIGHT at 1.3 on bone 1, the
+//         pommel, and at (-10, 0, 0), (5, 0, 0) and (20, 0, 0) on bone 2 a BITMAP_LIGHT at 1.3
+//         and a BITMAP_SHINY + 1 at 0.4.
 
 namespace mu::game {
 
@@ -218,10 +229,13 @@ public:
         Beuroba,
         AirLynBow,
         BattleScepter,
+        MasterScepter,
+        GreatScepter,
+        LordScepter,
     };
     // The Stinger Bow's 44 bones, each with its light (ZzzCharacter.cpp:7972-7999).
     static constexpr int kMostPoints = 44;
-    static constexpr Item kItems[49] = {Item::SaintCrossbow,   Item::GrandSoulShield,
+    static constexpr Item kItems[52] = {Item::SaintCrossbow,   Item::GrandSoulShield,
                                         Item::DragonSpear,     Item::DragonSoulStaff,
                                         Item::ElementalMace,   Item::GreatReignCrossbow,
                                         Item::ThunderBlade,    Item::LegendaryShield,
@@ -245,7 +259,8 @@ public:
                                         Item::ExplosionBlade,  Item::SylphWindBow,
                                         Item::GrandViperStaff, Item::ChromaticStaff,
                                         Item::Beuroba,         Item::AirLynBow,
-                                        Item::BattleScepter};
+                                        Item::BattleScepter,   Item::MasterScepter,
+                                        Item::GreatScepter,    Item::LordScepter};
 
     bool open(const std::string& assetDir, content::Textures& textures,
               const content::Showing& table);

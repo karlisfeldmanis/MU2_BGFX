@@ -42,7 +42,7 @@ From WebZen `classdef.cpp:39` / OpenMU `ClassDarkLord.cs`:
 - Weapons: scepters (his own), plus daggers, short swords, small axes and the early maces. Shields: the MU list plus his **Cross Shield**.
 
 Code: `rules.h:268` (`DarkLord = 4`, `kKinCount 5`, `pointsPerLevel`, `moveLevel`), `rules.cpp:166-188,375`
-(kRows, kStarting, kMana), `swings.cpp:25` (a scepter stance), `skills.cpp:1046,1060`, `cradle.cpp:11`,
+(kRows, kStarting, kMana), (no scepter stance: MuMain holds and swings a scepter on the one-hand ladder, ZzzCharacter.cpp:345-350, 1161-1176, as ours already does), `skills.cpp:1046,1060`, `cradle.cpp:11`,
 `items.h:840-848` (`kLordOnly`, **in `kEveryClass`**), `items.h:514` mask `& 7` -> `& 0x1F`,
 `items.cpp:774` `elementServes` (fire, lightning), `machine.cpp:812-850` (wing switches), `raid_party.cpp:43`.
 A `hasSecondClass(kin)` helper replaces ~9 `== MagicGladiator` checks; a `kLastKin` replaces ~10 clamps
@@ -133,7 +133,7 @@ reaches 24 rows and the Phoenix 25 with his).
 | Seed Master, Aida | as everyone |
 
 Weapon ladder against the knight's: Flail 22 / Battle 54 / Master 72 / Great +7 82 / Lord 98 / Great Lord +7 140.
-Sets: A Light Plate (46-62), B Adamantine (66-78), C Dark Steel (86-96). `testQuestLadder` guards it.
+Sets: A Light Plate (42-62), B Adamantine (66-78), C Dark Steel (86-96). `testQuestLadder` guards it.
 
 ## 7. Items to cook
 
@@ -164,7 +164,7 @@ Skipped: Stryker (gamble item). Frost Mace is not his.
 | set | drop | worlds | model |
 |---|---|---|---|
 | Leather / Bronze / Scale | 10 / 18 / 28 | Lorencia, Noria, Devias | existing: add "lord", helms too |
-| Light Plate | 46-62 | Dungeon, LT, Atlans | *Male26 |
+| Light Plate | 42-62 | Dungeon, LT, Atlans | *Male26 |
 | Adamantine | 66-78 | Atlans, Tarkan | *Male27 |
 | Dark Steel | 86-96 | Tarkan, Icarus | *Male28 |
 | Glorious | 97-105 | Icarus, BC | CW_*Male05 -> *Male39 |
@@ -235,7 +235,7 @@ window), rebirth window, signin JSON, bots' `build[4]`, sim_test loops over thre
 3. **Primary and gear** -- Force / Force Wave and its effect, scepter stance, the first scepters and Light Plate cooked; he fights in Lorencia.
    His clips' speeds first: actions.json entries 76-89 only (his and the horse rider's, used by no code), each given its real MU play speed -- Force 0.25 (now 0.3), Earthshake 0.2 (0.3), the horse idles 1.0 (0.2). The rest of the table stays (2026-10-23).
    **Done 2026-10-23** (82773543 and the next): the runtime speeds win over ZzzOpenData's load-time ones, as everywhere in the table -- walk and horse run 0.33 (ZzzCharacter.cpp:532-533, every frame), Force 0.25 and Earthshake 0.3 (SetAttackSpeed, :949, :1013). Index and figures/clips/player.muc re-cooked on the branch.
-   **Force done and approved 2026-10-23** (the user: "perfect"; f534176f .. 89c76a46): MU's row, born known, his primary; WebZen's (200 + Ene/20)% and Str/25 + Ene/50 + 10-15 before the defence; let go and landed on STRIKE's key 3 of 7 (`release` 3/7), never flown (`flies` 1000), he snaps onto the body; fx/force.h (MODEL_PIERCING2, two MODEL_WAVES on edge across his line, the BITMAP_PIERCING streaks, sDarkSpear), **all in front of him** (the user: "only frontal"); icon off newui_skill2; strike clips 80/82 in the tables cook. Still to do here: the scepters, their stance, Force Wave (66: a scepter with the skill option, 50-75 to every monster in a 1-wide, 4-long line), Light Plate.
+   **Force done and approved 2026-10-23** (the user: "perfect"; f534176f .. 89c76a46): MU's row, born known, his primary; WebZen's (200 + Ene/20)% and Str/25 + Ene/50 + 10-15 before the defence; let go and landed on STRIKE's key 3 of 7 (`release` 3/7), never flown (`flies` 1000), he snaps onto the body; fx/force.h (MODEL_PIERCING2, two MODEL_WAVES on edge across his line, the BITMAP_PIERCING streaks, sDarkSpear), **all in front of him** (the user: "only frontal"); icon off newui_skill2; strike clips 80/82 in the tables cook. Still to do here: the scepters, Force Wave (66: a scepter with the skill option, 50-75 to every monster in a 1-wide, 4-long line), Light Plate.
 4. **Skills** -- Fire Burst, Electric Spike, Critical Damage, Summon, Fire Scream: sim then fx, one at a time, judged in game.
 5. **Pets** -- Pet Trainer, Spirits, Dark Horse + Earthshake, Dark Raven + modes, pet levels.
 6. **Rest of the gear** -- Adamantine, Dark Steel, Glorious, Dark Master, Paewang, Cross Shield, the later scepters, Cape of Lord, Crest.

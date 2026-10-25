@@ -334,3 +334,6 @@ with `pipeline/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Cannon03 | world | 2026-10-11 00:19 | awaiting |  |
 | HouseEtc02 | world | 2026-10-11 00:22 | awaiting |  |
 | Mace09 | arm | 2026-10-25 00:47 | awaiting |  |
+| Mace11 | arm | 2026-10-25 15:17 | awaiting |  |
+| Mace10 | arm | 2026-10-25 15:21 | awaiting |  |
+| Mace12 | arm | 2026-10-25 15:24 | awaiting |  |

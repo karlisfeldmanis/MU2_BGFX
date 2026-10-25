@@ -152,6 +152,9 @@ const char* HeldLights::mesh(Item item) {
         case Item::Beuroba: return "Spear12";
         case Item::AirLynBow: return "Bow25";
         case Item::BattleScepter: return "Mace09";
+        case Item::MasterScepter: return "Mace10";
+        case Item::GreatScepter: return "Mace11";
+        case Item::LordScepter: return "Mace12";
     }
     return "";
 }
@@ -571,6 +574,35 @@ int HeldLights::points(Item item, float out[kMostPoints][3]) {
                 for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
             }
             return 2;
+        }
+        case Item::MasterScepter: {
+            // (-10, 0, 0) on bones 2-5 of Mace10.bmd at rest: three corners of the head, and the
+            // third its centre.
+            static const float kBones[4][3] = {
+                {-7.8f, -7.8f, 92.9f}, {-7.8f, 8.3f, 92.9f}, {-0.3f, -0.2f, 72.8f}, {7.3f, 8.3f, 92.9f}};
+            for (int i = 0; i < 4; ++i) {
+                for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
+            }
+            return 4;
+        }
+        case Item::GreatScepter: {
+            // Bone02 of Mace11.bmd at rest, the pommel; then (S*-10, 0, 0) on Bone01 at S 0 and
+            // at S 1, which gather() runs between.
+            static const float kBones[3][3] = {{0.0f, 0.0f, -59.8f}, {0.1f, 0.1f, 65.0f}, {0.1f, 0.1f, 75.0f}};
+            for (int i = 0; i < 3; ++i) {
+                for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
+            }
+            return 3;
+        }
+        case Item::LordScepter: {
+            // Bone01 of Mace12.bmd at rest, the pommel; then (-10, 0, 0), (5, 0, 0) and (20, 0, 0)
+            // on Bone02, up the head.
+            static const float kBones[4][3] = {
+                {0.0f, 0.0f, -62.1f}, {0.0f, 0.0f, 42.6f}, {0.0f, 0.0f, 57.6f}, {0.0f, 0.0f, 72.6f}};
+            for (int i = 0; i < 4; ++i) {
+                for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
+            }
+            return 4;
         }
     }
     return 0;
@@ -1087,6 +1119,33 @@ void HeldLights::gather(gfx::Effects& effects) const {
                 const float grey = std::sin(clock_) * 0.5f + 0.5f;
                 put(shiny_, one.at[1], halfOf(0.6f), grey, grey, grey);
                 put(shiny_, one.at[1], halfOf(0.6f), grey, grey, grey);
+                break;
+            }
+            case Item::MasterScepter: {
+                const float l = std::sin(clock_ * 2.0f) * 0.35f + 0.65f;
+                for (int i = 0; i < one.count; ++i) {
+                    put(light_, one.at[i], halfOf(1.0f), 0.6f * l, 0.8f * l, 1.0f * l);
+                }
+                if (one.count >= 3) put(shiny_, one.at[2], halfOf(0.6f), 0.5f, 0.5f, 0.5f);
+                break;
+            }
+            case Item::GreatScepter: {
+                if (one.count < 3) break;
+                const float l = std::sin(clock_) * 0.5f + 0.7f;
+                put(light_, one.at[0], halfOf(1.5f), l, 0.8f * l, 0.6f * l);
+                put(shiny_, one.at[0], halfOf(l * 0.5f), l, 0.8f * l, 0.6f * l);
+                float at[3];
+                for (int k = 0; k < 3; ++k) at[k] = one.at[1][k] + (one.at[2][k] - one.at[1][k]) * l;
+                put(light_, at, halfOf(0.7f), 0.6f, 0.8f, 1.0f);
+                put(shiny_, at, halfOf(0.5f), 0.6f, 0.8f, 1.0f);
+                put(shiny_, at, halfOf(0.4f), 0.6f, 0.8f, 1.0f);
+                break;
+            }
+            case Item::LordScepter: {
+                for (int i = 0; i < one.count; ++i) {
+                    put(light_, one.at[i], halfOf(1.3f), 1.0f, 0.6f, 0.3f);
+                    if (i > 0) put(shiny_, one.at[i], halfOf(0.4f), 1.0f, 0.6f, 0.3f);
+                }
                 break;
             }
         }
