@@ -58,14 +58,14 @@ void Dust::shutdown() {
     open_ = false;
 }
 
-void Dust::puff(const float at[3], float yaw, bool snow) {
+void Dust::puff(const float at[3], float yaw, bool snow, float size) {
     if (!open_ || puffs_.size() >= kPuffs) return;
     Puff one;
     one.snow = snow && bgfx::isValid(snow_);
     one.position[0] = at[0] + float(int(roll() % 16) - 8) * kUnit;
     one.position[1] = at[1];
     one.position[2] = at[2] + float(int(roll() % 16) - 8) * kUnit;
-    one.scale = float(roll() % 32 + 32) * 0.01f;
+    one.scale = float(roll() % 32 + 32) * 0.01f * size;
     one.spin = float(roll() % 360) * 3.14159265f / 180.0f;
     // Behind him: a figure faces (sin yaw, cos yaw) on the ground (play_show.cpp), and MU's 3 is
     // along the model's +Y, the back.

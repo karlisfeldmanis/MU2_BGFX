@@ -1504,6 +1504,8 @@ private:
         // drawing's clock (tick - 1 + through_), kWhirlCrashLead ahead of the farthest body he
         // pulled landing beside him. 0 for none.
         double crashAt = 0.0;
+        // Puffs owed to its drag while a Whirlwind hauls it in, at the mount's rate (fx/dust.h).
+        float dragOwed = 0.0f;
     };
 
     Drawn* drawnOf(uint32_t id);
