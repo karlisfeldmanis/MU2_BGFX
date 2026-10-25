@@ -1425,12 +1425,12 @@ void Realm::leave(const Body& dead, const Body& killer) {
         gearDice_.nextInt(0, kAtlansGearOdds) == 0) {
         int count = 0;
         for (const content::ItemRow& r : tables_->items) {
-            count += r.dropsFromMonsters() && secondClassOnly(r) ? 1 : 0;
+            count += r.dropsFromMonsters() && secondClassOnly(r) && !kanturuGear(r) ? 1 : 0;
         }
         int pick = count > 0 ? gearDice_.nextInt(0, count) : -1;
         for (size_t i = 0; pick >= 0 && i < tables_->items.size(); ++i) {
             const content::ItemRow& r = tables_->items[i];
-            if (!r.dropsFromMonsters() || !secondClassOnly(r) || pick-- != 0) continue;
+            if (!r.dropsFromMonsters() || !secondClassOnly(r) || kanturuGear(r) || pick-- != 0) continue;
             Lying gear;
             gear.what = Held{int32_t(i), 0, int16_t(fullDurability(r, 0))};
             gear.what.luck = gearDice_.nextInt(0, 100) < kLuckIn100;
@@ -1487,10 +1487,12 @@ void Realm::leave(const Body& dead, const Body& killer) {
     // The second class's gear only where it falls (sim::kTarkanMap): rules.second_class, and BC 6.
     const bool secondGearHere = rulesOf(tables_->map).secondClass ||
                                 (event() == EventKind::Castle && run_.castle >= kCastles);
-    const auto reaches = [level, secondGearHere](const content::ItemRow& row) {
+    // And Kanturu's gear only on Kanturu's maps (sim::kanturuGear).
+    const bool kanturuHere = rulesOf(tables_->map).kanturuGear;
+    const auto reaches = [level, secondGearHere, kanturuHere](const content::ItemRow& row) {
         return row.dropLevel <= level &&
                (row.maximumDropLevel == 0 || level <= row.maximumDropLevel) &&
-               (secondGearHere || !secondClassOnly(row));
+               (secondGearHere || !secondClassOnly(row)) && (kanturuHere || !kanturuGear(row));
     };
     // The pools are counted then drawn from by index, so nothing is allocated for them.
     const auto draw = [&](auto&& admits) -> int32_t {
@@ -1579,7 +1581,8 @@ void Realm::leave(const Body& dead, const Body& killer) {
         const int32_t item = draw([&](const content::ItemRow& r) {
             return r.dropsFromMonsters() && excellentable(r) && r.dropLevel <= lower &&
                    (r.maximumDropLevel == 0 || lower <= r.maximumDropLevel) &&
-                   r.dropLevel >= lower - kGap && (secondGearHere || !secondClassOnly(r));
+                   r.dropLevel >= lower - kGap && (secondGearHere || !secondClassOnly(r)) &&
+                   (kanturuHere || !kanturuGear(r));
         });
         if (item < 0) return;
         const content::ItemRow& row = tables_->items[size_t(item)];

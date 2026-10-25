@@ -154,6 +154,7 @@ void Realm::eliteSpoils(const Body& dead, const Body& killer) {
     constexpr int kGap = 15;
     const DropRate rate = dropRateOf(tables_->kinds[size_t(dead.kind)].number);
     const bool secondGearHere = rulesOf(tables_->map).secondClass;
+    const bool kanturuHere = rulesOf(tables_->map).kanturuGear;
     const auto draw = [&](auto&& admits) -> int32_t {
         int count = 0;
         for (const content::ItemRow& row : tables_->items) count += admits(row) ? 1 : 0;
@@ -170,7 +171,7 @@ void Realm::eliteSpoils(const Body& dead, const Body& killer) {
         return r.dropsFromMonsters() && r.group <= kGroupBoots && !ammunition(r) && !jewellery(r) &&
                !summoningOrb(r) && r.dropLevel <= level && r.dropLevel >= level - kGap &&
                (r.maximumDropLevel == 0 || level <= r.maximumDropLevel) &&
-               (secondGearHere || !secondClassOnly(r));
+               (secondGearHere || !secondClassOnly(r)) && (kanturuHere || !kanturuGear(r));
     };
     const auto option = [&](Held& what) {
         what.luck = eliteDice_.nextInt(0, 100) < kEliteLuckIn100;

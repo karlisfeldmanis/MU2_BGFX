@@ -314,7 +314,9 @@ void Realm::minionSpoils(const Body& dead) {
 }
 
 bool hoardFine(const content::ItemRow& row, Kin kin, bool second) {
-    if (!excellentable(row) || !takesOptions(row) || !row.dropsFromMonsters() || archangelWeapon(row)) {
+    // Never Kanturu's gear: it falls only on Kanturu's maps (sim::kanturuGear).
+    if (!excellentable(row) || !takesOptions(row) || !row.dropsFromMonsters() || archangelWeapon(row) ||
+        kanturuGear(row)) {
         return false;
     }
     if (row.dropLevel < kHoardFineLeast || row.dropLevel > kHoardFineMost) return false;

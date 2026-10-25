@@ -84,7 +84,7 @@ def flag(value) -> str:
     return "true" if value else "false"
 
 
-DROPS = ("feather", "nova_scroll", "firecracker", "first_wings", "second_gear")
+DROPS = ("feather", "nova_scroll", "firecracker", "first_wings", "second_gear", "kanturu_gear")
 TREASURE = {None: "None", "map": "Map", "last_floor": "LastFloor"}
 
 
@@ -114,6 +114,8 @@ def maps() -> str:
         # Written only where a map has one, so every other row reads as before.
         if rules.get("exp_bonus", 1.0) != 1.0:
             fields.append(f'.expBonus = {float(rules["exp_bonus"])}')
+        if "kanturu_gear" in drops:
+            fields.append(f'.kanturuGear = true')
         rows.append("    {" + ", ".join(fields) + "},")
     return (HEAD.format(block="rules", owner="maps.cpp")
             + "\nconstexpr MapRow kMaps[] = {\n" + "\n".join(rows) + "\n};\n")
