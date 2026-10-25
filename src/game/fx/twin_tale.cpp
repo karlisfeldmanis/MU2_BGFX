@@ -18,7 +18,10 @@ constexpr float kMarkLift = 0.03f;
 constexpr float kMarkEvery = 0.5f;        // seconds
 constexpr float kBeamHalf = 15.0f * kUnit * 0.33f;
 constexpr float kBeamFrames = 120.0f;  // the joint's LifeTime
-constexpr float kBeamRise = 20.0f;     // frames it spirals up before it turns home
+constexpr float kBeamRise = 6.0f;  // frames it spirals up before it turns home (MU's 20)
+constexpr float kBeamLift = 20.0f;  // units a frame it rises meanwhile: MU's 120 in all
+constexpr float kBeamCurl = 30.0f;  // degrees a frame it turns meanwhile (MU's 10)
+constexpr float kBeamUntil = 1.5f;  // Attack 2's last key that throws
 constexpr float kChest = 1.2f;
 constexpr float kWalkGreen[3] = {0.6f, 1.0f, 0.4f};
 constexpr float kHitSmoke[3] = {0.4f, 0.9f, 0.6f};
@@ -167,9 +170,10 @@ void TwinTale::watch(uint32_t id, const Figure& figure, bool walking, bool hair,
             continue;
         }
         if (!hair || !target) continue;
-        // The Hair Attack: each tip, one frame in two, a bolt at what it attacks.
+        // The Hair Attack: each tip, one frame in two through its wind-up, a bolt at what it
+        // attacks.
         for (int k = 0; k < 2; ++k) {
-            if (!has[k] || unit() >= 0.5f || beams_.size() >= kMostBeams) continue;
+            if (!has[k] || key > kBeamUntil || unit() >= 0.5f || beams_.size() >= kMostBeams) continue;
             Beam beam;
             beam.id = id;
             for (int i = 0; i < 3; ++i) {
@@ -231,8 +235,8 @@ void TwinTale::update(float seconds) {
     for (Beam& one : beams_) {
         one.age += frames;
         if (one.age <= kBeamRise) {
-            one.yaw += 10.0f * frames;
-            one.at[1] += 6.0f * kUnit * frames;
+            one.yaw += kBeamCurl * frames;
+            one.at[1] += kBeamLift * kUnit * frames;
         } else {
             one.velocity = std::min(30.0f, one.velocity + 5.0f * frames);
             const float dx = one.to[0] - one.at[0], dz = one.to[2] - one.at[2];

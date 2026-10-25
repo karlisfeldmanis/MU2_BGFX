@@ -30,7 +30,10 @@
 //
 // **Ours**: the hair's beams as MU's flying joint, a ribbon of JointEnergy01 through its eight
 // tails at a third of MU's width (the user, 2026-10-25: "you decide", over the still streak
-// it was), its heading starting from the tip toward what it attacks; smoke and water at a third of
+// it was), its heading starting from the tip toward what it attacks. MU's bolts fly some 34
+// frames and its attack is 30, so they struck after the blow (the user: "looks out of sync?"):
+// ours are thrown only through keys 0 to 1.5 and rise their 120 units in 6 frames, not 20,
+// turning 30 degrees a frame, and land with the blow; smoke and water at a third of
 // MU's size, the user's measure for monster sprites; the marks and clouds at MU's own size, as they
 // lie on the ground. Not carried: the MODEL_SKILL_INFERNO sub 9 it dies in, and the energy ring
 // MU lays under it only in the Maya battle (map 39). MU's numbers are per reference frame, 25 a
