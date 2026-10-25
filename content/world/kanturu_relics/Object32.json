@@ -1,0 +1,336 @@
+{
+  "item": "Object32",
+  "mu_name": "Object32",
+  "mu_name_from": "kanturu_relics's object slot: type N is Object{N+1}.bmd, from Data/Object39.",
+  "world": "kanturu_relics",
+  "object_type": 31,
+  "placements": 10,
+  "profile": "world",
+  "sheets": {
+    "songk3mmater0302_R": "kr_songk3mmater0302_r.png",
+    "han_c2": "kl_han_c2.png",
+    "han_c6": "kl_han_c6.png",
+    "song_k202w1": "kl_song_k202w1.png",
+    "han_c7": "kl_han_c7.png",
+    "han_c3": "kl_han_c3.png"
+  },
+  "sheet_from": "Data/Object39/, decoded under the kl_ prefix by `mu new`.",
+  "sheet_materials": {
+    "songk3mmater0302_R": "lamplight",
+    "han_c2": "wrought_iron",
+    "han_c6": "wrought_iron",
+    "song_k202w1": "wrought_iron",
+    "han_c7": "wrought_iron",
+    "han_c3": "wrought_iron"
+  },
+  "material_note": "songk3mmater0302_R: the blue liquid of the tanks, MU's bright sheet, the Ruins' own (kr_songk3mmater0302_r.png, byte-identical): lamplight; han_c2: dark bronze machinery with a riveted gauge: wrought_iron; han_c6: a rusted ring, its middle cut out: wrought_iron; song_k202w1: an iron wheel in a riveted, carved frame (the Ruins' wheel sheet): wrought_iron; han_c7: a chain link, cut out: wrought_iron; han_c3: a bronze ring, its middle cut out: wrought_iron.",
+  "cutout": [
+    "han_c6",
+    "han_c7",
+    "han_c3"
+  ],
+  "cutout_from": "decode_texture found a real alpha channel cutting the sheet.",
+  "why_this_one": "An incubator tank: blue liquid behind bronze machinery, rings and chains, 4 m tall. 10 placed. Batch 4 of the Relics (the user, 2026-10-23: \"first we eed to finish actual map then we go to monsters\", \"do next\"). docs/worlds/kanturu-port.md Part B 8.1.",
+  "additive": [
+    "songk3mmater0302_R"
+  ],
+  "additive_from": "songk3mmater0302_R is an _R sheet, drawn RENDER_BRIGHT, added (TextureScript.cpp:16-58); Render_Kanturu2nd_AfterObjectMesh type 31 draws mesh 0 again RENDER_TEXTURE|RENDER_BRIGHT after the characters (GM_Kanturu_2nd.cpp:630-635).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "lamplight",
+      "triangles": 68,
+      "area": 221934.2,
+      "along": [
+        -82.9,
+        82.9
+      ],
+      "mu_uv": [
+        -1.033,
+        -2.528,
+        2.416,
+        0.881
+      ],
+      "bake_uv": [
+        0.012,
+        0.012,
+        0.941,
+        0.979
+      ]
+    },
+    {
+      "island": 1,
+      "material": "wrought_iron",
+      "triangles": 30,
+      "area": 21333.0,
+      "along": [
+        -11.2,
+        10.9
+      ],
+      "mu_uv": [
+        0.011,
+        0.013,
+        0.355,
+        0.992
+      ],
+      "bake_uv": [
+        0.307,
+        0.012,
+        0.97,
+        0.551
+      ]
+    },
+    {
+      "island": 2,
+      "material": "wrought_iron",
+      "triangles": 26,
+      "area": 3537.3,
+      "along": [
+        -91.2,
+        -19.2
+      ],
+      "mu_uv": [
+        0.111,
+        0.017,
+        0.897,
+        0.732
+      ],
+      "bake_uv": [
+        0.012,
+        0.228,
+        0.951,
+        0.81
+      ]
+    },
+    {
+      "island": 3,
+      "material": "wrought_iron",
+      "triangles": 30,
+      "area": 21308.6,
+      "along": [
+        -11.2,
+        10.9
+      ],
+      "mu_uv": [
+        0.003,
+        0.013,
+        0.355,
+        0.992
+      ],
+      "bake_uv": [
+        0.455,
+        0.305,
+        0.97,
+        0.951
+      ]
+    },
+    {
+      "island": 4,
+      "material": "wrought_iron",
+      "triangles": 26,
+      "area": 3537.3,
+      "along": [
+        19.1,
+        91.2
+      ],
+      "mu_uv": [
+        0.111,
+        0.017,
+        0.897,
+        0.732
+      ],
+      "bake_uv": [
+        0.52,
+        0.012,
+        0.953,
+        0.955
+      ]
+    },
+    {
+      "island": 5,
+      "material": "wrought_iron",
+      "triangles": 62,
+      "area": 9804.4,
+      "along": [
+        -84.4,
+        84.5
+      ],
+      "mu_uv": [
+        0.146,
+        0.02,
+        0.998,
+        0.986
+      ],
+      "bake_uv": [
+        0.012,
+        0.012,
+        0.979,
+        0.984
+      ]
+    },
+    {
+      "island": 6,
+      "material": "wrought_iron",
+      "triangles": 62,
+      "area": 9804.4,
+      "along": [
+        -84.4,
+        84.5
+      ],
+      "mu_uv": [
+        0.146,
+        0.02,
+        0.998,
+        0.986
+      ],
+      "bake_uv": [
+        0.119,
+        0.078,
+        0.984,
+        0.989
+      ]
+    },
+    {
+      "island": 7,
+      "material": "wrought_iron",
+      "triangles": 8,
+      "area": 38168.2,
+      "along": [
+        -97.7,
+        97.7
+      ],
+      "mu_uv": [
+        0.003,
+        0.001,
+        1.0,
+        0.997
+      ],
+      "bake_uv": [
+        0.012,
+        0.012,
+        0.615,
+        0.765
+      ]
+    },
+    {
+      "island": 8,
+      "material": "wrought_iron",
+      "triangles": 8,
+      "area": 34207.1,
+      "along": [
+        -92.5,
+        92.4
+      ],
+      "mu_uv": [
+        0.003,
+        0.001,
+        1.0,
+        0.997
+      ],
+      "bake_uv": [
+        0.012,
+        0.012,
+        0.765,
+        0.725
+      ]
+    },
+    {
+      "island": 9,
+      "material": "wrought_iron",
+      "triangles": 8,
+      "area": 22914.9,
+      "along": [
+        -75.7,
+        75.7
+      ],
+      "mu_uv": [
+        0.003,
+        0.001,
+        1.0,
+        0.997
+      ],
+      "bake_uv": [
+        0.158,
+        0.456,
+        0.765,
+        0.758
+      ]
+    },
+    {
+      "island": 10,
+      "material": "wrought_iron",
+      "triangles": 8,
+      "area": 4610.3,
+      "along": [
+        -34.0,
+        33.9
+      ],
+      "mu_uv": [
+        0.003,
+        0.001,
+        1.0,
+        0.997
+      ],
+      "bake_uv": [
+        0.35,
+        0.16,
+        0.765,
+        0.765
+      ]
+    },
+    {
+      "island": 11,
+      "material": "wrought_iron",
+      "triangles": 20,
+      "area": 28561.7,
+      "along": [
+        -88.0,
+        87.9
+      ],
+      "mu_uv": [
+        0.003,
+        0.005,
+        0.992,
+        0.995
+      ],
+      "bake_uv": [
+        0.013,
+        0.157,
+        0.92,
+        0.91
+      ]
+    },
+    {
+      "island": 12,
+      "material": "wrought_iron",
+      "triangles": 10,
+      "area": 24519.4,
+      "along": [
+        -86.9,
+        86.9
+      ],
+      "mu_uv": [
+        -0.63,
+        0.377,
+        -0.506,
+        0.641
+      ],
+      "bake_uv": [
+        0.831,
+        0.013,
+        0.979,
+        0.185
+      ]
+    }
+  ],
+  "glow": {
+    "songk3mmater0302_R": {
+      "low": 0.7,
+      "high": 1.2,
+      "hz": 0.25,
+      "smooth_seconds": 2.0,
+      "scrolls_per_second": 0.08
+    }
+  },
+  "glow_from": "Ours, marked: MU's tank is still, one key and no Move or glow code for its type, its liquid drawn at a steady light. Here the liquid drifts through the glass a sheet in 12.5 s and its light breathes between 0.7 and 1.2, re-aimed every 4 s (the user, 2026-10-23: \"does those boxes has to be static? no aniamtion there?\", \"blue cilynders\")."
+}

@@ -229,7 +229,7 @@ src/app/modes/studio_control.cpp.
 | words | what |
 |---|---|
 | `subject <tab>\|<name>` | put a thing on the bench; tabs: World objects, Monsters, People, Armour sets, Weapons, Wings, Figure parts |
-| `scene Stage\|Home\|<world>` | the plain stage, the subject's own place, or a world |
+| `scene Stage\|Home\|<world> [<column>,<row>]` | the plain stage, the subject's own place, or a world; with a tile, the view stands there (`scene kanturu 78,91`) |
 | `plus <N>`, `swap`, `arena`, `arena off` | the item's shine at +N, read the cooked subject again, a monster's fight in the studio |
 | `clip <n\|word>` | the subject plays a clip, by number or the first whose name holds the word (`clip walk`, `clip ttack`) |
 | `place`, `mode objects\|gates\|townsfolk\|ground` | open Place, and what it edits |
@@ -237,6 +237,7 @@ src/app/modes/studio_control.cpp.
 | `mark <n>`, `budge <dc> <dr>`, `look <n>`, `way <world>` | a gate by number or a townsperson by index; a new gate pair |
 | `brush <slot> base\|overlay <alpha> <radius>`, `dab`, `undo` | the ground |
 | `tab light`, `time noon\|dusk\|night` | the Light tab; the time of day the scene is lit at |
+| `effects on\|off` | the frame with or without its sprites (mist, fires, spray): what is a sprite and what is a surface |
 | `hide`, `show`, `shot <abs.png>`, `wait <N>`, `status`, `quit` | the rest (`quit` closes the user's studio: don't) |
 
 ## Cooking: when you may

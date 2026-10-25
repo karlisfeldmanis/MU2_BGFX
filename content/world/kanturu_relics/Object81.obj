@@ -1,0 +1,19 @@
+# Object81.bmd — MU geometry at action 0 key 0, exported for MU2
+# 1 mesh(es)
+
+g Mctile02_R
+# texture: Mctile02_R.JPG
+v -250 30 250
+v 250 30 250
+v 250 30 -250
+v -250 30 -250
+vn 0 1 -0
+vn 0 1 -0
+vn 0 1 -0
+vn 0 1 -0
+vt 0.0005 0.0005
+vt 0.9995 0.0005
+vt 0.9995 0.9995
+vt 0.0005 0.9995
+f 1/1/1 3/3/3 2/2/2
+f 3/3/3 1/1/1 4/4/4

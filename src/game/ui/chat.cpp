@@ -1,14 +1,17 @@
 #include "game/ui/chat.h"
 
 #include <algorithm>
+#include <utility>
 #include <cmath>
 #include <cstdio>
 #include <ctime>
 #include <fstream>
 #include <functional>
 
+#include "core/bidi.h"
 #include "core/log.h"
 #include "core/paths.h"
+#include "core/utf8.h"
 #include "game/play.h"
 #include "game/roster.h"
 #include "game/ui/controls.h"
@@ -80,7 +83,9 @@ constexpr float kRadius = 4.0f;
 constexpr float kWord = 15.0f, kDraft = 17.0f;
 // The text's three sizes and their rows (the user, 2026-10-10: the log a step smaller, 16 on 21).
 constexpr float kTextSizes[3] = {14.0f, 16.0f, 18.0f}, kRowTalls[3] = {19.0f, 21.0f, 24.0f};
-constexpr float kSettingsWide = 290.0f, kSettingsGap = 6.0f, kSettingsRow = 30.0f;
+// The settings in the panel's place, its whole width, and the panel at least kSettingsTall while
+// they show (the user, 2026-10-24: "show settings inside chat container", "full wdith").
+constexpr float kSettingsRow = 30.0f, kSettingsTall = 36.0f + 7.0f * kSettingsRow + 6.0f + 12.0f;
 // Idle: a line just come stands at full for kNewFor and settles over kSettle; the pointer on the
 // chat lights it over kLight (style.h's hover).
 constexpr float kNewFor = 6.0f, kSettle = 1.0f, kLight = 0.12f;
@@ -312,7 +317,7 @@ bool Chat::covers(float x, float y) const {
             std::any_of(linkBoxes_.begin(), linkBoxes_.end(), [&](const LinkBox& one) { return one.box.has(x, y); }) ||
             std::any_of(choices_.begin(), choices_.end(), [&](const Choice& one) { return one.box.has(x, y); });
         if (!acts) {
-            return (settingsOpen_ && settingsBox_.has(x, y)) || (menu_ != Menu::None && menuBox_.has(x, y)) ||
+            return settingsOpen_ || (menu_ != Menu::None && menuBox_.has(x, y)) ||
                    (inviting_ && inviteCard_.has(x, y));
         }
     }
@@ -320,7 +325,7 @@ bool Chat::covers(float x, float y) const {
 }
 
 bool Chat::over(float x, float y) const {
-    return (showing_ && (frame_.has(x, y) || (settingsOpen_ && settingsBox_.has(x, y)) ||
+    return (showing_ && (frame_.has(x, y) || (!locked_ && grip_.has(x, y)) ||
                          (menu_ != Menu::None && menuBox_.has(x, y)) ||
                          (open_ && !suggestions_.empty() && suggestBox_.has(x, y)))) ||
            (inviting_ && inviteCard_.has(x, y));
@@ -652,6 +657,7 @@ Chat::Set Chat::setOf(const Line& line) const {
         set.who = line.inviter;
     }
     const size_t offset = set.text.size();
+    set.saidFrom = offset;
     set.text += line.shown;
     set.links = line.links;
     for (sim::ItemLink& link : set.links) {
@@ -672,10 +678,19 @@ float Chat::spans(gfx::Canvas& canvas, float x, float base, float size, uint32_t
     if (set.nameTo > set.nameFrom) cut(set.nameFrom), cut(set.nameTo);
     for (const sim::ItemLink& link : set.links) cut(link.from), cut(link.to);
     std::sort(cuts.begin(), cuts.end());
+    cut(set.saidFrom);
     cuts.erase(std::unique(cuts.begin(), cuts.end()), cuts.end());
+    // What was said, when it reads from the right, its parts from the last: each part turns its
+    // own letters (gfx::Canvas::text), and a link in Hebrew stands where it was typed.
+    std::vector<std::pair<size_t, size_t>> parts;
+    for (size_t k = 0; k + 1 < cuts.size(); ++k) parts.push_back({cuts[k], cuts[k + 1]});
+    const size_t said = std::max(start, set.saidFrom);
+    if (said < end && core::bidi::rightToLeft(set.text.substr(said, end - said))) {
+        const auto first = std::find_if(parts.begin(), parts.end(), [&](const auto& p) { return p.first >= said; });
+        std::reverse(first, parts.end());
+    }
     float advance = 0.0f;
-    for (size_t k = 0; k + 1 < cuts.size(); ++k) {
-        const size_t a = cuts[k], b = cuts[k + 1];
+    for (const auto& [a, b] : parts) {
         const std::string part = set.text.substr(a, b - a);
         const float wide = bodyWidth(size, part);
         const Box box{x + advance, base - size * 0.95f, wide, size * 1.3f};
@@ -1198,8 +1213,10 @@ void Chat::place(float u, float width, float height) {
         }
     }
     foot_ = std::min(foot_, std::max(0.0f, screenH - tall_));
-    frame_ = {std::round(left_ * u), std::round(height - (foot_ + tall_) * u), std::round(wide_ * u),
-              std::round(tall_ * u)};
+    // Too short for the settings: taller up from its foot while they show, its own size kept.
+    const float tall = settingsOpen_ ? std::min(std::max(tall_, kTabRow + kSettingsTall), screenH - foot_) : tall_;
+    frame_ = {std::round(left_ * u), std::round(height - (foot_ + tall) * u), std::round(wide_ * u),
+              std::round(tall * u)};
     row_ = {frame_.x, frame_.y, frame_.w, std::round(kTabRow * u)};
     panel_ = {frame_.x, row_.bottom(), frame_.w, frame_.bottom() - row_.bottom()};
     input_ = {panel_.x + kPadSide * u, panel_.bottom() - (kPadFoot + kInput) * u, panel_.w - 2.0f * kPadSide * u,
@@ -1209,7 +1226,9 @@ void Chat::place(float u, float width, float height) {
     const float rowH = rowTall() * u;
     const float logTall = std::max(rowH, std::floor((input_.y - kInputGap * u - logTop) / rowH) * rowH);
     logBox_ = {panel_.x + kPadSide * u, input_.y - kInputGap * u - logTall, panel_.w - 2.0f * kPadSide * u, logTall};
-    grip_ = {panel_.right() - 18.0f * u, panel_.y + 2.0f * u, 16.0f * u, 16.0f * u};
+    // The grip just off the frame's top right corner, clear of the gear and the settings' cross
+    // (the user, 2026-10-24: "resize helper has to be outside that chat container on corner").
+    grip_ = {frame_.right() + 2.0f * u, frame_.y - 18.0f * u, 16.0f * u, 16.0f * u};
     gear_ = {row_.right() - 30.0f * u, row_.y, 30.0f * u, row_.h};
     chip_ = {input_.x, input_.y, wordWidth(kWord * u, channelWord()) + 28.0f * u, input_.h};
 }
@@ -1295,18 +1314,21 @@ void Chat::layRows(float u) {
                 rows_.push_back(row);
                 break;
             }
+            // At spaces, and either side of a letter of a script without them (core/utf8.h).
             size_t cut = 0, from = 0;
             while (from < rest.size()) {
-                size_t next = rest.find(' ', from);
-                if (next == std::string::npos) next = rest.size();
+                const size_t next = core::utf8::nextBreak(rest, from);
                 if (bodyWidth(size, rest.substr(0, next)) > room) break;
                 cut = next;
-                from = next + 1;
+                from = next;
             }
             if (cut == 0) {  // one long word: as many letters as fit
-                cut = 1;
-                while (cut < rest.size() && bodyWidth(size, rest.substr(0, cut + 1)) <= room) ++cut;
-                while (cut < rest.size() && (uint8_t(rest[cut]) & 0xC0) == 0x80) ++cut;
+                cut = core::utf8::after(rest, 0);
+                while (cut < rest.size()) {
+                    const size_t more = core::utf8::after(rest, cut);
+                    if (bodyWidth(size, rest.substr(0, more)) > room) break;
+                    cut = more;
+                }
             }
             row.start = at;
             row.end = at + cut;
@@ -1488,6 +1510,11 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
     if (!inGuild_ && sticky_.channel == net::Channel::Guild) stick(net::Channel::Local);
     wasInParty_ = inParty_;
 
+    // Escape with the settings showing: back to the chat, and no more of it.
+    if (settingsOpen_ && escape) {
+        settingsOpen_ = false;
+        escape = false;
+    }
     // The keyboard: Enter opens the box, says the line and shuts it; Escape shuts it, the draft kept.
     if (toggle) open_ = !open_;
     if (open_) {
@@ -1506,9 +1533,12 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
                 if (!links.empty() && links.back().to == draft_.size()) draft_.resize(links.back().from);
                 else draft_.resize(draft_.size() - lastLetter(draft_));
             }
-            for (const char c : typed) {
-                if (uint8_t(c) < 0x20 || uint8_t(c) == 0x7F) continue;
-                if (draft_.size() < net::kMostSaid) draft_.push_back(c);
+            // Whole letters, in any script, while the line has room for all of one's bytes.
+            for (size_t at = 0; at < typed.size();) {
+                const size_t from = at;
+                const uint32_t cp = core::utf8::next(typed, at);
+                if (cp < 0x20 || (cp >= 0x7F && cp < 0xA0)) continue;
+                if (draft_.size() + (at - from) <= net::kMostSaid) draft_.append(typed, from, at - from);
             }
             if (!typed.empty()) recalled_ = -1;
             switchBySlash();
@@ -1516,6 +1546,7 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
     } else if (enter) {
         open_ = true;
     }
+    if (open_) settingsOpen_ = false;  // the box opened: back to the chat
     if (play.isOpen()) suggest(play.realm());
     if (open_ && !suggestions_.empty()) {
         const int n = int(suggestions_.size());
@@ -1545,10 +1576,7 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
     place(u, width, height);
     layTabs(u);
     layLog(u);
-    if (settingsOpen_) {
-        const float x = std::min(panel_.right() + kSettingsGap * u, width - kSettingsWide * u - 8.0f * u);
-        settingsBox_ = {x, panel_.y, kSettingsWide * u, (40.0f + kSettingsRow * 7.0f + 14.0f) * u};
-    }
+    if (settingsOpen_) settingsBox_ = panel_;
 
     // Lit: the pointer on it, the box open, a drag, a menu or the settings.
     const bool over = this->over(pointer.x, pointer.y);
@@ -1633,9 +1661,10 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
             break;
         }
     }
-    if (showing_ && pointer.pressed && !taken && frame_.has(pointer.x, pointer.y)) {
+    if (showing_ && pointer.pressed && !taken && (frame_.has(pointer.x, pointer.y) || (!locked_ && grip_.has(pointer.x, pointer.y)))) {
         if (gear_.has(pointer.x, pointer.y)) {
             settingsOpen_ = !settingsOpen_;
+            if (settingsOpen_) open_ = false;  // the draft kept
             menu_ = Menu::None;
             click();
         } else if (!locked_ && grip_.has(pointer.x, pointer.y)) {
@@ -1677,7 +1706,8 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
             logScroll_ = 0.0f;
             unseen_ = 0;
             click();
-        } else if (logTall_ > logBox_.h && pointer.x >= logBox_.right() - 8.0f * u && logBox_.has(pointer.x, pointer.y)) {
+        } else if (!settingsOpen_ && logTall_ > logBox_.h && pointer.x >= logBox_.right() - 8.0f * u &&
+                   logBox_.has(pointer.x, pointer.y)) {
             drag_ = Drag::LogSlider;
             dragY_ = pointer.y, startA_ = logScroll_;
             taken = true;
@@ -1746,7 +1776,7 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
         pressedTab_.clear();
         drag_ = Drag::None;
     }
-    if (wheel != 0.0f && logBox_.has(pointer.x, pointer.y)) logScroll_ += wheel * 1.5f * rowTall() * u;
+    if (wheel != 0.0f && !settingsOpen_ && logBox_.has(pointer.x, pointer.y)) logScroll_ += wheel * 1.5f * rowTall() * u;
     place(u, width, height);
     layTabs(u);
     layLog(u);
@@ -1889,12 +1919,14 @@ void Chat::build(float u, const Pointer& pointer) {
         }
     }
 
-    // The log, clipped to its well, the newest at the foot.
+    // The log, clipped to its well, the newest at the foot. Not while the settings show in its
+    // place (buildSettings), nor its slider, button or box.
+    const bool logShown = !settingsOpen_;
     lines_.clip(logBox_);
     const float size = textSize() * u, rowH = rowTall() * u;
     const float lineIdle = std::min(1.0f, idle + 0.2f);
     float y = logBox_.bottom() - logTall_ + logScroll_;
-    for (size_t k = 0; k < rows_.size(); ++k) {
+    for (size_t k = 0; logShown && k < rows_.size(); ++k) {
         const Row& row = rows_[k];
         const float rowTop = y;
         y += rowH;
@@ -1909,7 +1941,7 @@ void Chat::build(float u, const Pointer& pointer) {
         spans(lines_, x, base, size, inkOf(one), sets_[row.line], row.start, row.end, alpha, u, long(row.line), pointer);
     }
     // Its slider, when there is more than the well holds: a hairline of iron, its thumb a step lighter.
-    if (logTall_ > logBox_.h && lit_ > 0.0f) {
+    if (logShown && logTall_ > logBox_.h && lit_ > 0.0f) {
         const float thumb = std::max(24.0f * u, logBox_.h * logBox_.h / logTall_);
         const float at = logBox_.y + (logBox_.h - thumb) * (1.0f - logScroll_ / (logTall_ - logBox_.h));
         const float x = logBox_.right() + 6.0f * u;
@@ -1918,7 +1950,7 @@ void Chat::build(float u, const Pointer& pointer) {
     }
     // The new lines waiting while he reads back: a small button that jumps to the newest.
     newer_ = {};
-    if (unseen_ > 0) {
+    if (logShown && unseen_ > 0) {
         const std::string said = std::to_string(unseen_) + (unseen_ == 1 ? " new line" : " new lines");
         const float wide = wordWidth(13.0f * u, said) + 52.0f * u;
         newer_ = {std::round(logBox_.midX() - wide * 0.5f), std::round(logBox_.bottom() - 30.0f * u), std::round(wide),
@@ -1942,6 +1974,7 @@ void Chat::build(float u, const Pointer& pointer) {
     }
 
     // The edit box (controls::field, focused), or in its place the key that opens it.
+    if (!logShown) return;
     if (open_) {
         controls::field(back_, input_, std::string(), std::string(), true, false, false, false, u);
         const float base = controls::middle(input_.y, input_.h, kWord * u);
@@ -1968,7 +2001,9 @@ void Chat::build(float u, const Pointer& pointer) {
                                              : spans(back_, textX, textBase, kDraft * u, kBoneHi, set, from,
                                                      set.text.size(), 1.0f, u, -1, Pointer{});
         if (std::fmod(clock_, 1.0f) < 0.6f) {
-            back_.rect({std::round(textX + drawn + 1.0f * u), std::round(input_.midY() - 10.0f * u),
+            // Where the next letter comes: the left end of a line that reads from the right.
+            const float caretX = core::bidi::rightToLeft(draft_) ? textX - 3.0f * u : textX + drawn + 1.0f * u;
+            back_.rect({std::round(caretX), std::round(input_.midY() - 10.0f * u),
                         std::max(1.0f, std::round(2.0f * u)), std::round(20.0f * u)},
                        kBloodHi);
         }
@@ -1988,6 +2023,8 @@ void Chat::buildSettings(float u, const Pointer& pointer) {
     uint64_t key = 1469598103934665603ull;
     const auto mixIn = [&](uint64_t v) { key = (key ^ v) * 1099511628211ull; };
     mixIn(uint64_t(std::lround(settingsBox_.x))), mixIn(uint64_t(std::lround(settingsBox_.y)));
+    mixIn(uint64_t(std::lround(settingsBox_.w))), mixIn(uint64_t(std::lround(panel_.w)));
+    mixIn(uint64_t(std::lround(panel_.h)));
     mixIn(uint64_t(std::lround(u * 100.0f))), mixIn(size_), mixIn(fill_), mixIn(idle_), mixIn(stamps_);
     mixIn(bubbles_), mixIn(whisperTab_), mixIn(locked_);
     if (settingsBox_.has(pointer.x, pointer.y)) mixIn(uint64_t(std::lround(pointer.x))), mixIn(uint64_t(std::lround(pointer.y)));
@@ -1997,32 +2034,33 @@ void Chat::buildSettings(float u, const Pointer& pointer) {
     c.clear();
     const Box& b = settingsBox_;
     const float line = std::max(1.0f, std::round(u)), r = kRadius * u;
-    // The chat's own fill, edge, light and drop: one piece with it.
-    const uint32_t fill = faded(kFill, std::max(0.62f, float(fill_) / 100.0f));
-    tip::shadowUnder(c, b, u, r, 0.55f);
-    const float all[4] = {r, r, r, r};
-    tip::rounded(c, b, all, fill, fill);
-    c.shade({b.x, b.y, b.w, kPanelLight * u}, faded(kWarm, kSeamLight), faded(kWarm, kSeamLight), faded(kWarm, 0.0f),
-            faded(kWarm, 0.0f));
-    c.rect({b.x + r, b.y, b.w - 2.0f * r, line}, kEdgeTop);
-    c.shade({b.x, b.y + r, line, b.h - 2.0f * r}, kEdgeTop, kEdgeTop, kEdgeFoot, kEdgeFoot);
-    c.shade({b.right() - line, b.y + r, line, b.h - 2.0f * r}, kEdgeTop, kEdgeTop, kEdgeFoot, kEdgeFoot);
-    c.rect({b.x + r, b.bottom() - line, b.w - 2.0f * r, line}, kEdgeFoot);
-    stroke(c, b.x + line * 0.5f, b.y + r, b.x + r, b.y + line * 0.5f, line, kEdgeTop);
-    stroke(c, b.right() - r, b.y + line * 0.5f, b.right() - line * 0.5f, b.y + r, line, kEdgeTop);
-    stroke(c, b.x + line * 0.5f, b.bottom() - r, b.x + r, b.bottom() - line * 0.5f, line, kEdgeFoot);
-    stroke(c, b.right() - r, b.bottom() - line * 0.5f, b.right() - line * 0.5f, b.bottom() - r, line, kEdgeFoot);
+    // In the chat's panel, on its own fill and edge (build). A see-through background is made up
+    // to 62% under the rows so they read over the world, wherever the slider stands.
+    const float under = float(fill_) / 100.0f;
+    if (under < 0.62f) {
+        const uint32_t more = faded(kFill, (0.62f - under) / (1.0f - under));
+        const float panelR[4] = {0.0f, 0.0f, r, r};
+        tip::rounded(c, panel_.grown(-line), panelR, more, more);
+    }
 
     // Its head: the kicker, the reset as a quiet link, the cross.
     const float pad = 14.0f * u;
     controls::caps(c, b.x + pad, b.y + 22.0f * u, 11.0f * u, kAshInk, "CHAT SETTINGS", 0.14f);
-    closeBox_ = {b.right() - pad - 16.0f * u, b.y + 8.0f * u, 18.0f * u, 18.0f * u};
+    // The cross on a framed square of its own, bright enough to be found (the user, 2026-10-24:
+    // "close has to be betetr vissible"); Escape does the same.
+    closeBox_ = {b.right() - pad - 24.0f * u, b.y + 5.0f * u, 24.0f * u, 24.0f * u};
     {
         const bool lit = closeBox_.has(pointer.x, pointer.y);
-        const float m = 4.5f * u;
-        const uint32_t ink = lit ? kBoneHi : kAshInk;
-        stroke(c, closeBox_.midX() - m, closeBox_.midY() - m, closeBox_.midX() + m, closeBox_.midY() + m, 1.4f * u, ink);
-        stroke(c, closeBox_.midX() + m, closeBox_.midY() - m, closeBox_.midX() - m, closeBox_.midY() + m, 1.4f * u, ink);
+        const float rr[4] = {r, r, r, r};
+        tip::rounded(c, closeBox_, rr, lit ? hex(0x3a2a20) : hex(0x261c16), lit ? hex(0x2c2019) : hex(0x1a130f));
+        const Box& k = closeBox_;
+        const uint32_t edge = lit ? kIronHi : kIron;
+        c.rect({k.x, k.y, k.w, line}, edge), c.rect({k.x, k.bottom() - line, k.w, line}, edge);
+        c.rect({k.x, k.y, line, k.h}, edge), c.rect({k.right() - line, k.y, line, k.h}, edge);
+        const float m = 5.0f * u;
+        const uint32_t ink = lit ? hex(0xffffff) : kBoneHi;
+        stroke(c, k.midX() - m, k.midY() - m, k.midX() + m, k.midY() + m, 2.0f * u, ink);
+        stroke(c, k.midX() + m, k.midY() - m, k.midX() - m, k.midY() + m, 2.0f * u, ink);
     }
     {
         const std::string reset = "Reset size and place";

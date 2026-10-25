@@ -1,0 +1,81 @@
+{
+ "ref": "wing06_plus13_unmet.png",
+ "note": "The dump's Wing06 '+13' sheet without its option section, as the reference has none, and its needs Red.",
+ "sheet": {
+  "artScale": 1,
+  "base": "2nd level wings",
+  "classed": true,
+  "hero": {
+   "rail": [
+    {
+     "label": "base",
+     "values": [
+      {
+       "text": "45",
+       "tone": "White"
+      }
+     ]
+    },
+    {
+     "label": "refined to +13",
+     "values": [
+      {
+       "text": "+36",
+       "tone": "Yellow"
+      }
+     ]
+    }
+   ],
+   "tone": "Yellow",
+   "value": "81",
+   "word": "Armor"
+  },
+  "item": true,
+  "name": "Wings of Dragon +13",
+  "nameTone": "Artifact",
+  "sections": [
+   {
+    "rows": [
+     {
+      "free": "Increase 45% of Damage",
+      "freeTone": "White",
+      "mark": "Diamond",
+      "markTone": "Gray"
+     },
+     {
+      "free": "Absorb 51% of Damage",
+      "freeTone": "White",
+      "mark": "Diamond",
+      "markTone": "Gray"
+     },
+     {
+      "free": "Increase speed",
+      "freeTone": "White",
+      "mark": "Diamond",
+      "markTone": "Gray"
+     },
+     {
+      "free": "Life -3 for each successful attack",
+      "freeTone": "Red",
+      "mark": "Diamond",
+      "markTone": "Gray"
+     }
+    ]
+   }
+  ],
+  "sell": "340,696,000",
+  "wear": "Durability: 100%",
+  "wearTone": "White",
+  "who": [
+   {
+    "text": "BK",
+    "tone": "Red"
+   },
+   {
+    "text": "Level 280",
+    "tone": "Red"
+   }
+  ],
+  "worn": 1
+ }
+}

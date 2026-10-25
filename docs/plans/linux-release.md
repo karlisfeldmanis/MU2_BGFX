@@ -24,7 +24,17 @@ test and ship without a Linux PC.
 
 **X1 is done, and X2 is done but for `./mu build linux`.**
 - **The machine:** OrbStack `mu2linux64`, Ubuntu 22.04.5 amd64 (glibc 2.35), with GCC 15.2 from
-  the toolchain PPA (the box's own version) and the client's dev packages.
+  the toolchain PPA (the box's own version) and the client's dev packages. Made again on the
+  Mac mini (2026-10-25), from nothing:
+  ```
+  orb create --arch amd64 ubuntu:jammy mu2linux64
+  orb -m mu2linux64 -u root sh -c 'apt-get update && apt-get install -y software-properties-common &&
+      add-apt-repository -y ppa:ubuntu-toolchain-r/test && apt-get install -y gcc-15 g++-15
+      build-essential cmake ninja-build git pkg-config libx11-dev libxrandr-dev libxinerama-dev
+      libxcursor-dev libxi-dev libxext-dev libxkbcommon-dev libwayland-dev wayland-protocols
+      libgl1-mesa-dev zlib1g-dev libcurl4-openssl-dev libsqlite3-dev xvfb mesa-vulkan-drivers'
+  ```
+  `libgl1-mesa-dev` (GLFW's OpenGL find) and `libsqlite3-dev` are the two a configure stops on.
 - **The build:** `-DMU2_LINUX_CLIENT=ON` is its own switch, so the box's server build is
   untouched. It turns on `MU2_SHIP`, -O2 and a static libstdc++, and uses GLFW 3.4 from
   `third_party/` with X11 and Wayland, SPIR-V shaders only, and `gfx/window_linux.cpp`.

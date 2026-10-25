@@ -1,0 +1,795 @@
+{
+  "item": "Object09",
+  "mu_name": "Object09",
+  "mu_name_from": "kanturu_relics's object slot: type N is Object{N+1}.bmd, from Data/Object39.",
+  "world": "kanturu_relics",
+  "object_type": 8,
+  "placements": 18,
+  "profile": "world",
+  "sheets": {
+    "han_dd1": "kl_han_dd1.png",
+    "handd2_R": "kl_handd2_r.png"
+  },
+  "sheet_from": "Data/Object39/, decoded under the kl_ prefix by `mu new`.",
+  "sheet_materials": {
+    "han_dd1": "flagstone",
+    "handd2_R": "lamplight"
+  },
+  "material_note": "han_dd1: grey stone with jade panels and runes: flagstone; handd2_R: a green glow, MU's bright sheet: lamplight.",
+  "play_speed": 0.16,
+  "play_speed_from": "Every object's flat Velocity 0.16 until the map's Move code says otherwise: 5 of its 9 bones move over 13 keys (Object09.rig.json, MuExtract export-rig --actions=all; 810 vertices, as the .obj). Checked: MoveKanturu2ndObject has no case for its type (GM_Kanturu_2nd.cpp:218-270).",
+  "why_this_one": "A 13 m jade-panelled stone tower with a green glow, its parts moving. 18 placed. Batch 5 of the Relics (the user, 2026-10-24: \"next\"). docs/worlds/kanturu-port.md Part B 8.1.",
+  "additive": [
+    "handd2_R"
+  ],
+  "additive_from": "handd2_R is an _R sheet, drawn RENDER_BRIGHT, added (TextureScript.cpp:16-58); Render_Kanturu2nd_AfterObjectMesh type 8 draws mesh 1 again RENDER_CHROME|RENDER_BRIGHT after the characters (GM_Kanturu_2nd.cpp:636-640), not carried as chrome. Its spark, energy and thunder at bone 4 (:350-374) wait for the effects batch.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "flagstone",
+      "triangles": 3,
+      "area": 17522.7,
+      "along": [
+        -96.4,
+        96.6
+      ],
+      "mu_uv": [
+        0.011,
+        0.013,
+        0.675,
+        0.766
+      ],
+      "bake_uv": [
+        0.325,
+        0.107,
+        0.753,
+        0.843
+      ]
+    },
+    {
+      "island": 1,
+      "material": "flagstone",
+      "triangles": 16,
+      "area": 78787.6,
+      "along": [
+        -179.7,
+        179.1
+      ],
+      "mu_uv": [
+        0.017,
+        0.786,
+        0.994,
+        0.989
+      ],
+      "bake_uv": [
+        0.184,
+        0.684,
+        0.805,
+        0.837
+      ]
+    },
+    {
+      "island": 2,
+      "material": "flagstone",
+      "triangles": 132,
+      "area": 594498.6,
+      "along": [
+        -72.6,
+        73.1
+      ],
+      "mu_uv": [
+        0.214,
+        -0.581,
+        0.995,
+        0.616
+      ],
+      "bake_uv": [
+        0.013,
+        0.013,
+        0.973,
+        0.987
+      ]
+    },
+    {
+      "island": 3,
+      "material": "flagstone",
+      "triangles": 11,
+      "area": 59454.4,
+      "along": [
+        -88.2,
+        88.3
+      ],
+      "mu_uv": [
+        0.492,
+        0.123,
+        1.951,
+        0.99
+      ],
+      "bake_uv": [
+        0.013,
+        0.013,
+        0.9,
+        0.755
+      ]
+    },
+    {
+      "island": 4,
+      "material": "flagstone",
+      "triangles": 12,
+      "area": 11058.4,
+      "along": [
+        -22.7,
+        22.8
+      ],
+      "mu_uv": [
+        0.276,
+        0.207,
+        0.508,
+        0.37
+      ],
+      "bake_uv": [
+        0.614,
+        0.058,
+        0.954,
+        0.959
+      ]
+    },
+    {
+      "island": 5,
+      "material": "flagstone",
+      "triangles": 16,
+      "area": 78787.7,
+      "along": [
+        -180.4,
+        179.8
+      ],
+      "mu_uv": [
+        0.017,
+        0.786,
+        0.994,
+        0.99
+      ],
+      "bake_uv": [
+        0.284,
+        0.188,
+        0.805,
+        0.87
+      ]
+    },
+    {
+      "island": 6,
+      "material": "flagstone",
+      "triangles": 3,
+      "area": 17522.7,
+      "along": [
+        -96.4,
+        96.6
+      ],
+      "mu_uv": [
+        0.011,
+        0.013,
+        0.675,
+        0.766
+      ],
+      "bake_uv": [
+        0.013,
+        0.107,
+        0.856,
+        0.844
+      ]
+    },
+    {
+      "island": 7,
+      "material": "flagstone",
+      "triangles": 3,
+      "area": 17522.7,
+      "along": [
+        -129.4,
+        -32.9
+      ],
+      "mu_uv": [
+        0.011,
+        0.013,
+        0.675,
+        0.766
+      ],
+      "bake_uv": [
+        0.684,
+        0.013,
+        0.856,
+        0.165
+      ]
+    },
+    {
+      "island": 8,
+      "material": "flagstone",
+      "triangles": 3,
+      "area": 17522.7,
+      "along": [
+        33.0,
+        129.6
+      ],
+      "mu_uv": [
+        0.011,
+        0.013,
+        0.675,
+        0.766
+      ],
+      "bake_uv": [
+        0.184,
+        0.013,
+        0.847,
+        0.879
+      ]
+    },
+    {
+      "island": 9,
+      "material": "flagstone",
+      "triangles": 2,
+      "area": 3363.2,
+      "along": [
+        -27.4,
+        26.8
+      ],
+      "mu_uv": [
+        0.65,
+        0.008,
+        0.994,
+        0.195
+      ],
+      "bake_uv": [
+        0.461,
+        0.896,
+        0.731,
+        0.94
+      ]
+    },
+    {
+      "island": 10,
+      "material": "flagstone",
+      "triangles": 2,
+      "area": 3360.1,
+      "along": [
+        -26.9,
+        27.3
+      ],
+      "mu_uv": [
+        0.65,
+        0.008,
+        0.994,
+        0.195
+      ],
+      "bake_uv": [
+        0.537,
+        0.896,
+        0.797,
+        0.94
+      ]
+    },
+    {
+      "island": 11,
+      "material": "flagstone",
+      "triangles": 2,
+      "area": 3361.6,
+      "along": [
+        -112.7,
+        -53.9
+      ],
+      "mu_uv": [
+        0.65,
+        0.008,
+        0.994,
+        0.195
+      ],
+      "bake_uv": [
+        0.184,
+        0.905,
+        0.366,
+        0.943
+      ]
+    },
+    {
+      "island": 12,
+      "material": "flagstone",
+      "triangles": 2,
+      "area": 3361.7,
+      "along": [
+        53.8,
+        112.6
+      ],
+      "mu_uv": [
+        0.65,
+        0.008,
+        0.994,
+        0.195
+      ],
+      "bake_uv": [
+        0.013,
+        0.905,
+        0.291,
+        0.943
+      ]
+    },
+    {
+      "island": 13,
+      "material": "flagstone",
+      "triangles": 4,
+      "area": 3165.3,
+      "along": [
+        -147.4,
+        -97.0
+      ],
+      "mu_uv": [
+        0.683,
+        0.62,
+        0.925,
+        0.779
+      ],
+      "bake_uv": [
+        0.908,
+        0.89,
+        0.937,
+        0.908
+      ]
+    },
+    {
+      "island": 14,
+      "material": "flagstone",
+      "triangles": 4,
+      "area": 3165.3,
+      "along": [
+        -124.5,
+        -74.0
+      ],
+      "mu_uv": [
+        0.683,
+        0.62,
+        0.925,
+        0.779
+      ],
+      "bake_uv": [
+        0.918,
+        0.54,
+        0.947,
+        0.559
+      ]
+    },
+    {
+      "island": 15,
+      "material": "flagstone",
+      "triangles": 4,
+      "area": 3165.3,
+      "along": [
+        -147.4,
+        -97.0
+      ],
+      "mu_uv": [
+        0.683,
+        0.62,
+        0.925,
+        0.779
+      ],
+      "bake_uv": [
+        0.918,
+        0.585,
+        0.947,
+        0.604
+      ]
+    },
+    {
+      "island": 16,
+      "material": "flagstone",
+      "triangles": 4,
+      "area": 3165.3,
+      "along": [
+        -124.5,
+        -74.0
+      ],
+      "mu_uv": [
+        0.683,
+        0.62,
+        0.925,
+        0.779
+      ],
+      "bake_uv": [
+        0.918,
+        0.63,
+        0.947,
+        0.649
+      ]
+    },
+    {
+      "island": 17,
+      "material": "flagstone",
+      "triangles": 4,
+      "area": 3165.3,
+      "along": [
+        97.5,
+        148.0
+      ],
+      "mu_uv": [
+        0.683,
+        0.62,
+        0.925,
+        0.779
+      ],
+      "bake_uv": [
+        0.918,
+        0.688,
+        0.947,
+        0.706
+      ]
+    },
+    {
+      "island": 18,
+      "material": "flagstone",
+      "triangles": 4,
+      "area": 3165.3,
+      "along": [
+        74.6,
+        125.0
+      ],
+      "mu_uv": [
+        0.683,
+        0.62,
+        0.925,
+        0.779
+      ],
+      "bake_uv": [
+        0.918,
+        0.732,
+        0.947,
+        0.751
+      ]
+    },
+    {
+      "island": 19,
+      "material": "flagstone",
+      "triangles": 4,
+      "area": 3165.3,
+      "along": [
+        97.5,
+        148.0
+      ],
+      "mu_uv": [
+        0.683,
+        0.62,
+        0.925,
+        0.779
+      ],
+      "bake_uv": [
+        0.107,
+        0.93,
+        0.136,
+        0.949
+      ]
+    },
+    {
+      "island": 20,
+      "material": "flagstone",
+      "triangles": 4,
+      "area": 3165.3,
+      "along": [
+        74.6,
+        125.0
+      ],
+      "mu_uv": [
+        0.683,
+        0.62,
+        0.925,
+        0.779
+      ],
+      "bake_uv": [
+        0.924,
+        0.013,
+        0.953,
+        0.032
+      ]
+    },
+    {
+      "island": 21,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 15857.5,
+      "along": [
+        117.6,
+        160.9
+      ],
+      "mu_uv": [
+        0.369,
+        0.782,
+        0.634,
+        0.891
+      ],
+      "bake_uv": [
+        0.402,
+        0.941,
+        0.863,
+        0.957
+      ]
+    },
+    {
+      "island": 22,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 15857.5,
+      "along": [
+        -160.4,
+        -117.0
+      ],
+      "mu_uv": [
+        0.369,
+        0.782,
+        0.634,
+        0.891
+      ],
+      "bake_uv": [
+        0.184,
+        0.107,
+        0.974,
+        0.966
+      ]
+    },
+    {
+      "island": 23,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 15857.5,
+      "along": [
+        -160.4,
+        -117.0
+      ],
+      "mu_uv": [
+        0.369,
+        0.782,
+        0.634,
+        0.891
+      ],
+      "bake_uv": [
+        0.943,
+        0.265,
+        0.974,
+        0.399
+      ]
+    },
+    {
+      "island": 24,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 15857.5,
+      "along": [
+        117.6,
+        160.9
+      ],
+      "mu_uv": [
+        0.369,
+        0.782,
+        0.634,
+        0.891
+      ],
+      "bake_uv": [
+        0.461,
+        0.438,
+        0.974,
+        0.979
+      ]
+    },
+    {
+      "island": 25,
+      "material": "lamplight",
+      "triangles": 1,
+      "area": 13559.0,
+      "along": [
+        -63.9,
+        64.1
+      ],
+      "mu_uv": [
+        1.025,
+        0.307,
+        1.951,
+        0.99
+      ],
+      "bake_uv": [
+        0.013,
+        0.013,
+        0.123,
+        0.094
+      ]
+    },
+    {
+      "island": 26,
+      "material": "lamplight",
+      "triangles": 12,
+      "area": 43434.5,
+      "along": [
+        49.5,
+        157.7
+      ],
+      "mu_uv": [
+        -1.813,
+        0.528,
+        3.957,
+        0.981
+      ],
+      "bake_uv": [
+        0.013,
+        0.083,
+        0.841,
+        0.84
+      ]
+    },
+    {
+      "island": 27,
+      "material": "lamplight",
+      "triangles": 12,
+      "area": 33735.0,
+      "along": [
+        79.8,
+        155.7
+      ],
+      "mu_uv": [
+        2.147,
+        0.255,
+        4.024,
+        0.839
+      ],
+      "bake_uv": [
+        0.013,
+        0.227,
+        0.882,
+        0.864
+      ]
+    },
+    {
+      "island": 28,
+      "material": "lamplight",
+      "triangles": 12,
+      "area": 43434.5,
+      "along": [
+        -157.2,
+        -48.9
+      ],
+      "mu_uv": [
+        -1.813,
+        0.528,
+        3.957,
+        0.981
+      ],
+      "bake_uv": [
+        0.184,
+        0.227,
+        0.841,
+        0.801
+      ]
+    },
+    {
+      "island": 29,
+      "material": "lamplight",
+      "triangles": 12,
+      "area": 25113.3,
+      "along": [
+        -155.1,
+        -113.5
+      ],
+      "mu_uv": [
+        2.147,
+        0.255,
+        4.024,
+        0.839
+      ],
+      "bake_uv": [
+        0.013,
+        0.227,
+        0.588,
+        0.895
+      ]
+    },
+    {
+      "island": 30,
+      "material": "lamplight",
+      "triangles": 12,
+      "area": 43427.9,
+      "along": [
+        -157.2,
+        -48.9
+      ],
+      "mu_uv": [
+        -1.813,
+        0.528,
+        3.957,
+        0.981
+      ],
+      "bake_uv": [
+        0.013,
+        0.227,
+        0.841,
+        0.761
+      ]
+    },
+    {
+      "island": 31,
+      "material": "lamplight",
+      "triangles": 12,
+      "area": 33743.0,
+      "along": [
+        -155.1,
+        -79.2
+      ],
+      "mu_uv": [
+        2.147,
+        0.255,
+        4.024,
+        0.839
+      ],
+      "bake_uv": [
+        0.013,
+        0.013,
+        0.917,
+        0.915
+      ]
+    },
+    {
+      "island": 32,
+      "material": "lamplight",
+      "triangles": 12,
+      "area": 43427.9,
+      "along": [
+        49.5,
+        157.7
+      ],
+      "mu_uv": [
+        -1.813,
+        0.528,
+        3.957,
+        0.981
+      ],
+      "bake_uv": [
+        0.237,
+        0.013,
+        0.841,
+        0.72
+      ]
+    },
+    {
+      "island": 33,
+      "material": "lamplight",
+      "triangles": 12,
+      "area": 25115.9,
+      "along": [
+        114.0,
+        155.7
+      ],
+      "mu_uv": [
+        2.147,
+        0.255,
+        4.024,
+        0.839
+      ],
+      "bake_uv": [
+        0.013,
+        0.33,
+        0.917,
+        0.61
+      ]
+    }
+  ],
+  "emitters": [
+    {
+      "kind": "tower",
+      "colour": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "low": 0.0,
+      "high": 1.0,
+      "range_tiles": 0,
+      "at": [
+        -0.2,
+        0.0,
+        151.4
+      ]
+    }
+  ],
+  "emitters_from": "RenderKanturu2ndObjectVisual type 8 (GM_Kanturu_2nd.cpp:350-374) at bone 4, which holds still in the tower's clip (MuExtract export-rig: -0.2, 0, 151.4 units, its parents' offsets summing to nothing): a Spark03 of Scale 10 lit fLumi = (sin(WorldTime * 0.001) + 1) / 2, and one frame in 20 a BITMAP_JOINT_THUNDER bolt thrown round it. Drawn by game/world/ruin_effects.h (kind tower). Its BITMAP_ENERGY particle is not carried. (the user, 2026-10-24: \"next\", effects 2)."
+}

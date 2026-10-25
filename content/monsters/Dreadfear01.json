@@ -1,0 +1,322 @@
+{
+  "item": "Dreadfear01",
+  "mu_name": "Dreadfear",
+  "mu_name_from": "OpenMU VersionSeasonSix names number 360 'Dreadfear' (openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/KanturuRelics.cs:276); MuMain's MONSTER_DREADFEAR (MuMain/src/source/World/GameMaps/GM_Kanturu_2nd.cpp:87).",
+  "world": "kanturu_relics",
+  "object_type": 360,
+  "monster": {
+    "model_index": 116,
+    "scale": 1.3
+  },
+  "monster_from": "MuMain/src/source/World/GameMaps/GM_Kanturu_2nd.cpp:87:\n\ncase MONSTER_DREADFEAR:\n    {\n        OpenMonsterModel(MONSTER_MODEL_DREADFEAR);\n        pCharacter = CreateCharacter(Key, MODEL_DREADFEAR, PosX, PosY);\n        pCharacter->Object.Scale = 1.3f;\n        pCharacter->Object.Angle[0] = 0.0f;\n        pCharacter->Object.Gravity = 0.0f;\n        pCharacter->Object.Distance = (float)(rand() % 20) / 10.0f;\n        pCharacter->Weapon[0].Type = -1;\n        pCharacter->Weapon[1].Type = -1;\n\n        BoneManager::RegisterBone(pCharacter, L\"Dreadfear_Wing32\", 71);\n        BoneManager::RegisterBone(pCharacter, L\"Dreadfear_Wing34\", 68);\n        BoneManager::RegisterBone(pCharacter, L\"Dreadfear_Wing51\", 50);\n        BoneManager::RegisterBone(pCharacter, L\"Dreadfear_Wing53\", 47);\n        BoneManager::RegisterBone(pCharacter, L\"Dreadfear_Eye52\", 9);\n        BoneManager::RegisterBone(pCharacter, L\"Dreadfear_Eye54\", 10);\n    }\n    break;",
+  "profile": "monster",
+  "sheets": {
+    "anacondasword": "dreadfear_anacondasword.png",
+    "anaconda": "dreadfear_anaconda.png",
+    "anawing": "dreadfear_anawing.png"
+  },
+  "sheet_materials": {
+    "anacondasword": "blade_steel",
+    "anaconda": "plate_steel",
+    "anawing": "leather"
+  },
+  "combat": {
+    "level": 162,
+    "health": 185000,
+    "minimum_damage": 1925,
+    "maximum_damage": 2025,
+    "defense": 670,
+    "move_range": 3,
+    "attack_range": 2,
+    "view_range": 5,
+    "move_delay": 500,
+    "attack_delay": 1500,
+    "attack_rate": 3155,
+    "defense_rate": 1650,
+    "attack_skill": null,
+    "note": "OpenMU VersionSeasonSix (KanturuRelics.cs:276): level 119, 94000 life, 946-996, 783, 1015/906, attack range 2. Beside the Twin Tale (b9377590), its numbers the Twin Tale's times OpenMU's ratio between the two (life 1.07, damage 1.01, defence 0.91, attack rate 0.94), one level above the Persona; ranges and speeds as MU. Its defence rate not OpenMU's 2.06 of the Twin Tale's (2,780: the best pre-Kanturu kits landed so few blows that the wizard made 4 kills to 57 deaths across the sweep) but 1,650, still the Relics' hardest to hit: at its nest 164,129 the kits make 243 / 123 / 117 kills an hour (knight / wizard / elf, best skill), the wizard dying 3 times an hour, mostly to Personas. Provisional, ours (2026-10-25)."
+  },
+  "why_this_one": "MU's own Dreadfear (MONSTER_MODEL_DREADFEAR, Monster117): the Relics' third breed, 12 nests, after the Twin Tale and the Persona.",
+  "mu_checklist": [
+    {
+      "at": "MuMain/src/source/World/GameMaps/GM_Kanturu_2nd.cpp:86",
+      "in": "M38Kanturu2nd::Create_Kanturu2nd_Monster",
+      "kind": "body",
+      "lines": 20,
+      "actions": [],
+      "calls": [
+        "CreateCharacter",
+        "RegisterBone"
+      ],
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GM_Kanturu_2nd.cpp:1315",
+      "in": "M38Kanturu2nd::Move_Kanturu2nd_BlurEffect",
+      "kind": "effect",
+      "lines": 30,
+      "actions": [
+        "MONSTER01_ATTACK1",
+        "MONSTER01_ATTACK2"
+      ],
+      "calls": [
+        "CreateBlur"
+      ],
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GM_Kanturu_2nd.cpp:985",
+      "in": "M38Kanturu2nd::Render_Kanturu2nd_MonsterVisual",
+      "kind": "effect",
+      "lines": 80,
+      "actions": [
+        "MONSTER01_WALK",
+        "MONSTER01_ATTACK1",
+        "MONSTER01_ATTACK2",
+        "MONSTER01_DIE",
+        "MONSTER01_STOP1",
+        "MONSTER01_STOP2"
+      ],
+      "calls": [
+        "BITMAP_ENERGY_RING",
+        "BITMAP_ENERGY_FIELD",
+        "PlayBuffer",
+        "SOUND_KANTURU_2ND_DRED_MOVE1",
+        "SOUND_KANTURU_2ND_DRED_ATTACK1",
+        "SOUND_KANTURU_2ND_DRED_ATTACK2",
+        "SOUND_KANTURU_2ND_DRED_DIE",
+        "CreateParticle",
+        "BITMAP_CLUD64"
+      ],
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:453",
+      "in": "LoadWaveFile",
+      "kind": "sound",
+      "lines": 1,
+      "actions": [],
+      "calls": [
+        "SOUND_KANTURU_2ND_DRED_MOVE1"
+      ],
+      "file": "Data/Sound/w38/dred_idle-01.wav",
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:455",
+      "in": "LoadWaveFile",
+      "kind": "sound",
+      "lines": 1,
+      "actions": [],
+      "calls": [
+        "SOUND_KANTURU_2ND_DRED_ATTACK1"
+      ],
+      "file": "Data/Sound/w38/dred_attack-01.wav",
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:456",
+      "in": "LoadWaveFile",
+      "kind": "sound",
+      "lines": 1,
+      "actions": [],
+      "calls": [
+        "SOUND_KANTURU_2ND_DRED_ATTACK2"
+      ],
+      "file": "Data/Sound/w38/dred_attack-02.wav",
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:457",
+      "in": "LoadWaveFile",
+      "kind": "sound",
+      "lines": 1,
+      "actions": [],
+      "calls": [
+        "SOUND_KANTURU_2ND_DRED_DIE"
+      ],
+      "file": "Data/Sound/w38/dred_death.wav",
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/Engine/Object/ZzzObject.cpp:10642",
+      "in": "RenderPartObjectEdge",
+      "kind": "look",
+      "lines": 6,
+      "actions": [],
+      "calls": [
+        "RenderMesh",
+        "BlendMeshTexCoordU",
+        "BlendMeshTexCoordV"
+      ],
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GM_Kanturu_2nd.cpp:715",
+      "in": "M38Kanturu2nd::Render_Kanturu2nd_MonsterObjectMesh",
+      "kind": "look",
+      "lines": 14,
+      "actions": [
+        "MONSTER01_DIE"
+      ],
+      "calls": [
+        "RenderBody",
+        "RENDER_TEXTURE",
+        "BlendMeshTexCoordU",
+        "BlendMeshTexCoordV"
+      ],
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GM_Kanturu_3rd.cpp:1271",
+      "in": "M39Kanturu3rd::RenderKanturu3rdMonsterObjectMesh",
+      "kind": "look",
+      "lines": 14,
+      "actions": [
+        "MONSTER01_DIE"
+      ],
+      "calls": [
+        "RenderBody",
+        "RENDER_TEXTURE",
+        "BlendMeshTexCoordU",
+        "BlendMeshTexCoordV"
+      ],
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/Engine/Object/ZzzOpenData.cpp:2782",
+      "in": "OpenMonsterModel",
+      "kind": "animation",
+      "lines": 8,
+      "actions": [
+        "MONSTER01_STOP1",
+        "MONSTER01_STOP2",
+        "MONSTER01_WALK",
+        "MONSTER01_ATTACK1",
+        "MONSTER01_ATTACK2",
+        "MONSTER01_DIE"
+      ],
+      "calls": [],
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/Engine/Object/ZzzCharacter.cpp:3236",
+      "in": "DeadCharacter",
+      "kind": "other",
+      "lines": 4,
+      "actions": [],
+      "calls": [],
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/Engine/Object/ZzzCharacter.cpp:8655",
+      "in": "RenderCharacter",
+      "kind": "other",
+      "lines": 4,
+      "actions": [
+        "MONSTER01_ATTACK2"
+      ],
+      "calls": [],
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/Engine/Object/ZzzObject.cpp:9516",
+      "in": "RenderPartObjectEffect",
+      "kind": "other",
+      "lines": 4,
+      "actions": [],
+      "calls": [],
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/Engine/Object/ZzzOpenData.cpp:2439",
+      "in": "GetMonsterModelName",
+      "kind": "other",
+      "lines": 1,
+      "actions": [],
+      "calls": [],
+      "state": "skip",
+      "note": "MU's name for the model, for its tools; nothing to carry"
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GM_Kanturu_2nd.cpp:152",
+      "in": "M38Kanturu2nd::Set_CurrentAction_Kanturu2nd_Monster",
+      "kind": "other",
+      "lines": 7,
+      "actions": [],
+      "calls": [],
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GM_Kanturu_2nd.cpp:178",
+      "in": "M38Kanturu2nd::AttackEffect_Kanturu2nd_Monster",
+      "kind": "other",
+      "lines": 5,
+      "actions": [],
+      "calls": [],
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GM_Kanturu_2nd.cpp:320",
+      "in": "M38Kanturu2nd::Move_Kanturu2nd_MonsterVisual",
+      "kind": "other",
+      "lines": 4,
+      "actions": [],
+      "calls": [],
+      "state": "todo",
+      "note": ""
+    }
+  ],
+  "show": {
+    "tags": [
+      "dreadfear"
+    ],
+    "claws": {
+      "pairs": [
+        [
+          "Bip01 R Finger1",
+          "Line02"
+        ]
+      ],
+      "from": 0.07,
+      "to": 1.52,
+      "light": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "until": 9.0,
+      "axis": "through",
+      "note": "Move_Kanturu2nd_BlurEffect MODEL_DREADFEAR (GM_Kanturu_2nd.cpp:1315-1340): Attack 1 up to key 5 and Attack 2 up to key 9, ten CreateBlur type 4 a frame in white from bone 33 (Line02, its sword) out (100, 120, 0) in its own axes: 156 units, rigid on the hand. Ours along the line from Bip01 R Finger1 to Line02, which runs 21 degrees off MU's blade (FK of the rig): Line02 lies 0.07 m along it and MU's end 1.52 m along and 0.56 m off, at scale 1. One until for both swings: Attack 2's 9, so Attack 1's blur runs through its last three keys where MU stops at 5. An offset in a bone's own axes does not survive the Blender rebuild."
+    },
+    "note": "fx/dreadfear.h: its two teal eyes, the cloud its wings shed as it moves and swings, the smoke they break into as it dies."
+  },
+  "rules": {
+    "drops": {
+      "money_rate": 30,
+      "max_plus": 3,
+      "regen": 10
+    },
+    "resist": {
+      "ice": 27,
+      "poison": 27
+    },
+    "note": "Resistance: OpenMU S6 Maps/KanturuRelics.cs:276-302 writes 27/255 to all four, read as WebZen raw values as Aida's are; fire and lightning are not carried. Drops: Aida's (30 and 3) until Kanturu's are settled (docs/worlds/kanturu-port.md decision 8); RegTime 10, as the Twin Tale's."
+  }
+}

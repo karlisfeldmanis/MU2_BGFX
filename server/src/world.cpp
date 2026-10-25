@@ -742,6 +742,8 @@ void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions,
             one->keepAt = Clock::time_point{};
             core::logf("%s: reborn, rebirth %d", one->who.c_str(), int(said.a));
             announceRebirth(one->name, int(said.a), sessions);
+            const sim::Body* him = realm.find(one->player);
+            if (him != nullptr && !one->bot) tellRebirth(one->name, sim::className(int(him->kin), him->second), int(said.a));
         }
     }
     // The market's commands answered: a listing up, a purchase paid (broker.h).

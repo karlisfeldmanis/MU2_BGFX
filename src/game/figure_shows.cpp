@@ -34,6 +34,14 @@ void Figures::readShows() {
         show.auraTiles = float(row["aura"]["tiles"].numberOr(0.0));
         show.eyeTrail[0] = row["eye_trail"]["right"].stringOr("");
         show.eyeTrail[1] = row["eye_trail"]["left"].stringOr("");
+        const core::Json& trail = row["eye_trail"];
+        for (int i = 0; i < 3 && i < int(trail["colour"].items.size()); ++i) {
+            show.eyeTrailColour[i] = float(trail["colour"].items[size_t(i)].numberOr(0.0));
+        }
+        show.eyeTrailWidth = float(trail["width"].numberOr(show.eyeTrailWidth));
+        for (int i = 0; i < 2 && i < int(trail["tails"].items.size()); ++i) {
+            show.eyeTrailTails[i] = int(trail["tails"].items[size_t(i)].numberOr(0.0));
+        }
         for (const auto& [role, names] : row["bones"].members) {
             std::vector<std::string> list;
             for (const core::Json& name : names.items) list.push_back(name.string);
@@ -72,8 +80,10 @@ void Figures::readShows() {
             show.claws.light[i] = float(claws["light"].items[size_t(i)].numberOr(0.0));
         }
         show.claws.until = float(claws["until"].numberOr(-1.0));
+        show.claws.after = float(claws["after"].numberOr(-1.0));
         show.claws.firstOnly = claws["swing"].numberOr(0.0) == 1.0;
-        show.claws.alongZ = claws["axis"].stringOr("x") == "z";
+        const std::string axis = claws["axis"].stringOr("x");
+        show.claws.axis = axis == "through" ? 3 : axis == "z" ? 2 : axis == "y" ? 1 : 0;
         show.landsAt = float(row["lands"].numberOr(-1.0));
         for (const core::Json& segment : row["burn"]["segments"].items) {
             if (segment.items.size() != 3) continue;
@@ -106,6 +116,9 @@ void Figures::addShown(std::unique_ptr<FigureBody> made) {
         body.auraTiles = show.auraTiles;
         body.eyeTrail[0] = show.eyeTrail[0];
         body.eyeTrail[1] = show.eyeTrail[1];
+        for (int i = 0; i < 3; ++i) body.eyeTrailColour[i] = show.eyeTrailColour[i];
+        body.eyeTrailWidth = show.eyeTrailWidth;
+        for (int i = 0; i < 2; ++i) body.eyeTrailTails[i] = show.eyeTrailTails[i];
         body.boneRoles = show.boneRoles;
         for (int i = 0; i < 3; ++i) body.tint[i] = show.tint[i];
         body.tinted = show.tinted;

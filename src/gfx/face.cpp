@@ -9,9 +9,12 @@
 #include <map>
 #include <mutex>
 
+#include "core/bidi.h"
 #include "core/files.h"
 #include "core/log.h"
 #include "core/paths.h"
+#include "core/utf8.h"
+#include "gfx/glyphs.h"
 
 namespace mu::gfx {
 namespace {
@@ -89,6 +92,7 @@ bool Face::bake(const std::string& path, float pixels, int size, int padding, in
     char key[64];
     std::snprintf(key, sizeof(key), "|%g|%d|%d|%d|%d", double(pixels), size, padding, oversample, margin);
     if (remembered(path + key, this)) return true;
+    path_ = path;
     const bool baked = bakeNew(path, pixels, size, padding, oversample, margin);
     key_ = baked ? path + key : std::string();
     if (baked) remember(key_, *this);
@@ -230,11 +234,36 @@ void Face::blur(float sigma) {
     }
 }
 
+bool Face::look(uint32_t code, FaceGlyph* out, bool* cached) const {
+    *cached = false;
+    if (glyphs_.empty()) return false;
+    if (code == uint32_t(kMiddleDot)) {
+        *out = glyphs_.back();
+        return true;
+    }
+    if (code >= uint32_t(kFirstCode) && code <= uint32_t(kLastCode)) {
+        *out = glyphs_[size_t(code - kFirstCode)];
+        return true;
+    }
+    if (code < uint32_t(kFirstCode) || spreadTexels_ > 0 || path_.empty()) return false;
+    FaceGlyph g;
+    if (!glyphs::find(path_, code, &g)) return false;
+    const float f = bakedEm_ / glyphs::kEm;
+    g.x0 *= f, g.y0 *= f, g.x1 *= f, g.y1 *= f, g.advance *= f;
+    *out = g;
+    *cached = true;
+    return true;
+}
+
 float Face::measure(float fontSize, const std::string& s) const {
     const float f = emScale(fontSize);
     float width = 0.0f;
-    for (char c : s) {
-        if (const FaceGlyph* g = glyph(c)) width += g->advance * f;
+    FaceGlyph g;
+    bool cached = false;
+    // As drawn: Arabic's joined forms are not as wide as its letters alone.
+    const std::string& shown = core::bidi::visual(s);
+    for (size_t at = 0; at < shown.size();) {
+        if (look(core::utf8::next(shown, at), &g, &cached)) width += g.advance * f;
     }
     return width;
 }

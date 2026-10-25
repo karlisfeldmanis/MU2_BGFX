@@ -94,6 +94,17 @@ constexpr Resistance kResistances[] = {
     {307, 19, 19},  // Forest Orc
     {308, 18, 18},  // Death Tree
     {309, 50, 50},  // Hell Maine
+    {350, 25, 25},  // Berserker
+    {351, 20, 20},  // Splinter Wolf
+    {352, 21, 21},  // Iron Rider
+    {353, 22, 22},  // Satyros
+    {354, 23, 23},  // Blade Hunter
+    {355, 24, 24},  // Kentauros
+    {356, 25, 25},  // Gigantis
+    {357, 26, 26},  // Genocider
+    {358, 29, 29},  // Persona
+    {359, 28, 28},  // Twin Tale
+    {360, 27, 27},  // Dreadfear
     {549, 20, 20},  // Bloody Orc
     {550, 20, 20},  // Bloody Death Rider
     {552, 20, 20},  // Bloody Witch Queen
@@ -165,6 +176,17 @@ constexpr DropRate kDropRates[] = {
     {307, 30, 3, 10},  // Forest Orc
     {308, 30, 3, 10},  // Death Tree
     {309, 30, 4, 150},  // Hell Maine
+    {350, 30, 3, 10},  // Berserker
+    {351, 30, 3, 10},  // Splinter Wolf
+    {352, 30, 3, 10},  // Iron Rider
+    {353, 30, 3, 10},  // Satyros
+    {354, 30, 3, 10},  // Blade Hunter
+    {355, 30, 3, 10},  // Kentauros
+    {356, 30, 3, 10},  // Gigantis
+    {357, 30, 3, 10},  // Genocider
+    {358, 30, 3, 10},  // Persona
+    {359, 30, 3, 10},  // Twin Tale
+    {360, 30, 3, 10},  // Dreadfear
     {549, 30, 3, 8},  // Bloody Orc
     {550, 30, 3, 10},  // Bloody Death Rider
     {552, 30, 3, 10},  // Bloody Witch Queen

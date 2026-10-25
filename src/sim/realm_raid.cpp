@@ -313,6 +313,17 @@ void Realm::minionSpoils(const Body& dead) {
     }
 }
 
+bool hoardFine(const content::ItemRow& row, Kin kin, bool second) {
+    // Never Kanturu's gear: it falls only on Kanturu's maps (sim::kanturuGear).
+    if (!excellentable(row) || !takesOptions(row) || !row.dropsFromMonsters() || archangelWeapon(row) ||
+        kanturuGear(row)) {
+        return false;
+    }
+    if (row.dropLevel < kHoardFineLeast || row.dropLevel > kHoardFineMost) return false;
+    if (row.classes != 0 && (row.classes & (1 << int(kin))) == 0) return false;
+    return !secondClassOnly(row) || second || kin == Kin::MagicGladiator;
+}
+
 void Realm::dragonHoard(const Body& dragon) {
     if (raid_.stage == RaidStage::None || !tables_) return;
     const Body& hero = mine();
@@ -323,18 +334,18 @@ void Realm::dragonHoard(const Body& dragon) {
         return -1;
     };
     // What it leaves, in order, laid round it evenly from a turn the dice choose.
-    Held hoard[kHoardBoxes + kHoardRunes + kHoardJewels + 1 + kHoardExcellents + 1];
+    Held hoard[kHoardBoxes + kHoardRunes + kHoardLives + kHoardJewels + 1 + kHoardExcellents + 1];
     int count = 0;
     const int32_t box = first([](const content::ItemRow& r) { return boxOfKundun(r); });
-    for (int i = 0; i < kHoardBoxes && box >= 0; ++i) {
-        hoard[count++] = Held{box, int16_t(1 + raidDice_.nextInt(0, kKundunTiers)), 1};
-    }
+    for (int i = 0; i < kHoardBoxes && box >= 0; ++i) hoard[count++] = Held{box, int16_t(kKundunTiers), 1};
     const int32_t rune = first([](const content::ItemRow& r) { return creation(r); });
     for (int i = 0; i < kHoardRunes && rune >= 0; ++i) {
         Held one{rune, 0, 1};
-        one.powers[0] = drawRunePower(raidDice_, hero.kin, hero.second, dragon.level, false);
-        hoard[count++] = one;
+        one.powers[0] = drawRuneOf(raidDice_, hero.kin, hero.second, Rarity::Legendary);
+        if (one.powers[0] != 0) hoard[count++] = one;
     }
+    const int32_t life = tables_->itemAt(14, 16);
+    for (int i = 0; i < kHoardLives && life >= 0; ++i) hoard[count++] = Held{life, 0, 1};
     int jewels = 0;
     for (const content::ItemRow& r : tables_->items) jewels += refiningJewel(r) ? 1 : 0;
     for (int i = 0; i < kHoardJewels && jewels > 0; ++i) {
@@ -344,8 +355,12 @@ void Realm::dragonHoard(const Body& dragon) {
         }
     }
     const int excellents = kHoardExcellents + (raidDice_.nextInt(0, kHoardExcellentOdds) == 0 ? 1 : 0);
-    for (int i = 0; i < excellents; ++i) {
-        if (excellentOf(kKundunExcellent3, std::size(kKundunExcellent3), raidDice_, &hoard[count])) ++count;
+    std::vector<BagRow> fine;
+    for (const content::ItemRow& r : tables_->items) {
+        if (hoardFine(r, hero.kin, hero.second)) fine.push_back({int8_t(r.group), int16_t(r.number)});
+    }
+    for (int i = 0; i < excellents && !fine.empty(); ++i) {
+        if (excellentOf(fine.data(), fine.size(), raidDice_, &hoard[count])) ++count;
     }
     if (raidDice_.nextInt(0, kHoardFeatherOdds) == 0) {
         const int32_t feather = first([](const content::ItemRow& r) { return lochsFeather(r); });
@@ -408,6 +423,18 @@ void Realm::raidTick() {
     Body& dragon = bodies_[size_t(invasion_.slot)];
     if (raid_.stage == RaidStage::None) {
         if (!dragon.alive() || invasion_.phase != InvasionPhase::Standing) return;
+        // A landing is a new fight: nothing of the last one's carries over -- a `departing` left
+        // set by the first dragon to fly off had every later one in that world flown away on the
+        // tick after it landed (the players, 2026-10-25: "it says dragon invasion there is no
+        // dragon"). Its players were laid as it came (InvasionInstance::tick); the serial and the
+        // last "Immune" run on.
+        const int players = raid_.players;
+        const uint32_t serial = raid_.serial;
+        const int64_t immuneSaidAt = raid_.immuneSaidAt;
+        raid_ = RaidState{};
+        raid_.players = players;
+        raid_.serial = serial;
+        raid_.immuneSaidAt = immuneSaidAt;
         raid_.landedAt = tick_;
         raid_.nextMove = tick_ + kRiseIdleTicks + kMoveEvery / 2;
         raid_.nextFireball = tick_ + kRiseIdleTicks + kDragonFireballEvery;

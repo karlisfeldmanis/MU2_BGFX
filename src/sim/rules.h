@@ -71,8 +71,8 @@ struct Excellence {
     int moreMana = 0;
     double ignoreDefense = 0.0;
     double healthRate = 1.0;      // 6: x1.04 on max life
-    // Not an option: the Rune of the Undying's x1.2 on max life, each one set in anything worn
-    // (sim::kUndyingHealth). Beside the excellent rate so the two multiply, kept apart so the
+    // Not an option: the Rune of the Undying's +20% max life, each one set in anything worn
+    // added (sim::kUndyingHealth). Beside the excellent rate so the two multiply, kept apart so the
     // character window can say which is which.
     double undyingRate = 1.0;
     // The Wellspring runes' shares of max mana in the rings and the pendant, summed
@@ -129,7 +129,7 @@ struct Excellence {
     // The side arrows' share of the straight one's force: 1 with a Piercing Volley, less with
     // only a Scatter Volley or a Split Arrow (sim::kScatterVolleySide...), counted in `volleys`.
     float volleySide = 0.0f;
-    // A wizard's Kindles, each raising his Fire Ball by sim::kKindleForce.
+    // A wizard's Kindles, each adding sim::kKindleForce's share to his Fire Ball.
     int kindles = 0;
     // Not options either: the rings' and the pendant's (docs/game/jewellery.md). The largest
     // resistance worn in each element and the resistance powers on top: Ice and Poison each turn
@@ -254,7 +254,8 @@ double hitChance(float attackRate, float defenseRate);
 // (`skillDamage + skillDamage / 2`, integer halves). The band is then `(base + skill) *
 // wizardryRate`, truncated. Defence is taken BEFORE the excellent and critical multipliers here,
 // which is the one ordering difference from a swing: an excellent spell is
-// `(top - defence) * 1.2` where an excellent swing is `top * 1.2 - defence`. Everything after
+// `(top - defence) * 1.2` where an excellent swing is `top * 1.2 - defence` (each with the
+// critical damage on the 1.2, `excellentTop` in rules.cpp). Everything after
 // -- the overrate, the armour's decrease, the level floor, damageTaken -- is the swing's own.
 // The same draws in the same order as `strike`.
 Blow cast(const Fighter& attacker, const Fighter& defender, int skillDamage, Random& dice);
@@ -392,6 +393,8 @@ struct Arms {
     int greaterDamage = 0;
     // Critical Damage while it stands (Fighter::criticalAdd).
     int criticalAdd = 0;
+    // Swell Life's share of the most health while it stands, 0.15 for 15% (Body::swell).
+    double swell = 0.0;
     // A worn wing's option (docs/game/wings.md): Satan's on both ends of every band he swings, and
     // Heaven's on his wizardry, 4 a level, PlusSpecial's AT_IMPROVE_DAMAGE and AT_IMPROVE_MAGIC
     // (ObjCalCharacter.cpp:473-477, :582-583).

@@ -725,7 +725,9 @@ void Mixer::rebuild(const sim::Realm& realm, Stage* stage) {
             const int more = then ? std::max(0, then->have - n.have) : 0;
             uint32_t ink = style::kBone;
             std::string bag;
-            if (n.need == 0) {
+            if (n.remove) {
+                ink = style::kDanger;
+            } else if (n.need == 0) {
                 ink = n.have > 0 ? style::kBone : style::kAshInk;
             } else if (n.have == n.need || (n.atLeast && n.have > n.need)) {
                 ink = style::kFits;
@@ -819,6 +821,18 @@ void Mixer::rebuild(const sim::Realm& realm, Stage* stage) {
             at(kLeft, top, style::kAshInk,
                j.lucky ? "Lucky item: +" + std::to_string(j.luck) + "% counted"
                        : "A lucky item adds " + std::to_string(j.luck) + "%");
+            top += kLine;
+        }
+        // Add Socket's chance falls with each socket the thing has (GeraColorz on Discord, a 20%
+        // third read as the 50%): the three rates side by side, the one rolled lit.
+        if (service == sim::Service::AddSocket) {
+            static const char* const kNth[sim::kMostSockets] = {"1st", "2nd", "3rd"};
+            const float wide = (kRight - kLeft) / float(sim::kMostSockets);
+            for (int i = 0; i < sim::kMostSockets; ++i) {
+                const bool lit = j.target >= 0 && j.rate == sim::kAddSocketRate[i];
+                at(kLeft + wide * float(i), top, lit ? style::kBoneHi : style::kAshInk,
+                   std::string(kNth[i]) + " socket " + std::to_string(sim::kAddSocketRate[i]) + "%");
+            }
             top += kLine;
         }
         const auto outcome = [&](const char* label, uint32_t ink, const std::string& s) {

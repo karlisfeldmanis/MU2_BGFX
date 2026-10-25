@@ -8,12 +8,26 @@
       "number": 137,
       "box": [71, 102, 82, 109],
       "note": "OpenMU's spawn gate 137 (VersionSeasonSix Gates.cs:283): the safe hall by the Ruins' door, where a death in the Relics or the boss map stands up. docs/worlds/kanturu-port.md Part A 2.1."
-    }
+    },
+    "enters": [
+      {
+        "number": 131,
+        "box": [
+          69,
+          104,
+          69,
+          107
+        ],
+        "level": 0,
+        "target": 132,
+        "note": "The Relics' way back to the Ruins (Gates.cs:540). MU asks 150, ours free, as every way out."
+      }
+    ]
   },
   "pipeline": {
     "hidden": {
-      "value": [45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 65],
-      "note": "The Relics' emitter boxes (MoveKanturu2ndObject, GM_Kanturu_2nd.cpp:252-268): clouds, void glows, waterfall specks, water and thunder joints, every one an angeflo_R box drawn by no mesh. docs/worlds/kanturu-port.md Part B 8.1."
+      "value": [45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 65, 67],
+      "note": "The Relics' emitter boxes (MoveKanturu2ndObject, GM_Kanturu_2nd.cpp:252-268): clouds, void glows, waterfall specks, water and thunder joints, every one an angeflo_R box drawn by no mesh. docs/worlds/kanturu-port.md Part B 8.1. And type 67 (Object68), ours: one more angeflo_R box, 0.9 m at 143,72 in the void, which MU's code leaves drawn, a green-sprite cube among the clouds (the user, 2026-10-24: \"go\")."
     },
     "void": {
       "value": {"start": 0.5, "depth": 6.0, "blend": 1.5},
@@ -23,6 +37,140 @@
       "value": [[78, 106]],
       "note": "From the safe hall (spawn gate 137). The maze is one region of 4,454 tiles; the 75 stray open tiles on rows 250-251 become void. Ours."
     },
-    "flat_over_void": true
+    "flat_over_void": true,
+    "airs_from": {
+      "value": "bloodcastle",
+      "note": "The crows (show.boids) are Blood Castle's Crow01, built in its folder (the user, 2026-10-23: \"also maybe same birds which we had on BC\")."
+    },
+    "perches": {
+      "value": {
+        "3": {
+          "pose": 2,
+          "turns": false,
+          "leans": false,
+          "tall": false,
+          "model": "Object04, the stone chair"
+        }
+      },
+      "note": "The Relics: MOVEMENT_OPERATE's Is_Kanturu2nd arm, `TargetType == 3: Sit = true` with no turn (ZzzInterface.cpp:1766-1772); CreateOperate (GM_Kanturu_2nd.cpp:41-44). The nine stone chairs, eight in the safe hall (73-82, 103 and 108) and one at 86,120 (the user, 2026-10-24: \"next\")."
+    },
+    "void_islands": {
+      "value": true,
+      "note": "Every drawn tile no walk from void_fill's seed touches becomes void: MU's ring of NoMove floor round the maze and the two strips five tiles off the safe hall (rows 75-95 and 116-127), which ended on hard tile edges. The void has clouds instead (the user, 2026-10-24: \"still see some ground outside the platform, we are using void with clouds now\"). Ours, marked; pipeline/terrain.py VOID_ISLANDS."
+    },
+    "anchor_kinds": {
+      "value": {
+        "Object55": 30,
+        "Object57": 31,
+        "Object66": 32,
+        "Object56": 33,
+        "Object54": 34
+      },
+      "note": "The Relics' hidden lightning, thunder and water boxes (MoveKanturu2ndObject, GM_Kanturu_2nd.cpp:482-520): Object55 (type 54, 18 in the void) a bolt falling 11 m into it one frame in 20; Object57 (type 56, 13 on the walls) a half-metre arc from its west one in 10; Object66 (type 65, 2) a 3.5 m bolt from its north one in 10; Object56 (type 55, 32) a Fenrir thunder flash within 20 units one in 5; Object54 (type 53, 34, 1.8-2.7 m up on the walls) a drop of water rising, one in 3. game/world/ruin_effects.h (the user, 2026-10-24: \"better\", \"next\", effects 3)."
+    }
+  },
+  "npcs": [
+    {
+      "npc": 367,
+      "name": "Gateway Machine",
+      "figure": "GatewayMachine",
+      "at": [
+        141,
+        191
+      ],
+      "look": 3,
+      "note": "MU's place: OpenMU KanturuRelics.cs:46, 141,191 facing south, at the head of the Laser Trap corridor (x 138-144, y 166-183), on a NoMove tile; reached from 141,186 (the user, 2026-10-23: put it where it has to be). The tower event it opens is not built."
+    }
+  ],
+  "rules": {
+    "arrive": [
+      77,
+      105
+    ],
+    "home": 8,
+    "event": false,
+    "floors": false,
+    "move_order": 12,
+    "note": "Kanturu Relics, MU's map 38, entered from the Ruins' door (gates 129/131). arrive is the middle of spawn gate 137's box, the safe hall (OpenMU VersionSeasonSix Gates.cs:283), where a death in the Relics stands up too (OM's spawn gate; WZ's 139 lies inside the same hall). The Town Portal goes to Tarkan's town (home 8), as the Ruins'. Last on the M key's walk (12), so no other map's order moves. No drops yet: no breed stands here.",
+    "drops": [
+      "kanturu_gear",
+      "ancient_runes"
+    ]
+  },
+  "show": {
+    "void_clouds": {
+      "colour": [
+        0.55,
+        0.58,
+        0.66
+      ],
+      "note": "Big slow clouds drifting through the void round the maze (game/world/void_clouds.h), in place of cliffs (the user, 2026-10-23: \"lets not use cliffs at all, but use clouds which we used for other maps to fill balck voids\"). Blood Castle's cold grey at 1.8 times, so the top deck (0.3-1.6 m under the floor) reads as a smoke layer over the sunk crystals (the user, 2026-10-24: \"we need smoke layer coming above crystals levels\")."
+    },
+    "boids": {
+      "model": "Crow01",
+      "call": [
+        "boid_crow",
+        ""
+      ],
+      "call_every": 128.0,
+      "call_rolls": 1,
+      "calls_over_safe": true,
+      "note": "Blood Castle's crows (MODEL_CROW, GOBoid.cpp:1342-1345; SOUND_CROW a frame in 128, :1495-1501) over the Relics' void and its clouds. Ours: MU flies none here (the user, 2026-10-23: \"also maybe same birds which we had on BC\")."
+    },
+    "crystal_chrome": {
+      "model": "Object77",
+      "note": "The crystals' second pass, mesh 0 again RENDER_CHROME7 with BITMAP_CHROME (Render_Kanturu2nd_AfterObjectMesh type 76, GM_Kanturu_2nd.cpp:662), as the Ruins' Object96 takes it: Chrome01 added at the body light, slid by the normals and WorldTime*0.00006. game/world/crystal_sparks.h lendCrystalChrome. (the user, 2026-10-24: \"nextwhats next\", effects 1)."
+    },
+    "ruin_effects": {
+      "note": "The jade towers' spark and bolts (Object09, kind tower): game/world/ruin_effects.h, the Ruins' tank arcs' class. (the user, 2026-10-24: \"next\", effects 2)."
+    },
+    "chasm_mist": {
+      "note": "MU's blue cloud boxes, type 50 (Object51, 18 at the floor by the walls; MoveKanturu2ndObject, GM_Kanturu_2nd.cpp:448-459): a faint blue haze drifting from each one frame in 3, gone 5 m from where it was born (game/world/chasm_mist.h, effects 3c). Ours: half as bright, lying flat over the floor as the void clouds' soft masses (the user, 2026-10-24: \"more subtle and not cuted\", \"smoke is cuted/croped\", \"also to blurry\"); type 48's grey MINUS smoke (Object49) is not drawn, it stained the lit floor black (\"some smoke is black, is that expected?\")."
+    },
+    "air": {
+      "loop": "world_kanturu_relics",
+      "everywhere": true,
+      "room": "open",
+      "note": "SOUND_KANTURU_2ND_MAPSOUND_GLOBAL, kan_relic_global.wav, which Sound_Kanturu2nd_Object plays from every object every frame (GM_Kanturu_2nd.cpp:194-196): always on, the whole map, the maze open to the void."
+    },
+    "object_loops": [
+      {
+        "model": "Object10",
+        "loop": "kanturu_gear",
+        "full": 4,
+        "reach": 14
+      },
+      {
+        "model": "Object32",
+        "loop": "kanturu_incubator",
+        "full": 3,
+        "reach": 12
+      },
+      {
+        "model": "Object36",
+        "loop": "kanturu_incubator",
+        "full": 3,
+        "reach": 12
+      },
+      {
+        "model": "Object37",
+        "loop": "kanturu_incubator",
+        "full": 3,
+        "reach": 12
+      },
+      {
+        "model": "Object38",
+        "loop": "kanturu_incubator",
+        "full": 3,
+        "reach": 12
+      }
+    ],
+    "object_loops_note": "MU plays its gear and incubator sounds flat while any gear (type 9, Object10, 6) or incubator tank (types 31, 35-37: Object32, 36, 37, 38, 37 in all) is moved, which is the ones near the camera (GM_Kanturu_2nd.cpp:198-208). Ours, marked, as the Ruins: each from its nearest one, full to `full` metres and gone at `reach` (Play::hearWorld; the four tank models share one loop). Not built: kan_relic_hole.wav, which MU plays while the Gateway Machine opens (:1089-1093), an event not built yet. First distances, for the user to judge.",
+    "music": {
+      "track": "/music/kanturu_relics.mp3",
+      "where": "everywhere",
+      "loops": true,
+      "note": "Ours, not WebZen's kanturu_2nd (which M38Kanturu2nd::PlayBGM plays the whole time, GM_Kanturu_2nd.cpp:1350-1360): freesound_community ambient-creepy-soundscape-52699 (6:44), copied to content/music/kanturu_relics.mp3 (the user, 2026-10-24: \"use ... freesound_community-ambient-creepy-soundscape-52699.mp3 for relics music\"). Everywhere and looped, as MU's, not the house rule's safe zone only (the user, 2026-10-24: \"lets play kanturu_2nd.mp3 on relics\")."
+    }
   }
 }

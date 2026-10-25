@@ -99,8 +99,11 @@ public:
     // The realm said the blow missed: the fireball nearest that body flies on past and out.
     void missHurl(uint32_t target);
     // `count` of the rock's stones thrown up off the ground at `x, z` -- a Flame's kicked-up
-    // debris, MU's `MODEL_STONE1 + rand() % 2` off the same ballistic arm (fx/flame.h).
-    void stones(float x, float z, float floor, int count) { stonesAt(x, z, floor, count); }
+    // debris, MU's `MODEL_STONE1 + rand() % 2` off the same ballistic arm (fx/flame.h). `scale`
+    // on each stone's size: a Genocider's dragged weapon kicks them at a third.
+    void stones(float x, float z, float floor, int count, float scale = 1.0f) {
+        stonesAt(x, z, floor, count, scale);
+    }
     // `count` chips thrown off a rock spike at `x, z`, `floor` up: MU's MODEL_STONE1/2 sub-type 10,
     // Earthshake's (MoveHandlers.cpp:5694-5699; created ZzzEffect.cpp:2677-2686) -- life rand()%16+32,
     // scale (rand()%4+15)*0.05, a scatter of (rand()%256+64)*0.2 and gravity rand()%16+28: smaller,

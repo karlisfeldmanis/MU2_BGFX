@@ -14,6 +14,10 @@
 
 #include "sim/rules.h"
 
+namespace mu::content {
+struct ItemRow;
+}
+
 namespace mu::sim {
 
 // The raid minion: OpenMU Version095d's Golden Budge Dragon (InvasionMobsInitialization.cs:44-79).
@@ -111,21 +115,37 @@ constexpr int64_t kImmuneSayTicks = 10;
 constexpr int kMinionJewelOdds = 4;
 constexpr int kMinionRuneOdds = 10;
 constexpr int64_t kSpoilsLingerTicks = 60 * 20;  // a kill's drop's minute (realm_items.cpp)
-// **Its hoard** (the design's section 1, Loot): the 2009 renewal's five Boxes of Kundun, +1 to
-// +3, scattered round its corpse (WZ gObjMonster.cpp:4183-4335), and ours beside them: two Runes
-// of Creation, three refining jewels and a Loch's Feather one in four, laid in a ring
-// kHoardReach tiles out. Three minutes on the ground, as a fight's end is busy. Ours but the boxes.
-constexpr int kHoardBoxes = 5;
+// **Its hoard** (the design's section 1, Loot), laid in a ring kHoardReach tiles out, three
+// minutes on the ground, as a fight's end is busy. **Matched to the fight** (the user, 2026-10-24:
+// "we need that loot. match the fight"): a kill tuned for ten level-400 heroes at +11 left a
+// pile set at level 30-80 -- five Boxes of Kundun of Lorencia's gear, two runes drawn at the
+// dragon's level 80 (a Legendary one in ten), excellents off the +3 box's pool (drop level 13-54)
+// and a Feather one in four. Now: two Boxes of Kundun +3, the renewal's box kept (WZ
+// gObjMonster.cpp:4183-4335) at its best; two Legendary Runes of Creation for the killer's class
+// (drawRuneOf; an Ancient stays Kanturu's, sim::kAncientLevel); a Jewel of Life and three refining
+// jewels; Loch's Feather always; and the excellents off the killer's own top gear (hoardFine).
+// Ours but the boxes.
+constexpr int kHoardBoxes = 2;
 constexpr int kHoardRunes = 2;
 constexpr int kHoardJewels = 3;
-constexpr int kHoardFeatherOdds = 4;
+constexpr int kHoardLives = 1;
+constexpr int kHoardFeatherOdds = 1;
 constexpr float kHoardReach = 2.5f;
 constexpr int64_t kHoardLingerTicks = 3 * 60 * 20;
 // And excellent things of its own (the user, 2026-10-06: 'also draogn it self can drop some
-// excelent drops'): kHoardExcellents always and one more one in kHoardExcellentOdds, off the
-// Box of Kundun +3's excellent pool (sim::kKundunExcellent3) as a box gives one. Ours.
+// excelent drops'): kHoardExcellents always and one more one in kHoardExcellentOdds, drawn
+// evenly from the gear hoardFine passes for the killer. Ours.
 constexpr int kHoardExcellents = 1;
 constexpr int kHoardExcellentOdds = 3;
+// The band its excellents come from: the drop levels of the second class's sets, Aida's own
+// sets and the level-147 weapons, the best that falls anywhere before Kanturu. Ours.
+constexpr int kHoardFineLeast = 100;
+constexpr int kHoardFineMost = 147;
+// Whether `row` is among them for a hero of `kin`: a weapon, a shield or a piece of armour that
+// takes the excellent options and falls from monsters inside the band, his class's, and a second
+// class's only once he has it (the Magic Gladiator counts as having it). Never an Archangel
+// weapon, which nobody wears.
+bool hoardFine(const content::ItemRow& row, Kin kin, bool second);
 inline int minionsFor(int players) {
     const int n = 2 + 2 * (players < 1 ? 1 : players);
     return n > kMinionsMost ? kMinionsMost : n;

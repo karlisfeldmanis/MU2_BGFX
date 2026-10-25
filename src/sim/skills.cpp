@@ -62,23 +62,27 @@ constexpr SkillRow kRows[kSkills] = {
     // **And every two-hander throws all five** (the user, 2026-10-22: "we need that chars can use
     // orbs on 2-hand weapons"), ours: a two-handed sword had Slash and the two everyone has, so
     // the orbs bought for the one-handed bar were dead the day he took up a Giant Sword.
+    // **And now every weapon throws every orb** (the user, 2026-10-23: "allow to use death stab to
+    // all weapon types. actualy lets remove all restrictons for weapons to use orbs for DK for
+    // balance"), ours: the carriers below are the record of what was lifted, every knight row past
+    // Defense is `arms::kEvery`, and Defense alone still asks a shield.
     //
     // Falling Slash: the Morning Star (a mace), the Double Axe and the Tomahawk (one-handed),
     // the Battle Axe and the Nikkea Axe (two-handed). Axes and maces, in either hand -- and the
     // icon MU painted for it is an axe, which is the same fact from the artist's side.
     {skill::kFallingSlash, "Falling Slash", 9, 1.0f, 2.5f, 1.0f / 900.0f, 80, false, Spread::One,
      0, 1.0f, "An overhead blow brought down on one body -- the heaviest single strike he has.",
-     60, "player_skill_sword1", true, arms::kAxes | arms::kMaces | arms::kTwoHand, 13},
+     60, "player_skill_sword1", true, arms::kEvery, 13},
     // Lunge: the Gladius, and nothing else in 0.75 carried it. A one-handed sword, which is what
     // MU's own description says in as many words -- "used with weapons like Gladius and Katana
     // to execute quick stabs".
     {skill::kLunge, "Lunge", 9, 1.0f, 2.0f, 1.0f / 1200.0f, 30, false, Spread::One, 0, 1.0f,
      "A thrust straight ahead: the cheapest key and the one that comes back soonest.", 61,
-     "player_skill_sword2", true, arms::kSword1 | arms::kTwoHand, 20},
+     "player_skill_sword2", true, arms::kEvery, 20},
     // Uppercut: the Sword of Assassin, the Falchion and the Serpent Sword. All one-handed.
     {skill::kUppercut, "Uppercut", 8, 1.0f, 2.2f, 1.0f / 1100.0f, 40, false, Spread::One, 0, 1.0f,
      "A rising blow under the guard, between the jab and the overhead in force and in wait.",
-     62, "player_skill_sword3", true, arms::kSword1 | arms::kTwoHand, 12},
+     62, "player_skill_sword3", true, arms::kEvery, 12},
     // Cyclone: the Blade (a one-handed sword), the Berdysh and the Great Scythe (polearms). The
     // odd pair is MU's own, and it reads as a spin with something long or something quick.
     // **Two tiles and not one** (the user, 2026-10-21: "Make Cyclone and Twisting Slash" wider,
@@ -88,10 +92,14 @@ constexpr SkillRow kRows[kSkills] = {
     // 8f2e3afb's fuller Aida packs three had the knights at 11.5M and 14.7M an hour there.
     // **Three again** (the user, 2026-10-23: "we need that twisting slash and cyclone can get 3
     // tiles"), with Twisting Slash's wheel drawn out to the edge (fx/wheel.h).
-    {skill::kCyclone, "Cyclone", 9, 3.0f, 2.0f, 1.0f / 1400.0f, 40, false, Spread::Ring, 0, 1.0f,
-     "A spin that catches everything within three tiles, harder than Twisting Slash and back "
-     "in two seconds.",
-     63, "player_skill_sword4", true, arms::kSword1 | arms::kTwoHand, 36},
+    // **Frontal** (the user, 2026-10-23: "cyclon has to be frontal, with some base spell
+    // cooldown, later its less. dmg can stay"): a player found it Twisting Slash's ring for less
+    // mana and more force, 7.2M an hour against 5.2M (skill_sweep, Bran on Aida). Now Slash's arc
+    // out to three tiles, thrown where the pointer is; its two seconds still fall with agility.
+    {skill::kCyclone, "Cyclone", 9, 3.0f, 2.0f, 1.0f / 1400.0f, 40, false, Spread::Arc, 0, 1.0f,
+     "A spin thrown into everything in front of him within three tiles, harder than Twisting "
+     "Slash and back in two seconds, sooner the quicker he is.",
+     63, "player_skill_sword4", true, arms::kEvery, 36},
     // Every row is built now. `built` used to mean "and the bar has a key for it", which is why
     // Slash sat here false with its arc written and tested; the list of 2026-09-23 holds every
     // learned skill and the four keys are the player's to fill from it, so the two questions
@@ -102,7 +110,7 @@ constexpr SkillRow kRows[kSkills] = {
     // the Giant Sword; the other two are elsewhere and the family is written for them anyway.
     {skill::kSlash, "Slash", 10, 1.0f, 1.8f, 1.0f / 1000.0f, 80, false, Spread::Arc, 0, 1.0f,
      "A wide sweep across the three tiles he faces, thrown with both hands on the haft.", 64,
-     "player_skill_sword4", true, arms::kTwoHand, 52},
+     "player_skill_sword4", true, arms::kEvery, 52},
 
     // ---- past 0.75, and appended so the six keep their indices -------------------------------
     //
@@ -154,7 +162,10 @@ constexpr SkillRow kRows[kSkills] = {
     // **The knight's cooldown blow: 3.0 and not 2.1, and its 8.5 s kept** (the user, 2026-10-02:
     // "ragefull blow will be cooldown spell with some multiplier"). Ours: the hardest blow in
     // the table, paid for by the longest wait.
-    {skill::kRagefulBlow, "Rageful Blow", 25, 1.0f, 3.0f, 1.0f / 900.0f, 170, false, Spread::Arc,
+    // **Three tiles and not one** (the user, 2026-10-23, on a player's "raging blow nestrādā tieši
+    // iekš tarkan un atlantis"): the live log's refusals in Tarkan stood 1.3 to 2.2 tiles out, past
+    // a reach of one, so the arc his own description promises -- three tiles ahead -- held nobody.
+    {skill::kRagefulBlow, "Rageful Blow", 25, 3.0f, 3.0f, 1.0f / 900.0f, 170, false, Spread::Arc,
      0, 1.0f,
      "The weapon driven down into the ground, and what it breaks is the three tiles ahead of "
      "him.",
@@ -172,7 +183,7 @@ constexpr SkillRow kRows[kSkills] = {
     // and its streaks, cones and the wound on what it strikes are game/fx/deathstab.h.
     {skill::kDeathStab, "Death Stab", 15, 1.0f, 2.8f, 1.0f / 800.0f, 110, false, Spread::One, 0,
      1.0f, "The point driven through one body at speed. Nothing he has hits one thing harder.",
-     71, "player_skill_sword2", true, arms::kSpear, 60},
+     71, "player_skill_sword2", true, arms::kEvery, 60},
 
     // ---- the wizard's, appended after the knight's nine ----------------------------------------
     //
@@ -497,14 +508,15 @@ constexpr SkillRow kRows[kSkills] = {
     // "need to nerft elf multishot", "elf multishot has to use 3 arrows"): each body is struck
     // once a cast already, so on a lone body the fan is now the weaker blow and her plain shot
     // the single-target one; on a crowd it is still every body in nine tiles of three lanes.
-    // Ours.
-    {.number = skill::kSkillshot, .name = "Skillshot", .mana = 5, .reach = 9.0f, .force = 0.75f,
+    // Ours. **Past 30% of the defence** of what it strikes, as Penetration (2026-10-25): its
+    // three-quarter arrows lost the most to Aida's defence, ~5M an hour there; now ~9M.
+    {.number = skill::kSkillshot, .name = "Multi-Shot", .mana = 5, .reach = 9.0f, .force = 0.75f,
      .spread = Spread::Fan,
      .tells = "Three arrows loosed in a fan at a body up to nine tiles off, each flying on "
-              "through everything in its way, at three quarters of a plain shot. Each body is "
-              "struck once. Three arrows are spent a cast.",
+              "through everything in its way, at three quarters of a plain shot, past 30% of "
+              "its defence. Each body is struck once. Three arrows are spent a cast.",
      .clip = 50, .sound = "player_bow", .built = true, .families = arms::kMissiles,
-     .needLevel = 0, .kin = Kin::FairyElf, .flies = 17.5f, .arrows = 3},
+     .needLevel = 0, .kin = Kin::FairyElf, .flies = 17.5f, .arrows = 3, .pierces = 30},
     // Heal 26: twenty mana, `5 + energy / 5` health at once (HealEffectInitializer). MU casts it
     // on a player, and so does she: on whoever she points at within kAidReach, else herself
     // (SkillRow::aids). `PLAYER_SKILL_ELF1` (151) and `SOUND_SKILL_DEFENSE`, as MuMain's ReceiveMagic opens
@@ -779,12 +791,15 @@ constexpr SkillRow kRows[kSkills] = {
     // bow's 50 or 51, as Skillshot's is; SOUND_PIERCING is MU's, at the draw (ZzzCharacter.cpp:
     // 2774-2779). Wind (realm_fight.cpp `skillElement`), so Tempest raises it.
     // Force 1.5 -> 1.275, -15% (the user's nerf of 2026-10-21: the strongest skill on Aida).
+    // And back up to 1.25 with `pierces` 30 (the user, 2026-10-25: "lets boost some elf
+    // thingies"): with Ascendance on, tests/kits/ascendance.json's Faela was 14.8M an hour on
+    // Icarus and 9.5M on Aida, every other kit 16.5-19.5M and 12.4-20.3M; now 16.4M and 13.4M.
     {.number = skill::kPenetration, .name = "Penetration", .mana = 7, .reach = 8.0f,
-     .force = 1.15f, .spread = Spread::Fan,  // and 1.275 -> 1.15, -10% more (the class balance)
+     .force = 1.25f, .spread = Spread::Fan,  // and 1.275 -> 1.15, -10% more (the class balance)
      .tells = "An arrow loosed at a body up to eight tiles off, flying on through everything in "
-              "its line. One arrow is spent for every body struck.",
+              "its line and past 30% of its defence. One arrow is spent for every body struck.",
      .clip = 50, .sound = "player_piercing", .built = true, .families = arms::kMissiles,
-     .needLevel = 130, .kin = Kin::FairyElf, .flies = 17.5f, .arrows = 1},
+     .needLevel = 130, .kin = Kin::FairyElf, .flies = 17.5f, .arrows = 1, .pierces = 30},
 
     // ---- Fire Breath 49, the Dinorant's, after Penetration so no save's learned bit moves -------
     //
@@ -854,8 +869,8 @@ constexpr SkillRow kRows[kSkills] = {
     // is 2.3 on 5.5. Learned at 56, twice its 28 as the ladder asks (the orb's level_from).
     {.number = skill::kImpale, .name = "Impale", .mana = 8, .reach = 1.0f, .force = 2.4f,
      .forcePerStrength = 1.0f / 900.0f, .coolTicks = 80, .spread = Spread::One,
-     .tells = "A spear driven through one body, and ghosts of it after. Thrown with a spear.",
-     .clip = 71, .sound = "riding_spear", .built = true, .families = arms::kSpear,
+     .tells = "A thrust driven through one body, and ghosts of it after.",
+     .clip = 71, .sound = "riding_spear", .built = true, .families = arms::kEvery,
      .needLevel = 56},
 
     // ---- Nova 40, the Soul Master's, past Impale -------------------------------------------------
@@ -891,7 +906,79 @@ constexpr SkillRow kRows[kSkills] = {
      .clip = 151, .sound = "player_skill_defense", .built = true, .families = arms::kNone,
      .kin = Kin::FairyElf, .anyHand = true, .summons = 69, .summonsAs = 150, .airborne = true},
 
-    // ---- Force 60, the Dark Lord's, past the Alquamos ------------------------------------------
+    // ---- Fire Slash 55, the Magic Gladiator's own, past the Alquamos ----------------------------
+    //
+    // docs/plans/mg-skills/fire-slash.md is the research; its section 5 is this row. MU's: mana
+    // 15 (WebZen skill.txt:61, OpenMU SkillsInitializer.cs:173; AG is no resource here), WHEEL
+    // (action 65, Twisting Slash's clip) at MU's two paces -- 0.24 to key 3, 0.54 after
+    // (ZzzCharacter.cpp:2783-2818) -- the blow on key 3, where the ribbon appears: 0.43 of the
+    // clip. The cut: 45% a body, -10% defence for ten seconds, a re-hit refreshing it
+    // (MaGumSkillDefenseDown, ObjUseSkill.cpp:1327-1358; BuffEffectSlot.cpp:80-95), rolled before
+    // the blow (protocol.cpp:16718-16719). Fire (OpenMU's ElementalType.Fire and its name, where
+    // WebZen's data says poison). Any right-hand weapon but a staff (MuMain ClassAttack.cpp:
+    // 484-489), and the families say that already.
+    // **Ours**: the area, a front half-disc out to two and a half tiles -- the ribbon's own shape,
+    // +-90 of his facing, everything in it struck once (WebZen lets the client name five; OpenMU's
+    // frustum is two tiles deep). Its force: his signature key, so above the Cyclone he also knows
+    // (2.0 every two seconds over three tiles), 2.3 on the same wait and strength rate, a blade's
+    // like his knight's skills (sim::force). Learned at 120 (the user, 2026-10-24: "add some level
+    // requirments"), twice the orb's drop level, as Death Stab's.
+    {.number = skill::kFireSlash, .name = "Fire Slash", .mana = 15, .reach = 2.5f, .force = 2.3f,
+     .forcePerStrength = 1.0f / 1400.0f, .coolTicks = 40, .spread = Spread::Arc,
+     .tells = "A ribbon of fire swept round the half in front of him within two and a half "
+              "tiles. What it burns may lose a tenth of its defence for ten seconds.",
+     .clip = 65, .sound = "player_skill_sword3", .built = true, .families = arms::kEvery,
+     .needLevel = 120, .kin = Kin::MagicGladiator, .release = 0.43f,
+     .arcHalf = 1.57079633f, .paceAfter = 0.54f, .paceKey = 3, .cutTicks = 200,
+     .cutChance = 0.45f, .cutShare = 10},
+
+    // ---- Power Slash 56, the gladiator's orb's, past Fire Slash -------------------------------
+    //
+    // docs/plans/mg-skills/power-slash.md is the research; its section 5 is this row. MU's: mana
+    // 15, no element, the weapon's damage alone (skill damage 0, WebZen skill.txt:63, OpenMU
+    // SkillsInitializer.cs:175). MU's is a weapon skill, known while one of his blades is in his
+    // right hand (AT_SKILL_SWORD6 on the Dark Reign, Explosion and Rune Blades, the Sword Dancer
+    // and the Imperial Sword, item.txt's skill column). **Ours** (the user, 2026-10-24: "Power
+    // Slash has to be orb"): learned for good off the Orb of Power Slash (12/28), as Fire Slash
+    // is off its own, and thrown with any weapon in his right hand but a staff -- Fire Slash's
+    // rule, which the families say. Learned at 150, twice the orb's drop level of 75, past Fire
+    // Slash's 120. Never riding (ClassAttack.cpp:660-697, `afoot`). Its clip is those blades' own swing,
+    // PLAYER_ATTACK_TWO_HAND_SWORD_TWO (ZzzCharacter.cpp:1178-1181) -- player.muc's 146
+    // (content/players/rig/actions.json; the dossier counts MuMain's enum, 145) -- at its 0.25
+    // and his attack speed. WebZen's trapezoid and count (`Spread::Frustum`, kFrustum*), and
+    // the waves leave as the swing begins (`release` 0, a tick in), each body struck as one
+    // reaches it (kWaveTilesPerSecond, Realm::powerSlash).
+    // **Ours**: a key with a cooldown, two seconds as Fire Slash's -- the wide, capped answer to
+    // the narrow one that cuts (the dossier's 5.5). Force 2.3, Fire Slash's own, tuned from 2.0
+    // on the skill sweep (tests/kits/sweep.json's GaiusReign, 6 seeds x 4 min): with the same
+    // force it is below Fire Slash on one body, which has fire for his element runes and talents
+    // and its cut (4,609 a blow against 5,301 on Icarus, 1,622 against 1,997 on Aida), and close
+    // on a pack (8.56M an hour against 8.20M on Aida; about 10-11M against 12.7M on Icarus,
+    // where 2.2 and 2.4 read the same within the sweep's noise). Reach 5, MU's row's distance,
+    // is how near the key walks him; the wedge runs six.
+    {.number = skill::kPowerSlash, .name = "Power Slash", .mana = 15, .reach = 5.0f, .force = 2.3f,
+     .forcePerStrength = 1.0f / 1400.0f, .coolTicks = 40, .spread = Spread::Frustum,
+     .tells = "Five waves fanned out from his blade, striking what stands in a widening wedge "
+              "six tiles ahead of him as they reach it: the nearest five, and up to six more.",
+     .clip = 146, .sound = "player_skill_sword3", .built = true, .families = arms::kEvery,
+     .needLevel = 150, .kin = Kin::MagicGladiator, .release = 0.0f, .afoot = true},
+
+    // ---- Swell Life 48, the knight's, on the end so no save's learned bit moves ----------------
+    //
+    // MU's row: twenty-two mana, the knight's alone (OpenMU VersionSeasonSix/SkillsInitializer.cs:
+    // 167, CharacterClasses.AllKnights -- not the Magic Gladiator's), learned at 120 off the Orb of
+    // Greater Fortitude, cast on his party in view (SkillTarget.ImplicitParty).
+    // PLAYER_SKILL_VITALITY, clip 67, as MuMain's click plays it (ClassAttack.cpp:960-965). What it
+    // gives is MU's sum, under our cap (swellShare). Ours: **five minutes** where MU gives
+    // 60 s and a little more for energy -- every buff here stands five (Greater Damage's row) --
+    // and three seconds of cooldown at his hands, as the elf's lent buffs (lentBuff): it falls
+    // on others, and a recast only puts the clock back, never the health.
+    {.number = skill::kSwellLife, .name = "Swell Life", .mana = 22, .coolTicks = 60,
+     .tells = "His party's most health raised for five minutes, him with them. The keener and "
+              "hardier the knight, and the more of them near him, the more.",
+     .clip = 67, .sound = "player_skill_defense", .built = true, .families = arms::kNone,
+     .needLevel = 120, .kin = Kin::DarkKnight, .anyHand = true, .swellTicks = 6000},
+    // ---- Force 60, the Dark Lord's, past Swell Life --------------------------------------------
     //
     // MU's row (VersionSeasonSix/SkillsInitializer.cs:178): ten damage, four tiles, ten mana, born
     // knowing it. Its blow is WebZen's for every Dark Lord skill: the swing with Str/25 + Ene/50 and
@@ -1132,7 +1219,10 @@ float force(const SkillRow& row, const HeroPoints& points, Kin who) {
                       float(points.energy) * kForcePerEnergy;
     // The Gladiator's too since the class balance (2026-10-21): his blades were the knight's
     // unboosted, and Aida's 6.7M against the knight's 8.1M.
-    const bool blade = (who == Kin::DarkKnight || who == Kin::MagicGladiator) && row.kin == Kin::DarkKnight;
+    // And his own Fire Slash (2026-10-24), a blade's as his knight's are, so the boost that lifts
+    // his Cyclone lifts his own sweep alike.
+    const bool blade = (who == Kin::DarkKnight || who == Kin::MagicGladiator) &&
+                       (row.kin == Kin::DarkKnight || (row.kin == Kin::MagicGladiator && !row.wizardry));
     return blade ? sum * kKnightSkillBoost : sum;
 }
 
@@ -1170,12 +1260,23 @@ int32_t castTicks(const content::Tables& tables, Kin kin, int agility, const con
     const float quicken = row.number == skill::kIce ? kIceQuicken : quick ? kSpellQuicken : 1.0f;
     const float rate = (clip->speed + bonus) * 25.0f * quicken;
     if (rate <= 0.0f) return 0;
+    // Fire Slash's second pace from its key on (SkillRow::paceAfter), his speed on both.
+    if (row.paceAfter > 0.0f && row.paceKey > 0 && row.paceKey < clip->keys) {
+        const float after = (row.paceAfter + bonus) * 25.0f * quicken;
+        const float seconds = float(row.paceKey) / rate + float(clip->keys - row.paceKey) / after;
+        return swingTicks(int(seconds * 1000.0f));
+    }
     return swingTicks(int(float(clip->keys) / rate * 1000.0f));
 }
 
 int32_t authoredCastTicks(const content::Tables& tables, const SkillRow& row) {
     const content::PlayerAction* clip = tables.action(row.clip);
     if (!clip || clip->keys <= 0 || clip->speed <= 0.0f) return 0;
+    if (row.paceAfter > 0.0f && row.paceKey > 0 && row.paceKey < clip->keys) {
+        const float seconds = float(row.paceKey) / (clip->speed * 25.0f) +
+                              float(clip->keys - row.paceKey) / (row.paceAfter * 25.0f);
+        return swingTicks(int(seconds * 1000.0f));
+    }
     return swingTicks(int(float(clip->keys) / (clip->speed * 25.0f) * 1000.0f));
 }
 
@@ -1189,6 +1290,7 @@ bool skillFor(const SkillRow& row, Kin kin) {
         case skill::kRagefulBlow:
         case skill::kDeathStab:
         case skill::kCometfall: return false;  // the Soul Master's alone (secondSkill)
+        case skill::kSwellLife: return false;  // the knight's alone, as MU's AllKnights
         default: return true;
     }
 }
@@ -1361,6 +1463,12 @@ int32_t keenOf(const HeroPoints& points) {
 }
 
 int32_t keenTicksOf(const HeroPoints& points) { return (60 + std::max(0, points.energy) / 10) * 20; }
+
+float swellShare(const HeroPoints& points, int members) {
+    const float share = kSwellBase + float(std::max(0, points.energy)) / 2000.0f +
+                        float(std::max(0, points.vitality)) / 10000.0f + float(std::max(0, members)) / 100.0f;
+    return std::min(kSwellCap, share);
+}
 
 float boonShare(const SkillRow& row, const HeroPoints& points, int shieldDefense) {
     if (row.number == skill::kGreaterDefense) return wardShare(points);

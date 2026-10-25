@@ -11,21 +11,21 @@
     "group": 11,
     "number": 32,
     "drop_level": 131,
-    "drops_from_monsters": false,
-    "drops_from_monsters_note": "Dormant: MU drops it in Kanturu, which is not on main yet. Built, worn and cooked, but no monster leaves it until the map ships (the user, 2026-10-22: 'Dormant until Kanturu'). Its drop level is MU's.",
+    "drops_from_monsters": true,
+    "drops_from_monsters_note": "Drops in Kanturu only (the user, 2026-10-25: \"The 380 gear\", \"Kanturu only\"): sim::kanturuGear keeps anything asking level 380 to the maps whose rules drop kanturu_gear. Its drop level is MU's.",
     "slot": 6,
     "width": 2,
     "height": 2,
     "defense": 61,
     "durability": 95,
     "requires": {
-      "level": 0,
+      "level": 380,
       "strength": 145,
       "agility": 60,
       "energy": 0,
       "vitality": 0
     },
-    "requires_note": "MU asks level 380 (OpenMU's levelRequirement). Left at 0 for now: the user, 2026-10-22, settles it with Kanturu's levels ('Formula, decide later').",
+    "requires_note": "MU asks level 380 (OpenMU's levelRequirement), and so does ours (the user, 2026-10-25: \"Level 380\"): found in the Ruins from 320, worn from 380. The stat columns are raw, scaled by the drop level as every item's.",
     "classes": [
       "gladiator"
     ],

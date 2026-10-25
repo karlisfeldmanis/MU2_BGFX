@@ -150,6 +150,16 @@ TALENT_STATES = {
     "last_stand": ("master", 372, "Last Stand, under 30% life: the green crest"),
     "iron_will": ("status", 132, "Iron Will: the steel helm"),
     "mercy": ("status", 133, "Mercy, on whoever was healed: the golden figure"),
+    # Not a talent, but cut the same way: the party's experience boon (Hud::Boon::party; the user,
+    # 2026-10-23: "show aura icon how much exp boost party gets by size of party"). A lookup, not
+    # a borrowing: eBuff_PartyExpBonus is 112 in MuMain's eBuffState.
+    "party": ("status", 112, "Party experience: eBuff_PartyExpBonus"),
+    # And the knight's Swell Life (skill 48, 2026-10-25), a lookup: eBuff_Life is 8 in MuMain's
+    # eBuffState, the cell MuMain registers for AT_SKILL_SWELL_LIFE (WSclient.cpp:4730).
+    "swell_life": ("status", 8, "Swell Life, skill 48: eBuff_Life"),
+    # And a monster's sleep under the Ancient rune Sleep (skill 219, 2026-10-25), on the target
+    # frame: eDeBuff_Sleep is 72, S17's buff_template 72 "Sleep" (BuffDef.h:65).
+    "sleep": ("status", 72, "Sleep, skill 219: eDeBuff_Sleep"),
 }
 
 #: MuMain's own sheets in the repository's reference tree. MuDream's 4x copies of status 2, 3 and
@@ -185,10 +195,12 @@ def enlarged(name: str, expected: tuple[int, int]) -> "Image.Image":
         return Image.open(big).convert("RGB")
 
 
-def talents(out: Path) -> None:
-    """Cuts the seven talent states, each from its sheet at three times."""
+def talents(out: Path, only: list[str] | None = None) -> None:
+    """Cuts the talent states (or `only` those keys), each from its sheet at three times."""
     wanted = {}
     for key, (kind, number, _) in TALENT_STATES.items():
+        if only and key not in only:
+            continue
         sheet = "master" if kind == "master" else "status1" if number < 81 else "status2" if number < 161 else "status3"
         wanted.setdefault(sheet, []).append((key, number))
     out.mkdir(parents=True, exist_ok=True)
@@ -210,9 +222,10 @@ def main() -> None:
     parser.add_argument("--out", type=Path, default=ASSETS)
     parser.add_argument("--talents", action="store_true",
                         help="cut only the talents' timed states, from MuMain's sheets at 3x")
+    parser.add_argument("--only", nargs="+", help="with --talents, just these keys (e.g. party)")
     args = parser.parse_args()
     if args.talents:
-        talents(args.out)
+        talents(args.out, args.only)
         return
 
     name, expected, size = SHEETS["mudream"]

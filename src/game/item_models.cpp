@@ -23,12 +23,28 @@ namespace {
 // Only here, on the item paths -- the bag, the shelf, the potion boxes, the ground. A piece
 // worn on a character is Figures' and keeps its body.
 constexpr const char* kSkin = "skin";
+// And MU's hair, which HideSkin skips as well (ZzzBMD.cpp:1338; LoadData.cpp:85 classes level*
+// as skin and hair* as hair). Five helms carry the wearer's own head on a level_man sheet that
+// MU2's bake calls "hair": Grand Soul's and Dark Soul's level_man022, the hood open over the
+// wizard's face and white hair, and Red Spirit's, Sylphid Ray's and Iris's level_man033, the
+// elf's. Kept, the market drew a head in the helm (the user, 2026-10-25). Not every "hair": the
+// Seraphim's, the Venom Mist's and the Eclipse's are the helm's own sheets, which MU shows.
+constexpr const char* kHair = "hair";
+bool wearersHair(const std::string& name) {
+    static const char* const kHeads[] = {"HelmMale19", "HelmMale23", "HelmMale25", "HelmMale32", "HelmMale37"};
+    for (const char* head : kHeads) {
+        if (name == head) return true;
+    }
+    return false;
+}
 
 template <typename V>
-int cutSkin(std::vector<V>& vertices, content::CookedMesh& mesh) {
+int cutSkin(std::vector<V>& vertices, content::CookedMesh& mesh, bool hairToo) {
     std::vector<bool> skin(mesh.materials.size(), false);
     int cut = 0;
-    for (size_t i = 0; i < mesh.materials.size(); ++i) skin[i] = mesh.materials[i].name == kSkin;
+    for (size_t i = 0; i < mesh.materials.size(); ++i) {
+        skin[i] = mesh.materials[i].name == kSkin || (hairToo && mesh.materials[i].name == kHair);
+    }
     for (const content::CookedPart& part : mesh.parts) {
         if (part.material < skin.size() && skin[part.material]) ++cut;
     }
@@ -93,8 +109,9 @@ const content::Mesh* ItemModels::read(const std::string& glb, const std::string&
     std::string error;
     bool parsed = !bytes.empty() && content::parseCookedMesh(bytes, cooked, error);
     if (parsed) {
-        const int cut = cooked.isSkinned() ? cutSkin(cooked.skinned, cooked)
-                                           : cutSkin(cooked.vertices, cooked);
+        const bool hair = wearersHair(name);
+        const int cut = cooked.isSkinned() ? cutSkin(cooked.skinned, cooked, hair)
+                                           : cutSkin(cooked.vertices, cooked, hair);
         if (cut > 0) core::logf("items: %s drawn with its wearer's skin cut (%d part%s)",
                                 name.c_str(), cut, cut == 1 ? "" : "s");
     }

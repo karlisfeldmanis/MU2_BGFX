@@ -1,0 +1,55 @@
+{
+  "item": "Object39",
+  "mu_name": "Object39",
+  "mu_name_from": "kanturu_relics's object slot: type N is Object{N+1}.bmd, from Data/Object39.",
+  "world": "kanturu_relics",
+  "object_type": 38,
+  "placements": 107,
+  "profile": "world",
+  "sheets": {
+    "Tileeffec01_R": "kl_tileeffec01_r.png"
+  },
+  "sheet_from": "Data/Object39/, decoded under the kl_ prefix by `mu new`.",
+  "sheet_materials": {
+    "Tileeffec01_R": "lamplight"
+  },
+  "material_note": "Tileeffec01_R: a blue glowing line glyph on black, MU's bright sheet: lamplight.",
+  "why_this_one": "A 4 m glowing glyph laid flat on the floor, 107 of them along the corridors and halls. Batch 2 of the Relics, the most-placed kinds (the user, 2026-10-23: \"first we eed to finish actual map then we go to monsters\"). docs/worlds/kanturu-port.md Part B 8.1.",
+  "additive": [
+    "Tileeffec01_R"
+  ],
+  "additive_from": "Tileeffec01_R is an _R sheet, drawn RENDER_BRIGHT, added (TextureScript.cpp:16-58).",
+  "glow": {
+    "Tileeffec01_R": {
+      "low": 0.0,
+      "high": 2.0,
+      "hz": 0.32,
+      "smooth_seconds": 3.14
+    }
+  },
+  "glow_from": "MU: BlendMeshLight = sin(WorldTime * 0.001) + 1 (MoveKanturu2ndObject type 38, GM_Kanturu_2nd.cpp:236-240), a pulse between 0 and 2 every 6.3 s. Ours, marked, as the Ruins' Object47: our glow wanders over MU's range, re-aimed every half period and eased over it.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "lamplight",
+      "triangles": 2,
+      "area": 155000.3,
+      "along": [
+        -196.9,
+        196.9
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ]
+    }
+  ]
+}

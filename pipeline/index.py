@@ -406,11 +406,33 @@ EFFECTS = {
     "weakness_shiny": "effects/weakness/shiny05.png",
     "weakness_pin": "effects/weakness/pin_lights.png",
 
+    # The Magic Gladiator's Fire Slash (game/fx/fire_slash.h): BITMAP_JOINT_FORCE's ribbon,
+    # Effect/motion_blur_r2.jpg, 64 by 128, an orange-red flame gradient white-hot at U 1, laid
+    # wrapping (GL_REPEAT, ZzzOpenData.cpp:5295); and BITMAP_SKULL, Skill/Skull.jpg, 16 by 16 and
+    # GL_NEAREST (:5294), the three over a body whose defence it cut. Both JPEGs on black, added.
+    # Its flames, bolts, sparks and hand glow are "fire", "joint_thunder", "spark_flash" and
+    # "shiny_02", already here.
+    "fire_slash_ribbon": "effects/fireslash/motion_blur_r2.png",
+    "fire_slash_skull": "effects/fireslash/skull.png",
+
     # The Ancient rune Drain Life's (game/fx/drain.h): BITMAP_LIGHT + 2, Effect/cra_04.jpg, its
     # red motes; and BITMAP_DRAIN_LIFE_GHOST, Effect/gostmark01.jpg, the ghosts it throws
     # (ZzzOpenData.cpp:5429, 5222).
     "drain_mote": "effects/drain/cra_04.png",
     "drain_ghost": "effects/drain/gostmark01.png",
+
+    # The Ancient rune Requiem's (game/fx/requiem.h): BITMAP_ADV_SMOKE, Effect/fi01.jpg, the
+    # magenta mist MU's eDeBuff_NeilDOT throws off a body it bleeds (ZzzOpenData.cpp:5183).
+    "requiem_mist": "effects/requiem/fi01.png",
+
+    # The Ancient rune Sleep's (game/fx/sleep.h): BITMAP_TWINTAIL_WATER, Effect/water.jpg, the
+    # violet puffs eDeBuff_Sleep throws off a sleeper (ZzzOpenData.cpp:5428) -- the Twin Tale's
+    # water, the same pixels as MuMain's water.OZJ.
+    "sleep_puff": "effects/kanturu/water.png",
+
+    # A Whirlwind rune's pull (game/fx/chains.h): not MU 0.75's -- Season 17's Object132/so_chain,
+    # a 128x64 strip of links that tiles end to end, the chain he hauls them in with.
+    "whirl_chain": "effects/chain/so_chain.png",
 
     # And what the wizard's Flame burns with. See client/core/Flame.cs.
     #
@@ -441,6 +463,9 @@ EFFECTS = {
     # black, 64 square. Not Flare.OZJ, which is the Energy Ball's. The Chain Scorpion carries
     # one on the tip of its tail in its own colour - see Entry.Glints and ChainScorpion01.
     "light": "effects/light/flare01.png",
+    # Ours: a clean soft dot, a gaussian with no rays, for Swell Life's embers (fx/aura.h,
+    # Aura::swell), where flare01's star cross read as busy sparkles (2026-10-25).
+    "ember_soft": "effects/light/ember_soft.png",
 
     # BITMAP_FLARE+1, which ZzzOpenData loads from Effect/Flare02.jpg with GL_REPEAT
     # (ZzzOpenData.cpp:5320): a white streak across the middle of 64 square. The four bands
@@ -679,6 +704,12 @@ EFFECTS = {
     # Kanturu's carnivorous plants' spit, BITMAP_TWINTAIL_WATER, Effect/water.OZJ
     # (ZzzOpenData.cpp:5428): a 32 square on black, added (game/world/ruin_effects.h).
     "plant_spit": "effects/kanturu/water.png",
+    # The Iron Rider's (game/fx/iron_rider.h): its arrow's BITMAP_LIGHT + 3, Effect/Impack01.OZJ
+    # (ZzzOpenData.cpp:5430) and BITMAP_DS_EFFECT, Effect/BowE.OZJ (:5259), and its death smoke's
+    # BITMAP_CLUD64, Effect/Clud64.OZJ (:5252). 64 squares on black, added.
+    "iron_light": "effects/kanturu/impack01.png",
+    "iron_bow": "effects/kanturu/bowe.png",
+    "iron_cloud": "effects/kanturu/clud64.png",
     # The Witch Queen's (game/fx/witch_queen.h): BITMAP_CHROME3, Effect/Chrome03.OZJ
     # (ZzzOpenData.cpp:5300), a grey cloud her blows' BITMAP_SMOKE sub 27 wears; and
     # BITMAP_TRUE_BLUE, Effect/fantaB.OZJ (:5186), the blue lick where each of her strikes lands.
@@ -2117,8 +2148,11 @@ def missiles(root: Path, build: Path) -> dict:
         **_models(root, build, "fire_burst"),
         **_models(root, build, "tarkan"),
         **_models(root, build, "aida"),
+        **_models(root, build, "kanturu"),
         **_models(root, build, "weakness"),
         **_models(root, build, "pollution"),
+        **_models(root, build, "requiem"),
+        **_models(root, build, "sleep"),
     }
 
 

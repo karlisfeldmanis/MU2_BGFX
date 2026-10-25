@@ -49,7 +49,7 @@ void testDarkLord(void (*check)(bool, const char*), void (*checkEqual)(long long
     check(!knight.spend(0, 0, 0, 0, 1), "a knight may not spend on Command");
     checkEqual(knight.hero().points.command, 0, "and has none");
 
-    // Through a character's bytes (kKeptLayout 15), and a layout-14 record reads none.
+    // Through a character's bytes (kKeptLayout 19), and a layout-18 record reads none.
     sim::Kept kept;
     kept.hero = realm.record();
     std::vector<uint8_t> bytes;
@@ -58,19 +58,19 @@ void testDarkLord(void (*check)(bool, const char*), void (*checkEqual)(long long
     check(net::keptFrom(bytes, back), "his bytes read back");
     checkEqual(back.hero.points.command, 30, "his Command read back");
     checkEqual(int(back.hero.kin), int(sim::Kin::DarkLord), "and his class");
-    // Layout 15 also carries his skills' cools from the 41st, Force's: found by the first byte a
+    // Layout 19 also carries his skills' cools from the 44th, Force's: found by the first byte a
     // mark on it moves, eight bytes each.
     sim::Kept forced = kept;
-    forced.hero.coolsLeft[40] = 0x7F;
+    forced.hero.coolsLeft[43] = 0x7F;
     std::vector<uint8_t> forcedBytes;
     net::putKept(forcedBytes, forced);
     size_t cool = 0;
     while (cool < bytes.size() && bytes[cool] == forcedBytes[cool]) ++cool;
     std::vector<uint8_t> older(bytes.begin(), bytes.end() - 4);
     older.erase(older.begin() + std::ptrdiff_t(cool),
-                older.begin() + std::ptrdiff_t(cool + 8 * size_t(sim::kSkills - 40)));
+                older.begin() + std::ptrdiff_t(cool + 8 * size_t(sim::kSkills - 43)));
     sim::Kept old;
-    check(net::keptFrom(older, old, 14), "a layout-14 record reads");
+    check(net::keptFrom(older, old, 18), "a layout-18 record reads");
     checkEqual(old.hero.points.command, 0, "with no Command in it");
 
     // A reborn character opens every class to his account (the user, 2026-10-23: "allow reborn

@@ -574,6 +574,7 @@ void Play::update(double seconds) {
         // chat's loot lines want what it was (Play::takeLooted). Insert only, so a thing taken on
         // this tick is still here to be read; cleared now and then as things vanish unpicked.
         if (lyingSeen_.size() > realm_.lying().size() + 256) lyingSeen_.clear();
+        if (picked_.size() > 512) picked_.clear();  // nobody asking (the studio)
         for (const sim::Lying& lying : realm_.lying()) {
             if (!lying.what.empty()) lyingSeen_[lying.id] = lying.what;
         }
@@ -611,6 +612,7 @@ void Play::update(double seconds) {
             if (happening.what == sim::What::Picked && happening.b >= 0) {
                 const auto seen = lyingSeen_.find(uint32_t(happening.a));
                 if (seen != lyingSeen_.end()) {
+                    if (happening.who == heroId) picked_.push_back({seen->second, 0});
                     looted_.push_back({happening.who, seen->second});
                     lyingSeen_.erase(seen);
                 }
@@ -722,6 +724,7 @@ void Play::update(double seconds) {
                     // and it is held here until the body it came off falls, where a drop would
                     // have landed, and then rings coins at him (Play::takeZen).
                     if (happening.b < 0) {
+                        picked_.push_back({{}, happening.c});
                         const uint32_t dropper = uint32_t(happening.a);
                         if (drawnOf(dropper)) held_.push_back({0, dropper, happening.c});
                         else takeZen(happening.c);
@@ -937,6 +940,7 @@ void Play::update(double seconds) {
                         caster->figure.play(burst, true, -1.0f, true);
                         caster->swinging = caster->casting = caster->figure.length();
                         caster->swingPace = 1.0f;
+                        caster->swingPaceAfter = 0.0f;
                         ++caster->swingToken;
                     }
                     // Owed to the key he comes down on (kNovaBurstKey): the burst, its sound,
@@ -1003,8 +1007,9 @@ void Play::update(double seconds) {
                         guardRise(aided->id, row->number);
                     }
                     // Her Heal and Greater Damage: a burst on whom it fell, once (fx/aura.h,
-                    // kMending and kMight -- ours, MU draws neither).
-                    if (row && (row->mends || row->mightTicks > 0) &&
+                    // kMending and kMight -- ours, MU draws neither). A knight's Swell Life takes
+                    // kMight's for now, on him: MU's ring of spirits is not drawn yet.
+                    if (row && (row->mends || row->mightTicks > 0 || row->swellTicks > 0) &&
                         (happening.who == heroId || caster->visible) && aided->placed && ground_) {
                         const float feet[3] = {
                             aided->crown[0],
@@ -1038,6 +1043,7 @@ void Play::update(double seconds) {
                         // was the clip's own 2.08 s until kSpellQuicken, 2026-10-03).
                         caster->swingPace = lasts > 0.01f ? std::max(1.0f, caster->figure.length() / lasts)
                                                           : 1.0f;
+                        caster->swingPaceAfter = 0.0f;
                         caster->swinging = lasts;
                         ++caster->swingToken;
                         // A new draw: the arrow is back on the string (Figure::nock).
@@ -1065,6 +1071,7 @@ void Play::update(double seconds) {
                         caster->selfClip = row->onSelf() ? caster->castClip : -1;
                         caster->casting = caster->figure.played();
                         caster->swingPace = 1.0f;
+                        caster->swingPaceAfter = 0.0f;
                         caster->swinging = caster->figure.played();
                         ++caster->swingToken;
                         // Critical Damage's flash at his weapon hands (fx/critical_damage.h).
@@ -1154,6 +1161,8 @@ void Play::update(double seconds) {
                     happening.b == 0
                         ? std::string(sealed && sealed->sealed ? sealed->sealed : "The way")
                               + " is sealed. Its door will not open."
+                    : happening.b == -2
+                        ? std::string("A Uniria cannot fly. Take it off and wear wings, or ride a Dinorant.")
                     : happening.b < 0
                         ? std::string("You need wings or a Dinorant to enter Icarus.")
                         : "Only characters of level " + std::to_string(happening.b) +
@@ -1253,6 +1262,18 @@ void Play::update(double seconds) {
                 if (Drawn* pushed = drawnOf(happening.who);
                     pushed != nullptr && pushed->placed && pushed->shockClip >= 0) {
                     shock(*pushed, pushed->shockClip);
+                }
+                // A Whirlwind's pull: one crash a cast, timed to the farthest body's landing --
+                // it is still sliding here, so its ticks left say when -- and a chain to each
+                // body, let go as that one lands (fx/chains.h).
+                const sim::Body* body = realm_.find(happening.who);
+                if (body != nullptr && body->whirledBy != 0) {
+                    if (Drawn* knight = drawnOf(body->whirledBy)) {
+                        const double lands = double(realm_.tick() + body->pushTicks);
+                        knight->crashAt = std::max(knight->crashAt, lands - kWhirlCrashLead / kTickSeconds);
+                        const double drawn = double(realm_.tick()) - 1.0 + through_;
+                        chains_.cast(body->whirledBy, happening.who, float((lands - drawn) * kTickSeconds));
+                    }
                 }
             }
             // The hit, on the caster at the release, as MU plays it for a spell and an arrow alike
@@ -1450,6 +1471,32 @@ void Play::update(double seconds) {
                         drain_.cast(happening.who, happening.whom, self, to);
                         if (heard_.drainLife >= 0) {
                             emit(heard_.drainLife, caster->crown[0], caster->crown[2], caster->id);
+                        }
+                    } else if (happening.a == sim::skill::kSleep) {
+                        // The Ancient rune Sleep: MU's violet circle under him once a roll (`b`
+                        // its first sleeper), with SOUND_SUMMON_SKILL_SLEEP, and the two rings
+                        // on each body it put to sleep, at once (fx/sleep.h).
+                        if (happening.b == 0) {
+                            const float self[3] = {caster->crown[0], feet, caster->crown[2]};
+                            sleep_.cast(self);
+                            if (heard_.sleep >= 0) emit(heard_.sleep, self[0], self[2], caster->id);
+                        }
+                        if (target && target->placed) {
+                            const float at[3] = {target->crown[0],
+                                                 ground_->heightAt(target->crown[0], target->crown[2]),
+                                                 target->crown[2]};
+                            sleep_.rings(happening.whom, at);
+                        }
+                    } else if (happening.a == sim::skill::kRequiem) {
+                        // The Ancient rune Requiem: MU's casting circle round him in Requiem's
+                        // colours, and Neil called up before him against the point the realm
+                        // chose, with SOUND_SUMMON_NEIL (fx/requiem.h). One at a time: a roll
+                        // while one plays strikes unseen. The thorns' sound is takeThorns's.
+                        const float self[3] = {caster->crown[0], feet, caster->crown[2]};
+                        const float there[3] = {to[0], ground_->heightAt(to[0], to[2]), to[2]};
+                        if (requiem_.cast(self, there, caster->id)) {
+                            pollution_.circle(self, Pollution::kRequiemPalette);
+                            if (heard_.requiem >= 0) emit(heard_.requiem, self[0], self[2], caster->id);
                         }
                     } else if (happening.a == sim::skill::kIce) {
                         // The block where the body is drawn, turned to his yaw, as MU turns it.
@@ -1933,6 +1980,8 @@ void Play::update(double seconds) {
                         // hand was still coming down when the next cast began.
                         const sim::SkillRow* spell =
                             cast ? sim::skillNumbered(swinger->castSkill) : nullptr;
+                        swinger->swingPaceAfter = 0.0f;
+                        float keyed = 0.0f;  // the clip's seconds, authored, to its pace's turn
                         // A primary's does the same at AttackSpeed, every class's: the realm
                         // holds Twisting Slash and Skillshot for their quickened clip
                         // (Realm::throwSkill), so the spin has to end when the hold does. And
@@ -1951,10 +2000,28 @@ void Play::update(double seconds) {
                                                body->castSpeed(realm_.tick()));
                             const float fits = float(ticks) * float(kTickSeconds);
                             if (fits > 0.01f && clip > fits) swinger->swingPace = clip / fits;
+                            // **Fire Slash's two paces** (SkillRow::paceAfter): MU's 0.24 to key 3
+                            // and 0.54 after it, fitted so key 3 comes on the realm's release and
+                            // the spin ends on its hold.
+                            const content::PlayerAction* action = tables_.action(spell->clip);
+                            if (spell->paceAfter > 0.0f && fits > 0.01f && action != nullptr &&
+                                action->keys > spell->paceKey) {
+                                keyed = clip * float(spell->paceKey) / float(action->keys);
+                                swinger->swingPace = keyed / (spell->release * fits);
+                                swinger->swingPaceAfter = (clip - keyed) / ((1.0f - spell->release) * fits);
+                            }
                         }
                         // Paced on the whole clip, as the realm times it, and ended on its
                         // last authored key, before the closing one (Figure::played).
                         swinger->swinging = swinger->figure.played() / swinger->swingPace;
+                        // Two paces: the keys to the turn at the first, the rest at the second.
+                        float released = swinger->swinging * (spell ? spell->release : 0.5f);
+                        if (swinger->swingPaceAfter > 0.0f) {
+                            released = keyed / swinger->swingPace;
+                            swinger->swinging =
+                                released + std::max(0.0f, swinger->figure.played() - keyed) / swinger->swingPaceAfter;
+                            swinger->swingTurn = swinger->swinging - released;
+                        }
                         ++swinger->swingToken;
                         // A new draw: the arrow is back on the string (Figure::nock).
                         swinger->figure.nock(true);
@@ -1998,6 +2065,21 @@ void Play::update(double seconds) {
                             // starts; the weapon leaves his hand a key in. fx/fury.h.
                             if (swinger->castSkill == sim::skill::kRagefulBlow) {
                                 throwFury(*swinger, body);
+                            }
+                            // Fire Slash's SOUND_SKILL_SWORD3 with its ribbon, on key 3, and the
+                            // lightning gathering at his hand from now. fx/fire_slash.h.
+                            if (swinger->castSkill == sim::skill::kFireSlash) {
+                                cry = -1;
+                                fireSlash_.cast(swinger->id, released);
+                            }
+                            // Power Slash's SOUND_SKILL_SWORD3 with its five waves, which leave as
+                            // the swing begins -- a tick on, as the realm lets the blow go -- along
+                            // the realm's aim, the way they strike. fx/power_slash.h.
+                            if (swinger->castSkill == sim::skill::kPowerSlash && body != nullptr) {
+                                cry = -1;
+                                const float aim = body->aim;
+                                powerSlash_.cast(swinger->id, std::atan2(std::cos(aim), -std::sin(aim)),
+                                                 std::max(released, float(kTickSeconds)));
                             }
                         }
                         if (cry >= 0 && swinger->placed) {
@@ -2553,6 +2635,14 @@ void Play::update(double seconds) {
         one.lastClock = one.figure.clock();
     }
     steps(float(seconds));
+    // The Whirlwind crashes that have come due, on the drawing's clock: a body is drawn a tick
+    // behind the realm, so it is seen landing as through_ comes round on its landing tick.
+    const double drawnTick = double(realm_.tick()) - 1.0 + through_;
+    for (Drawn& one : drawn_) {
+        if (one.crashAt == 0.0 || drawnTick < one.crashAt) continue;
+        one.crashAt = 0.0;
+        if (one.placed && heard_.whirlPull >= 0) emit(heard_.whirlPull, one.crown[0], one.crown[2], one.id);
+    }
     hammer();
     chatter(float(seconds));
     orbs(float(seconds));
@@ -2634,6 +2724,25 @@ void Play::update(double seconds) {
     };
     bolt_.update(float(seconds), standing, middle);
     drain_.update(float(seconds), middle);
+    requiem_.update(float(seconds));
+    // Sleep's rings follow their sleepers' feet (fx/sleep.h).
+    sleep_.update(float(seconds), [&](uint32_t id, float* out) {
+        const Drawn* drawn = drawnOf(id);
+        if (drawn == nullptr || !drawn->placed || !ground_) return false;
+        out[0] = drawn->crown[0];
+        out[1] = ground_->heightAt(drawn->crown[0], drawn->crown[2]);
+        out[2] = drawn->crown[2];
+        return true;
+    });
+    // Requiem's thorns out of the ground: SOUND_SUMMON_REQUIEM there (fx/requiem.h).
+    {
+        float at[3];
+        uint32_t by = 0;
+        if (requiem_.takeThorns(at, by) && heard_.requiemThorns >= 0) {
+            emit(heard_.requiemThorns, at[0], at[2]);
+        }
+    }
+    chains_.update(float(seconds), middle);
     for (Volley& volley : volleys_) {
         volley.wait -= float(seconds);
         if (volley.wait <= 0.0f) volleyShot(volley.shooter, volley.target);
@@ -2874,6 +2983,7 @@ void Play::update(double seconds) {
                 if (held >= 0 && hero->figure.clip() != held) hero->figure.play(held, true);
                 hero->swinging = hero->casting = 1e9f;
                 hero->swingPace = 0.5f;
+                hero->swingPaceAfter = 0.0f;
             }
             float points[20 * 3];
             int count = 0;
@@ -2909,6 +3019,7 @@ void Play::update(double seconds) {
         if (Drawn* hero = drawnOf(realm_.hero().id); hero && hero->swinging > 1e8f) {
             hero->swinging = hero->casting = 0.0f;
             hero->swingPace = 1.0f;
+            hero->swingPaceAfter = 0.0f;
         }
     }
     spirits_.update(float(seconds), [&](uint32_t id, float* feet) {
@@ -2998,6 +3109,34 @@ void Play::update(double seconds) {
             if (held.kind != "weapon" || held.bone < 0) continue;
             const float grip[3] = {0.0f, 0.0f, 0.0f};
             return drawn->figure.pointOn(held.bone, grip, out);
+        }
+        return false;
+    };
+    // The weapon's grip and tip in the world: the tip the far end of its mesh's longest axis, as
+    // the skill streak reads it (play_show.cpp).
+    const auto bladeOf = [&](uint32_t id, float* grip, float* tip) {
+        const Drawn* drawn = drawnOf(id);
+        const FigureBody* look = drawn ? drawn->figure.body() : nullptr;
+        if (look == nullptr) return false;
+        for (const HeldItem& held : look->held) {
+            if (held.kind != "weapon" || held.mesh == nullptr || held.bone < 0) continue;
+            const content::Bounds& box = held.mesh->bounds();
+            int axis = 0;
+            float far = 0.0f;
+            for (int k = 0; k < 3; ++k) {
+                const float reach = std::max(std::fabs(box.min[k]), std::fabs(box.max[k]));
+                if (reach > far) {
+                    far = reach;
+                    axis = k;
+                }
+            }
+            if (far <= 0.001f) return false;
+            const float way = std::fabs(box.max[axis]) >= std::fabs(box.min[axis]) ? 1.0f : -1.0f;
+            const float origin[3] = {0.0f, 0.0f, 0.0f};
+            float end[3] = {0.0f, 0.0f, 0.0f};
+            end[axis] = way * far;
+            return drawn->figure.pointOn(held.bone, origin, grip) &&
+                   drawn->figure.pointOn(held.bone, end, tip);
         }
         return false;
     };
@@ -3128,6 +3267,55 @@ void Play::update(double seconds) {
             const Drawn* drawn = drawnOf(id);
             if (heard_.recall >= 0 && drawn && drawn->placed) {
                 emit(heard_.recall, drawn->crown[0], drawn->crown[2], id);
+            }
+        });
+    // Power Slash's waves and their smoke (fx/power_slash.h), its swing's wave as they leave.
+    powerSlash_.update(
+        float(seconds),
+        [&](uint32_t id, float* feet) {
+            float tall = 1.8f, yaw = 0.0f;
+            return bodyAt(id, feet, &tall, &yaw);
+        },
+        [&](uint32_t id, const float* feet) {
+            const int index = sim::skillIndexOf(sim::skill::kPowerSlash);
+            if (index >= 0 && heard_.skill[index] >= 0) emit(heard_.skill[index], feet[0], feet[2], id);
+        });
+    // Fire Slash's gathering, ribbon and skulls (fx/fire_slash.h): its swing's wave as the ribbon
+    // is made, and eBloodAttack on a body as a cut is laid on it or laid again.
+    fireSlash_.update(
+        float(seconds),
+        [&](uint32_t id, float* feet, float* yaw) {
+            float tall = 1.8f;
+            return bodyAt(id, feet, &tall, yaw);
+        },
+        bladeOf, [&](uint32_t id, const float* feet) {
+            const int index = sim::skillIndexOf(sim::skill::kFireSlash);
+            if (index >= 0 && heard_.skill[index] >= 0) emit(heard_.skill[index], feet[0], feet[2], id);
+        },
+        [&](auto lay) {
+            const int64_t now = int64_t(realm_.tick());
+            for (Drawn& one : drawn_) {
+                const sim::Body* body = realm_.find(one.id);
+                if (body == nullptr || !body->alive() || body->defenseCutUntil <= now) {
+                    one.cutSeen = 0;
+                    continue;
+                }
+                if (body->defenseCutUntil > one.cutSeen) {
+                    one.cutSeen = body->defenseCutUntil;
+                    if (heard_.bloodAttack >= 0 && one.placed) {
+                        emit(heard_.bloodAttack, one.crown[0], one.crown[2], one.id);
+                    }
+                }
+                if (!one.visible || !one.placed || !ground_) continue;
+                // 200 of its scale over its feet: MU's o->Scale, here its drawn height over a
+                // man's 1.8 m.
+                const FigureBody* look = one.figure.body();
+                const float scale = look ? look->height * look->scale / 1.8f : 1.0f;
+                const float crown[3] = {one.crown[0],
+                                        ground_->heightAt(one.crown[0], one.crown[2]) + 2.0f * scale *
+                                            ground_->metresPerTile(),
+                                        one.crown[2]};
+                lay(crown);
             }
         });
     // The fire on him while he calls a Meteorite down: while its clip is on him, not while the
@@ -3417,6 +3605,32 @@ void Play::update(double seconds) {
         }
     }
     setShine_.update(float(seconds), ground_ ? ground_->metresPerTile() : 1.0f);
+    // Swell Life standing on a player drawn: MU's embers off his arms and neck (Aura::swell),
+    // in g_byUpperBoneLocation's order -- right hand to upper arm, the neck, left upper arm to
+    // hand -- so its pair n and 6 - n fall on the two sides of him.
+    if (ground_ && isOpen()) {
+        const std::vector<sim::Body>& bodies = realm_.bodies();
+        for (size_t i = 0; i < bodies.size() && i < drawn_.size(); ++i) {
+            const sim::Body& body = bodies[i];
+            const Drawn& drawn = drawn_[i];
+            if (!body.player || !body.alive() || body.swellUntil <= realm_.tick() ||
+                drawn.id != body.id || !drawn.placed || !drawn.visible) {
+                continue;
+            }
+            const FigureBody* look = drawn.figure.body();
+            if (!look) continue;
+            const int bones[7] = {look->armBones[0], look->armBones[1], look->armBones[2],
+                                  look->neckBone,    look->armBones[5], look->armBones[4],
+                                  look->armBones[3]};
+            const float origin[3] = {0.0f, 0.0f, 0.0f};
+            float points[7][3];
+            int lit = 0;
+            for (int bone : bones) {
+                if (bone >= 0 && drawn.figure.pointOn(bone, origin, points[lit])) ++lit;
+            }
+            aura_.swell(points, lit, float(seconds), ground_->metresPerTile());
+        }
+    }
     warp_.update(float(seconds));
     // The Rebirth rite (fx/rite.h): its show, and the hero held on his knee through it -- MU's
     // PLAYER_RESPECT1, player.muc's clip 217 whatever its label says (a kneel on one knee, the
@@ -3445,9 +3659,11 @@ void Play::update(double seconds) {
                 const bool held = t >= kRiteLow && t < Rite::kStands;
                 if (held) hero->figure.setClock(kRiteLow);
                 hero->swingPace = held ? 0.0f : 1.0f;
+                hero->swingPaceAfter = 0.0f;
             } else if (hero->swinging > 1e8f) {
                 hero->swinging = 0.0f;
                 hero->swingPace = 1.0f;
+                hero->swingPaceAfter = 0.0f;
             }
         }
     }

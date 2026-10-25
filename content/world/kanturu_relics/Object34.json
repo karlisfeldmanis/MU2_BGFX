@@ -1,0 +1,634 @@
+{
+  "item": "Object34",
+  "mu_name": "Object34",
+  "mu_name_from": "kanturu_relics's object slot: type N is Object{N+1}.bmd, from Data/Object39.",
+  "world": "kanturu_relics",
+  "object_type": 33,
+  "placements": 10,
+  "profile": "world",
+  "sheets": {
+    "songk3mmater0302_R": "kr_songk3mmater0302_r.png",
+    "han_c2": "kl_han_c2.png",
+    "han_c6": "kl_han_c6.png",
+    "song_k202w1": "kl_song_k202w1.png",
+    "han_c3": "kl_han_c3.png",
+    "han_c5": "kl_han_c5.png",
+    "han_c4": "kl_han_c4.png",
+    "han_c7": "kl_han_c7.png"
+  },
+  "sheet_from": "Data/Object39/, decoded under the kl_ prefix by `mu new`.",
+  "sheet_materials": {
+    "songk3mmater0302_R": "lamplight",
+    "han_c2": "wrought_iron",
+    "han_c6": "wrought_iron",
+    "song_k202w1": "wrought_iron",
+    "han_c3": "wrought_iron",
+    "han_c5": "wrought_iron",
+    "han_c4": "wrought_iron",
+    "han_c7": "wrought_iron"
+  },
+  "material_note": "songk3mmater0302_R: the blue liquid of the tanks, MU's bright sheet, the Ruins' own (kr_songk3mmater0302_r.png, byte-identical): lamplight; han_c2: dark bronze machinery with a riveted gauge: wrought_iron; han_c6: a rusted ring, its middle cut out: wrought_iron; song_k202w1: an iron wheel in a riveted, carved frame (the Ruins' wheel sheet): wrought_iron; han_c3: a bronze ring, its middle cut out: wrought_iron; han_c5: dark bronze plating with bolts: wrought_iron; han_c4: dark bronze plating with a chain: wrought_iron; han_c7: a chain link, cut out: wrought_iron.",
+  "why_this_one": "An incubator column, 29 m of tank and bronze machinery hung into the void under the maze. 10 placed. Batch 4 of the Relics (the user, 2026-10-23: \"first we eed to finish actual map then we go to monsters\", \"do next\"). docs/worlds/kanturu-port.md Part B 8.1.",
+  "additive": [
+    "songk3mmater0302_R"
+  ],
+  "additive_from": "songk3mmater0302_R is an _R sheet, drawn RENDER_BRIGHT, added (TextureScript.cpp:16-58); type 33 is drawn after the characters, nothing more (GM_Kanturu_2nd.cpp:604-616).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "lamplight",
+      "triangles": 68,
+      "area": 221934.3,
+      "along": [
+        -82.9,
+        82.9
+      ],
+      "mu_uv": [
+        -1.033,
+        -2.528,
+        2.416,
+        0.881
+      ],
+      "bake_uv": [
+        0.167,
+        0.01,
+        0.765,
+        0.784
+      ]
+    },
+    {
+      "island": 1,
+      "material": "wrought_iron",
+      "triangles": 30,
+      "area": 21333.0,
+      "along": [
+        -11.2,
+        10.9
+      ],
+      "mu_uv": [
+        0.011,
+        0.013,
+        0.355,
+        0.992
+      ],
+      "bake_uv": [
+        0.321,
+        0.218,
+        0.76,
+        0.561
+      ]
+    },
+    {
+      "island": 2,
+      "material": "wrought_iron",
+      "triangles": 26,
+      "area": 3537.3,
+      "along": [
+        -91.2,
+        -19.1
+      ],
+      "mu_uv": [
+        0.111,
+        0.017,
+        0.897,
+        0.732
+      ],
+      "bake_uv": [
+        0.264,
+        0.01,
+        0.741,
+        0.548
+      ]
+    },
+    {
+      "island": 3,
+      "material": "wrought_iron",
+      "triangles": 30,
+      "area": 21308.6,
+      "along": [
+        -11.2,
+        10.9
+      ],
+      "mu_uv": [
+        0.003,
+        0.013,
+        0.355,
+        0.992
+      ],
+      "bake_uv": [
+        0.321,
+        0.107,
+        0.741,
+        0.589
+      ]
+    },
+    {
+      "island": 4,
+      "material": "wrought_iron",
+      "triangles": 26,
+      "area": 3537.3,
+      "along": [
+        19.1,
+        91.2
+      ],
+      "mu_uv": [
+        0.111,
+        0.017,
+        0.897,
+        0.732
+      ],
+      "bake_uv": [
+        0.264,
+        0.388,
+        0.752,
+        0.62
+      ]
+    },
+    {
+      "island": 5,
+      "material": "wrought_iron",
+      "triangles": 62,
+      "area": 9804.4,
+      "along": [
+        -84.4,
+        84.5
+      ],
+      "mu_uv": [
+        0.146,
+        0.02,
+        0.998,
+        0.986
+      ],
+      "bake_uv": [
+        0.167,
+        0.061,
+        0.842,
+        0.838
+      ]
+    },
+    {
+      "island": 6,
+      "material": "wrought_iron",
+      "triangles": 62,
+      "area": 9804.4,
+      "along": [
+        -84.4,
+        84.5
+      ],
+      "mu_uv": [
+        0.146,
+        0.02,
+        0.998,
+        0.986
+      ],
+      "bake_uv": [
+        0.167,
+        0.01,
+        0.838,
+        0.842
+      ]
+    },
+    {
+      "island": 7,
+      "material": "wrought_iron",
+      "triangles": 8,
+      "area": 38168.3,
+      "along": [
+        -97.7,
+        97.7
+      ],
+      "mu_uv": [
+        0.003,
+        0.001,
+        1.0,
+        0.997
+      ],
+      "bake_uv": [
+        0.167,
+        0.319,
+        0.525,
+        0.597
+      ]
+    },
+    {
+      "island": 8,
+      "material": "wrought_iron",
+      "triangles": 8,
+      "area": 34207.0,
+      "along": [
+        -92.5,
+        92.5
+      ],
+      "mu_uv": [
+        0.003,
+        0.001,
+        1.0,
+        0.997
+      ],
+      "bake_uv": [
+        0.353,
+        0.01,
+        0.621,
+        0.491
+      ]
+    },
+    {
+      "island": 9,
+      "material": "wrought_iron",
+      "triangles": 8,
+      "area": 22914.9,
+      "along": [
+        -75.7,
+        75.7
+      ],
+      "mu_uv": [
+        0.003,
+        0.001,
+        1.0,
+        0.997
+      ],
+      "bake_uv": [
+        0.353,
+        0.107,
+        0.621,
+        0.588
+      ]
+    },
+    {
+      "island": 10,
+      "material": "wrought_iron",
+      "triangles": 8,
+      "area": 4356.1,
+      "along": [
+        -33.0,
+        33.0
+      ],
+      "mu_uv": [
+        0.003,
+        0.001,
+        1.0,
+        0.997
+      ],
+      "bake_uv": [
+        0.352,
+        0.319,
+        0.621,
+        0.588
+      ]
+    },
+    {
+      "island": 11,
+      "material": "wrought_iron",
+      "triangles": 8,
+      "area": 3115.2,
+      "along": [
+        -73.4,
+        -10.6
+      ],
+      "mu_uv": [
+        0.725,
+        0.784,
+        0.873,
+        0.993
+      ],
+      "bake_uv": [
+        0.312,
+        0.755,
+        0.811,
+        0.808
+      ]
+    },
+    {
+      "island": 12,
+      "material": "wrought_iron",
+      "triangles": 28,
+      "area": 14439.7,
+      "along": [
+        -107.7,
+        -4.6
+      ],
+      "mu_uv": [
+        0.744,
+        0.02,
+        0.896,
+        0.641
+      ],
+      "bake_uv": [
+        0.215,
+        0.107,
+        0.838,
+        0.841
+      ]
+    },
+    {
+      "island": 13,
+      "material": "wrought_iron",
+      "triangles": 8,
+      "area": 3002.1,
+      "along": [
+        -9.2,
+        9.2
+      ],
+      "mu_uv": [
+        0.725,
+        0.784,
+        0.873,
+        0.993
+      ],
+      "bake_uv": [
+        0.763,
+        0.608,
+        0.812,
+        0.809
+      ]
+    },
+    {
+      "island": 14,
+      "material": "wrought_iron",
+      "triangles": 28,
+      "area": 14439.7,
+      "along": [
+        -11.4,
+        11.4
+      ],
+      "mu_uv": [
+        0.744,
+        0.02,
+        0.896,
+        0.641
+      ],
+      "bake_uv": [
+        0.52,
+        0.01,
+        0.843,
+        0.84
+      ]
+    },
+    {
+      "island": 15,
+      "material": "wrought_iron",
+      "triangles": 8,
+      "area": 3002.2,
+      "along": [
+        -9.2,
+        9.2
+      ],
+      "mu_uv": [
+        0.725,
+        0.784,
+        0.873,
+        0.993
+      ],
+      "bake_uv": [
+        0.795,
+        0.645,
+        0.812,
+        0.809
+      ]
+    },
+    {
+      "island": 16,
+      "material": "wrought_iron",
+      "triangles": 28,
+      "area": 14439.7,
+      "along": [
+        -11.4,
+        11.4
+      ],
+      "mu_uv": [
+        0.744,
+        0.02,
+        0.896,
+        0.641
+      ],
+      "bake_uv": [
+        0.571,
+        0.073,
+        0.843,
+        0.84
+      ]
+    },
+    {
+      "island": 17,
+      "material": "wrought_iron",
+      "triangles": 8,
+      "area": 3096.5,
+      "along": [
+        10.6,
+        73.4
+      ],
+      "mu_uv": [
+        0.725,
+        0.784,
+        0.873,
+        0.993
+      ],
+      "bake_uv": [
+        0.215,
+        0.268,
+        0.81,
+        0.814
+      ]
+    },
+    {
+      "island": 18,
+      "material": "wrought_iron",
+      "triangles": 28,
+      "area": 14439.6,
+      "along": [
+        4.6,
+        107.7
+      ],
+      "mu_uv": [
+        0.744,
+        0.02,
+        0.896,
+        0.641
+      ],
+      "bake_uv": [
+        0.215,
+        0.209,
+        0.844,
+        0.841
+      ]
+    },
+    {
+      "island": 19,
+      "material": "wrought_iron",
+      "triangles": 68,
+      "area": 32335.7,
+      "along": [
+        -33.1,
+        33.1
+      ],
+      "mu_uv": [
+        0.009,
+        0.07,
+        0.983,
+        0.612
+      ],
+      "bake_uv": [
+        0.264,
+        0.319,
+        0.843,
+        0.734
+      ]
+    },
+    {
+      "island": 20,
+      "material": "wrought_iron",
+      "triangles": 68,
+      "area": 32335.7,
+      "along": [
+        -124.6,
+        -84.1
+      ],
+      "mu_uv": [
+        0.009,
+        0.07,
+        0.983,
+        0.612
+      ],
+      "bake_uv": [
+        0.167,
+        0.311,
+        0.843,
+        0.844
+      ]
+    },
+    {
+      "island": 21,
+      "material": "wrought_iron",
+      "triangles": 68,
+      "area": 32335.7,
+      "along": [
+        -33.1,
+        33.1
+      ],
+      "mu_uv": [
+        0.009,
+        0.07,
+        0.983,
+        0.612
+      ],
+      "bake_uv": [
+        0.19,
+        0.107,
+        0.843,
+        0.844
+      ]
+    },
+    {
+      "island": 22,
+      "material": "wrought_iron",
+      "triangles": 68,
+      "area": 32335.7,
+      "along": [
+        84.1,
+        124.6
+      ],
+      "mu_uv": [
+        0.009,
+        0.07,
+        0.983,
+        0.612
+      ],
+      "bake_uv": [
+        0.167,
+        0.04,
+        0.845,
+        0.808
+      ]
+    },
+    {
+      "island": 23,
+      "material": "wrought_iron",
+      "triangles": 12,
+      "area": 20450.6,
+      "along": [
+        -15.8,
+        15.8
+      ],
+      "mu_uv": [
+        0.65,
+        0.224,
+        0.933,
+        0.295
+      ],
+      "bake_uv": [
+        0.264,
+        0.01,
+        0.811,
+        0.814
+      ]
+    },
+    {
+      "island": 24,
+      "material": "wrought_iron",
+      "triangles": 30,
+      "area": 52731.6,
+      "along": [
+        -86.9,
+        86.9
+      ],
+      "mu_uv": [
+        -0.63,
+        0.005,
+        0.992,
+        0.995
+      ],
+      "bake_uv": [
+        0.167,
+        0.01,
+        0.799,
+        0.805
+      ]
+    },
+    {
+      "island": 25,
+      "material": "wrought_iron",
+      "triangles": 2,
+      "area": 34196.8,
+      "along": [
+        -0.0,
+        -0.0
+      ],
+      "mu_uv": [
+        -1.001,
+        -9.23,
+        -0.24,
+        3.629
+      ],
+      "bake_uv": [
+        0.01,
+        0.01,
+        0.068,
+        0.99
+      ]
+    },
+    {
+      "island": 26,
+      "material": "wrought_iron",
+      "triangles": 2,
+      "area": 34196.9,
+      "along": [
+        -16.4,
+        16.3
+      ],
+      "mu_uv": [
+        -1.001,
+        -9.23,
+        -0.24,
+        3.629
+      ],
+      "bake_uv": [
+        0.089,
+        0.01,
+        0.147,
+        0.99
+      ]
+    }
+  ],
+  "play_speed": 0.16,
+  "play_speed_from": "No Move code for its type, so every object's flat Velocity 0.16 (as the Ruins' Object45 note). 34 of its 50 bones (the hanging machinery) move over 21 keys (Object34.rig.json, MuExtract export-rig --actions=all of MuMain's Object39; vertices as the .obj) (the user, 2026-10-23: \"does those boxes has to be static? no aniamtion there?\", \"blue cilynders\")."
+}

@@ -177,6 +177,22 @@ const sim::Held* listed(const Session& one, const net::BrokerAsk& asked) {
     return there == nullptr || there->empty() || !same(*there, asked.seen) ? nullptr : there;
 }
 
+// How many of a stack he lists (the ask's count), 0 for the whole of it or of what never stacks.
+int piecesOf(const Session& one, const sim::Held& there, const net::BrokerAsk& asked) {
+    const content::Tables& tables = one.world->tables;
+    if (size_t(there.item) >= tables.items.size()) return 0;
+    const content::ItemRow& row = tables.items[size_t(there.item)];
+    if (!sim::stacks(row) || sim::ammunition(row)) return 0;
+    return asked.count > 0 && asked.count < there.durability ? asked.count : 0;
+}
+
+// What goes up: the thing, or that many of the stack.
+sim::Held partOf(const Session& one, const sim::Held& there, const net::BrokerAsk& asked) {
+    sim::Held part = there;
+    if (const int pieces = piecesOf(one, there, asked); pieces > 0) part.durability = int16_t(pieces);
+    return part;
+}
+
 void list(Session& one, const net::BrokerAsk& asked, std::vector<std::unique_ptr<Session>>& sessions) {
     const sim::Held* there = listed(one, asked);
     if (there == nullptr) {
@@ -191,8 +207,8 @@ void list(Session& one, const net::BrokerAsk& asked, std::vector<std::unique_ptr
     Waiting w;
     w.who = traderOf(one);
     w.asked = asked;
-    w.floor = std::max<int64_t>(1, sim::npcValue(one.world->tables, *there));
-    w.thing = nameOf(*there);
+    w.floor = std::max<int64_t>(1, sim::npcValue(one.world->tables, partOf(one, *there, asked)));
+    w.thing = nameOf(partOf(one, *there, asked));
     MarketAsk may{.op = MarketOp::MayList};
     may.floor = w.floor;
     ask(std::move(may), std::move(w), sessions);
@@ -209,7 +225,7 @@ void take(Session& one, uint64_t serial, Waiting& w) {
     w.listing.seller = one.token;
     w.listing.account = w.who.account;
     w.listing.name = one.name;
-    w.listing.what = *there;
+    w.listing.what = partOf(one, *there, w.asked);
     w.listing.price = w.asked.price;
     w.listing.floor = w.floor;
     w.left = 1;
@@ -218,7 +234,8 @@ void take(Session& one, uint64_t serial, Waiting& w) {
     p.ask = serial;
     sim::Command command{.kind = sim::Command::Kind::BrokerTake};
     sim::packHeld(*there, command);
-    command.zen = w.asked.slot | (w.asked.fromVault ? 0x10000 : 0);
+    command.zen = w.asked.slot | (w.asked.fromVault ? 0x10000 : 0) |
+                  int64_t(piecesOf(one, *there, w.asked)) << 32;
     queue(one, command, std::move(p));
 }
 

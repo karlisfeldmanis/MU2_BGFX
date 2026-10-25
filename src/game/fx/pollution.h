@@ -55,6 +55,20 @@ public:
     // The casting circle at `caster` and the ghosts let loose at `target` (world metres, the
     // ground under each).
     void cast(const float caster[3], const float target[3]);
+    // The casting circle alone, in another book's colours: CreateCastingEffect's lights for
+    // BITMAP_MAGIC 9, Suhwanzin1/11/111, 2/22/222 and 4 (SummonSystem.cpp:190-231). Requiem's
+    // (fx/requiem.h) is drawn by this.
+    struct Palette {
+        float impact[3];
+        float rings1[3];
+        float rings2[3];
+        float ring4[3];
+    };
+    static constexpr Palette kPollutionPalette = {
+        {0.6f, 0.6f, 0.9f}, {0.6f, 0.3f, 0.9f}, {0.8f, 0.1f, 0.6f}, {0.9f, 0.1f, 1.0f}};
+    static constexpr Palette kRequiemPalette = {
+        {0.7f, 0.7f, 1.0f}, {0.0f, 0.7f, 1.0f}, {0.0f, 0.0f, 1.0f}, {0.8f, 0.5f, 1.0f}};
+    void circle(const float caster[3], const Palette& palette);
     void update(float seconds);
     void gather(gfx::Effects& effects) const;
 
@@ -80,6 +94,7 @@ private:
         float darkAlpha = 0.0f;   // subtype 10
         float ringAlpha = 1.0f;   // subtype 9
         float ringTurn[2] = {};   // degrees
+        float impact[3] = {};     // subtype 9's light, the book's
     };
     struct Ring {
         bool alive = false;
@@ -89,6 +104,7 @@ private:
         float glow = 0.0f;
         float scale = 0.9f;
         float left = 0.0f;
+        float light[3] = {};      // the book's
     };
     struct Joint {
         bool alive = false;

@@ -347,7 +347,7 @@ QuestRow devin() {
     row.paid[n++] = {.item = "Shield15", .kin = wizard, .sockets = 1,
                      .firstOnly = true};  // Legendary Shield
     row.paid[n++] = {.item = "Bow05", .kin = elf, .sockets = 2, .firstOnly = true};  // Tiger Bow
-    // Its two runes, the first Epic of the ladder (the Ice Queen is 52): +10% all stats (the
+    // Its two runes, the first Epic of the ladder (the Ice Queen is 52): +5% all stats since 2026-10-25 (the
     // user, 2026-10-05: 'add tier-1 all stats to devias quest line for all classes') -- **the
     // elf's Barrage** in its place (2026-10-08: "replace some rune reward in devias for
     // multi-shot icnrease damage rune") -- and a Rare on the class's own stat.
@@ -872,6 +872,10 @@ QuestRow tersiaFifth() {
     row.paid[row.paidCount++] = {.item = "Ring01", .kin = elf, .sockets = 1, .firstOnly = true};
     row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Renewal),
                                  .firstOnly = true};
+    // And the knight's Swell Life, the Orb of Greater Fortitude (the user, 2026-10-25: "put it on
+    // floor 5"): its orb asks 120, the top of floors 1-5, and the floor of undying knights pays
+    // the health. Floor 6 has his Death Stab already. It drops too, off anything of level 60 on.
+    row.paid[row.paidCount++] = {.item = "OrbSwellLife", .kin = knight, .firstOnly = true};
     row.voice = "tersia_5";  // pipeline/voice.py, VOICES["tersia"]
     return row;
 }
@@ -1062,7 +1066,7 @@ QuestRow tersiaSkyDoor() {
                                  .firstOnly = true};  // Storm Crow
     row.paid[row.paidCount++] = {.item = "BootMale16", .kin = gladiator, .sockets = 2,
                                  .firstOnly = true};
-    // And the first second-class Legendary, every class's: Greater Ascendance, +30% all stats,
+    // And the first second-class Legendary, every class's: Greater Ascendance, +15% all stats,
     // Tarkan's until this day (the Magic Gladiator's its Lesser, sim::gladiatorRune). Spirit
     // Plague, the Epic it had, is the wizard's at Tarkan now.
     row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::GreaterAscendance),
@@ -1889,7 +1893,7 @@ QuestRow sealedWood() {
 //
 // The pay is the doc's proposal (the ladder stops at Sevina's 200; Aida at 300 is a new act):
 // every clear the jewels and a Box of Kundun +3, and the first clear a Legendary Rune of Creation,
-// Greater Wellspring, the Seed Master's own trade.
+// Greater Wellspring, the Seed Master's own trade, and the class's level-147 weapon.
 QuestRow seedMastersClearing() {
     QuestRow row;
     row.giver = kSeedMasterNumber;
@@ -1959,6 +1963,154 @@ QuestRow seedMastersClearing() {
     // Realm::questChoiceFits), and a Rune of Creation fits every class.
     row.paid[n++] = {.item = "Jewel22", .power = uint8_t(Power::GreaterWellspring),
                      .firstOnly = true};
+    // And the first clear's weapon, each class's: the three level-147 weapons MU sold only at its
+    // gambling shop, which drop here and wait for a quest (the user, 2026-10-23: 'we will create
+    // that quest later'; 2026-10-24: 'give for each class something which make sense'). +7 and
+    // three sockets as Kantur's Captain's; any rank, since no quest gates Aida on the class
+    // change and a first-only weapon held back from one not yet promoted would never come. The
+    // knight's Beuroba is a two-hander, so the Flamberge comes beside it (the Captain's rule);
+    // the Magic Gladiator takes the spear on the knight's path and the staff on the wizard's. The
+    // Flamberge a plus higher, so the pair sell alike (Beuroba +7 361,600, Flamberge +8 348,000).
+    row.paid[n++] = {.item = "Sword27", .plus = 8, .kin = knight, .sockets = 3,
+                     .firstOnly = true};  // Flamberge +8, the knight's one-hander
+    row.paid[n++] = {.item = "Spear12", .plus = 7, .kin = knight, .sockets = 3,
+                     .firstOnly = true};  // Beuroba +7
+    row.paid[n++] = {.item = "Staff34", .plus = 7, .kin = wizard, .sockets = 3,
+                     .firstOnly = true};  // Chromatic Staff +7
+    row.paid[n++] = {.item = "Bow25", .plus = 7, .kin = elf, .sockets = 3,
+                     .firstOnly = true};  // Air Lyn Bow +7
+    row.paidCount = n;
+    return row;
+}
+
+// Kantur's Gate, the hook to Kanturu: the Keeper's third, once Kantur's Legion has been handed in,
+// given to Elpis in the Ruins camp (docs/game/kanturu-quest.md; the user, 2026-10-25: "we need to
+// create ruins quest first", "she will give all kanturu quests"). As The Road of Kantur: no hunt,
+// the errand is the meeting. The level is Tarkan's arch's, gate 125 at 320 (step 7 reopens it).
+// Ours, on MU's facts: Kanturu is Kantur's underground empire, entered from Tarkan, and Elpis is
+// MU's keeper of the Tower of Refinement (OpenMU KanturuEvent.cs:51), stood in the camp here.
+QuestRow kantursGate() {
+    QuestRow row;
+    row.giver = kKeeperNumber;
+    row.giverName = "the Keeper";
+    row.place = "Tarkan";
+    row.receiver = kElpisNumber;
+    row.receiverName = "Elpis";
+    row.receiverPlace = "the Ruins of Kantur";
+    row.title = "Kantur's Gate";
+    row.offer[0] = "\"You broke Kantur's legion in the sand. I did not think I would live to see it.\"";
+    row.offer[1] =
+        "\"The arch in the west is Kantur's own gate. I have kept it shut for three hundred years, "
+        "because what lies beyond it still obeys a dead king.\"";
+    row.offer[2] =
+        "\"But someone on the other side has kept a light burning all that time. Elpis, the last "
+        "of the refiners. If you are strong enough to walk where I cannot, go to her. The gate "
+        "will open for you.\"";
+    row.underway =
+        "\"The arch is at the western edge of town. Elpis keeps her light at the head of the camp "
+        "beyond it.\"";
+    // Elpis's, in the camp; what the Ruins became is her own quest's offer (ruinsOfKantur).
+    row.handIn[0] = "\"A living face, through Kantur's gate... The Keeper still remembers me, then.\"";
+    row.handIn[1] = "\"Sit. You will need your strength. Nothing out there has stopped fighting.\"";
+    row.resting = "\"The shrine stays lit. It always has.\"";
+    // The Keeper's voice on his offer, Elpis's own on the hand-in (pipeline/voice.py, to audition).
+    row.voice = "keeper_3";
+    row.receiverVoice = "elpis";
+    row.steps[0] = {QuestStepKind::Return, 0, 1, "Find Elpis in the Ruins of Kantur"};
+    row.stepCount = 1;
+    row.repeatSeconds = 0;  // once
+    row.minLevel = 320;     // Tarkan's arch to Kanturu
+    row.gateLevel = true;
+    row.afterAny = 1u << kKantursLegion;
+    constexpr int8_t knight = int8_t(Kin::DarkKnight);
+    constexpr int8_t wizard = int8_t(Kin::DarkWizard);
+    constexpr int8_t elf = int8_t(Kin::FairyElf);
+    row.natives = uint8_t((1u << knight) | (1u << wizard) | (1u << elf));
+    row.strangers = true;
+    // About two fifths of a level at 320, a step above The Sealed Wood's 3M at 300.
+    row.experience = 4000000;
+    row.zen = 1000000;
+    return row;
+}
+
+// The Ruins of Kantur, Elpis's clear: the eight Ruins breeds in the order the walk meets them
+// from the camp to the Relics door, each count its nests' (content/world/kanturu/nests.json)
+// scaled to 200 kills, about 40 minutes for a hero in the best pre-Kanturu gear at da0e7426's
+// balance (the user, 2026-10-25: "About 40 minutes"). Ours.
+//
+// The pay is act X's (docs/game/quest-rewards.md stops at Aida's IX): every clear a step above the
+// Seed Master's, and the first clear two pieces of the class's 380 set (the user: "A set piece or
+// two"), no rune ("No Ancient as quest pay"; the ladder pays no weapon rune twice).
+QuestRow ruinsOfKantur() {
+    QuestRow row;
+    row.giver = kElpisNumber;
+    row.giverName = "Elpis";
+    row.place = "the Ruins of Kantur";
+    row.title = "The Ruins of Kantur";
+    row.offer[0] =
+        "\"Kantur's engineers bred beasts to guard the refinery road, and built machines to ride "
+        "them. When the empire died, nobody told them.\"";
+    row.offer[1] =
+        "\"The wolves came first, to run down thieves. Then the riders and their iron. The Satyros "
+        "and the hunters were the road's wardens. The Kentauros were its archers, the Gigantis its "
+        "walls.\"";
+    row.offer[2] =
+        "\"The Berserkers and the Genocider were made for war, and kept nearest the Relics. They "
+        "are what stands between us and the door.\"";
+    row.offer[3] =
+        "\"Clear the road, from this camp to that door. They will be back by morning: the old "
+        "breeding vats still work. But for one night, the road is ours.\"";
+    row.underway = "\"I can still hear them on the road.\"";
+    row.handIn[0] = "\"Quiet. I had forgotten what the Ruins sound like without them.\"";
+    row.handIn[1] =
+        "\"Take these. Kantur's armourers made them for the ones who walked this road. It is only "
+        "right they go to you. Come back when the vats have done their work.\"";
+    row.resting = "\"Rest. The vats are slow, but they never stop.\"";
+    row.voice = "elpis_1";
+    row.steps[0] = {QuestStepKind::Clear, 351, 30, "Splinter Wolves"};  // level 142, 22 nests
+    row.steps[1] = {QuestStepKind::Clear, 352, 28, "Iron Riders"};      // 144, 21
+    row.steps[2] = {QuestStepKind::Clear, 353, 32, "Satyros"};          // 146, 25
+    row.steps[3] = {QuestStepKind::Clear, 354, 28, "Blade Hunters"};    // 148, 22
+    row.steps[4] = {QuestStepKind::Clear, 355, 18, "Kentauros"};        // 150, 13
+    row.steps[5] = {QuestStepKind::Clear, 356, 12, "Gigantis"};         // 152, 9
+    row.steps[6] = {QuestStepKind::Clear, 350, 36, "Berserkers"};       // 154, 28
+    row.steps[7] = {QuestStepKind::Clear, 357, 16, "Genocider"};        // 156, 11, by the door
+    row.steps[8] = {QuestStepKind::Return, 0, 1, "Return to Elpis"};
+    row.stepCount = 9;
+    row.repeatSeconds = 12 * 60 * 60;
+    row.minLevel = 320;
+    row.gateLevel = true;
+    row.afterAny = 1u << kKantursGate;
+    constexpr int8_t knight = int8_t(Kin::DarkKnight);
+    constexpr int8_t wizard = int8_t(Kin::DarkWizard);
+    constexpr int8_t elf = int8_t(Kin::FairyElf);
+    constexpr int8_t gladiator = int8_t(Kin::MagicGladiator);
+    // Every class's, as the Keeper's and the Seed Master's: no class is born in Kanturu.
+    row.natives = uint8_t((1u << knight) | (1u << wizard) | (1u << elf));
+    row.strangers = true;
+    // A step above Aida's 3M and 12M on the curve (12M a level at 320).
+    row.experience = 4000000;
+    row.firstExperience = 16000000;
+    row.zen = 750000;
+    int n = 0;
+    row.paid[n++] = {.item = "Jewel03"};                // a Jewel of Life
+    row.paid[n++] = {.item = "Jewel15"};                // a Jewel of Chaos
+    row.paid[n++] = {.item = "Jewel01", .count = 2};    // Jewels of Bless
+    row.paid[n++] = {.item = "Jewel02", .count = 2};    // Jewels of Soul
+    row.paid[n++] = {.item = "MagicBox08", .plus = 3};  // a Box of Kundun +3
+    // The first clear: the class's 380 armour and helm, +7 and two sockets. They ask level 380
+    // (a4aea731), a goal for a hero at 320; the other three pieces and the weapon are the Ruins'
+    // drops. The Gladiator's Volcano has no helm, so his are the armour and the pants. Dragon
+    // Knight is the Blade Knight's alone, so it filters out for him as every second-class piece
+    // does (sim::questPaysHero).
+    row.paid[n++] = {.item = "ArmorMale30", .plus = 7, .kin = knight, .sockets = 2, .firstOnly = true};
+    row.paid[n++] = {.item = "HelmMale30", .plus = 7, .kin = knight, .sockets = 2, .firstOnly = true};
+    row.paid[n++] = {.item = "ArmorMale31", .plus = 7, .kin = wizard, .sockets = 2, .firstOnly = true};
+    row.paid[n++] = {.item = "HelmMale31", .plus = 7, .kin = wizard, .sockets = 2, .firstOnly = true};
+    row.paid[n++] = {.item = "ArmorMale32", .plus = 7, .kin = elf, .sockets = 2, .firstOnly = true};
+    row.paid[n++] = {.item = "HelmMale32", .plus = 7, .kin = elf, .sockets = 2, .firstOnly = true};
+    row.paid[n++] = {.item = "ArmorMale33", .plus = 7, .kin = gladiator, .sockets = 2, .firstOnly = true};
+    row.paid[n++] = {.item = "PantMale33", .plus = 7, .kin = gladiator, .sockets = 2, .firstOnly = true};
     row.paidCount = n;
     return row;
 }
@@ -1997,6 +2149,8 @@ const QuestRow kRawTable[kQuests] = {
     keyed(sealedWood(), "sealed_wood"),
     keyed(seedMastersClearing(), "seed_masters_clearing"),
     keyed(kantursCaptain(), "kanturs_captain"),
+    keyed(kantursGate(), "kanturs_gate"),
+    keyed(ruinsOfKantur(), "ruins_of_kantur"),
 };
 
 // **Every quest pays three Firecrackers** besides its own reward, every completion, to every
@@ -2054,6 +2208,7 @@ int32_t questFolkMap(int32_t number) {
         case kLirienNumber: return int32_t(kAtlansMap);
         case kKeeperNumber: return int32_t(kTarkanMap);
         case kSeedMasterNumber: return 33;  // Aida
+        case kElpisNumber: return 37;       // the Ruins of Kantur's camp
         default: return -1;
     }
 }

@@ -39,6 +39,16 @@ constexpr float kEdgeFull = 0.35f;
 // fixed-step shots against 1.0, 0.8 and narrower, dimmer strips (2026-09-22).
 constexpr float kStrength = 0.65f;
 
+// Swell Life's embers (Aura::swell): MU's ten frames; ours, how wide one is at birth in metres
+// and how bright, judged on fixed-step shots to read as a soft glow on him and not a fire.
+constexpr float kEmberFrames = 10.0f;
+// 0.07 m since the user's "smaller sparkles" (2026-10-25), half of the 0.14 before it.
+constexpr float kEmberAcross = 0.07f;
+constexpr float kEmberStrength = 2.4f;
+// Three a reference frame where MU throws two: the user, at 0.07 m, "good, but litle bit more
+// sparkles" (2026-10-25).
+constexpr float kEmberRate = 3.0f;
+
 // --- the circle, ZzzEffect.cpp BITMAP_MAGIC + 1 subtype 0 ----------------------------------
 constexpr float kRingTicks = 20.0f;      // LifeTime
 constexpr float kRingDims = 5.0f;        // full until five ticks are left...
@@ -102,6 +112,11 @@ bool Aura::open(const std::string& assetDir, content::Textures& textures) {
     // The fire's smoke sheets, which the skill's puff is made of.
     smoke_ = take("../fire/smoke02.png");
     wisp_ = take("../fire/smoke01.png");
+    // Swell Life's embers: a clean soft dot of ours (content/effects/light/ember_soft.png, a
+    // gaussian with no rays), where MU draws BITMAP_LIGHT's flare01 -- its star cross read as
+    // busy sparkles (the user, 2026-10-25: "saprkles has to be much smaller and more bliry
+    // and clean").
+    light_ = take("../light/ember_soft.png");
     core::logf("aura: flare %s, circle %s", bgfx::isValid(flare_) ? "in hand" : "MISSING",
                bgfx::isValid(ground_) ? "in hand" : "MISSING");
     return bgfx::isValid(flare_);
@@ -111,6 +126,7 @@ void Aura::shutdown() {
     // The sheets belong to Textures, which destroys them.
     for (Burst& b : bursts_) b.living = false;
     for (Puff& p : puffs_) p.living = false;
+    for (Ember& e : embers_) e.living = false;
 }
 
 int Aura::live() const {
@@ -269,10 +285,51 @@ bool Aura::guarding(uint32_t owner) const {
     return false;
 }
 
+void Aura::swell(const float (*points)[3], int count, float seconds, float metresPerTile) {
+    if (count <= 0 || !bgfx::isValid(light_)) return;
+    const float per = metresPerTile / kPerTile;
+    // kEmberRate a reference frame, in pairs as MU's -- n and its mirror 6 - n across the body
+    // when all seven are given -- carried over frames shorter than one.
+    float owed = seconds * kReference * kEmberRate;
+    int free = 0;
+    while (owed >= 1.0f || (owed > 0.0f && unit() < owed)) {
+        owed -= 1.0f;
+        const int n = std::min(count - 1, int(unit() * float(count)));
+        const int which = free % 2 == 0 ? n : count - 1 - n;
+        ++free;
+        for (Ember& e : embers_) {
+            if (e.living) continue;
+            e.living = true;
+            std::copy(points[which], points[which] + 3, e.at);
+            e.age = 0.0f;
+            e.climb = 0.0f;
+            e.pace = 0.0f;
+            e.scale = 2.0f;
+            e.per = per;
+            break;
+        }
+    }
+}
+
 void Aura::update(float seconds) {
     // No cap on a long frame, where MU2 had one: nothing is laid per step any more, so a hitch
     // moves the burst on and cannot leave a streak behind it.
     const float ticks = seconds * kReference;
+    // Swell Life's embers on MU's frame: the pace gains 5.7-9.5 units a frame, the scale loses
+    // 0.04-0.08; ten frames and gone. MU puts the particle back on its bone every frame and then
+    // adds the pace once (ZzzEffectParticle.cpp:8065-8075), so its height over the bone IS the
+    // pace -- about 0.75 m at the end -- and not the sum of it.
+    for (Ember& e : embers_) {
+        if (!e.living) continue;
+        e.age += ticks;
+        if (e.age >= kEmberFrames) {
+            e.living = false;
+            continue;
+        }
+        e.pace += (0.6f + 0.4f * unit()) * 9.5f * e.per * ticks;
+        e.climb = e.pace;
+        e.scale -= (0.04f + 0.04f * unit()) * ticks;
+    }
     for (Burst& b : bursts_) {
         if (!b.living) continue;
         b.age += ticks;
@@ -339,9 +396,30 @@ void Aura::gatherPuffs(gfx::Effects& effects) const {
     }
 }
 
+void Aura::gatherEmbers(gfx::Effects& effects) const {
+    for (const Ember& e : embers_) {
+        if (!e.living || e.scale <= 0.0f) continue;
+        // MU's light, (1, 0.5, 0.1), down by 1/1.35 a frame from the first.
+        const float light = kEmberStrength * std::pow(1.0f / 1.35f, e.age);
+        gfx::Sprite sprite;
+        sprite.sheet = light_;
+        sprite.blend = gfx::Blend::Additive;
+        sprite.position[0] = e.at[0];
+        sprite.position[1] = e.at[1] + e.climb;
+        sprite.position[2] = e.at[2];
+        sprite.halfWidth = sprite.halfHeight = kEmberAcross * 0.5f * e.scale / 2.0f;
+        sprite.colour[0] = 1.0f * light;
+        sprite.colour[1] = 0.5f * light;
+        sprite.colour[2] = 0.1f * light;
+        sprite.colour[3] = 1.0f;
+        if (!effects.add(sprite)) return;
+    }
+}
+
 void Aura::gather(gfx::Effects& effects, const content::Ground& ground,
                   const float eye[3]) const {
     gatherPuffs(effects);
+    gatherEmbers(effects);
     for (const Burst& b : bursts_) {
         if (!b.living) continue;
         if (b.r.circle && b.laps == 0) gatherCircle(effects, ground, b);
@@ -429,8 +507,23 @@ void Aura::gather(gfx::Effects& effects, const content::Ground& ground,
                 const float back = over + length * float(s) / float(steps);
                 at(b, j, back, p1);
                 const float u1 = (length - (back - over)) / length;
-                segment(p0, p1, up, u0, u1, true);        // the upright strip
-                segment(p0, p1, b.across, u0, u1, false); // and the flat one across it
+                if (b.r.faces) {
+                    // One strip across the path and the view (Recipe::faces): the tangent
+                    // crossed with the line to the eye, so it is never seen edge-on.
+                    const float t[3] = {p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2]};
+                    float v[3];
+                    for (int d = 0; d < 3; ++d) v[d] = eye[d] - (b.feet[d] + (p0[d] + p1[d]) * 0.5f);
+                    float axis[3] = {t[1] * v[2] - t[2] * v[1], t[2] * v[0] - t[0] * v[2],
+                                     t[0] * v[1] - t[1] * v[0]};
+                    const float al = std::sqrt(axis[0] * axis[0] + axis[1] * axis[1] + axis[2] * axis[2]);
+                    if (al > 1e-6f) {
+                        for (float& a : axis) a /= al;
+                        segment(p0, p1, axis, u0, u1, false);
+                    }
+                } else {
+                    segment(p0, p1, up, u0, u1, true);        // the upright strip
+                    segment(p0, p1, b.across, u0, u1, false); // and the flat one across it
+                }
                 std::copy(p1, p1 + 3, p0);
                 u0 = u1;
             }

@@ -1,0 +1,313 @@
+{
+  "item": "Persona01",
+  "mu_name": "Persona",
+  "mu_name_from": "OpenMU VersionSeasonSix names number 358 'Persona' (openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/KanturuRelics.cs:212); MuMain's MONSTER_PERSONA (MuMain/src/source/World/GameMaps/GM_Kanturu_2nd.cpp:58).",
+  "world": "kanturu_relics",
+  "object_type": 358,
+  "monster": {
+    "model_index": 114,
+    "scale": 1.0
+  },
+  "monster_from": "MuMain/src/source/World/GameMaps/GM_Kanturu_2nd.cpp:58:\n\ncase MONSTER_PERSONA:\n    {\n        OpenMonsterModel(MONSTER_MODEL_PERSONA);\n        pCharacter = CreateCharacter(Key, MODEL_PERSONA, PosX, PosY);\n        pCharacter->Object.Scale = 1.0f;\n        pCharacter->Weapon[0].Type = -1;\n        pCharacter->Weapon[1].Type = -1;\n\n        BoneManager::RegisterBone(pCharacter, L\"PRSona_A1\", 73);\n        BoneManager::RegisterBone(pCharacter, L\"PRSona_Tail\", 76);\n        BoneManager::RegisterBone(pCharacter, L\"PRSona_Tail1\", 77);\n    }\n    break;",
+  "profile": "monster",
+  "sheets": {
+    "prsona_02": "persona_prsona_02.png",
+    "prsonas": "persona_prsonas.png",
+    "prsonass": "persona_prsonass.png"
+  },
+  "sheet_materials": {
+    "prsona_02": "painted_steel",
+    "prsonas": "plate_steel",
+    "prsonass": "cloth"
+  },
+  "combat": {
+    "level": 161,
+    "health": 134000,
+    "minimum_damage": 2380,
+    "maximum_damage": 2470,
+    "defense": 530,
+    "move_range": 3,
+    "attack_range": 5,
+    "view_range": 7,
+    "move_delay": 500,
+    "attack_delay": 1600,
+    "attack_rate": 3699,
+    "defense_rate": 1488,
+    "attack_skill": null,
+    "note": "OpenMU VersionSeasonSix (KanturuRelics.cs:212): level 118, 68000 life, 1168-1213, 615, 1190/485, attack range 5. Beside the Twin Tale (b9377590), its numbers the Twin Tale's times OpenMU's ratio between the two (life 0.78, damage 1.24, defence 0.71, rates 1.10), one level above; ranges and speeds as MU. Provisional, ours (2026-10-25)."
+  },
+  "cutout": [
+    "prsonass"
+  ],
+  "why_this_one": "MU's own Persona (MONSTER_MODEL_PERSONA, Monster115): the Relics' second breed, 27 nests, after the Twin Tale.",
+  "mu_checklist": [
+    {
+      "at": "MuMain/src/source/World/GameMaps/GM_Kanturu_2nd.cpp:57",
+      "in": "M38Kanturu2nd::Create_Kanturu2nd_Monster",
+      "kind": "body",
+      "lines": 14,
+      "actions": [],
+      "calls": [
+        "CreateCharacter",
+        "RegisterBone"
+      ],
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GM_Kanturu_2nd.cpp:763",
+      "in": "M38Kanturu2nd::Render_Kanturu2nd_MonsterVisual",
+      "kind": "effect",
+      "lines": 80,
+      "actions": [
+        "MONSTER01_WALK",
+        "MONSTER01_ATTACK1",
+        "MONSTER01_ATTACK2",
+        "MONSTER01_DIE",
+        "MONSTER01_STOP1",
+        "MONSTER01_STOP2"
+      ],
+      "calls": [
+        "PlayBuffer",
+        "SOUND_KANTURU_2ND_PERSO_MOVE1",
+        "SOUND_KANTURU_2ND_PERSO_ATTACK1",
+        "SOUND_KANTURU_2ND_PERSO_ATTACK2",
+        "SOUND_KANTURU_2ND_PERSO_DIE",
+        "CreateSprite",
+        "BITMAP_LIGHT",
+        "CreateParticle",
+        "BITMAP_SMOKE",
+        "BITMAP_WATERFALL_3",
+        "CreateEffect",
+        "CreateJoint"
+      ],
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:443",
+      "in": "LoadWaveFile",
+      "kind": "sound",
+      "lines": 1,
+      "actions": [],
+      "calls": [
+        "SOUND_KANTURU_2ND_PERSO_MOVE1"
+      ],
+      "file": "Data/Sound/w38/perso_idle-01.wav",
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:445",
+      "in": "LoadWaveFile",
+      "kind": "sound",
+      "lines": 1,
+      "actions": [],
+      "calls": [
+        "SOUND_KANTURU_2ND_PERSO_ATTACK1"
+      ],
+      "file": "Data/Sound/w38/perso_attack-01.wav",
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:446",
+      "in": "LoadWaveFile",
+      "kind": "sound",
+      "lines": 1,
+      "actions": [],
+      "calls": [
+        "SOUND_KANTURU_2ND_PERSO_ATTACK2"
+      ],
+      "file": "Data/Sound/w38/perso_attack-02.wav",
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:447",
+      "in": "LoadWaveFile",
+      "kind": "sound",
+      "lines": 1,
+      "actions": [],
+      "calls": [
+        "SOUND_KANTURU_2ND_PERSO_DIE"
+      ],
+      "file": "Data/Sound/w38/perso_death.wav",
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/Engine/Object/ZzzObject.cpp:10636",
+      "in": "RenderPartObjectEdge",
+      "kind": "look",
+      "lines": 6,
+      "actions": [],
+      "calls": [
+        "RenderMesh",
+        "BlendMeshTexCoordU",
+        "BlendMeshTexCoordV"
+      ],
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GM_Kanturu_2nd.cpp:684",
+      "in": "M38Kanturu2nd::Render_Kanturu2nd_MonsterObjectMesh",
+      "kind": "look",
+      "lines": 9,
+      "actions": [],
+      "calls": [
+        "RenderBody",
+        "RENDER_TEXTURE",
+        "BlendMeshTexCoordU",
+        "BlendMeshTexCoordV",
+        "RenderMesh",
+        "RENDER_BRIGHT",
+        "BITMAP_PRSONA_EFFECT",
+        "BITMAP_PRSONA_EFFECT2"
+      ],
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GM_Kanturu_3rd.cpp:1242",
+      "in": "M39Kanturu3rd::RenderKanturu3rdMonsterObjectMesh",
+      "kind": "look",
+      "lines": 9,
+      "actions": [],
+      "calls": [
+        "RenderBody",
+        "RENDER_TEXTURE",
+        "BlendMeshTexCoordU",
+        "BlendMeshTexCoordV",
+        "RenderMesh",
+        "RENDER_BRIGHT",
+        "BITMAP_PRSONA_EFFECT",
+        "BITMAP_PRSONA_EFFECT2"
+      ],
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/Engine/Object/ZzzOpenData.cpp:2766",
+      "in": "OpenMonsterModel",
+      "kind": "animation",
+      "lines": 8,
+      "actions": [
+        "MONSTER01_STOP1",
+        "MONSTER01_STOP2",
+        "MONSTER01_WALK",
+        "MONSTER01_ATTACK1",
+        "MONSTER01_ATTACK2",
+        "MONSTER01_DIE"
+      ],
+      "calls": [],
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/Engine/Object/ZzzOpenData.cpp:2437",
+      "in": "GetMonsterModelName",
+      "kind": "other",
+      "lines": 1,
+      "actions": [],
+      "calls": [],
+      "state": "skip",
+      "note": "MU's name for the model, for its tools; nothing to carry"
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GM_Kanturu_2nd.cpp:1246",
+      "in": "M38Kanturu2nd::Move_Kanturu2nd_BlurEffect",
+      "kind": "other",
+      "lines": 4,
+      "actions": [],
+      "calls": [],
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GM_Kanturu_2nd.cpp:152",
+      "in": "M38Kanturu2nd::Set_CurrentAction_Kanturu2nd_Monster",
+      "kind": "other",
+      "lines": 1,
+      "actions": [],
+      "calls": [],
+      "state": "todo",
+      "note": "falls through into the next case: no break"
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GM_Kanturu_2nd.cpp:168",
+      "in": "M38Kanturu2nd::AttackEffect_Kanturu2nd_Monster",
+      "kind": "other",
+      "lines": 5,
+      "actions": [],
+      "calls": [],
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GM_Kanturu_2nd.cpp:278",
+      "in": "M38Kanturu2nd::Move_Kanturu2nd_MonsterVisual",
+      "kind": "other",
+      "lines": 4,
+      "actions": [],
+      "calls": [],
+      "state": "todo",
+      "note": ""
+    }
+  ],
+  "chrome": [
+    {
+      "slot": "prsona_02",
+      "image": "prsona_r",
+      "uv": "mesh",
+      "tint": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "where": "over",
+      "pulse": [
+        0.5,
+        0.5
+      ],
+      "pulse_rate": "half",
+      "note": "Render_Kanturu2nd_MonsterObjectMesh MODEL_PERSONA (GM_Kanturu_2nd.cpp:684-692): after its body, mesh 0 (prsona_02) again RENDER_TEXTURE | RENDER_BRIGHT with BITMAP_PRSONA_EFFECT, Monster/prsona_R.jpg (ZzzOpenData.cpp:5426), at its own UVs and fLumi2 = (sin(WorldTime * 0.002) + 1) * 0.5, 0 to 1: its armour's cyan lines breathing."
+    },
+    {
+      "slot": "prsonass",
+      "image": "prsonass_r",
+      "uv": "mesh",
+      "tint": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "where": "over",
+      "pulse": [
+        0.5,
+        0.5
+      ],
+      "pulse_rate": "half",
+      "note": "And mesh 2 (prsonass, its cape) with BITMAP_PRSONA_EFFECT2, Monster/prsonass_R.jpg (ZzzOpenData.cpp:5427), at the same fLumi2: a pale wisp over the cape."
+    }
+  ],
+  "rules": {
+    "drops": {
+      "money_rate": 30,
+      "max_plus": 3,
+      "regen": 10
+    },
+    "resist": {
+      "ice": 29,
+      "poison": 29
+    },
+    "note": "Resistance: OpenMU S6 Maps/KanturuRelics.cs:212-238 writes 29/255 to all four, read as WebZen raw values as Aida's are; fire and lightning are not carried. Drops: Aida's (30 and 3) until Kanturu's are settled (docs/worlds/kanturu-port.md decision 8); RegTime 10, as the Twin Tale's."
+  },
+  "show": {
+    "tags": [
+      "persona"
+    ],
+    "note": "fx/persona.h: the light on its brow, the blue smoke round its feet, the water its tails drip and the water it dies in; Attack 1 throws Play's storm (fx/storm.h) at what it attacks, Attack 2 lets Play's spirits go round itself (fx/spirits.h)."
+  }
+}

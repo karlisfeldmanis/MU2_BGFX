@@ -57,6 +57,15 @@ struct MapRow {
     bool firstWings = false;
     bool secondGear = false;
     bool secondClass = false;
+    // Ours: every kill's experience here times this, on top of the game's rate and the rings
+    // (the manifest's `rules.exp_bonus`; the user, 2026-10-25: the Ruins pay "more than Aida",
+    // x1.25). 1 on every other map.
+    double expBonus = 1.0;
+    // Kanturu's gear (sim::kanturuGear) in the pools here: the manifest's drops `kanturu_gear`.
+    bool kanturuGear = false;
+    // Ancient runes in a kill's rune draw (sim::drawRunePower): the manifest's drops
+    // `ancient_runes`, the Relics and the boss's map, never the Ruins.
+    bool ancientRunes = false;
 };
 
 // The rules of MU's map `number`: its row, or a row of the defaults for a map not in the table

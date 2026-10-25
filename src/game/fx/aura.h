@@ -102,6 +102,12 @@ struct Recipe {
     // climb starting a breath after the last has run out, as a +11 set's ribbon does
     // (game/fx/set_shine.cpp). Only the first lap flashes the circle.
     bool loops = false;
+    // **One strip turned to the eye** in place of MU's fixed cross (ours, 2026-10-25): a
+    // ring of crosses laid in the facing goes edge-on over most of its round from this
+    // camera, and the edge-on fade left two short arcs on one side -- the user, of Swell
+    // Life's cast: "do you see that aura is cuted/croped?". Each segment's strip lies across
+    // the path and the view, so the whole ring reads from any angle.
+    bool faces = false;
 };
 
 // MU's level-up: fifteen flares on a ring of forty, climbing away and dimming. The circle is
@@ -135,10 +141,18 @@ inline constexpr Recipe kBarrier{3,    50.0f, 12.0f, 100.0f, 1.6f, 1.6f, 19.0f, 
 // eBuff_Attack. Eight ribbons spread evenly round a ring wider than she is, thrown once at the
 // cast (the shape a learned skill had until 2026-09-29): a slower green-white climb
 // for a wound closing, a quicker red-orange one for her blows hardening.
-inline constexpr Recipe kMending{8,    34.0f, 30.0f, 22.0f, 12.0f, 16.0f, 12.0f, 0.0f,
-                                 true, false, false, {0.45f, 1.70f, 0.60f}};
-inline constexpr Recipe kMight{8,    44.0f, 34.0f, 16.0f, 20.0f, 22.0f, 10.0f, 0.0f,
-                               true, false, false, {2.20f, 0.55f, 0.15f}};
+// Both on one strip turned to the eye (Recipe::faces) since 2026-10-25, the user of Swell Life's
+// cast, which borrows kMight's until its own is drawn: "do you see that aura is cuted/croped?",
+// "also ribons going to high". A ring of 34 and of 44 ran through the body, which hid half of
+// it, and the climbs -- 12-16 and 20-22 units a tick -- went to 300 units and more, well over his
+// head. Now a ring of 70 clears him all round, and each climbs to about his crown (170) over
+// its life, as the guard's ribbons stop there (kGuarding).
+inline constexpr Recipe kMending{8,    70.0f, 30.0f, 22.0f, 7.5f, 7.5f, 12.0f, 0.0f,
+                                 true, false, false, {0.45f, 1.70f, 0.60f},
+                                 {0.4f, 0.6f, 1.0f}, 0.15f, 2.0f, 0.0f, 0.0f, false, false, false, true};
+inline constexpr Recipe kMight{8,    70.0f, 34.0f, 16.0f, 10.5f, 10.5f, 10.0f, 0.0f,
+                               true, false, false, {2.20f, 0.55f, 0.15f},
+                               {0.4f, 0.6f, 1.0f}, 0.15f, 2.0f, 0.0f, 0.0f, false, false, false, true};
 // The Dark Phoenix's shield going up, ours: WebZen raises it every six seconds and MuMain
 // answers with the wizard's Soul Barrier buff on the bird (ZzzCharacter.cpp:4976-4979), whose
 // look this game does not draw. Ten ember-red ribbons round a ring the bird's width, rising
@@ -206,6 +220,19 @@ public:
     // Whether `owner` has a guard standing.
     bool guarding(uint32_t owner) const;
 
+    // **Swell Life standing on a body** (the user, 2026-10-25: "1", MU's own glow): MU's
+    // BITMAP_LIGHT subtype 1 on each body with eBuff_Life throws, every frame, two orange
+    // (1, 0.5, 0.1) BITMAP_LIGHT particles at subtype 4 off two of seven upper-body bones -- index
+    // n and 6 - n of g_byUpperBoneLocation {25, 26, 27, 20, 34, 35, 36}, his arms and neck
+    // (ZzzEffect.cpp:34, :7004-7024). Each lives ten frames, climbs by a pace that gains 5.7-9.5
+    // units a frame, shrinks 0.04-0.08 of its scale of two and loses its light by 1/1.35 a
+    // frame (ZzzEffectParticle.cpp:3196-3201, :8058-8082): embers streaming up off his shoulders
+    // and arms. `points` are those bones in the world this frame, `count` of them.
+    // **Ours**: an ember stays where it was born and climbs from there rather than riding its
+    // bone; it is a soft round dot (ember_soft.png) and not MU's rayed flare01; and its size is
+    // judged on shots (kEmberAcross), not MU's sprite scale.
+    void swell(const float (*points)[3], int count, float seconds, float metresPerTile);
+
     // Ages every burst on MU's clock. `seconds` is the frame's own.
     void update(float seconds);
     // `eye` is the camera's position in world metres, which the edge-on fade is taken from.
@@ -227,6 +254,9 @@ public:
     static constexpr int kBursts = 24;
     // Room for two skills read inside a second of each other; a third's puffs are not drawn.
     static constexpr int kPuffs = 64;
+    // Swell Life's embers: three a reference frame (kEmberRate), ten frames each, so thirty a
+    // body; room for a party of five and a few more in sight. One with none free is not drawn.
+    static constexpr int kEmbers = 256;
 
 private:
     struct Joint {
@@ -261,6 +291,21 @@ private:
         float spin = 0.0f;
         float turns = 0.0f;    // radians a tick
     };
+
+    // One of Swell Life's embers. Times in reference frames, lengths in world metres.
+    struct Ember {
+        bool living = false;
+        float at[3] = {0.0f, 0.0f, 0.0f};  // where it was born
+        float age = 0.0f;
+        float climb = 0.0f;  // metres over where it was born
+        float pace = 0.0f;   // metres a frame it climbs by, gaining every frame
+        float scale = 2.0f;  // MU's Scale, two at birth
+        float per = 0.01f;
+    };
+    Ember embers_[kEmbers];
+    float emberDebt_ = 0.0f;  // embers owed by the frames fed so far
+    void gatherEmbers(gfx::Effects& effects) const;
+    bgfx::TextureHandle light_ = BGFX_INVALID_HANDLE;  // the embers' soft dot
 
     // Where joint `j` of `b` was `back` ticks ago, as an offset from the feet.
     static void at(const Burst& b, const Joint& j, float back, float out[3]);

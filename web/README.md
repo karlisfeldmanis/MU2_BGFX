@@ -11,12 +11,54 @@ Design: the "MU2 Launcher" canvas, Website page.
 | `i18n.py`, `i18n/` | the site in Portuguese, Spanish, Russian, Vietnamese and Polish under `/pt/`, `/es/`, `/ru/`, `/vi/`, `/pl/`: the English pages are the source, each language's words are kept in the database (`texts`) and edited by admins on `/translate` (`site/translate.html`); `i18n/<lang>.json` are the first words of each, put in at start wherever a line has none. A script's words go through `MU.t('...')` (`site.js`) |
 | `Caddyfile` | HTTPS on mu-classic.com (and still on 37.27.158.226 for launchers already out), installers from disk, the rest to server.py |
 | `mu2-web.service` | the systemd unit; accounts in `/var/lib/mu2-web/accounts.db` |
-| `deploy.sh` | HEAD's `web/` to `/opt/mu2-web`, Caddy installed if missing, both restarted |
+| `deploy.sh` | HEAD's `web/` to `/opt/mu2-web`, the live release's tested Armory to `/srv/mu2-web/armory/`, Caddy installed if missing, both restarted; `--armory` the Armory alone |
+| `armory.py`, `site/armory/` | the Armory (below) |
 
 ## Run it here
 
     python3 -I web/server.py --db out/web/accounts.db --port 8093
     open http://127.0.0.1:8093/
+
+## The Armory
+
+`armory.py` (routes asked by server.py first) and `site/armory/` (`armory.js` draws every page,
+`card.js` the game's item card, `armory.css`): the item, monster, NPC, quest, event, rune, skill,
+talent, mix and Elite database at `/armory`, read from a built release (`./mu armory build`,
+docs/plans/armory.md). Each entity has its own URL (`/armory/item/<slug>`, `/armory/monster/<slug>`, ...),
+served with its own head (title, description, og:image its thumbnail), a plain body and its JSON
+inline; a page fetches only its own file and the small indexes, from `/armory/data/<commit>/`
+(immutable). Comments are the accounts' (`armory_comments`, `armory_votes`, `armory_reports` in the
+same database), with upvotes, reports, a rate limit and delete by the writer or an admin; an
+admin reads the reports at `GET /api/armory/reports`. Its words are a group of `/translate`.
+
+    python3 -I web/server.py --db out/web/accounts.db --port 8091 --armory out/armory/5d7ddebc
+    open http://127.0.0.1:8091/armory
+
+`--armory` takes a release (a folder with meta.json) or a folder of them, serving the commit
+`ARMORY` names, else `current`, else locally the newest built release of out/armory/releases.json --
+never the newest on disk, and never a history-only build (`SEED`). `./mu armory test out/armory/<commit>`
+checks the output, the card against the game's renders (tools/armory/tests/card_check.js) and the
+pages in headless Chrome (site_test.js), and writes `TESTED` in the release's folder on a pass.
+
+`web/deploy.sh` uploads the Armory of `ARMORY=<commit>`, else of the live release (the macOS
+manifest's version), to `/srv/mu2-web/armory/<commit>/` and moves `current`; Caddy serves
+`/armory/data/*` from there. It refuses, leaving `current` as it is, a release not built, a `.new`
+(unfinished), a `SEED`, or one without `TESTED`. It is sent with `rsync --link-dest` against the
+release `current` was, so unchanged thumbnails are linked on the box, not sent again. Kept on the
+box: the release `current` points at, the one it pointed at before, the one just sent and the
+newest four by meta.json `built`. `mu ship` plans and switches the Armory as its own lane:
+
+    ARMORY=4b0ad87e web/deploy.sh --armory          # its data and `current` only, nothing restarted
+    DRY=1 ARMORY=4b0ad87e web/deploy.sh --armory    # the commands, not run
+
+Rollback: point `current` back at a release still on the box (one of the kept ones) by sending it
+again, which uploads nothing new when it is there and swaps the link:
+
+    ARMORY=<older commit> web/deploy.sh --armory
+
+(it needs out/armory/<older commit>/ with its TESTED here; `./mu armory build --commit <older>`
+and `./mu armory test out/armory/<older>` remake it from its kept packs, out/armory/packs/<commit>/).
+Or on the box itself: `cd /srv/mu2-web/armory && ln -sfn <older> current.new && mv -T current.new current`.
 
 ## The accounts
 
@@ -137,6 +179,13 @@ it is set or changed without a restart; with no file, nothing is told.
     ssh hetzner "curl -s -d '{\"day\":\"2026-10-19\"}' http://127.0.0.1:8080/internal/discord"  # a day now
 
 `journalctl -u mu2-web | grep discord` shows each message posted, edited, taken away or not told.
+
+Each rebirth on any region's game server is one message in #announcements (`class Announce`): the
+server POSTs /internal/rebirth {region, name, class, count} on the accounts' line, and the site
+posts it by that channel's webhook, kept the same way in `discord_announce_webhook`; with no file,
+nothing is told. A message Discord turns away is dropped.
+
+    ssh hetzner 'cd /var/lib/private/mu2-web && umask 077 && cat > discord_announce_webhook && chown --reference=accounts.db discord_announce_webhook'
 
 ## Translated by itself
 

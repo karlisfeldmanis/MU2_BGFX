@@ -13,10 +13,19 @@ namespace {
 
 constexpr float kFrames = 25.0f;               // MU's reference frames a second
 constexpr float kArcOdds = 30.0f;              // rand() % 30 == 1
+constexpr float kTowerArcOdds = 20.0f;         // rand_fps_check(20)
+constexpr float kEnergySheetMetres = 64.0f * 0.01f;  // Thunder01 is 64
+constexpr float kFlareMetres = 64.0f * 0.01f;        // and flare01
+// A Fenrir flash: gone once 0.3 a frame has taken its alpha from 1 to nothing.
+constexpr float kFlashLife = (1.0f / 0.3f) / 25.0f;
+// The lightning model's size, ours: lightning_type01 is drawn as a crackle about 2 m across at
+// Scale 1, so MU's 0.3-0.5 reads as a spark of 0.6-1 m.
+constexpr float kFlashMetres = 2.0f;
 constexpr float kSpitEvery = 3.0f;             // rand_fps_check(3)
 constexpr float kUnit = 0.01f;                 // metres a MU unit
 constexpr float kSpitSheetMetres = 32.0f * kUnit;  // water is 32 texels: Scale 1 is 32 units
 constexpr float kSpitShrink = 0.026f * kFrames;    // Scale a second
+constexpr float kSprayShrink = 0.013f * kFrames;   // sub-type 1's
 constexpr float kSpitDim = 1.02f;                  // the light's fall a frame
 constexpr float kReach = 30.0f;                // ours: metres from the camera's point
 constexpr size_t kMostBlobs = 600;
@@ -37,7 +46,30 @@ void RuinEffects::open(const std::string& assetDir, const std::string& world,
     if (content::loadShowing(assetDir + "/cooked/showing/showing.mus", table, error)) {
         if (const content::EffectSheet* sheet = table.effect("plant_spit"))
             spit_ = textures.load(assetDir + "/" + sheet->path, content::TextureRole::Albedo);
+        if (const content::EffectSheet* sheet = table.effect("energy"))
+            energy_ = textures.load(assetDir + "/" + sheet->path, content::TextureRole::Albedo);
+        if (const content::EffectSheet* sheet = table.effect("flare"))
+            flare_ = textures.load(assetDir + "/" + sheet->path, content::TextureRole::Albedo);
         thunderOpen_ = thunder_.open(assetDir, textures, table);
+    }
+    // The world's lightning and water boxes.
+    for (const content::TownEmitter& one : town.emitters) {
+        if (one.model != content::TownEmitter::kWorld) continue;
+        if (one.kind == content::EmitterKind::Spray) {
+            Plant spray;
+            for (int k = 0; k < 3; ++k) spray.at[k] = one.at[k];
+            spray.spray = true;
+            spray.owed = unit();
+            plants_.push_back(spray);
+            continue;
+        }
+        if (one.kind == content::EmitterKind::VoidStrike || one.kind == content::EmitterKind::WallArc ||
+            one.kind == content::EmitterKind::NorthBolt || one.kind == content::EmitterKind::FenrirFlash) {
+            Bolt bolt;
+            for (int k = 0; k < 3; ++k) bolt.at[k] = one.at[k];
+            bolt.kind = one.kind;
+            bolts_.push_back(bolt);
+        }
     }
     // What each model carries, found once, in the cook's order.
     std::vector<std::vector<const content::TownEmitter*>> carried(town.models.size());
@@ -45,7 +77,8 @@ void RuinEffects::open(const std::string& assetDir, const std::string& world,
         if (one.model == content::TownEmitter::kWorld) continue;
         if (one.kind == content::EmitterKind::TankArcFrom ||
             one.kind == content::EmitterKind::TankArcTo ||
-            one.kind == content::EmitterKind::PlantSpit) {
+            one.kind == content::EmitterKind::PlantSpit ||
+            one.kind == content::EmitterKind::TowerSpark) {
             carried[one.model].push_back(&one);
         }
     }
@@ -70,6 +103,10 @@ void RuinEffects::open(const std::string& assetDir, const std::string& world,
             } else if (one->kind == content::EmitterKind::TankArcTo) {
                 place(*one, tank.to);
                 to = true;
+            } else if (one->kind == content::EmitterKind::TowerSpark) {
+                Tower tower;
+                place(*one, tower.at);
+                towers_.push_back(tower);
             } else {
                 Plant plant;
                 place(*one, plant.at);
@@ -83,17 +120,23 @@ void RuinEffects::open(const std::string& assetDir, const std::string& world,
     }
     blobs_.reserve(kMostBlobs);
     open_ = true;
-    core::logf("ruin effects: %zu tank arcs, %zu spitting plants; water %s, thunder %s",
-               tanks_.size(), plants_.size(), bgfx::isValid(spit_) ? "yes" : "NO",
-               thunderOpen_ ? "yes" : "NO");
+    core::logf("ruin effects: %zu tank arcs, %zu spitting plants and water boxes, %zu towers, %zu bolt boxes; water %s, "
+               "energy %s, thunder %s",
+               tanks_.size(), plants_.size(), towers_.size(), bolts_.size(), bgfx::isValid(spit_) ? "yes" : "NO",
+               bgfx::isValid(energy_) ? "yes" : "NO", thunderOpen_ ? "yes" : "NO");
 }
 
 void RuinEffects::shutdown() {
     open_ = false;
     tanks_.clear();
     plants_.clear();
+    towers_.clear();
+    bolts_.clear();
+    flashes_.clear();
+    flare_ = BGFX_INVALID_HANDLE;
     blobs_.clear();
     spit_ = BGFX_INVALID_HANDLE;
+    energy_ = BGFX_INVALID_HANDLE;
     thunderOpen_ = false;
 }
 
@@ -102,6 +145,7 @@ void RuinEffects::update(float seconds, const float near[3]) {
     for (int k = 0; k < 3; ++k) near_[k] = near[k];
     const float dt = std::min(seconds, 0.1f);
     const float frames = dt * kFrames;
+    clock_ += dt;
     auto nearby = [&](const float at[3]) {
         const float dx = at[0] - near[0], dz = at[2] - near[2];
         return dx * dx + dz * dz < kReach * kReach;
@@ -111,13 +155,61 @@ void RuinEffects::update(float seconds, const float near[3]) {
         for (const Tank& tank : tanks_) {
             if (nearby(tank.from) && unit() < odds) thunder_.fork(tank.from, tank.to, true);
         }
+        // The towers' bolts, thrown round bone 4 in the world's axes, not the tower's: MU adds
+        // to Position (x east, y south, z up) after the bone's transform.
+        const float towerOdds = 1.0f - std::pow(1.0f - 1.0f / kTowerArcOdds, frames);
+        for (const Tower& tower : towers_) {
+            if (!nearby(tower.at) || unit() >= towerOdds) continue;
+            float from[3], to[3];
+            from[0] = tower.at[0] - (50.0f + 100.0f * unit()) * kUnit;
+            from[2] = tower.at[2] + 50.0f * unit() * kUnit;
+            to[0] = tower.at[0] + 80.0f * unit() * kUnit;
+            to[2] = tower.at[2] - 50.0f * unit() * kUnit;
+            from[1] = to[1] = tower.at[1] + 10.0f * kUnit;
+            thunder_.fork(from, to, true);
+        }
+        // The lightning boxes: each bolt ends on the box. MU's x is east (ours x), its y south
+        // (ours -z), its z up (ours y).
+        const float everyTwenty = 1.0f - std::pow(1.0f - 1.0f / 20.0f, frames);
+        const float everyTen = 1.0f - std::pow(1.0f - 1.0f / 10.0f, frames);
+        for (const Bolt& bolt : bolts_) {
+            if (bolt.kind == content::EmitterKind::FenrirFlash) continue;
+            const bool strike = bolt.kind == content::EmitterKind::VoidStrike;
+            if (!nearby(bolt.at) || unit() >= (strike ? everyTwenty : everyTen)) continue;
+            float from[3] = {bolt.at[0], bolt.at[1], bolt.at[2]};
+            if (strike) {
+                from[0] += (unit() * 10.0f - 5.0f) * kUnit;
+                from[2] += (unit() * 10.0f - 5.0f) * kUnit;
+                from[1] += 1100.0f * kUnit;
+            } else if (bolt.kind == content::EmitterKind::WallArc) {
+                from[0] -= 50.0f * kUnit;
+            } else {
+                from[2] += 350.0f * kUnit;  // MU's y - 350: north
+            }
+            thunder_.fork(from, bolt.at, true);
+        }
         // Every arc here is pinned at both ends (target 0), so neither is asked.
         thunder_.update(seconds, [](uint32_t) { return false; }, [](uint32_t, float*) { return false; });
+    }
+    // The Fenrir thunder boxes: one flash in 5 frames each, within 20 units, gone in 4 frames.
+    for (Flash& one : flashes_) one.age += dt;
+    flashes_.erase(std::remove_if(flashes_.begin(), flashes_.end(),
+                                  [](const Flash& f) { return f.age >= kFlashLife; }),
+                   flashes_.end());
+    const float everyFive = 1.0f - std::pow(1.0f - 1.0f / 5.0f, frames);
+    for (const Bolt& bolt : bolts_) {
+        if (bolt.kind != content::EmitterKind::FenrirFlash || !nearby(bolt.at)) continue;
+        if (unit() >= everyFive || flashes_.size() >= kMostBlobs) continue;
+        Flash flash;
+        for (int k = 0; k < 3; ++k) flash.at[k] = bolt.at[k] + (unit() * 40.0f - 20.0f) * kUnit;
+        flash.size = 0.3f + 0.2f * unit();
+        flash.spin = unit() * 6.2831853f;
+        flashes_.push_back(flash);
     }
     for (Blob& one : blobs_) {
         one.age += dt;
         one.at[1] += one.rise * dt;
-        one.scale -= kSpitShrink * dt;
+        one.scale -= one.shrink * dt;
         const float keep = std::pow(1.0f / kSpitDim, frames);
         for (int k = 0; k < 3; ++k) one.colour[k] *= keep;
     }
@@ -135,15 +227,31 @@ void RuinEffects::update(float seconds, const float near[3]) {
             plant.owed -= 1.0f;
             if (blobs_.size() >= kMostBlobs) break;
             Blob blob;
-            // Within 20 units across in MU's x and y and 0-40 up, scaled as the bone is.
-            const float across = 20.0f * kUnit * plant.scale;
-            blob.at[0] = plant.at[0] + (unit() * 2.0f - 1.0f) * across;
-            blob.at[1] = plant.at[1] + unit() * 2.0f * across;
-            blob.at[2] = plant.at[2] + (unit() * 2.0f - 1.0f) * across;
+            if (plant.spray) {
+                // Sub-type 1: within 40 units across and 0-80 up, unscaled; Scale 0.5-0.81
+                // shrinking 0.013 a frame, living 20-29 frames, light (0.4, 0.6, 0.7).
+                const float across = 40.0f * kUnit;
+                blob.at[0] = plant.at[0] + (unit() * 2.0f - 1.0f) * across;
+                blob.at[1] = plant.at[1] + unit() * 2.0f * across;
+                blob.at[2] = plant.at[2] + (unit() * 2.0f - 1.0f) * across;
+                blob.scale = (50.0f + unit() * 31.0f) * 0.01f;
+                blob.shrink = kSprayShrink;
+                blob.life = (20.0f + unit() * 9.0f) / kFrames;
+                blob.colour[0] = 0.4f;
+                blob.colour[1] = 0.6f;
+                blob.colour[2] = 0.7f;
+            } else {
+                // Within 20 units across in MU's x and y and 0-40 up, scaled as the bone is.
+                const float across = 20.0f * kUnit * plant.scale;
+                blob.at[0] = plant.at[0] + (unit() * 2.0f - 1.0f) * across;
+                blob.at[1] = plant.at[1] + unit() * 2.0f * across;
+                blob.at[2] = plant.at[2] + (unit() * 2.0f - 1.0f) * across;
+                blob.scale = (50.0f + unit() * 31.0f) * 0.02f;
+                blob.shrink = kSpitShrink;
+                blob.life = (60.0f + unit() * 9.0f) / kFrames;
+                for (int k = 0; k < 3; ++k) blob.colour[k] = plant.colour[k];
+            }
             blob.rise = (2.0f + unit()) * kFrames * kUnit;
-            blob.scale = (50.0f + unit() * 31.0f) * 0.02f;
-            blob.life = (60.0f + unit() * 9.0f) / kFrames;
-            for (int k = 0; k < 3; ++k) blob.colour[k] = plant.colour[k];
             blobs_.push_back(blob);
         }
     }
@@ -152,6 +260,69 @@ void RuinEffects::update(float seconds, const float near[3]) {
 void RuinEffects::gather(gfx::Effects& effects) const {
     if (!open_) return;
     if (thunderOpen_) thunder_.gather(effects);
+    for (const Flash& one : flashes_) {
+        // Alpha 1 falling 0.3 a reference frame; the crackle at the model's Scale, its light
+        // (0.8, 0.8, 1.0); the flare (Scale 2, light 0.3 less) on its first frame only.
+        const float alpha = std::max(0.0f, 1.0f - 0.3f * one.age * kFrames);
+        if (bgfx::isValid(energy_)) {
+            gfx::Sprite crackle;
+            for (int k = 0; k < 3; ++k) crackle.position[k] = one.at[k];
+            crackle.colour[0] = crackle.colour[1] = 0.8f * alpha;
+            crackle.colour[2] = alpha;
+            crackle.colour[3] = 1.0f;
+            crackle.halfWidth = crackle.halfHeight = 0.5f * one.size * kFlashMetres;
+            crackle.spin = one.spin + one.age * kFrames * 0.15f;
+            crackle.sheet = energy_;
+            crackle.blend = gfx::Blend::Additive;
+            if (!effects.add(crackle)) break;
+        }
+        if (bgfx::isValid(flare_) && one.age * kFrames < 1.0f) {
+            gfx::Sprite flare;
+            for (int k = 0; k < 3; ++k) flare.position[k] = one.at[k];
+            flare.colour[0] = flare.colour[1] = 0.5f;
+            flare.colour[2] = 0.7f;
+            flare.colour[3] = 1.0f;
+            flare.halfWidth = flare.halfHeight = 0.5f * 2.0f * kFlareMetres;
+            flare.sheet = flare_;
+            flare.blend = gfx::Blend::Additive;
+            if (!effects.add(flare)) break;
+        }
+    }
+    if (bgfx::isValid(energy_)) {
+        // fLumi = (sin(WorldTime * 0.001) + 1) / 2: white, from nothing to full every 6.3 s.
+        const float lumi = 0.5f * (std::sin(clock_) + 1.0f);
+        for (const Tower& one : towers_) {
+            const float dx = one.at[0] - near_[0], dz = one.at[2] - near_[2];
+            if (dx * dx + dz * dz > kReach * kReach) continue;
+            gfx::Sprite sprite;
+            for (int k = 0; k < 3; ++k) {
+                sprite.position[k] = one.at[k];
+                sprite.colour[k] = lumi;
+            }
+            sprite.colour[3] = 1.0f;
+            sprite.blend = gfx::Blend::Additive;
+            // MU's Spark03 of Scale 10 here is not drawn (the user, 2026-10-24: "remove that
+            // blue sphere"): only the crackles and the bolts.
+            if (!bgfx::isValid(energy_)) continue;
+            // The two living crackles: born on this reference frame and the one before, each
+            // its own size and turn, spun 20 degrees a frame since. Rolled from the frame and
+            // the tower so a frame draws the same pair however often it is gathered.
+            const uint32_t frame = uint32_t(clock_ * kFrames);
+            for (uint32_t back = 0; back < 2; ++back) {
+                uint32_t roll = (frame - back) * 2654435761u ^
+                                uint32_t(one.at[0] * 97.0f) * 40503u ^ uint32_t(one.at[2] * 89.0f);
+                roll = roll * 1664525u + 1013904223u;
+                const float size = 0.6f + 0.7f * float((roll >> 8) & 0xFFFF) / 65535.0f;
+                const float turn = float(roll >> 24) / 255.0f * 6.2831853f;
+                gfx::Sprite crackle = sprite;
+                crackle.halfWidth = crackle.halfHeight = 0.5f * 1.5f * size * kEnergySheetMetres;
+                crackle.spin = turn + float(back) * 0.349f;
+                crackle.soft = 0.0f;
+                crackle.sheet = energy_;
+                if (!effects.add(crackle)) break;
+            }
+        }
+    }
     if (!bgfx::isValid(spit_)) return;
     for (const Blob& one : blobs_) {
         gfx::Sprite sprite;

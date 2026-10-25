@@ -369,6 +369,9 @@ void GuildWindow::update(float seconds, float width, float height, int column, P
         if (focus_ == Focus::Invite || focus_ == Focus::Notice) focus_ = Focus::None;
     }
 
+    // A tab or page pressed above changes the rows this frame draws, not the next.
+    layout(state, me);
+
     // Redrawn on a change: the state, the pointer's place, the fields, the caret's blink.
     uint64_t key = 1469598103934665603ull;
     key = mixed(key, state.id);

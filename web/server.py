@@ -39,6 +39,7 @@ The routes:
     GET  /api/comments?post=ID                      -> 200 {comments: [{name, text, at}]}
     POST /api/comments   Bearer T {post, text}      -> 201 {ok} | 400 {error} | 401 | 429
          on the posts of site/posts.json, under the account's name.
+    GET  /armory/..., /api/armory/...               the Armory's pages, its release's files and its comments (web/armory.py)
     GET  /api/downloads                             -> 200 {windows: {file, bytes, sha256} | null, macos: ...}
     POST /api/bug        {text, platform?, build?, renderer?, gpu?, world?, x?, y?, character?, class?,
                           level?, server?}  [Bearer T]  -> 200 {ok, id} | 400 {error} | 413 | 429 {error: "later"}
@@ -103,6 +104,10 @@ The routes:
          (class Discord), by the webhook URL in discord_webhook beside the database.
     POST /internal/discord          (127.0.0.1 only) {day}  -> 200 {ok} | 400 | 409 with no webhook
          that day's #updates message sent, edited or taken away now.
+    POST /internal/rebirth          (127.0.0.1 only) {region, name, class, count}  -> 200 {ok} | 400
+         a character reborn on a region's game server (mu2_server's tellRebirth), posted in the
+         Discord's #announcements (class Announce) by the webhook URL in discord_announce_webhook
+         beside the database; with none, nothing is told.
     GET  /internal/untranslated     (127.0.0.1 only)  -> 200 {langs, missing, examples}
     POST /internal/translations     (127.0.0.1 only) {texts: {lang: {source: text}}}  -> 200 {put, refused}
          the units of the site with no translation in a language, and translations of them put in
@@ -130,6 +135,7 @@ import hmac
 import json
 import mimetypes
 import os
+import queue
 import re
 import secrets
 import sqlite3
@@ -145,6 +151,7 @@ from urllib.parse import parse_qs, urlparse
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import i18n  # noqa: E402
+import armory  # noqa: E402
 
 SESSION_DAYS = 90
 # The plays an account page lists, and how long each is kept.
@@ -1396,6 +1403,13 @@ def site_units(site: Path, store: "Store") -> list:
         if k not in seen:
             seen.add(k)
             out.append({"group": "js", "source": k, "path": "/"})
+    # The Armory's words: what its script says through t(), and its pages' own few (web/armory.py).
+    script = site / "armory" / "armory.js"
+    for source in (i18n.script_units(script.read_text()) if script.is_file() else []) + list(armory.PAGE_WORDS):
+        k = i18n.key(source)
+        if k not in seen:
+            seen.add(k)
+            out.append({"group": "armory", "source": k, "path": "/armory"})
     return out
 
 
@@ -1481,7 +1495,8 @@ class Discord:
                             "color": DISCORD_COLOUR}],
                 "allowed_mentions": {"parse": []}}
 
-    def call(self, method: str, url: str, body: dict = None) -> dict:
+    @staticmethod
+    def call(method: str, url: str, body: dict = None) -> dict:
         import urllib.request
         import urllib.error
         request = urllib.request.Request(
@@ -1529,6 +1544,63 @@ class Discord:
             sent = self.call("POST", f"{url}?wait=true", body)["id"]
             print(f"discord: {day} posted, {len(lines)} lines", flush=True)
         self.store.set_setting(key, f"{sent} {digest} {len(lines)}")
+
+
+# ---- rebirths in Discord's #announcements -------------------------------------------------------
+
+def roman(n: int) -> str:
+    """A count as a Roman numeral, I to MMMCMXCIX, as the game writes a rebirth's (net::romanNumeral)."""
+    n, out = max(1, min(3999, n)), ""
+    for value, letters in ((1000, "M"), (900, "CM"), (500, "D"), (400, "CD"), (100, "C"), (90, "XC"),
+                           (50, "L"), (40, "XL"), (10, "X"), (9, "IX"), (5, "V"), (4, "IV"), (1, "I")):
+        while n >= value:
+            out, n = out + letters, n - value
+    return out
+
+
+class Announce:
+    """Each rebirth a game server tells (/internal/rebirth) as one message in #announcements, by the
+    channel's webhook: the file discord_announce_webhook beside the database, read at each message,
+    so it is set or changed without a restart. Posted on a thread of its own, one at a time; one
+    Discord turns away is dropped, not tried again."""
+
+    def __init__(self, webhook: Path):
+        self.webhook_path = webhook
+        self.waiting = queue.Queue()
+        threading.Thread(target=self.run, daemon=True).start()
+
+    def webhook(self) -> str:
+        try:
+            url = self.webhook_path.read_text().strip()
+        except OSError:
+            return ""
+        return url if DISCORD_WEBHOOK.match(url) else ""
+
+    def rebirth(self, region: str, name: str, kind: str, count: int):
+        self.waiting.put((region, name, kind, count))
+
+    @staticmethod
+    def message(region: str, name: str, kind: str, count: int) -> dict:
+        def plain(text):
+            return re.sub(r"([\\*_~`|])", r"\\\1", text)
+        who = f"**{plain(name)}**" + (f", {plain(kind)}," if kind else "")
+        where = f" in {plain(region)}" if region else ""
+        return {"embeds": [{"title": f"Rebirth {roman(count)}",
+                            "description": f"{who} has been reborn{where}.",
+                            "color": DISCORD_COLOUR}],
+                "allowed_mentions": {"parse": []}}
+
+    def run(self):
+        while True:
+            region, name, kind, count = self.waiting.get()
+            url = self.webhook()
+            if not url:
+                continue
+            try:
+                Discord.call("POST", url, self.message(region, name, kind, count))
+                print(f"discord: {name} reborn ({count}) announced", flush=True)
+            except Exception as e:
+                print(f"discord: {name} reborn ({count}) not announced: {e}", flush=True)
 
 
 # ---- the handler ---------------------------------------------------------------------------------
@@ -1598,6 +1670,7 @@ class Handler(BaseHTTPRequestHandler):
     store: Store = None
     site: Path = None
     downloads: Path = None
+    armory: "armory.Armory" = None
 
     def finish(self):
         try:
@@ -1655,6 +1728,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         path = urlparse(self.path).path
+        if path.startswith("/api/armory/") and self.armory.post(self, path):
+            return
         if path == "/api/register":
             return self.register()
         if path == "/api/login":
@@ -1694,6 +1769,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.told_updates()
         if path == "/internal/discord":
             return self.tell_discord()
+        if path == "/internal/rebirth":
+            return self.told_rebirth()
         if path == "/internal/translations":
             return self.take_translations()
         if path == "/api/texts":
@@ -1964,13 +2041,13 @@ class Handler(BaseHTTPRequestHandler):
         """Every unit of the site, grouped as the /translate page shows them, each once (where it
         first stands), and each language's translations."""
         groups = {}
-        names = {"index.html": "Front page", "updates": "Latest updates", "js": "Messages"}
+        names = {"index.html": "Front page", "updates": "Latest updates", "js": "Messages", "armory": "Armory"}
         for file, (path, name) in i18n.PAGES.items():
             names.setdefault(file, name)
         for unit in site_units(self.site, self.store):
             groups.setdefault(unit["group"], []).append({"source": unit["source"], "tags": i18n.has_tags(unit["source"]),
                                                         "path": unit["path"]})
-        order = ["index.html", "updates", "account.html", "privacy.html", "contact.html", "mac.html", "linux.html", "js"]
+        order = ["index.html", "updates", "account.html", "privacy.html", "contact.html", "mac.html", "linux.html", "js", "armory"]
         return {"langs": {code: v[0] for code, v in i18n.LANGS.items()},
                 "groups": [{"id": g, "name": names[g], "units": groups[g]} for g in order if g in groups],
                 "texts": self.store.texts()}
@@ -2016,6 +2093,19 @@ class Handler(BaseHTTPRequestHandler):
         if not self.discord.webhook():
             return self.reply(409, {"error": "no webhook in discord_webhook beside the database"})
         self.discord.touch(day, at=0)
+        self.reply(200, {"ok": True})
+
+    def told_rebirth(self):
+        if not self.direct():
+            return self.reply(404, {"error": "not found"})
+        said = self.body() or {}
+        name = str(said.get("name", "")).strip()
+        count = said.get("count")
+        if not NAME.match(name) or not isinstance(count, int) or count < 1:
+            return self.reply(400, {"error": "name and count"})
+        region = " ".join(str(said.get("region", "")).split())[:40]
+        kind = " ".join(str(said.get("class", "")).split())[:40]
+        self.announce.rebirth(region, name, kind, count)
         self.reply(200, {"ok": True})
 
     def told_updates(self):
@@ -2209,6 +2299,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         url = urlparse(self.path)
+        # The Armory's pages, its release's files and its comments (web/armory.py).
+        if self.armory.get(self, url.path, url.query):
+            return
         if url.path == "/api/me":
             if self.old_launcher():
                 return self.reply(401, {"error": OLD_LAUNCHER})
@@ -2405,17 +2498,24 @@ def main():
     ap.add_argument("--port", type=int, default=8080)
     ap.add_argument("--site", default=str(here / "site"))
     ap.add_argument("--downloads", default=str(here / "downloads"))
+    ap.add_argument("--armory", default=str(armory.default_root(here)),
+                    help="the Armory's built release, or a folder of them (current, else the newest)")
     ap.add_argument("--discord-quiet", type=int, default=DISCORD_QUIET,
                     help="seconds a day's lines are left alone before #updates is told")
     args = ap.parse_args()
     Handler.store = Store(Path(args.db))
     print(f"{Handler.store.load_rosters()} characters as their regions last listed them", flush=True)
     Handler.discord = Discord(Handler.store, Path(args.db).parent / "discord_webhook", args.discord_quiet)
+    Handler.announce = Announce(Path(args.db).parent / "discord_announce_webhook")
     seeded = Handler.store.seed_texts(i18n.seeds(here / "i18n"))
     if seeded:
         print(f"{seeded} translations put in from web/i18n/", flush=True)
     Handler.site = Path(args.site)
     Handler.downloads = Path(args.downloads)
+    Handler.armory = armory.Armory(Path(args.armory), Handler.site)
+    # A page asks its pictures many at once (the Armory's thumbnails); the default backlog of 5
+    # resets the rest when Caddy is not in front (local runs).
+    ThreadingHTTPServer.request_queue_size = 128
     httpd = ThreadingHTTPServer((args.host, args.port), Handler)
     print(f"mu2-web on http://{args.host}:{args.port}, accounts in {args.db}", flush=True)
     httpd.serve_forever()

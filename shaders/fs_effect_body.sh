@@ -252,9 +252,38 @@ vec4 breath(float slot, vec2 uv, vec4 particle)
 	return vec4(colour * particle.a, 0.0);
 }
 
+// Mist (gfx::Blend::Mist, ours): dust's blur and bell, added as light rather than mixed --
+// Power Slash's smoke01, a mottled 64-pixel cloud with corners not quite black, which drawn
+// plain and brightened showed its grain and its square (the user, 2026-10-24: "smoke effects
+// nice and smooth without cut/crop effect").
+vec4 mist(float slot, vec2 uv, vec4 tint)
+{
+	vec2 step = vec2(0.045, 0.045);
+	vec3 sheet = sheetAt(slot, uv).rgb * 0.36
+	           + sheetAt(slot, uv + vec2(step.x, 0.0)).rgb * 0.16
+	           + sheetAt(slot, uv - vec2(step.x, 0.0)).rgb * 0.16
+	           + sheetAt(slot, uv + vec2(0.0, step.y)).rgb * 0.16
+	           + sheetAt(slot, uv - vec2(0.0, step.y)).rgb * 0.16;
+	float r = length(uv * 2.0 - 1.0);
+	float bell = 1.0 - smoothstep(0.2, 0.95, r);
+	return vec4(sheet * tint.rgb * tint.a * bell, 0.0);
+}
+
+// Glow (gfx::Blend::Glow, ours): added, the sheet read by its brightness. The tint colours
+// that brightness, and its square adds white, so the brightest texels of an orange sheet come
+// out a hot white core under the tint's colour -- MU's added art as its 8-bit screen clipped
+// it -- where `plain` keeps the sheet's own saturated hue (Requiem's burning ground, fx/requiem.h).
+vec4 glow(float slot, vec2 uv, vec4 tint)
+{
+	vec4 sheet = sheetAt(slot, uv);
+	float lum = dot(sheet.rgb, vec3(0.2126, 0.7152, 0.0722));
+	vec3 colour = (tint.rgb * lum + vec3_splat(lum * lum)) * 1.6;
+	return vec4(colour * sheet.a * tint.a, 0.0);
+}
+
 void main()
 {
-	// gfx::Effects's Kind: 0 mixed, 1 added, 2 flame, 3 smoke, 4 dust, 5 breath. Whole numbers
+	// gfx::Effects's Kind: 0 mixed, 1 added, 2 flame, 3 smoke, 4 dust, 5 breath, 6 mist, 7 glow. Whole numbers
 	// at every corner, so the interpolated value is within rounding of one.
 	float slot = v_material.x;
 	float code = v_material.y + 0.5;
@@ -264,6 +293,8 @@ void main()
 	else if (kind < 2.5) gl_FragColor = flame(slot, v_texcoord0, v_colour);
 	else if (kind < 3.5) gl_FragColor = smoke(slot, v_texcoord0, v_colour);
 	else if (kind < 4.5) gl_FragColor = dust(slot, v_texcoord0, v_colour);
-	else                 gl_FragColor = breath(slot, v_texcoord0, v_colour);
+	else if (kind < 5.5) gl_FragColor = breath(slot, v_texcoord0, v_colour);
+	else if (kind < 6.5) gl_FragColor = mist(slot, v_texcoord0, v_colour);
+	else                 gl_FragColor = glow(slot, v_texcoord0, v_colour);
 	gl_FragColor *= softness(code, gl_FragCoord.xy, v_material.z, v_wpos);
 }

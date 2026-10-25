@@ -6,6 +6,7 @@
 
 #include <zlib.h>
 
+#include "core/utf8.h"
 #include "net/rules_print.h"
 #include "sim/realm.h"
 
@@ -226,10 +227,15 @@ sim::Kept takeKept(In& in, int layout = kKeptLayout) {
     r.mana = in.i32();
     r.money = in.i64();
     r.learned = in.u64();
-    // Layouts 3 to 8 carry 39 skills' cools; 9 to 14 the Alquamos's too (40); 15 the Dark Lord's
-    // Force, Fire Burst, Electric Spike, Critical Damage, Summon, Fire Scream and Earthshake as
-    // well (kSkills 47). The rest stand cold.
-    const int cools = layout >= 15 ? sim::kSkills : layout >= 9 ? std::min(40, sim::kSkills) : std::min(39, sim::kSkills);
+    // Layouts 3 to 8 carry 39 skills' cools; 9 to 15 the Alquamos's too (40); 16 Fire Slash's
+    // and Power Slash's (42); 17 and 18 Swell Life's (43); 19 the Dark Lord's Force, Fire Burst,
+    // Electric Spike, Critical Damage, Summon, Fire Scream and Earthshake (kSkills 50). The rest
+    // stand cold.
+    const int cools = layout >= 19 ? sim::kSkills
+                      : layout >= 17 ? std::min(43, sim::kSkills)
+                      : layout >= 16 ? std::min(42, sim::kSkills)
+                      : layout >= 9 ? std::min(40, sim::kSkills)
+                                    : std::min(39, sim::kSkills);
     for (int i = 0; i < cools; ++i) r.coolsLeft[i] = in.i64();
     r.boonSkill = in.i32();
     r.boonDamageTaken = floatOf(in.u32());
@@ -238,9 +244,11 @@ sim::Kept takeKept(In& in, int layout = kKeptLayout) {
     r.might = in.i32();
     r.mightTicksLeft = in.i64();
     for (sim::Held& h : r.slots) h = takeHeld(in);
-    // Layouts 3 and 4 carry 24 quests, 5 to 7 carry 25, 8 to 11 carry 27; the rest stand untaken.
-    const int quests = layout >= 12 ? sim::kQuests
-                                    : std::min(layout >= 8 ? 27 : layout >= 5 ? 25 : 24, sim::kQuests);
+    // Layouts 3 and 4 carry 24 quests, 5 to 7 carry 25, 8 to 11 carry 27, 12 to 17 carry 28; the
+    // rest stand untaken.
+    const int quests = layout >= 18 ? sim::kQuests
+                                    : std::min(layout >= 12 ? 28 : layout >= 8 ? 27 : layout >= 5 ? 25 : 24,
+                                               sim::kQuests);
     for (int i = 0; i < quests; ++i) {
         sim::QuestProgress& q = r.quests[size_t(i)];
         q.state = sim::QuestState(in.u8());
@@ -251,10 +259,12 @@ sim::Kept takeKept(In& in, int layout = kKeptLayout) {
     r.found = in.u32();
     r.summonSkill = in.i32();
     r.summonHealth = in.i32();
+    // Eighteen across from layout 15; MU's eight before it, each into its own column and row.
     k.vault.clear();
-    for (int cell = 0; cell < sim::kVaultCells; ++cell) {
+    const bool wide = layout >= 15;
+    for (int cell = 0; cell < (wide ? sim::kVaultCells : sim::kOldVaultCells); ++cell) {
         const sim::Held h = takeHeld(in);
-        if (!h.empty()) k.vault.put(cell, h);
+        if (!h.empty()) k.vault.put(wide ? cell : sim::widenedCell(cell), h);
     }
     k.vault.setZen(in.i64());
     k.machine.clear();
@@ -284,10 +294,10 @@ sim::Kept takeKept(In& in, int layout = kKeptLayout) {
     if (layout >= 13) r.rebirths = in.i32();
     // Layout 14 each quest's life (QuestProgress::life); before it, every one the first.
     if (layout >= 14) {
-        for (sim::QuestProgress& q : r.quests) q.life = in.u8();
+        for (int i = 0; i < quests; ++i) r.quests[size_t(i)].life = in.u8();
     }
-    // Layout 15 the Dark Lord's Command; before it nobody had one.
-    if (layout >= 15) r.points.command = in.i32();
+    // Layout 19 the Dark Lord's Command; before it nobody had one.
+    if (layout >= 19) r.points.command = in.i32();
     return k;
 }
 
@@ -485,11 +495,31 @@ std::string newcomerLine(const std::string& name, const std::string& kind, const
 }
 
 std::string saidText(const std::string& text) {
+    // Any script's letters, as good UTF-8 only. Controls are spaces; bytes that are no letter, and
+    // the invisible ones that turn or hide what follows (bidi overrides, zero widths), go; and a
+    // letter takes three marks at most, so no line spills up and down the chat.
     std::string kept;
     kept.reserve(text.size());
-    for (const char c : text) {
-        const auto b = uint8_t(c);
-        kept.push_back(b < 0x20 || b == 0x7F ? ' ' : c);
+    int marks = 0;
+    for (size_t at = 0; at < text.size();) {
+        const size_t from = at;
+        const uint32_t cp = core::utf8::next(text, at);
+        if (cp >= 0x80 && at - from == 1) continue;  // a lone byte, not UTF-8
+        if (cp < 0x20 || (cp >= 0x7F && cp < 0xA0)) {
+            kept.push_back(' ');
+            marks = 0;
+            continue;
+        }
+        if ((cp >= 0x200B && cp <= 0x200F) || (cp >= 0x202A && cp <= 0x202E) ||
+            (cp >= 0x2060 && cp <= 0x206F) || cp == 0xFEFF || cp == 0xAD) {
+            continue;
+        }
+        const bool mark = (cp >= 0x0300 && cp <= 0x036F) || (cp >= 0x1AB0 && cp <= 0x1AFF) ||
+                          (cp >= 0x1DC0 && cp <= 0x1DFF) || (cp >= 0x20D0 && cp <= 0x20FF) ||
+                          (cp >= 0xFE20 && cp <= 0xFE2F);
+        if (mark && ++marks > 3) continue;
+        if (!mark) marks = 0;
+        kept.append(text, from, at - from);
     }
     const size_t first = kept.find_first_not_of(' ');
     if (first == std::string::npos) return {};

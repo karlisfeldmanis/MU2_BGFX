@@ -529,6 +529,13 @@ bool fits(const content::Tables& tables, const Wearer& who, const Held& what);
 // Whether it asks its class's second (OpenMU's class level 2, pipeline/cook.py's bits 8-10): the
 // 2nd wings and the second class's gear (docs/game/second-class-gear.md).
 inline bool secondClassOnly(const content::ItemRow& row) { return ((row.classes >> 8) & 7) != 0; }
+// Kanturu's gear: whatever asks level 380, MU's own requirement on the 380 sets and weapons. It
+// falls only on a map whose rules drop it (MapRow::kanturuGear) and never from the Golden Dragon's
+// hoard or Atlans's second-class roll (the user, 2026-10-25: "Kanturu only").
+constexpr int kKanturuGearLevel = 380;
+// Its weight in an ordinary drop's pool, a row's 1 / this (Realm::leave).
+constexpr int kKanturuGearWeight = 4;
+inline bool kanturuGear(const content::ItemRow& row) { return row.needLevel >= kKanturuGearLevel; }
 // Whether it asks `kin` in particular for his second class: the bit eight above his. The Staff of
 // Kundun is the Soul Master's and the Magic Gladiator's, who has no second (OpenMU S6
 // Weapons.cs:253: darkWizardClassLevel 2, magicGladiatorClassLevel 1).
@@ -848,7 +855,11 @@ enum class Power : uint8_t {
     Pollution = 76,
     // 77 was Chain Lightning for a day (2026-10-22), retired before release: the wizard's
     // Lightning plays its look and sound. The numbers run unbroken (drawRunePower walks them).
-    DrainLife = 77
+    DrainLife = 77,
+    // The Summoner's Book of Neil (kRequiem...).
+    Requiem = 78,
+    // The Summoner's first curse (kSleep...).
+    Sleep = 79
 };
 // **A rune's group** (the user, 2026-10-02: "we need to start group runes which is only for
 // specific classes, for specific weapon slots"): which classes may set it, a bit a class, and
@@ -935,8 +946,10 @@ struct PowerRow {
 };
 
 // **The Undying**, the first armour power and every class's (the user, 2026-09-30: "its for
-// all classes the same"): x1.2 on maximum health for each set in anything worn, armour or
-// shield. Devin's first clear pays it (sim/quests.cpp). Invention, as every rune is.
+// all classes the same"): +20% maximum health for each set in anything worn, armour or
+// shield -- added since 2026-10-24, x1.4 for two, where each multiplied before (x1.44, and
+// x1.73 for three: the multiplying stacks outgrew every other source). Devin's first clear pays
+// it (sim/quests.cpp). Invention, as every rune is.
 constexpr double kUndyingHealth = 1.2;
 // The Dungeon's three, the Golden Archer's chain (the user, 2026-09-30: "same runes for all, for
 // helm, pants, boots ... life steal, mana gain back, increase attack speed, increased chance of
@@ -981,9 +994,11 @@ constexpr double kSpiritOdds = 2.0 / 3.0;  // rand()%3 < 2
 constexpr int64_t kSpiritDelayTicks = 40;  // rand()%2000 ms, the realm's twenty ticks a second
 // **The stat runes** (the user, 2026-10-05: "+10% all stats ... +10% agility, energy, vitality,
 // str"), then 'lets keep only +10 and +30': Might is strength, Grace agility, Vigor vitality,
-// Insight energy, Ascendance all four, at 10 percent (Lesser) and 30 (Greater). Every class's, in
+// Insight energy, Ascendance all four, at 10 percent (Lesser) and 30 (Greater) -- Ascendance at 5
+// and 15 since 2026-10-25 (Discord #67). Every class's, in
 // any socket -- Ascendance a weapon's alone (the user, 2026-10-05: 'runes which increase all
-// stats only on weapons'). The share is of
+// stats only on weapons'), and a shield's since 2026-10-25 (Discord #67): see kAscendanceMost.
+// The share is of
 // the points he has spent, summed over every rune worn, and is added on top of them for all that
 // a point buys (Body::totalPoints) but never for what an item asks to be worn: a rune that let
 // the piece it sits in be worn would hold itself up. The tiers are mine: a single stat at 10 is
@@ -992,6 +1007,46 @@ constexpr int64_t kSpiritDelayTicks = 40;  // rand()%2000 ms, the realm's twenty
 HeroPoints statShareOf(Power power);
 // Nullptr for none and for a number no row has.
 const PowerRow* powerOf(uint8_t power);
+// Whether a second of it, in another socket or another thing worn, does more: what
+// Realm::redress and the rolls make of it, said on its tooltip (the user, 2026-10-24: "runes
+// which dont stack we need to say the dont stack, if the stack we say they stack").
+// `stacks` false where a second adds nothing; `says` the line.
+struct Stacking {
+    bool stacks;
+    std::string says;
+};
+Stacking stackingOf(Power power);
+// How many of the strongest runes count, worn anywhere (the user, 2026-10-24: "check which
+// stacking runes is way to powerfull to stuck and nerf them", then a cap on every rune "to much
+// nerfed", then "just add some limiters for most OP runes of how many they can be used"): some
+// twenty-six sockets worn would have summed Keen Eye to +260% critical, Bloodwell to 78% of every
+// wound back, Renewal to 78% life a 3 s, Ironskin to +210% defense, an element to +220% and a
+// stat rune to +800%. The first so many found count, the rest are idle; 0 is no limit -- the
+// weapon's runes, held to its sockets, and Wellspring to the jewellery's five. Steadfast and the
+// Plagues keep the ceilings they had. Ours.
+int stackMostOf(Power power);
+// The kin a `once` rune is one of a thing among (PowerRow::once, settable): Bulwark, Buckler and
+// Brace one, the three Volleys one, where only the strongest worn works; any other its own.
+// The user, 2026-10-24: "there is some runes which it does not make sense to stuck such as
+// Bulwark" -- Kinship, the Bulwarks and the Volleys are once since.
+Power onceKinOf(Power power);
+// The stat runes': the best four for each stat, Might and Ascendance alike -- six were +180%,
+// far above every other limited rune's top (2026-10-24).
+constexpr int kStatRuneMost = 4;
+// **Ascendance, Lesser and Greater together: three worn count, the strongest**, and no more than
+// two are set in a weapon and one in a shield (`settable`). Two swords held four where a staff or
+// a bow held three, +120% all stats to +90% at the time (Discord #67, 2026-10-25; the user: "lets allow
+// Ascendance max 3 runes, 2 on weapons and 1 on shield"). A weapon set with three before keeps
+// them, and still counts three at most. **A two-handed weapon holds all three** -- a bow, a
+// crossbow, a spear, a great sword or staff -- having no other hand to hold the third (the user,
+// 2026-10-25: "make first tests then we tune", after the sweep in tests/kits/ascendance.json).
+constexpr int kAscendanceMost = 3;
+constexpr int kAscendanceInWeapon = 2;
+constexpr int kAscendanceInTwoHanded = 3;
+constexpr int kAscendanceInShield = 1;
+inline bool ascendance(Power power) {
+    return power == Power::LesserAscendance || power == Power::GreaterAscendance;
+}
 // A rune paid to the Magic Gladiator that he may not set -- a Legendary of the knight's or the
 // wizard's, from a giver's path -- comes as its weaker kin he may: Arcane Echo as Faint Echo,
 // Pyroblaster as Scorch, Whirlwind as Eddy, Fireburst as Sparkburst, Hellfire as Brimstone,
@@ -1067,7 +1122,14 @@ constexpr int kRuneRarityLevel[kRarities] = {kCreationLevel, 40, 60, 1, kAncient
 // reaches that hold one, then one of that rarity evenly. 0 when none can be drawn.
 class Random;
 // `commons` false leaves the Common runes out: a reward's rune (Blood Castle) is never one.
-uint8_t drawRunePower(Random& dice, Kin kin, bool second, int level, bool commons = true);
+// `ancients` false leaves the Ancients out whatever the level: a kill's drop passes its map's
+// rules (MapRow::ancientRunes), so they fall from the Relics and the boss on, never the Ruins
+// (the user, 2026-10-25: "starting with relics only and boss").
+uint8_t drawRunePower(Random& dice, Kin kin, bool second, int level, bool commons = true,
+                      bool ancients = true);
+// One of `rarity` evenly, as drawRunePower draws within the rarity it picks, whatever the level:
+// the raid's dragon's Legendary runes (Realm::dragonHoard). 0 when none is his class's.
+uint8_t drawRuneOf(Random& dice, Kin kin, bool second, Rarity rarity);
 // The Bless (14, 13), the Soul (14, 14), the Life (14, 16) and the Chaos (12, 15): the
 // kJewelChance draws. The Life falls from 72 (OpenMU Version095d Jewels.cs:43), past Devias.
 bool refiningJewel(const content::ItemRow& row);
@@ -1279,6 +1341,46 @@ constexpr int kPollutionMost = 4;
 constexpr double kDrainChance = 0.10;  // a cast in ten; the user may tune it
 constexpr float kDrainForce = 0.525f;
 inline int drainLife(int energy, int level) { return energy / 15 + int(float(level) / 2.5f); }
+// **Requiem**, the sixth Ancient and the Summoner's Book of Neil: MU's AT_SKILL_SUMMON_REQUIEM
+// (224; S17 skill_template 224: 65 damage, wind; docs/plans/ancient-runes/requiem.md). A spell he
+// casts, or a swing that lands, has kRequiemChance to call Neil up against what he struck -- on a
+// cast with no monster struck, the nearest within kStormcallReach (Realm::runeAim) -- and up to
+// kRequiemMost bodies within kRequiemTiles of it, that one first and the rest in body order, all
+// chosen at the roll, as S17's SkillAttackRequiem counts them (WebZen's 5x5 square, OpenMU's
+// effect range 2). Each is struck kRequiemHoldTicks later, if it still stands -- WebZen's and
+// S17's 1000 ms hold, so the numbers land with the thorns -- by his rune's blow (runeStrike) at
+// kRequiemForce, wind: MU's 65 against Pollution's 80 at 1.2. And as WebZen's BUFFTYPE_BLOODDOT,
+// each body the blow lands on bleeds for kBleedTicks, a pulse every kBleedEvery -- MU's five
+// pulses, one a second -- each pulse kRequiemBleedShare of the landed blow: ours, a fifth of
+// MU's 60% (the user, 2026-10-25), so the rune stays in line with the other Ancients. A Requiem
+// on a body it already bleeds restarts it; on a body bleeding from something else (a knight's
+// Rend) it takes the bleed only when its pulse is the larger. A Soul Master's weapon only.
+constexpr double kRequiemChance = 0.10;  // a cast in ten; the user may tune it
+constexpr float kRequiemForce = 0.975f;
+constexpr float kRequiemTiles = 2.0f;
+constexpr int kRequiemMost = 4;
+constexpr int64_t kRequiemHoldTicks = 20;  // WebZen's and S17's 1000 ms
+constexpr float kRequiemBleedShare = 0.2f;
+// **Sleep**, the seventh Ancient and the Summoner's first curse: MU's AT_SKILL_SLEEP (219; S17
+// skill_template 219: no damage, range 6; docs/plans/ancient-runes/sleep.md). A spell he casts, or
+// a swing that lands, has kSleepChance to put to sleep up to kSleepMost monsters -- never the one
+// he struck, which his next blow would wake -- the nearest he sees within kStormcallReach, those
+// whose quarry is him first; none near, nothing. The 10% alone decides (the user, 2026-10-25),
+// where MU rolls `20 + energy/30 + curse/6` % after its hit. How long is MU's monster formula,
+// sleepSeconds -- `5 + energy/100 - level/20` s, WebZen's and OpenMU's -- capped at kSleepMostSeconds
+// (ours: OpenMU caps it at 20), and under one second it does not take; a second Sleep on a sleeper
+// keeps the longer, as WebZen's gObjCheckPowerfulEffect refuses the shorter. Asleep it neither
+// walks, turns, thinks nor swings (Body::sleepUntil), until its time or the first blow that lands
+// on it, anyone's (WebZen's ObjAttack.cpp:2570-2575); a miss or a poison, burn or bleed pulse does
+// not wake it. Monsters only; the Golden Dragon, the Statue of Saint and the Elites never sleep
+// (Realm::sleepProof). A Soul Master's weapon only.
+constexpr double kSleepChance = 0.10;  // a cast in ten; the user may tune it
+constexpr int kSleepMost = 3;          // ours: MU's Sleep holds one (the user, 2026-10-25)
+constexpr int kSleepMostSeconds = 8;   // ours (the user, 2026-10-25)
+inline int sleepSeconds(int energy, int level) {
+    const int seconds = 5 + energy / 100 - level / 20;
+    return seconds < kSleepMostSeconds ? seconds : kSleepMostSeconds;
+}
 // **The Common runes** (Rarity::Common), each a Legendary at a fraction, every one first-class:
 // **Cinder** Ring of Fire's ring and **Gust** Twister's storm, a knight's; **Chill** Frost Arrow's
 // freeze for half as long with half its wound, the elf's; **Faint Echo** Arcane Echo's second
@@ -1343,6 +1445,7 @@ constexpr float kSplitArrowSide = 0.25f;
 // Of the guard a shield would let him raise, with no shield on his arm; a Bulwark's is whole.
 constexpr float kBucklerGuard = 0.6f;
 constexpr float kBraceGuard = 0.3f;
+// Kindle's +15% Fire Ball each, added (2026-10-24; multiplied before), three counting.
 constexpr float kKindleForce = 1.15f;
 // **Immolate** (the user, 2026-10-06: 'chance to burn monsters to do some % of damage of hp and
 // their has to be some burn efekt to the monster'), Epic, any knight's weapon: a swing that lands
@@ -1455,6 +1558,8 @@ inline bool rideMap(uint32_t) { return true; }
 // NewUIMyInventory.cpp:351-354). Its manifest's `rules.flight`.
 constexpr uint32_t kIcarusMap = 10;
 bool canFly(const content::Tables& tables, const Satchel& bag);
+// The Horn of Uniria in the mount slot: the one thing that grounds him even with wings on.
+bool ridesUniria(const content::Tables& tables, const Satchel& bag);
 // **Blood Castle's ticket** (docs/worlds/blood-castle-port.md, Part A 2.2): the Scroll of Archangel
 // (13, 16) and the Blood Bone (13, 17) of one level make the Invisibility Cloak (13, 18) of that
 // level in the Chaos Machine. The level is the castle's, carried in the refinement.

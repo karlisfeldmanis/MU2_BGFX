@@ -57,7 +57,16 @@ soul master spells, ... only DK defense skill not DW soul barrier"):**
   (`Realm::knows`, realm_skills.cpp:79), so that gate has to let MG in.
   **Impale** (0.95d :79, the spear's, level 28) is not built in this game, for any class;
 - not Rageful Blow or Death Stab, which are Season skills that stay the knight's here.
-Power Slash (56) and Spiral Slash (57) are Season skills and are not in 0.95d.
+- **Fire Slash (55), his own** (the Icarus era's; built 2026-10-24, docs/plans/mg-skills/fire-slash.md):
+  a ribbon of fire over the half-disc in front of him, 2.5 tiles, 15 mana, 2 s; 45% a body to lose
+  10% defence for 10 s. Off the Orb of Fire Slash (12/27, drop level 60, level 120, strength 596).
+- **Power Slash (56), his own** (0.99B's; built 2026-10-24, docs/plans/mg-skills/power-slash.md): MU's
+  is his blades' weapon skill; ours is off the Orb of Power Slash (12/28, drop level 75, level 150, the
+  user's 2026-10-24 "Power Slash has to be orb"), learned for good, thrown with any weapon but a staff and
+  not while riding. Five waves fan out over a wedge ahead
+  of him (a tile either side at his feet to six at six tiles), the nearest five struck and the next six
+  at even odds, each as its wave reaches it; 15 mana, 2 s.
+Spiral Slash (57) is a Season skill and is not in 0.95d.
 
 **Defense and Soul Barrier (the user, 2026-10-07: "MG can use shield skill, and also can use Soul
 barrier, but only 1 DEF aura is usable at same time"):** both are his, overriding the list above;

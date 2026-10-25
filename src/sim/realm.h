@@ -630,6 +630,11 @@ struct Body {
     int64_t recallAt = 0;
     int32_t recallColumn = 0, recallRow = 0;
     uint32_t recallBy = 0;
+    // Swell Life on him, a knight's or his own: the share of his most health it adds, reckoned
+    // off the caster at the cast (sim::swellShare), and the tick it lapses. Not saved: it ends on
+    // death, as MU's StopByDeath, and five minutes is not worth a character's bytes.
+    float swell = 0.0f;
+    int64_t swellUntil = 0;
     // Being pushed (`Realm::push`): tiles a tick to slide, and how many ticks are left. While it
     // runs the body neither thinks nor walks.
     float pushX = 0.0f, pushY = 0.0f;
@@ -676,6 +681,10 @@ struct Body {
     int64_t chilledUntil = 0;
     // Frozen (a Frost Arrow rune, sim/items.h): neither walks nor swings until this tick.
     int64_t frozenUntil = 0;
+    // Asleep (the Ancient rune Sleep, sim/items.h kSleep...): held as frozen is until this tick, or
+    // until the first blow that lands on it. Not Temper::Asleep (nobody near) nor wakesAt (a
+    // risen beast's standing seconds). 0 for never.
+    int64_t sleepUntil = 0;
     // Poisoned (`SkillRow::poisonTicks`): until this tick, its next pulse, how much a pulse takes,
     // and who poisoned it. 0 for never.
     int64_t poisonUntil = 0, poisonNext = 0;
@@ -696,10 +705,18 @@ struct Body {
     int64_t bleedUntil = 0, bleedNext = 0;
     int32_t bleedDamage = 0;
     uint32_t bleedBy = 0;
+    // And whether that bleed is a Requiem's (the Ancient rune, sim/items.h kRequiem...), which
+    // the drawing shows as MU's magenta mist rather than drips.
+    bool bleedRequiem = false;
     // Weakened (the Ancient rune Weakness, sim/items.h kWeakness...): until this tick its blows
     // lose `weakCut` percent. 0 for never.
     int64_t weakUntil = 0;
     int32_t weakCut = 0;
+    // Its defence cut (Fire Slash's, SkillRow::cutTicks): until this tick every blow on it meets
+    // `defenseCut` percent less defence -- MU's BUFFTYPE_DEFENSE_POWER_DEC, its three skulls over
+    // the head (fx/fire_slash.h). 0 for never.
+    int64_t defenseCutUntil = 0;
+    int32_t defenseCut = 0;
     // And on the one who wears it: his Weakness field, MU's monster 821 -- until this tick, its
     // next look round, and the tile it lies on. 0 for none; one a caster.
     int64_t curseUntil = 0, curseNext = 0;
@@ -925,6 +942,9 @@ public:
     // A recording's (`--unseen`): no monster ever notices the hero, so he runs past their nests
     // and is never in a fight. One that is struck still turns on whoever struck it.
     void unseen(bool on) { unseen_ = on; }
+    // Whether a monster never sleeps (the Ancient rune Sleep, sim/items.h kSleep...): the raid's
+    // Golden Dragon, the Statue of Saint and an Elite, which shrug every hold.
+    bool sleepProof(const Body& one) const { return isBoss(one) || fixed(one) || one.elite; }
     // The demo's (`--wing-demo`): every kill in Icarus leaves the first wings. Never set in play.
     void wingDemo(bool on) { wingDemo_ = on; }
     // The crowd bench's fight (`--bench-fight`): a blow that would fell a monster or a player
@@ -1225,7 +1245,7 @@ public:
     int brokering() const { return me().brokering; }
     void closeBroker() { me().brokering = -1; }
     bool atBroker(uint32_t id) const;  // player `id` within kCounter of a Broker
-    int brokerTake(int slot, bool fromVault, const Held& expect);
+    int brokerTake(int slot, bool fromVault, const Held& expect, int pieces = 0);
     int brokerBuy(const Held& what, int64_t price, bool intoVault);
     int brokerGive(const Held& what);
     int64_t brokerZen(int64_t zen);
@@ -1860,6 +1880,9 @@ private:
     void earthshake(Body& hero, const SkillRow& row, uint32_t aimedAt, float force);
     void explode(Body& hero, const Body& struck, int32_t damage);
     void landBlasts();
+    // Power Slash: the bodies in its wedge (`Spread::Frustum`), WebZen's count of them, each a
+    // blow held back till its wave reaches it, unsaid.
+    void powerSlash(Body& hero, const SkillRow& row, float force);
     // A shower (SkillRow::showers): `kShowerRocks` rocks at random within the splash of `spot`
     // (tiles), or of the body `aimedAt` when there is none, each said as a `Loosed` with no body
     // and its ground in `x`/`y`; every monster within `kRockBlast` of one, in its sight, takes
@@ -2252,6 +2275,19 @@ private:
     };
     static constexpr int kSpiritBlowsMost = 96;
     SpiritBlow spiritBlows_[kSpiritBlowsMost] = {};
+    // Requiem's blows held (the Ancient rune, sim/items.h kRequiem...): each on one monster
+    // kRequiemHoldTicks after the roll, at the rune's force, his while he stands. Room for a few
+    // rolls inside a hold; a blow that finds no room is not held.
+    struct RequiemBlow {
+        int64_t at = 0;  // 0 for none
+        uint32_t target = 0;
+        float force = 1.0f;
+        uint32_t owner = 0;
+    };
+    static constexpr int kRequiemBlowsMost = 32;
+    RequiemBlow requiemBlows_[kRequiemBlowsMost] = {};
+    // One landing: his rune's blow, and the bleed off what it landed for.
+    void requiemStrike(Body& hero, const RequiemBlow& blow);
     // Whether this body's spirits are still out.
     bool spiritsGoing(uint32_t owner) const;
     // Whether a pool entry let go by `owner` lands on the player the realm works for now: his

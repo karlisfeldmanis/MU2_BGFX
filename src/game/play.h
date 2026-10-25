@@ -47,6 +47,9 @@
 #include "game/fx/weakness.h"
 #include "game/fx/pollution.h"
 #include "game/fx/drain.h"
+#include "game/fx/requiem.h"
+#include "game/fx/sleep.h"
+#include "game/fx/chains.h"
 #include "game/fx/ice.h"
 #include "game/fx/stains.h"
 #include "game/world/trap_show.h"
@@ -59,6 +62,8 @@
 #include "game/fx/thunder.h"
 #include "game/fx/wheel.h"
 #include "game/fx/fury.h"
+#include "game/fx/fire_slash.h"
+#include "game/fx/power_slash.h"
 #include "game/fx/hellfire.h"
 #include "game/fx/storm.h"
 #include "game/fx/inferno.h"
@@ -202,8 +207,11 @@ public:
     // The pointer, and what a click does with it. The ray is cast against the land's own
     // height field rather than against a flat plane: the town is up to two metres of relief
     // and a flat-plane pick is a tile or two out wherever the ground is not level.
+    // `past`, Alt held: the pointer passes through every monster, so a click walks between
+    // them or picks up what lies under them, and never fights (Piddy on Discord, 2026-10-25:
+    // "move through the mobs without attacking them" in Blood Castle and Devil Square).
     void point(const gfx::Camera& camera, const float* view, const float* proj, float pixelX,
-               float pixelY, int width, int height);
+               float pixelY, int width, int height, bool past = false);
     void leftClick();   // walk to the tile under the pointer, or fight what is standing on it
     // Space (the player's report, 2026-10-16: "spacebar does not join objects"): the nearest
     // drop he may take within a few tiles of him, walked to and picked up. `fresh` for the
@@ -528,10 +536,18 @@ public:
         sim::Held what;
     };
     std::vector<Looted> takeLooted() { return std::exchange(looted_, {}); }
+    // What came to him himself since the last ask: a thing off the ground, or Zen (`what` empty)
+    // with a kill or off the ground, as the lane posts it. The Helper's log (Helper::picked).
+    struct Picked {
+        sim::Held what;
+        int64_t zen = 0;
+    };
+    std::vector<Picked> takePicked() { return std::exchange(picked_, {}); }
     // The player in this world called `name`, by body id, or 0.
     uint32_t playerNamed(const std::string& name) const;
     std::vector<sim::Happening> dealNews_;
     std::vector<Looted> looted_;
+    std::vector<Picked> picked_;
     std::unordered_map<uint32_t, sim::Held> lyingSeen_;  // a lying thing's id to what it is
     // The last mix's answer while it stands: 1 made, 0 failed, -1 none since the box was last
     // filled or closed. The window's line in place of the recipe.
@@ -1031,6 +1047,12 @@ public:
         warpOwed_ = false;
         return was;
     }
+    // The same landing for the Helper, which a warp stops (app's PlayMode).
+    bool takeLanding() {
+        const bool was = landingOwed_;
+        landingOwed_ = false;
+        return was;
+    }
     // The guard: thrown when Defense lands, and kept on the body every frame after -- on
     // whichever player cast it, the hero or another. `skill` picks its look: the wizard's Magic
     // Shield is MU's blue, every other guard the knight's green.
@@ -1066,6 +1088,12 @@ public:
     Pollution& pollution() { return pollution_; }
     // And the Ancient rune Drain Life's motes, ghosts and strands. fx/drain.h.
     Drain& drain() { return drain_; }
+    // And the Ancient rune Requiem's Neil, thorns and burning ground. fx/requiem.h.
+    Requiem& requiem() { return requiem_; }
+    // And the Ancient rune Sleep's circle, rings and a sleeper's puffs. fx/sleep.h.
+    Sleep& sleep() { return sleep_; }
+    // And a Whirlwind rune's pull, the chains he hauls them in by. fx/chains.h.
+    Chains& chains() { return chains_; }
     // What a death leaves by the head: MU's CreateBlood. fx/stains.h.
     Stains& stains() { return stains_; }
     void gatherStains(gfx::Effects& effects) const {
@@ -1087,6 +1115,10 @@ public:
     Wheel& wheel() { return wheel_; }
     // The knight's Rageful Blow: his weapon thrown down and the ground broken. fx/fury.h.
     Fury& fury() { return fury_; }
+    // The gladiator's Fire Slash: its ribbon, the lightning at his hand, the skulls. fx/fire_slash.h.
+    FireSlash& fireSlash() { return fireSlash_; }
+    // The gladiator's Power Slash: its five waves and their smoke. fx/power_slash.h.
+    PowerSlash& powerSlash() { return powerSlash_; }
     // The wizard's Hellfire: the sigil and the wall of fire at his feet. fx/hellfire.h.
     Hellfire& hellfire() { return hellfire_; }
     // The wizard's Twister: the whirlwind walked out ahead of him. fx/storm.h.
@@ -1436,6 +1468,8 @@ private:
         float burningOwed = 0.0f;
         float sickOwed = 0.0f, bleedOwed = 0.0f;  // poison's smoke, a bleed's drips: owed
         float weakOwed = 0.0f;  // a Weakness curse's red, frames owed (fx/weakness.h)
+        float requiemOwed = 0.0f;  // a Requiem bleed's mist, frames owed (fx/requiem.h)
+        float sleepOwed = 0.0f;    // a Sleep rune's puffs, frames owed (fx/sleep.h)
         uint32_t burningDice = 0;
         float snortOwed = 0.0f;
         // An Elite Yeti's breath: the same puff out of Box03, in every action, one in four
@@ -1468,6 +1502,12 @@ private:
         // is under its fourth key (ZzzCharacter.cpp:10079). fx/fury.h.
         float handEmpty = 0.0f;
         float swingPace = 1.0f;  // how much faster than authored the swing clip must run
+        // And a second pace from a key on (Fire Slash's, sim::SkillRow::paceAfter): run at
+        // `swingPaceAfter` once `swinging` is down to `swingTurn`. 0 for one pace through.
+        float swingPaceAfter = 0.0f, swingTurn = 0.0f;
+        // The last defence cut seen on it (sim::Body::defenseCutUntil): one later is a cut laid
+        // or laid again, and sounds (fx/fire_slash.h).
+        int64_t cutSeen = 0;
         // Seconds of a flinch left to play, held as a swing is -- without it the idle took the
         // shock clip back on the next frame. A swing or a step ends it. See Play::flinch.
         float shocked = 0.0f;
@@ -1504,6 +1544,10 @@ private:
         // tick each is due to land by, 0 for none. Four, because the next bolt can be let go
         // before the last one lands; a miss lapses rather than paying for the next.
         int64_t owedHits[4] = {};
+        // A Whirlwind pull's crash, owed at the knight who pulled: when it starts, on the
+        // drawing's clock (tick - 1 + through_), kWhirlCrashLead ahead of the farthest body he
+        // pulled landing beside him. 0 for none.
+        double crashAt = 0.0;
     };
 
     Drawn* drawnOf(uint32_t id);
@@ -1809,6 +1853,7 @@ private:
     uint32_t riteBody_ = 0;  // whose rite it is: the kneel and the facing are his
     int riteCount_ = 1;      // and his rebirths, for the message when it is the hero's
     bool warpOwed_ = false;
+    bool landingOwed_ = false;
     bool homeOwed_ = false;
     int portalFrom_[2] = {-1, -1};  // takePortalFrom's tile, -1 for none
     float portalFacing_ = 0.0f;
@@ -1964,6 +2009,9 @@ private:
     Weakness weakness_;
     Pollution pollution_;
     Drain drain_;
+    Requiem requiem_;
+    Sleep sleep_;
+    Chains chains_;
     Stains stains_;
     TrapShow trapShow_;
     Poison poison_;
@@ -1983,6 +2031,8 @@ private:
     Firework firework_;
     Wheel wheel_;
     Fury fury_;
+    FireSlash fireSlash_;
+    PowerSlash powerSlash_;
     Hellfire hellfire_;
     Storm storm_;
     Inferno inferno_;
@@ -2148,6 +2198,10 @@ private:
         int weakness = -1;                     // SE_Ch_summoner_weakness, the Ancient rune Weakness's
         int pollution = -1;                    // Rargle, the Ancient rune Pollution's
         int drainLife = -1;                    // SE_Ch_summoner_skill07, the Ancient rune Drain Life's
+        int requiem = -1, requiemThorns = -1;  // SE_Ch_summoner_skill06_requiem01/02, Requiem's
+        int sleep = -1;                        // SE_Ch_summoner_skill03_sleep, the Ancient rune Sleep's
+        int bloodAttack = -1;                  // eBloodAttack, Fire Slash's cut landing on a body
+        int whirlPull = -1;                    // whirl_pull, a Whirlwind rune's pull landing
         // The knight's skills, one wave each -- and Cyclone and Slash share SWORD4, which is
         // MU's own reuse. Indexed by the skill table's own index, as the cooldowns are.
         int skill[sim::kSkills] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};

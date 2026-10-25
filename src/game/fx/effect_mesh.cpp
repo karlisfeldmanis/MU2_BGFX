@@ -73,7 +73,7 @@ void submitEffectAlong(gfx::Effects& effects, const std::vector<EffectCorner>& t
     for (int k = 0; k < 3; ++k) sprite.colour[k] = colour[k];
     sprite.colour[3] = alpha;
     const bool added = blend == gfx::Blend::Additive || blend == gfx::Blend::Flame ||
-                       blend == gfx::Blend::Breath;
+                       blend == gfx::Blend::Breath || blend == gfx::Blend::Glow;
     for (size_t i = 0; i + 2 < tris.size(); i += 3) {
         for (int k = 0; k < 4; ++k) {
             const EffectCorner& p = tris[i + size_t(std::min(k, 2))];

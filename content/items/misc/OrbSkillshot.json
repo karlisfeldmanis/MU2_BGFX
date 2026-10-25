@@ -1,6 +1,6 @@
 {
   "item": "OrbSkillshot",
-  "mu_name": "Orb of Skillshot",
+  "mu_name": "Orb of Multi-Shot",
   "mu_name_from": "OURS, the user's of 2026-09-28: 'in our game we will have orb of skillshot, that is multishot skill for any elf bow or crossbow'. 0.75 has no such orb: Triple Shot (24) comes only on a bow carrying the Skill option.",
   "why_this_one": "The elf's first skill and her quick-slot auto-attack (sim/skills.cpp, Skillshot). Since 2026-10-11 not early: the user, 'multi-shot is very poverfull, we need to icnrease min lvl for that orb and give it when finish the noria'. Peia's first clear pays it (sim/quests.cpp), no shelf sells it, and it asks level 25, read on the hand-in, since Noria's Song ends near 29. Its number, 21, is free in 0.75's group 12 (wings 0-2, the elf's orbs 8-11, the Jewel of Chaos 15; every other free number already carries one of this project's knight orbs).",
   "mesh": "Gem05",
@@ -32,7 +32,7 @@
   "skill": {
     "note": "What the orb teaches. Read once and gone.",
     "number": 24,
-    "name": "Skillshot",
+    "name": "Multi-Shot",
     "tells": "Three arrows loosed in a fan at a body up to nine tiles off, each flying on through everything in its way. One arrow is spent for every body struck.",
     "tells_from": "The skill's own line in sim/skills.cpp, kept letter for letter so the orb's tooltip and the skill's card cannot say different things.",
     "level_requirement": 25,

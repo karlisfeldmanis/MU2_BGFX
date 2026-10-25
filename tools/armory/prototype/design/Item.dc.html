@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Armory: Sword of Destruction</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&amp;family=Alegreya+Sans+SC:wght@700&amp;family=Alegreya+Sans:wght@400;500;700&amp;display=swap">
+<style>
+body{margin:0;background:#0D0B0A}
+a{color:#C9BFAE;text-decoration:none}a:hover{color:#F3E8D4}
+.pg{background:#0D0B0A;color:#D9CFBD;font:17px/1.55 'Alegreya Sans',system-ui,sans-serif;min-height:100vh}
+.pg *{box-sizing:border-box}
+.wrap{max-width:1160px;margin:0 auto;padding:0 24px}
+.top{position:relative;overflow:hidden}
+.top .bg{position:absolute;top:0;left:50%;transform:translateX(-50%);width:min(1280px,100%);height:auto;aspect-ratio:16/9;object-fit:cover;object-position:70% 20%;-webkit-mask-image:radial-gradient(ellipse 50% 50% at 50% 45%,#000 55%,transparent 100%);mask-image:radial-gradient(ellipse 50% 50% at 50% 45%,#000 55%,transparent 100%)}
+.top .shade{position:absolute;inset:0;background:radial-gradient(ellipse 60% 70% at 50% 55%,rgba(13,11,10,.82) 0%,rgba(13,11,10,.55) 60%,rgba(13,11,10,.3) 100%),linear-gradient(0deg,#0D0B0A 0%,rgba(13,11,10,0) 35%)}
+.bar{position:relative;display:flex;justify-content:space-between;align-items:center;height:84px;padding:0 clamp(16px,3vw,40px);font-size:18px}
+.bar img{height:50px;width:auto;display:block}
+.bar-links{display:flex;align-items:center;gap:clamp(14px,2.4vw,26px)}
+.pill{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 14px 0 12px;border-radius:19px;font-size:16px;font-weight:500;background:rgba(13,11,10,.55);box-shadow:inset 0 0 0 1px rgba(201,162,126,.28)}
+.pill svg{color:#C9A27E}
+.amenu{position:relative;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between;padding:8px 0 20px}
+.atabs{display:flex;gap:4px;padding:4px;border-radius:4px;background:#0A0706;border:1px solid #221A15}
+.atabs a{padding:8px 16px;border-radius:3px;font:700 15px/1 'Alegreya Sans SC',sans-serif;color:#C9BFAE}
+.atabs a[aria-current]{background:#2A2014;color:#F2D58A}
+.search{display:flex;gap:8px;flex:0 1 420px;min-width:240px}
+.search input,.field{flex:1;min-width:0;height:42px;padding:0 12px;border:1px solid #241B15;border-radius:3px;background:linear-gradient(#020101,#090706);color:#D9CFBD;font:inherit;font-size:16px}
+.search input:focus,.field:focus{outline:2px solid #A88B6C;outline-offset:-1px}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 18px;border:1px solid transparent;border-radius:4px;font:700 16px/1 'Alegreya Sans SC',sans-serif;cursor:pointer;background:linear-gradient(#2B211B,#140F0C) padding-box,linear-gradient(#8E7258,#4A3B2F 45%,#241B15) border-box;color:#D9CFBD}
+.red{background:linear-gradient(#7E1C14,#3A0B07) padding-box,linear-gradient(#E05A4A,#8A2418 45%,#4A100A) border-box;color:#F6E7D0}
+.card{display:flex;flex-direction:column;gap:6px;padding:20px 22px;background:linear-gradient(#17110E,#0B0807);border:1px solid #2E4A2E;border-radius:4px;box-shadow:0 18px 40px rgba(0,0,0,.6);font-size:16px;color:#C9BFAE}
+.c-rule{height:1px;background:#2E241D;margin:8px 0}
+.c-opt{color:#7FB2FF}
+.c-exc{color:#7FD66A}
+.c-sock{color:#C58CF5}
+.h3{margin:0 0 14px;font:700 15px/1 'Alegreya Sans SC',sans-serif;color:#8F8575}
+.tl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.tl li{position:relative;padding:0 0 26px 30px}
+.tl li::before{content:"";position:absolute;left:6px;top:10px;bottom:-4px;width:1px;background:#2E241D}
+.tl li:last-child::before{display:none}
+.tl .pip{position:absolute;left:0;top:4px;width:13px;height:13px;border-radius:50%;background:#F2C14E;box-shadow:0 0 0 3px #0D0B0A}
+.tl .pip.q{background:#4A4038}
+.diff{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;margin-top:10px;padding:12px 14px;border:1px solid #221A15;border-radius:4px;background:#0A0706;font-size:15px}
+.diff .k{font:700 12px/1.9 'Alegreya Sans SC',sans-serif;color:#8F8575}
+.was{color:#8F8575;text-decoration:line-through;text-decoration-color:#5A4E44}
+.now{color:#F3E8D4}
+.chip{display:inline-flex;align-items:center;min-height:34px;padding:0 12px;border-radius:17px;border:1px solid #2E241D;background:#0E0B09;color:#C9BFAE;font:500 15px/1 'Alegreya Sans',sans-serif;cursor:pointer}
+.chip[aria-pressed="true"]{background:#2A2014;border-color:#6A5426;color:#F2D58A}
+.chip:focus-visible,.btn:focus-visible,.vote:focus-visible{outline:2px solid #A88B6C;outline-offset:2px}
+.cm{display:flex;gap:14px;padding:16px 0;border-top:1px solid #1E1814}
+.vote{flex:0 0 48px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;height:56px;border:1px solid #2E241D;border-radius:3px;background:#0E0B09;color:#C9BFAE;font:700 15px/1 'Alegreya Sans',sans-serif;cursor:pointer}
+.vote[aria-pressed="true"]{border-color:#6A5426;color:#F2D58A}
+footer{padding:52px 0 36px;box-shadow:inset 0 1px 0 #1E1814;margin-top:72px}
+footer .wrap{display:flex;flex-direction:column;align-items:center;gap:24px}
+footer .logo{height:52px;width:auto;opacity:.3}
+footer p{margin:0 auto;max-width:660px;text-align:center;font-size:13px;line-height:1.7;color:rgba(212,200,184,.5)}
+.foot-links{display:flex;flex-wrap:wrap;justify-content:center;row-gap:8px;font:700 13px/1.2 'Alegreya Sans SC',sans-serif;letter-spacing:.1em}
+.foot-links a{padding:2px 16px;color:#C9BFAE}
+.foot-links a+a{box-shadow:inset 1px 0 0 #3A2E25}
+footer p.foot-legal{margin-top:-8px;font-size:12px;color:rgba(143,133,117,.65)}
+@media (max-width:560px){.pill span{display:none}}
+</style>
+</helmet>
+<div class="pg">
+
+<header class="top">
+<img class="bg" src="/_blob/990f252731067c642219b0e2d107d07a" alt="" aria-hidden="true">
+<div class="shade" aria-hidden="true"></div>
+<div class="bar">
+<a href="https://mu-classic.com/"><img src="/_blob/68b48e377ad6ffbb048aaaea78fa7598" alt="MU Classic" width="435" height="261"></a>
+<div class="bar-links">
+<a class="pill" href="https://discord.gg/frqaT5k3EF"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.3 4.4A19.7 19.7 0 0 0 15.4 3l-.6 1.3a18.3 18.3 0 0 0-5.5 0L8.6 3a19.6 19.6 0 0 0-4.9 1.5C.6 9.1-.3 13.7.1 18.2a19.8 19.8 0 0 0 6 3l1.3-2.1a12.8 12.8 0 0 1-2-1l.5-.4a14.1 14.1 0 0 0 12.2 0l.5.4c-.6.4-1.3.7-2 1l1.3 2.1a19.7 19.7 0 0 0 6-3c.5-5.2-.8-9.8-3.6-13.8zM8 15.4c-1.2 0-2.2-1.1-2.2-2.4S6.8 10.6 8 10.6s2.2 1.1 2.2 2.4-1 2.4-2.2 2.4zm8 0c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4z"></path></svg><span>Discord</span></a>
+<a href="https://mu-classic.com/account" style="font-weight: 500">[YOU]</a>
+</div>
+</div>
+<div class="wrap amenu">
+<nav class="atabs" aria-label="Armory"><a href="Main.dc.html" aria-current="page">Items</a><a href="Patches.dc.html">Updates</a></nav>
+<form class="search" role="search"><label for="q" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Find a character or an item</label><input id="q" type="search" placeholder="Find a character or an item"><button class="btn" type="button">Search</button></form>
+</div>
+</header>
+
+<main class="wrap">
+<nav aria-label="Breadcrumb" style="font-size: 15px; color: #8F8575; padding: 4px 0 18px">Armory › Items › Swords › <span style="color: #C9BFAE">Sword of Destruction</span></nav>
+
+<div style="display: flex; flex-wrap: wrap; gap: 40px; align-items: flex-start">
+
+<aside style="flex: 1 1 340px; max-width: 400px; display: flex; flex-direction: column; gap: 18px">
+<div class="card">
+<div style="display: flex; gap: 14px; align-items: flex-start; justify-content: space-between">
+<div>
+<div style="font: 700 24px/1.15 Cinzel, serif; color: #F3E8D4">Sword of Destruction</div>
+<div style="font-size: 15px; color: #8F8575">One-handed sword</div>
+</div>
+<img src="/_blob/ac205f1a5716feb97e2645c1211bcc2d" alt="" width="64" height="97" style="flex: 0 0 auto">
+</div>
+<div class="c-rule"></div>
+<div><b style="font: 700 24px/1 'Alegreya Sans', sans-serif; color: #F2C14E">82 ~ 90</b> <span>Damage</span></div>
+<span>Attack speed <b style="color: #F3E8D4">35</b></span>
+<span>Durability <b style="color: #F3E8D4">84</b></span>
+<span>Size <b style="color: #F3E8D4">1 × 4</b></span>
+<div class="c-rule"></div>
+<span>Requires Strength <b style="color: #F3E8D4">160</b>, Agility <b style="color: #F3E8D4">60</b></span>
+<span style="color: #7FD66A">Dark Knight, Magic Gladiator</span>
+<div class="c-rule"></div>
+<span style="font-size: 15px">Can roll Luck, Skill, Options, Excellent and +Socket</span>
+<span style="font-size: 15px; color: #8F8575">Drop level 82 · Tarkan, Blood Castle 6</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border: 1px solid #221A15; border-radius: 4px; background: #0A0706; font-size: 15px">
+<span class="h3" style="margin: 0">Related</span>
+<a href="Main.dc.html" style="text-decoration: underline">Other one-handed swords</a>
+<a href="Main.dc.html" style="text-decoration: underline">Everything the 23 Oct update changed</a>
+</div>
+</aside>
+
+<div style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 44px">
+
+<section aria-labelledby="hist">
+<div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; margin-bottom: 18px">
+<h2 id="hist" style="margin: 0; font: 700 28px/1.15 Cinzel, serif; color: #F3E8D4">Update history</h2>
+<span style="font-size: 15px; color: #F2C14E">2 changes, both in the 23 Oct update</span>
+</div>
+<ol class="tl">
+<li><span class="pip" aria-hidden="true"></span>
+<div style="display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline"><a href="Patches.dc.html" style="font: 700 16px/1.3 'Alegreya Sans SC', sans-serif; color: #F2C14E">23 October update</a><span style="color: #F3E8D4; font-weight: 500">Stronger with a second weapon</span></div>
+<div class="diff"><span class="k">Was</span><span class="was">Two matched weapons hit at 55% each; mixed 43%</span><span class="k">Now</span><span class="now">Two matched weapons hit at 62% each; mixed 49%</span></div>
+<button class="chip" type="button" style="margin-top: 10px" onClick="{{showOct23}}">{{n23}} comments on this change</button>
+</li>
+<li><span class="pip" aria-hidden="true"></span>
+<div style="display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline"><a href="Patches.dc.html" style="font: 700 16px/1.3 'Alegreya Sans SC', sans-serif; color: #F2C14E">23 October update</a><span style="color: #F3E8D4; font-weight: 500">Its runes set the level it asks</span></div>
+<div class="diff"><span class="k">Was</span><span class="was">Asked only its own level; runes asked none</span><span class="k">Now</span><span class="now">Asks the highest level among it and its runes: Common 20, Rare 80, Epic 150, Legendary 250. Any rebirth meets them all.</span></div>
+<button class="chip" type="button" style="margin-top: 10px" onClick="{{showOct22}}">{{n22}} comments on this change</button>
+</li>
+<li><span class="pip q" aria-hidden="true"></span>
+<div style="display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline"><span style="font: 700 16px/1.3 'Alegreya Sans SC', sans-serif; color: #8F8575">14 October 2026</span><span style="color: #C9BFAE">In the game since the first release</span></div>
+</li>
+</ol>
+</section>
+
+<section aria-labelledby="cmh">
+<h2 id="cmh" style="margin: 0 0 16px; font: 700 28px/1.15 Cinzel, serif; color: #F3E8D4">Comments</h2>
+
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 16px; border: 1px solid #221A15; border-radius: 4px; background: #0A0706; margin-bottom: 18px">
+<label for="cmt" style="font-size: 15px; color: #C9BFAE">Comment as <b style="color: #F3E8D4">[YOUR ACCOUNT NAME]</b></label>
+<textarea id="cmt" class="field" rows="3" placeholder="How does it play since the update?" style="height: auto; padding: 10px 12px; resize: vertical" value="{{draft}}" onChange="{{onDraft}}"></textarea>
+<div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between">
+<div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center"><span style="font-size: 14px; color: #8F8575">About</span>
+<sc-for list="{{abouts}}" as="t" hint-placeholder-count="3"><button class="chip" type="button" aria-pressed="{{t.on}}" onClick="{{t.pick}}">{{t.label}}</button></sc-for>
+</div>
+<button class="btn red" type="button" disabled="{{noPost}}" onClick="{{post}}">Post</button>
+</div>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px">
+<sc-for list="{{filters}}" as="f" hint-placeholder-count="4"><button class="chip" type="button" aria-pressed="{{f.on}}" onClick="{{f.pick}}">{{f.label}}</button></sc-for>
+</div>
+
+<sc-for list="{{shown}}" as="c" hint-placeholder-count="2">
+<article class="cm">
+<button class="vote" type="button" aria-pressed="{{c.mine}}" aria-label="Agree" onClick="{{c.vote}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M5 15l7-7 7 7"></path></svg>{{c.votes}}</button>
+<div style="min-width: 0; display: flex; flex-direction: column; gap: 4px">
+<div style="display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; font-size: 15px"><a href="Main.dc.html" style="color: #F3E8D4; font-weight: 700">{{c.who}}</a><span style="color: #8F8575">{{c.cls}}</span><span style="color: #F2C14E">{{c.aboutLabel}}</span><span style="color: #8F8575">{{c.when}}</span></div>
+<p style="margin: 0">{{c.text}}</p>
+</div>
+</article>
+</sc-for>
+</section>
+</div>
+</div>
+</main>
+
+<footer>
+<div class="wrap">
+<img class="logo" src="/_blob/68b48e377ad6ffbb048aaaea78fa7598" alt="MU Classic" width="435" height="261">
+<p>To WebZen, and to MU Online fans across the years: This is a love letter, not a business. MU Online was part of our childhood: the first steps out of Lorencia, the nights spent hunting in Dungeon and Devias, the friends we made and the hours we lost together in a world that felt like our own. For many of us, those memories never faded, and this game was made out of that love. Every character, item, monster, map, sound and name in it belongs to WebZen Inc., who created MU and gave a whole generation those memories. This is not our game; it's a tribute to theirs.</p>
+<nav class="foot-links" aria-label="Site"><a href="https://mu-classic.com/mac">Mac</a><a href="https://mu-classic.com/linux">Linux</a><a href="https://discord.gg/frqaT5k3EF">Discord</a><a href="https://mu-classic.com/privacy">Privacy</a><a href="https://mu-classic.com/contact">Contact</a></nav>
+<span style="display: inline-flex; align-items: center; justify-content: center; width: 168px; height: 67px; border: 1px dashed #3A2D24; border-radius: 3px; font-size: 13px; color: #8F8575">[Nostalgic.gg vote]</span>
+<p class="foot-legal">© 2026 MU Classic · MU Online is a trademark of WebZen Inc. · Unofficial and non-commercial</p>
+</div>
+</footer>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      filter: 'all', about: 'oct23', draft: '',
+      comments: [
+        { id: 1, who: '[PLAYER]', cls: 'Blade Knight 312', about: 'oct23', when: '23 Oct', text: '[Sample comment about dual wielding two of these after the update]', votes: 7, mine: false },
+        { id: 2, who: '[PLAYER]', cls: 'Dark Knight 180', about: 'oct22', when: '23 Oct', text: '[Sample comment about the Legendary rune now asking level 250]', votes: 3, mine: false },
+        { id: 3, who: '[PLAYER]', cls: 'Magic Gladiator 220', about: 'item', when: '18 Oct', text: '[Sample comment about where it drops]', votes: 1, mine: false }
+      ]
+    };
+  }
+  renderVals() {
+    var self = this, s = this.state;
+    var names = { item: 'The item', oct23: 'Dual wield change', oct22: 'Rune level change' };
+    var count = function (k) { return s.comments.filter(function (c) { return c.about === k; }).length; };
+    var filters = [['all', 'All'], ['oct23', 'Dual wield change'], ['oct22', 'Rune level change'], ['item', 'The item']].map(function (f) {
+      return { label: f[1] + ' · ' + (f[0] === 'all' ? s.comments.length : count(f[0])), on: s.filter === f[0] ? 'true' : 'false', pick: function () { self.setState({ filter: f[0] }); } };
+    });
+    var abouts = ['oct23', 'oct22', 'item'].map(function (k) {
+      return { label: names[k], on: s.about === k ? 'true' : 'false', pick: function () { self.setState({ about: k }); } };
+    });
+    var shown = s.comments.filter(function (c) { return s.filter === 'all' || c.about === s.filter; }).map(function (c) {
+      return Object.assign({}, c, { aboutLabel: 'on ' + names[c.about], vote: function () {
+        self.setState({ comments: self.state.comments.map(function (x) { return x.id === c.id ? Object.assign({}, x, { mine: !x.mine, votes: x.votes + (x.mine ? -1 : 1) }) : x; }) });
+      } });
+    });
+    return {
+      filters: filters, abouts: abouts, shown: shown, draft: s.draft,
+      n23: count('oct23'), n22: count('oct22'),
+      showOct23: function () { self.setState({ filter: 'oct23' }); },
+      showOct22: function () { self.setState({ filter: 'oct22' }); },
+      onDraft: function (e) { self.setState({ draft: e.target.value }); },
+      noPost: !s.draft.trim(),
+      post: function () {
+        var t = self.state.draft.trim();
+        if (!t) return;
+        self.setState({ draft: '', filter: 'all', comments: [{ id: Date.now(), who: '[YOUR ACCOUNT NAME]', cls: '', about: self.state.about, when: 'just now', text: t, votes: 0, mine: false }].concat(self.state.comments) });
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

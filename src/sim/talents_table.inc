@@ -148,7 +148,7 @@ inline constexpr TalentColumn kFairyElfTalents[] = {
         {"Draw", "bow and crossbow damage", 435, {TalentStat::Damage, 1.0f, Hold::Bow, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Quick Draw", "attack speed", 438, {TalentStat::AttackSpeed, 1.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Eagle Eye", "+10% excellent damage chance with a bow or crossbow", 369, {TalentStat::ExcellentChance, 10.0f, Hold::Bow, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
-        {"Hail", "Skillshot damage", 414, {TalentStat::SkillDamage, 2.0f, Hold::Any, 0, {24, 0, 0, 0, 0}, Special::None, 0, 0, false}},
+        {"Hail", "Multi-Shot damage", 414, {TalentStat::SkillDamage, 2.0f, Hold::Any, 0, {24, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Sure Shot", "attack success rate", 325, {TalentStat::AttackRate, 2.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Icy Shot", "10% chance an arrow chills its target for 3 s", 373, {TalentStat::Special, 0.0f, Hold::Bow, 0, {0, 0, 0, 0, 0}, Special::ChillOnHit, 10, 3, false}},
         {"Steady Aim", "critical damage chance", 442, {TalentStat::CriticalChance, 0.5f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},

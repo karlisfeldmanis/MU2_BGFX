@@ -127,6 +127,7 @@ bool Realm::turn(Body& one) {
 
 void Realm::advance(Body& one) {
     if (one.frozenUntil > tick_) return;  // frozen: not a step, not a turn
+    if (one.sleepUntil > tick_) return;   // a Sleep rune's: held as frozen is (kSleep...)
     // A body that is standing still still comes round: a fighter between two blows turns onto
     // what it is hitting, and a walk that has just been given spends its first tick or two
     // turning before any ground is covered.
@@ -271,9 +272,11 @@ bool Realm::throughGate(Body& hero) {
         say(What::Barred, hero, gate->number, moveLevel(gate->level, hero.kin));
         return false;
     }
-    // And Icarus's: Barred with level -1 is the drawing's "wings or a Dinorant".
+    // And Icarus's: Barred with level -1 is the drawing's "wings or a Dinorant", -2 its "a
+    // Uniria cannot fly" (2026-10-25, dong on Discord, on a Uniria without wings: "Why I can't
+    // get in").
     if (gate->fly && !canFly(*tables_, me().bag)) {
-        say(What::Barred, hero, gate->number, -1);
+        say(What::Barred, hero, gate->number, ridesUniria(*tables_, me().bag) ? -2 : -1);
         return false;
     }
     return passGate(hero, *gate);
@@ -499,6 +502,7 @@ bool Realm::beside(const Body& target, int radius, const Body& walker, int* colu
 
 void Realm::think(Body& beast) {
     if (beast.frozenUntil > tick_) return;  // frozen: no thought and no swing until it thaws
+    if (beast.sleepUntil > tick_) return;   // asleep (a Sleep rune's): nor while it sleeps
     if (beast.wakesAt > tick_) return;      // risen, and standing its five seconds
     const content::MonsterKind& kind = tables_->kinds[size_t(beast.kind)];
 

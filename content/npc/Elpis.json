@@ -6,8 +6,8 @@
   "object_type": -1,
   "why_this_one": "Kanturu's NPCs (the user, 2026-10-23: 'lets add kunturu npcs, if we dont have them cook them', then 'Both' -- MU's two in their maps and camp folk in the Ruins). MU's Elpis refines Gemstones into Jewels of Harmony; that system is not built, so she stands and is talked to.",
   "profile": "npc",
-  "scale": 2.5,
-  "scale_from": "CreateCharacter stands her at `c->Object.Scale = 2.5f`, one tile off her spot, (x + 1, y - 1) (ZzzCharacter.cpp:14599-14600), MU's own.",
+  "scale": 1.3,
+  "scale_from": "MU stands her at c->Object.Scale = 2.5f, one tile off her spot, (x + 1, y - 1) (ZzzCharacter.cpp:14599-14600), as the Tower of Refinement's giant. Ours 1.3, about one and a half times a hero, since she stands in the Ruins camp among Baz and Amy (the user, 2026-10-25: \"scale down her size\").",
   "sheets": {
     "kannpc01": "npc_kannpc01.png",
     "kannpc02": "npc_kannpc02.png",

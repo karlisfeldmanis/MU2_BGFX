@@ -133,6 +133,7 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     travel_.open(interface_, assetDir, &arts_);
     goBack_.open(interface_);
     lineChip_.open(interface_);
+    rejoinBadge_.open(interface_);
     squareResult_.open(interface_);
     herald_.open(interface_);
     minimap_.open(interface_);
@@ -173,6 +174,7 @@ void Desk::shutdown() {
     travel_.close();
     goBack_.close();
     lineChip_.close();
+    rejoinBadge_.close();
     squareResult_.close();
     herald_.close();
     minimap_.close();
@@ -186,6 +188,14 @@ void Desk::shutdown() {
     inspectStagePicture_.shutdown();
     inspectFigure_.shutdown();
     for (Portrait& face : classFaces_) face.shutdown();
+    // The target's face and the party's too. A Portrait does not let its target go by itself,
+    // and the desk is shut at every gate, warp and trip to the character screen: left, each
+    // world handed on took one of bgfx's 128 frame buffers per face. A party that travelled
+    // ran out, and the vault's stage, refused its buffer, drew its items over the screen's
+    // top-left corner (GeraColorz in Discord, 2026-10-24).
+    portrait_.shutdown();
+    for (auto& [name, face] : partyFaces_) face.shutdown();
+    partyFaces_.clear();
     arrival_.shutdown();
     reborn_.shutdown();
     tally_.shutdown();
@@ -448,10 +458,13 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // windows under it do not hear a click on its OK and a 1 typed into it is not the first
     // potion drunk. `typing` is taken before the box answers, so the frame Return closes it on
     // does not hand the same keys on either. The cursor is still drawn where the pointer is.
-    const bool typing = amount_.up() || report_.up() || whatsNew_.up() || broker_.typing() || guild_.typing() || guildMake_.typing();
+    const bool typing = amount_.up() || report_.up() || whatsNew_.up() || broker_.typing() || guild_.typing() || guildMake_.typing() ||
+                        helperWindow_.typing();
     // The chat's keyboard, taken before the box spends the script's: it types only while it is
     // open and no box is up, and its Enter and Escape are then its own.
     const bool chatTyping = chat_.typing() && !typing;
+    // Its settings, showing in its panel, take Escape the same way: back to the chat.
+    const bool chatSetting = chat_.setting() && chat_.showing() && !chatHidden() && !typing;
     const std::string typedNow = window.typed() + scriptTyped_;
     const bool enterNow = window.entered() || scriptEnter_;
     const bool escapeNow = window.escaped() || scriptEscape_;
@@ -462,7 +475,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // And a quest giver's window, which is answered as the box is and takes Escape before the menu.
     const bool questing = play.isOpen() && (play.realm().questing() >= 0 || journal_ >= 0);
     const bool escape =
-        !typing && !chatTyping && !questing && (scriptEscape_ || (holdEscape_ && window.escaped()));
+        !typing && !chatTyping && !chatSetting && !questing && (scriptEscape_ || (holdEscape_ && window.escaped()));
     {
         Amount::Result result;
         const std::string typed = window.typed() + scriptTyped_;
@@ -687,9 +700,32 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             place += (place.empty() ? "" : "  \xC2\xB7  ") + std::to_string(hero->column()) +
                      ", " + std::to_string(hero->row());
         }
-        // The server's line gone (Play::cut): the game holds and the Disconnected page is up
-        // over it, with every other window shut, and stays up -- Escape does not take it down.
-        if (play.isOpen() && play.cut() && !menu_.lost()) {
+        // The server's line gone (Play::cut): the game holds. While PlayMode's reconnect may
+        // bring him back by itself (Play::rejoinIn), the badge turns in the top left and
+        // nothing else changes; the Disconnected page comes when it cannot -- played
+        // elsewhere, unreadable, another build -- or has not in kQuietMost (RejoinBadge).
+        constexpr float kQuietMost = 30.0f;
+        const bool cut = play.isOpen() && play.cut();
+        const bool quiet = cut && !menu_.lost() && play.rejoinIn() >= 0.0 && !rejoinOutdated_ &&
+                           rejoinQuiet_ < kQuietMost;
+        if (quiet) {
+            rejoinQuiet_ += seconds;
+            if (!rejoinQuietSaid_) {
+                const std::string why = play.cutWhy();
+                core::logf("window: reconnecting under the badge -- %s", why.empty() ? "no reason kept" : why.c_str());
+                rejoinQuietSaid_ = true;
+            }
+        } else if (!cut) {
+            rejoinQuiet_ = 0.0f;
+            rejoinQuietSaid_ = false;
+        }
+        {
+            const float u = tip::unit();
+            rejoinBadge_.update(seconds, quiet, rejoinCount_, 10.0f * u, 4.0f * u);
+        }
+        // Then the Disconnected page over it, with every other window shut, and it stays up --
+        // Escape does not take it down.
+        if (cut && !quiet && !menu_.lost()) {
             closeTalents(false);
             inventoryOpen_ = characterOpen_ = false;
             travel_.hide();
@@ -849,13 +885,18 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         HelperWindow::Result result;
         int32_t bar[Hud::kSkillBoxes];
         for (int k = 0; k < Hud::kSkillBoxes; ++k) bar[k] = bound_[k];
-        helperWindow_.update(seconds, play, helperSettings_, bar, helping_, helperStats_, float(window.width()),
-                             float(window.height()), typing ? Pointer{} : pointer, &result);
+        // Its name field types as the broker's does: the keys its own, and the pointer while it has them.
+        HelperWindow::Keys keys;
+        if (helperWindow_.typing()) keys = {typedNow, window.backspaces(), enterNow, escapeNow};
+        helperWindow_.update(seconds, play, helperSettings_, bar, helping_, helperStats_, helperLog_, float(window.width()),
+                             float(window.height()), helperWindow_.typing() && !amount_.up() ? real : typing ? Pointer{} : pointer,
+                             keys, &result);
         if (result.clicked) click();
         if (result.changed) helperChanged_ = true;
         if (result.close) helperWindow_.hide();
         if (result.start) helperAsk_ = 1;
         if (result.stop) helperAsk_ = 0;
+        if (result.clearLog) helperClear_ = true;
         if (result.health >= 0 || result.mana >= 0) {
             play.setAutoDrink(result.health, result.mana);
             core::logf("window: auto-drink %d%% health, %d%% mana", result.health, result.mana);
@@ -1038,7 +1079,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                      hud_.buffsLeft() - 16.0f * u, chatPointer,
                      chat_.over(chatPointer.x, chatPointer.y) && !chatHidden() ? window.scroll() : 0.0f,
                      chatTyping ? typedNow : std::string(), chatTyping ? window.backspaces() : 0,
-                     (chatTyping || free) && enterNow, chatTyping && escapeNow, toggleChat, play,
+                     (chatTyping || free) && enterNow, (chatTyping || chatSetting) && escapeNow, toggleChat, play,
                      chatTyping && window.tabbed(), chatTyping ? window.arrows() : 0);
         // While the Helper helps, what its window says of invites and trades is answered for him
         // (HelperSettings::invites, noTrades): the card shows it answered.
@@ -1326,6 +1367,9 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         bagForBroker_ = !inventoryOpen_;
         inventoryOpen_ = true;
     }
+    // A screen too narrow for the market beside the bag: the market stands in the middle, and the
+    // bag over it would hide its cards (game/ui/broker.h besideBag).
+    if (brokering && inventoryOpen_ && !Broker::besideBag(float(window.width()))) inventoryOpen_ = false;
     if (!brokering && brokering_ && bagForBroker_) inventoryOpen_ = bagForBroker_ = false;
     brokering_ = brokering;
     if (play.isOpen()) {
@@ -1986,8 +2030,9 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
         const bool court = row.aura() && tables.map == sim::kBloodCastleMap;
         // Nor a summon where none is raised: Icarus (Realm::conjure, sim::MapRow::summons).
         const bool raised = row.summons <= 0 || sim::summonsHere(row, uint32_t(tables.map));
+        // Power Slash never ridden, as MU greys it on a mount (NewUIMainFrameWindow.cpp:2159-2163).
         return hero.alive() && (!inTown || court) && armedFor(row) && hero.mana >= sim::manaCostOf(hero, row) &&
-               (!row.mounted || hero.riding) && raised;
+               (!row.mounted || hero.riding) && (!row.afoot || !hero.riding) && raised;
     };
 
     fan_.clear();
@@ -2108,6 +2153,35 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
             }
         }
     }
+    // His party's experience boon while he is in one: how many of it stand near enough to share
+    // a kill (Realm::partyInView's ten tiles and level gap, reckoned round him), and the percent
+    // that pays.
+    if (const net::PartyState& party = play.party(); party.members.size() > 1 && standing < Hud::kBoons) {
+        std::vector<const sim::Body*> near{&hero};
+        for (const auto& member : party.members) {
+            const sim::Body* one = member.here != 0 ? realm.find(member.here) : nullptr;
+            if (!one || one == &hero || one->gone || !one->alive()) continue;
+            const float dx = one->x - hero.x, dy = one->y - hero.y;
+            if (dx * dx + dy * dy < sim::kPartyReach * sim::kPartyReach) near.push_back(one);
+        }
+        int top = 0;
+        for (const sim::Body* one : near) top = std::max(top, one->level);
+        std::erase_if(near, [&](const sim::Body* one) { return one->level < top - sim::kPartyGap; });
+        // Himself past the gap: he shares nothing, whoever else is near.
+        const bool gapped = hero.level < top - sim::kPartyGap;
+        bool wizard = false, knight = false, elf = false;
+        for (const sim::Body* one : near) {
+            wizard |= one->kin == sim::Kin::DarkWizard;
+            knight |= one->kin == sim::Kin::DarkKnight;
+            elf |= one->kin == sim::Kin::FairyElf;
+        }
+        Hud::Boon& boon = boons[standing++];
+        boon.party = true;
+        boon.stacks = gapped ? 0 : int(near.size());
+        boon.idle = gapped;
+        boon.trio = wizard && knight && elf;
+        boon.share = 1.0f;
+    }
     // Her summon while it stands (Realm::summoned): hidden in a safe zone it is not standing.
     if (const sim::Body* summon = realm.summoned();
         summon && summon->alive() && !summon->gone && summon->maxHealth > 0 && standing < Hud::kBoons) {
@@ -2144,6 +2218,15 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
         boon.skill = sim::skill::kCriticalDamage;
         boon.seconds = left * 0.05f;
         boon.share = std::min(1.0f, left / float(std::max(1, sim::keenTicksOf(hero.totalPoints()))));
+    }
+    // A knight's Swell Life, his or one of his party's, beside both: its own clock (Body::swellUntil).
+    if (hero.swellUntil > realm.tick() && standing < Hud::kBoons) {
+        const sim::SkillRow* row = sim::skillNumbered(sim::skill::kSwellLife);
+        const float left = float(hero.swellUntil - realm.tick());
+        Hud::Boon& boon = boons[standing++];
+        boon.skill = sim::skill::kSwellLife;
+        boon.seconds = left * 0.05f;
+        boon.share = row && row->swellTicks > 0 ? left / float(row->swellTicks) : 0.0f;
     }
     if (const int64_t left = realm.aleLeft(); left > 0) {
         Hud::Boon& boon = boons[standing++];
@@ -2437,14 +2520,23 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm) c
     weapon.values.push_back({sim::familiesListed(row.families), met, false, "", 0});
     // A spell asks nothing of the hand, so it has no such row. Nor does a mount's skill, which
     // asks for the mount under him instead: white while he rides it, red off it.
-    // Nor one any hand throws -- a buff or a summon -- whose list is empty.
+    // Nor one any hand throws -- a buff or a summon -- whose list is empty. Nor one any weapon
+    // throws, every knight's blow since e4054cd5 (the user, 2026-10-23: "we can remove that
+    // completly because all orbs work for all weapons"): "Any weapon" asks nothing of the hand.
+    // What is left are the real asks, Defense's shield and the elf's bows.
     if (!row.wizardry && !row.mounted && !(row.anyHand && row.onSelf()) &&
+        (row.families & sim::arms::kEvery) != sim::arms::kEvery &&
         !sim::familiesListed(row.families).empty()) {
         facts.rows.push_back(weapon);
     }
     if (row.mounted) {
         facts.rows.push_back(line("Mount", "Horn of Dinorant",
                                   hero.riding ? tip::Tone::White : tip::Tone::Red));
+    }
+    // Power Slash: no mount under him -- red while he rides.
+    if (row.afoot) {
+        facts.rows.push_back(line("Mount", "Not while riding",
+                                  hero.riding ? tip::Tone::Red : tip::Tone::White));
     }
     // **Her walking summons, not over Icarus** (Realm::conjure refuses them there; the user,
     // 2026-10-20: "dont allow walking pets for elf in icarus, basically we need to show that its
@@ -2913,6 +3005,8 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     interface_.add(hud_.glowCanvas());  // the ember round its Talents button
     // The line's chip in the corner over the minimap, its list over whatever lies under it.
     if (lineChip_.showing()) interface_.add(lineChip_.canvas());
+    // And the rejoin's badge in the other corner, the same kind of thing.
+    if (rejoinBadge_.showing()) interface_.add(rejoinBadge_.canvas());
     // A party invite, centred over the plate where a fight's Zen is said.
     if (chat_.inviting()) interface_.add(chat_.invite());
     if (characterOpen_) {

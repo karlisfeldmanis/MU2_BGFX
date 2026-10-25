@@ -1,0 +1,209 @@
+{
+  "item": "Object16",
+  "mu_name": "Object16",
+  "mu_name_from": "kanturu_relics's object slot: type N is Object{N+1}.bmd, from Data/Object39.",
+  "world": "kanturu_relics",
+  "object_type": 15,
+  "placements": 4,
+  "profile": "world",
+  "sheets": {
+    "song_k21wall01": "kl_song_k21wall01.png",
+    "song_k21wall04": "kl_song_k21wall04.png",
+    "song_k21wall03": "kl_song_k21wall03.png",
+    "song_k21magma03": "kl_song_k21magma03.png"
+  },
+  "sheet_from": "Data/Object39/, decoded under the kl_ prefix by `mu new`.",
+  "sheet_materials": {
+    "song_k21wall01": "flagstone",
+    "song_k21wall04": "flagstone",
+    "song_k21wall03": "flagstone",
+    "song_k21magma03": "lamplight"
+  },
+  "material_note": "song_k21wall01: grey stone with a carved frieze; song_k21wall04: grey stone with a worn chevron pattern; song_k21wall03: grey cut stone with a magma vein: flagstone. song_k21magma03: molten rock, streaming: lamplight.",
+  "why_this_one": "A 5 m magma-veined stone wall piece, 4 of them. MU's model is still (no moving bone). Batch 8 of the Relics (the user, 2026-10-24: \"next\"). docs/worlds/kanturu-port.md Part B 8.1.",
+  "glow": {
+    "song_k21magma03": {
+      "scrolls_per_second": 0.5,
+      "stream": true
+    }
+  },
+  "glow_from": "Render_Kanturu2nd_ObjectMesh type 15 (GM_Kanturu_2nd.cpp:583-591): mesh 3 drawn as StreamMesh, its V at -(WorldTime % 2000) * 0.0005, a sheet every 2 s, so +0.5 here as Object15. Drawn lit, not added.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "lamplight",
+      "triangles": 10,
+      "area": 4264.9,
+      "along": [
+        -2.1,
+        36.3
+      ],
+      "mu_uv": [
+        0.0,
+        -1.158,
+        0.828,
+        4.016
+      ],
+      "bake_uv": [
+        0.563,
+        0.471,
+        0.962,
+        0.9
+      ]
+    },
+    {
+      "island": 1,
+      "material": "lamplight",
+      "triangles": 10,
+      "area": 4264.9,
+      "along": [
+        -39.6,
+        -1.2
+      ],
+      "mu_uv": [
+        0.0,
+        -1.158,
+        0.828,
+        4.016
+      ],
+      "bake_uv": [
+        0.901,
+        0.57,
+        0.985,
+        0.865
+      ]
+    },
+    {
+      "island": 2,
+      "material": "flagstone",
+      "triangles": 22,
+      "area": 160989.4,
+      "along": [
+        -24.0,
+        20.6
+      ],
+      "mu_uv": [
+        0.4,
+        -0.627,
+        5.795,
+        0.927
+      ],
+      "bake_uv": [
+        0.01,
+        0.009,
+        0.872,
+        0.878
+      ]
+    },
+    {
+      "island": 3,
+      "material": "flagstone",
+      "triangles": 18,
+      "area": 60920.2,
+      "along": [
+        -38.5,
+        34.7
+      ],
+      "mu_uv": [
+        -0.387,
+        0.336,
+        0.754,
+        3.191
+      ],
+      "bake_uv": [
+        0.01,
+        0.009,
+        0.938,
+        0.985
+      ]
+    },
+    {
+      "island": 4,
+      "material": "flagstone",
+      "triangles": 20,
+      "area": 152887.4,
+      "along": [
+        -36.4,
+        32.9
+      ],
+      "mu_uv": [
+        0.014,
+        0.335,
+        0.59,
+        0.991
+      ],
+      "bake_uv": [
+        0.01,
+        0.009,
+        0.991,
+        0.991
+      ]
+    },
+    {
+      "island": 5,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 71950.2,
+      "along": [
+        -174.0,
+        175.6
+      ],
+      "mu_uv": [
+        0.483,
+        0.008,
+        0.992,
+        0.988
+      ],
+      "bake_uv": [
+        0.55,
+        0.009,
+        0.988,
+        0.95
+      ]
+    },
+    {
+      "island": 6,
+      "material": "flagstone",
+      "triangles": 26,
+      "area": 129854.1,
+      "along": [
+        -138.8,
+        131.9
+      ],
+      "mu_uv": [
+        0.001,
+        0.016,
+        0.95,
+        0.845
+      ],
+      "bake_uv": [
+        0.009,
+        0.01,
+        0.68,
+        0.909
+      ]
+    },
+    {
+      "island": 7,
+      "material": "flagstone",
+      "triangles": 10,
+      "area": 48115.2,
+      "along": [
+        -175.6,
+        107.6
+      ],
+      "mu_uv": [
+        0.001,
+        0.007,
+        0.992,
+        0.988
+      ],
+      "bake_uv": [
+        0.01,
+        0.026,
+        0.963,
+        0.991
+      ]
+    }
+  ]
+}

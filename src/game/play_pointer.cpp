@@ -23,7 +23,7 @@
 namespace mu::game {
 
 void Play::point(const gfx::Camera& camera, const float* view, const float* proj, float pixelX,
-                 float pixelY, int width, int height) {
+                 float pixelY, int width, int height, bool past) {
     pointedColumn_ = pointedRow_ = -1;
     pointedAt_ = 0;
     pointedPlayer_ = 0;
@@ -147,6 +147,10 @@ void Play::point(const gfx::Camera& camera, const float* view, const float* proj
         // green ring (the user, 2026-10-08: 'show that only with hover and use green hover
         // outline when hovering players'). Not pointedAt_, so a click on him walks.
         if (body.summoner != 0 || body.id == realm_.hero().id) continue;
+        // With Alt, none of the monsters: the ground and the drops behind them are what is
+        // pointed at. MU's Alt only puts a drop first (Selection.cpp's SelectItem before
+        // SelectCharacter); ours goes on through to the ground.
+        if (past && !body.player && body.warden < 0) continue;
         const Drawn* drawn = drawnOf(body.id);
         if (drawn == nullptr || !drawn->visible) continue;
         // Standing on screen, not alive in the realm: a monster killed on this tick is still

@@ -38,6 +38,13 @@
 #include "game/fx/hell_maine.h"
 #include "game/fx/witch_queen.h"
 #include "game/fx/aida_sparks.h"
+#include "game/fx/iron_rider.h"
+#include "game/fx/blade_hunter.h"
+#include "game/fx/kentauros.h"
+#include "game/fx/berserker.h"
+#include "game/fx/twin_tale.h"
+#include "game/fx/persona.h"
+#include "game/fx/dreadfear.h"
 #include "game/fx/tree_roots.h"
 #include "gfx/effects.h"
 #include "gfx/renderer.h"
@@ -52,6 +59,13 @@ public:
     WitchQueen& witchQueen() { return witchQueen_; }
     HellMaine& hellMaine() { return hellMaine_; }
     AidaSparks& aidaSparks() { return aidaSparks_; }
+    IronRider& ironRider() { return ironRider_; }
+    BladeHunter& bladeHunter() { return bladeHunter_; }
+    Kentauros& kentauros() { return kentauros_; }
+    Berserker& berserker() { return berserker_; }
+    TwinTale& twinTale() { return twinTale_; }
+    Persona& persona() { return persona_; }
+    Dreadfear& dreadfear() { return dreadfear_; }
     bool open(const std::string& assetDir, content::Textures& textures,
               const content::Showing& table);
     void shutdown();
@@ -188,6 +202,13 @@ private:
     WitchQueen witchQueen_;   // a Witch Queen's lights and strikes (fx/witch_queen.h)
     HellMaine hellMaine_;     // Hell Maine's lights, hand fire, storm and fire lay (fx/hell_maine.h)
     AidaSparks aidaSparks_;   // the Death Rider's and Death Tree's sparks (fx/aida_sparks.h)
+    IronRider ironRider_;     // a Kanturu Iron Rider's sparks, arrow and smoke (fx/iron_rider.h)
+    BladeHunter bladeHunter_; // a Kanturu Blade Hunter's swirl and blasts (fx/blade_hunter.h)
+    Kentauros kentauros_;     // a Kanturu Kentauros's bow smoke, arrows and death smoke (fx/kentauros.h)
+    Berserker berserker_;     // a Kanturu Berserker's green breath (fx/berserker.h)
+    TwinTale twinTale_;       // a Relics Twin Tale's hair marks, beams and water (fx/twin_tale.h)
+    Persona persona_;         // a Relics Persona's brow light, smoke and drips (fx/persona.h)
+    Dreadfear dreadfear_;     // a Relics Dreadfear's eyes and the cloud off its wings (fx/dreadfear.h)
     static constexpr int kRibbonTails = 15;
     struct Ribbon {
         float points[kRibbonTails][3];

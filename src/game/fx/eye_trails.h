@@ -14,6 +14,8 @@
 //   both: Scale 30 (the ribbon 30 units across), Light (0.5, 0.1, 1.0) (:443-444), added.
 //
 // So one long purple streak off one eye and a short one off the other, the asymmetry MU's.
+// Other breeds give their own (show.eye_trail colour, width, tails): the Splinter Wolf's
+// subtypes 24 and 25 are 10 tails each at scale 10 in (1.5, 0.01, 0) (GM_Kanturu_1st.cpp:454-456).
 // The caller finds the eye bones by name (show.eye_trail) and feeds the two points every frame
 // the body is drawn; a trail no longer fed is let go.
 #pragma once
@@ -39,8 +41,10 @@ public:
     // Moves every trail on by the frame's seconds: a tail laid a reference frame, and a trail
     // that went unfed since the last update let go.
     void update(float seconds);
-    // The eye a trail follows this frame: `left` is subtype 2's (20 tails), else subtype 3's (8).
-    void feed(uint32_t id, bool left, const float at[3]);
+    // The eye a trail follows this frame, `left` or the right; a new trail takes the breed's
+    // light, width in units and tails (at most kTails).
+    void feed(uint32_t id, bool left, const float at[3], const float colour[3], float width,
+              int tails);
     // `eye` is the camera, which the ribbon is turned to face.
     void gather(gfx::Effects& effects, const float* eye) const;
 
@@ -50,6 +54,8 @@ private:
         bool left = false;
         bool fed = false;
         int most = kTails;
+        float colour[3] = {0.0f, 0.0f, 0.0f};
+        float halfWidth = 0.0f;
         int count = 0;
         float clock = 0.0f;
         float head[3] = {0.0f, 0.0f, 0.0f};

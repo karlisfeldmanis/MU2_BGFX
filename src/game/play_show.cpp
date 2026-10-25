@@ -165,6 +165,9 @@ void Play::exhale(float seconds) {
         if (skill && one.swingSkill == sim::skill::kTwistingSlash) continue;
         // Nor Rageful Blow, past them too, whose weapon is out of his hand. fx/fury.h.
         if (skill && one.swingSkill == sim::skill::kRagefulBlow) continue;
+        // Nor Fire Slash, on the same WHEEL: MU lays no blur on it (ZzzCharacter.cpp:3783-3864),
+        // its ribbon is the look. fx/fire_slash.h.
+        if (skill && one.swingSkill == sim::skill::kFireSlash) continue;
         // Nor Death Stab: PLAYER_ATTACK_DEATHSTAB is on neither of CreateWeaponBlur's lists -- a
         // spear blurs PLAYER_ATTACK_SPEAR1..SCYTHE3 alone (ZzzCharacter.cpp:3859-3863) -- and the
         // blur the skill rung laid over its thrust was a pink-white smear MU never draws
@@ -174,9 +177,24 @@ void Play::exhale(float seconds) {
         if (skill && one.swingSkill == sim::skill::kImpale) continue;
         const FigureBody* look = one.figure.body();
         if (look == nullptr) continue;
+        // **Power Slash's blade trails the whole clip** (`AnimationFrame >= 3 || CurrentAction ==
+        // PLAYER_ATTACK_TWO_HAND_SWORD_TWO`, ZzzCharacter.cpp:3767-3770) on BlurMapping 1, the
+        // blue lightning of motion_blur -- 2, motion_blur_r's fire, on the Sword Dancer (0/25,
+        // :3830-3846). fx/power_slash.h is its waves.
+        const bool powerSlash = skill && one.swingSkill == sim::skill::kPowerSlash;
         // Three keys of wind-up: the client's `AnimationFrame >= 3`, so the gathering of the
         // swing leaves nothing and the streak appears as the blade comes round.
-        if (keyOf(one.figure) < kStreakWindUp) continue;
+        if (!powerSlash && keyOf(one.figure) < kStreakWindUp) continue;
+        Streak::Sheet skillSheet = Streak::Sheet::Skill;
+        if (powerSlash) {
+            skillSheet = Streak::Sheet::Lightning;
+            const sim::Body* body = realm_.find(one.id);
+            const content::Arm* arm = body != nullptr && body->weapon >= 0 &&
+                                              size_t(body->weapon) < tables_.arms.size()
+                                          ? &tables_.arms[size_t(body->weapon)]
+                                          : nullptr;
+            if (arm != nullptr && arm->group == 0 && arm->number == 25) skillSheet = Streak::Sheet::Skill;
+        }
         for (const HeldItem& held : look->held) {
             if (held.kind != "weapon" || held.mesh == nullptr || held.bone < 0) continue;
             if (held.stance == "bow" || held.stance == "crossbow") continue;
@@ -199,7 +217,7 @@ void Play::exhale(float seconds) {
             // The look: white on motion_blur_r for a skill; for a plain blow, blur01 from a sixth
             // of the blade, or blur02 over a spear's or a scythe's head, lit by mapping 0's ladder.
             const bool pole = held.stance == "spear" || held.stance == "scythe";
-            Streak::Sheet sheet = Streak::Sheet::Skill;
+            Streak::Sheet sheet = skillSheet;
             float light[3] = {1.0f, 1.0f, 1.0f};
             if (blow) {
                 sheet = pole ? Streak::Sheet::Spear : Streak::Sheet::Plain;
@@ -233,13 +251,27 @@ void Play::exhale(float seconds) {
         if (look == nullptr) continue;
         const FigureBody::Claws& claws = look->claws;
         if (claws.until >= 0.0f && keyOf(one.figure) > claws.until) continue;
+        if (claws.after >= 0.0f && keyOf(one.figure) < claws.after) continue;
         if (claws.firstOnly && clip != one.attackClip) continue;
-        const float grip[3] = {claws.alongZ ? 0.0f : claws.from, 0.0f, claws.alongZ ? claws.from : 0.0f};
-        const float tip[3] = {claws.alongZ ? 0.0f : claws.to, 0.0f, claws.alongZ ? claws.to : 0.0f};
+        float grip[3] = {0.0f, 0.0f, 0.0f}, tip[3] = {0.0f, 0.0f, 0.0f};
+        if (claws.axis < 3) {
+            grip[claws.axis] = claws.from;
+            tip[claws.axis] = claws.to;
+        }
         for (size_t c = 0; c + 1 < one.clawBones.size(); c += 2) {
             float from[3], to[3];
             if (!one.figure.pointOn(one.clawBones[c], grip, from)) continue;
             if (!one.figure.pointOn(one.clawBones[c + 1], tip, to)) continue;
+            if (claws.axis == 3) {
+                const float line[3] = {to[0] - from[0], to[1] - from[1], to[2] - from[2]};
+                const float far = std::sqrt(line[0] * line[0] + line[1] * line[1] + line[2] * line[2]);
+                if (far < 1e-4f) continue;
+                const float base[3] = {from[0], from[1], from[2]};
+                for (int k = 0; k < 3; ++k) {
+                    from[k] = base[k] + line[k] / far * claws.from * look->scale;
+                    to[k] = base[k] + line[k] / far * claws.to * look->scale;
+                }
+            }
             const uint32_t key = one.id ^ (uint32_t(c / 2 + 1) << 28);
             streak_.feed(key, from, to, Streak::Sheet::Spear, claws.light);
         }
@@ -456,10 +488,16 @@ void Play::snort(float seconds) {
         if (one.trailBones[0] < 0 || one.trailBones[1] < 0 || !one.visible || !one.placed) {
             continue;
         }
+        const FigureBody* look = one.figure.body();
+        if (look == nullptr) continue;
         const float origin[3] = {0.0f, 0.0f, 0.0f};
         float at[3];
-        if (one.figure.pointOn(one.trailBones[0], origin, at)) eyeTrails_.feed(one.id, false, at);
-        if (one.figure.pointOn(one.trailBones[1], origin, at)) eyeTrails_.feed(one.id, true, at);
+        for (int e = 0; e < 2; ++e) {
+            if (one.figure.pointOn(one.trailBones[e], origin, at)) {
+                eyeTrails_.feed(one.id, e == 1, at, look->eyeTrailColour, look->eyeTrailWidth,
+                                look->eyeTrailTails[e]);
+            }
+        }
     }
     // The plain Beam Knight's hand flames, one a claw each reference frame while it is drawn.
     for (Drawn& one : drawn_) {
@@ -601,8 +639,19 @@ void Play::snort(float seconds) {
 void Play::shade(float seconds) {
     shadowStars_.update(seconds);
     for (Drawn& one : drawn_) {
-        if ((one.shadeBones.empty() && one.auraBone < 0 && !one.embers && one.starBones.empty()) ||
-            !one.visible || !one.placed) {
+        // An Iron Rider, a Blade Hunter, a Kentauros, a Berserker, a Genocider, a Twin Tale, a
+        // Persona and a Dreadfear have none of these and their shows all the same (play_breeds.cpp).
+        const bool shown = !one.shadeBones.empty() || one.auraBone >= 0 || one.embers ||
+                           !one.starBones.empty() ||
+                           (one.figure.body() && (one.figure.body()->has("iron_rider") ||
+                                                  one.figure.body()->has("blade_hunter") ||
+                                                  one.figure.body()->has("kentauros") ||
+                                                  one.figure.body()->has("berserker") ||
+                                                  one.figure.body()->has("genocider") ||
+                                                  one.figure.body()->has("twin_tale") ||
+                                                  one.figure.body()->has("persona") ||
+                                                  one.figure.body()->has("dreadfear")));
+        if (!shown || !one.visible || !one.placed) {
             continue;
         }
         float fade = 1.0f;
@@ -1097,6 +1146,7 @@ void Play::learned() {
 // fade a revive uses.
 void Play::warped() {
     warpOwed_ = true;
+    landingOwed_ = true;
     // INVENTION: MuMain lands a Town Portal in silence -- TryConsumeItem's scroll branch and
     // ReceiveTeleport's warp branch play nothing. What is borrowed is SOUND_MAGIC, sMagic.wav,
     // which CreateTeleportEnd plays as a wizard's Teleport puts him down (ZzzEffectMagicSkill.cpp:
@@ -1499,6 +1549,8 @@ void Play::follow(float seconds) {
 
         // On the Dinorant he sits 30 over the ground and the dragon stands on it (game/pets.h).
         float lift = 0.0f;
+        // The part of it that is the run's bound, kept apart so the crown can leave it out.
+        float seatBob = 0.0f;
         if (body->player && body->riding) {
             // His own mount's, not the hero's: a rider on Uniria beside a hero on the Dinorant
             // sat 30 over the ground.
@@ -1513,7 +1565,8 @@ void Play::follow(float seconds) {
                 const int riding = one.figure.clip();
                 if (seatOn && riding >= 0 &&
                     (riding == seatOn->rideRunClip || riding == seatOn->rideRunArmedClip)) {
-                    lift += dinorantBob(one.figure.through());
+                    seatBob = dinorantBob(one.figure.through());
+                    lift += seatBob;
                 }
             }
         }
@@ -1639,6 +1692,10 @@ void Play::follow(float seconds) {
                 one.figure.pointInModel(look->headJoint, head);
                 one.crown[1] = std::min(one.crown[1], head[1] + kBarOverHead * look->scale);
             }
+            // Nor with the Dinorant's bound under him: his seat rides its back, and his name and
+            // bar rode it too (the user, 2026-10-24: "when char is riding on mount char name label
+            // is bouncing").
+            one.crown[1] -= seatBob;
             one.crown[2] = position[2];
             one.placed = true;
         }
@@ -1671,7 +1728,10 @@ void Play::follow(float seconds) {
         // freeze, but the drawing played on whatever it had -- a swing begun before the arrow
         // landed, an idle rolling round -- and the user saw it "still doing attack". The swing
         // is dropped rather than paused, so it does not finish its blow on the thaw.
-        if (!body->player && body->frozenUntil > realm_.tick()) {
+        // And asleep under a Sleep rune (sim/items.h kSleep...): MU stops its animation
+        // (ZzzCharacter.cpp:2553-2556), held the same way, not iced.
+        if (!body->player &&
+            (body->frozenUntil > realm_.tick() || body->sleepUntil > realm_.tick())) {
             one.swinging = 0.0f;
             one.casting = 0.0f;
             one.shocked = 0.0f;
@@ -1705,7 +1765,10 @@ void Play::follow(float seconds) {
             }
         }
         if (one.swinging > 0.0f) {
-            one.clipRate = held ? holdRate : one.swingPace;
+            // Fire Slash's second pace from its key 3 on (Drawn::swingPaceAfter).
+            one.clipRate = held ? holdRate
+                           : one.swingPaceAfter > 0.0f && one.swinging <= one.swingTurn ? one.swingPaceAfter
+                                                                                       : one.swingPace;
             one.shocked = 0.0f;
             continue;
         }

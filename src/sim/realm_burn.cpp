@@ -107,6 +107,7 @@ void Realm::rend(Body& hero, Body& struck, const BleedRune& rune, int wound) {
     struck.bleedUntil = tick_ + kBleedTicks;
     if (!bleeding) struck.bleedNext = tick_ + kBleedEvery;
     struck.bleedBy = hero.id;
+    struck.bleedRequiem = false;
     core::logf("rend: tick %lld, #%u cuts #%u, %d stack(s) of %d a pulse", (long long)tick_,
                hero.id, struck.id, struck.bleed, struck.bleedDamage);
 }
@@ -116,6 +117,7 @@ void Realm::bleedPulse(Body& one) {
     if (one.bleedNext > one.bleedUntil || !one.alive() || one.bleed <= 0) {
         one.bleed = 0;
         one.bleedUntil = 0;
+        one.bleedRequiem = false;
         return;
     }
     one.bleedNext += kBleedEvery;

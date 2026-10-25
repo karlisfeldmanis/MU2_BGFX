@@ -524,6 +524,9 @@ void sweepLetGo();
 // Who is on the server, told to the website's /internal/online every 5 s for its admins' Online page
 // (web/README.md): the post on a job of its own, never the loop's.
 void tellOnline(const std::vector<std::unique_ptr<Session>>& sessions);
+// A character reborn, told to the website's /internal/rebirth, which posts it in the Discord's
+// #announcements (web/server.py, class Announce).
+void tellRebirth(const std::string& name, const char* kind, int count);
 
 // transfer.cpp: a character moved to another region's server (docs/game/transfer.md), each 15 s
 // asked of the website's /internal/transfers on the accounts' line; a character handed over is

@@ -23,6 +23,20 @@
           0
         ],
         "note": "Kanturu, from Tarkan. MU's 126 is 17,219-21,220 (Gates.cs:279), which overlaps the way back (127) on three tiles, 17-19,220: a character dropped there would stand on the door home. So it lands on the camp's box, spawn gate 138's (19,217-21,219), as research 2.1 settled."
+      },
+      {
+        "number": 132,
+        "box": [
+          85,
+          89,
+          86,
+          92
+        ],
+        "faces": [
+          -1,
+          0
+        ],
+        "note": "The Ruins, from the Relics: beside the door (Gates.cs:280), facing west, away from 129."
       }
     ],
     "enters": [
@@ -50,7 +64,7 @@
       "note": "MU grows dark olive tufts on slot 0 (5,340 drawn tiles) and pale blue-white wisps on slot 1 (1,353), ZzzLodTerrain.cpp:2076-2120. Slot 0 only for the first look; the wisps wait for a shot (decision 11). docs/worlds/kanturu-port.md."
     },
     "void": {
-      "value": {"start": 0.5, "depth": 6.0, "blend": 0, "fade": 3, "sink": 16, "no_walls": [[185, 31, 199, 45],[59, 43, 70, 53],[80, 37, 90, 48]]},
+      "value": {"start": 0.5, "depth": 3.0, "blend": 0, "fade": 3, "sink": 16, "no_walls": [[185, 31, 199, 45],[59, 43, 70, 53],[80, 37, 90, 48]]},
       "note": "Aida's way, deeper: 44.8% of the map is NoGround, a chasm round the plateau, and Object06/76's 394 cliff faces hang 5-14 m into it (Aida's walls 4.7 m, depth 4.5). `blend` darkens the bare ring lips where no cliff stands, as Aida. docs/worlds/kanturu-port.md Part B 5."
     },
     "void_fill": {
@@ -243,7 +257,11 @@
     "event": false,
     "floors": false,
     "move_order": 11,
-    "note": "Kanturu Ruins, MU's map 37, entered from Tarkan's west door (gates 125/127, the next step). arrive is the middle of the spawn gate 138's box, the camp by the door (OpenMU VersionSeasonSix Gates.cs:276-280), where a death lands too; not 126's arrival box, which overlaps the way back on three tiles (docs/worlds/kanturu-port.md 2.1). The Town Portal goes to Tarkan's town (home 8): the camp has no merchant (decision 6). Last on the M key's walk (11), so no other map's order moves. No drops yet: no breed stands here."
+    "note": "Kanturu Ruins, MU's map 37, entered from Tarkan's west door (gates 125/127, the next step). arrive is the middle of the spawn gate 138's box, the camp by the door (OpenMU VersionSeasonSix Gates.cs:276-280), where a death lands too; not 126's arrival box, which overlaps the way back on three tiles (docs/worlds/kanturu-port.md 2.1). The Town Portal goes to Tarkan's town (home 8): the camp has no merchant (decision 6). Last on the M key's walk (11), so no other map's order moves. No drops yet: no breed stands here.",
+    "exp_bonus": 1.25,
+    "drops": [
+      "kanturu_gear"
+    ]
   },
   "npcs": [
     {
@@ -273,22 +291,11 @@
       "name": "Elpis",
       "figure": "Elpis",
       "at": [
-        30,
-        202
+        35,
+        216
       ],
       "look": 3,
-      "note": "MU's Elpis (368), the Refinery Tower's keeper (OpenMU KanturuEvent.cs:51, 77,177 in map 39), stood in the Ruins camp because the Tower is not playable (the user, 2026-10-23: find better locations for them, then you decide): before the north ruin wall at the head of the camp, a shrine, facing the camera. Her refining is not built."
-    },
-    {
-      "npc": 367,
-      "name": "Gateway Machine",
-      "figure": "GatewayMachine",
-      "at": [
-        41,
-        212
-      ],
-      "look": 3,
-      "note": "MU's Gateway Machine (367), which stands in the Relics (OpenMU KanturuRelics.cs:46, 141,191), stood in the Ruins camp because the Relics are not playable (the user, 2026-10-23: find better locations for them, then you decide): the centrepiece of the lit east plaza between its brazier pairs, facing the camera. Tried first behind the Relics door, out over the chasm and unseen, then on the north ground, where it crowded the way. The tower event it opens is not built."
+      "note": "MU's Elpis (368), the Refinery Tower's keeper (OpenMU KanturuEvent.cs:51, 77,177 in map 39), stood in the Ruins camp because the Tower is not playable. Since 2026-10-25 by the camp's fire stands at 35,216, on the way from the arrival to the Ruins, where the user showed her in game (\"put her here, and scale down her size\"); before, at the north ruin wall (30,202). She gives every Kanturu quest. Her refining is not built."
     }
   ]
 }

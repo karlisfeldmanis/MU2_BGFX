@@ -172,6 +172,10 @@ struct BrokerQuery {
     std::string text;       // in the name, any case
     int usableBy = -1;      // a Kin, -1 for any
     bool excellentOnly = false, sevenUp = false;
+    // The market's Options (the ecommerce redesign, 2026-10-24): with Luck, with a socket.
+    bool luckOnly = false, socketOnly = false;
+    // A piece's price at least / at most, 0 for no bound: a stack's price over its count.
+    int64_t minPrice = 0, maxPrice = 0;
     uint64_t seller = 0;    // one seller's, 0 for all (the server's own: a token is never sent)
     std::string sellerName; // one seller's by the name on his listings, empty for all
     bool watchedOnly = false;  // what `watcher` watches (the server's own: a token is never sent)
@@ -183,6 +187,8 @@ struct BrokerQuery {
     int page = 0;
 };
 constexpr int kBrokerPage = 12;
+// What one piece of a listing costs: its price, or a stack's over its count.
+int64_t brokerPiecePrice(const content::ItemRow& row, const Listing& listing);
 // The listings that match, sorted, all pages; the window takes its page.
 std::vector<const Listing*> brokerMatches(const Book& book, const content::Tables& tables,
                                           const BrokerQuery& query);

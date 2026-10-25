@@ -117,6 +117,10 @@ foreach(t bx bimg bimg_decode bimg_encode bgfx shaderc)
     target_compile_options(${t} PRIVATE -w)   # third-party warnings are not ours to fix
   endif()
 endforeach()
+# 512 frame buffers, not bgfx's 128: the probe and the renderer hold some 87 for good, and each
+# item stage keeps up to four, so a few leaked buffers ran the pool out and a shop's pictures
+# went blank (bugs #56/#57, the vault's black panel of c2ce7d1d). A slot costs little memory.
+target_compile_definitions(bgfx PRIVATE BGFX_CONFIG_MAX_FRAME_BUFFERS=512)
 # Direct3D 11's shaders (docs/plans/low-end-windows.md, P7) made on this Mac: shaderc hands the
 # HLSL to Microsoft's own d3dcompiler_47.dll, run under Wine by bgfx's d3d4linux.exe (the copy
 # beside shaderc is in the shaders block below). bgfx's header turns this on for Linux only;
@@ -265,6 +269,7 @@ set(MU_DIRS
 # Logging, arguments, json, files. Depends on nothing.
 add_library(mu_core STATIC
   src/core/log.cpp
+  src/core/bidi.cpp
   src/core/watch.cpp
   src/core/jobs.cpp
   src/core/args.cpp
@@ -486,6 +491,7 @@ add_library(mu_gfx STATIC
   src/gfx/renderer_lights.cpp
   src/gfx/effects.cpp
   src/gfx/face.cpp
+  src/gfx/glyphs.cpp
   src/gfx/overlay.cpp
   src/gfx/readout.cpp
   src/gfx/interface.cpp
@@ -706,6 +712,13 @@ add_library(mu_game STATIC
   src/game/fx/witch_queen.cpp
   src/game/fx/hell_maine.cpp
   src/game/fx/aida_sparks.cpp
+  src/game/fx/iron_rider.cpp
+  src/game/fx/blade_hunter.cpp
+  src/game/fx/kentauros.cpp
+  src/game/fx/berserker.cpp
+  src/game/fx/twin_tale.cpp
+  src/game/fx/persona.cpp
+  src/game/fx/dreadfear.cpp
   src/game/fx/tree_roots.cpp
   src/game/fx/forge.cpp
   src/game/fx/meteor.cpp
@@ -719,6 +732,9 @@ add_library(mu_game STATIC
   src/game/fx/weakness.cpp
   src/game/fx/pollution.cpp
   src/game/fx/drain.cpp
+  src/game/fx/requiem.cpp
+  src/game/fx/sleep.cpp
+  src/game/fx/chains.cpp
   src/game/fx/stains.cpp
   src/game/fx/poison.cpp
   src/game/fx/flame.cpp
@@ -727,6 +743,8 @@ add_library(mu_game STATIC
   src/game/fx/firework.cpp
   src/game/fx/wheel.cpp
   src/game/fx/fury.cpp
+  src/game/fx/fire_slash.cpp
+  src/game/fx/power_slash.cpp
   src/game/fx/hellfire.cpp
   src/game/fx/storm.cpp
   src/game/fx/inferno.cpp
@@ -782,6 +800,7 @@ add_library(mu_game STATIC
   src/game/ui/travel.cpp
   src/game/ui/go_back.cpp
   src/game/ui/line_chip.cpp
+  src/game/ui/rejoin_badge.cpp
   src/game/ui/guild.cpp
   src/game/ui/herald.cpp
   src/game/ui/minimap.cpp
@@ -1041,6 +1060,18 @@ target_compile_definitions(sim_test PRIVATE MU2_ASSET_DIR="${MU_ASSETS}"
                                           MU2_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 target_compile_options(sim_test PRIVATE -Wall -Wextra -Wno-unused-parameter)
 
+# The Broker's window without a window (tests/market_test.cpp): its sums and its rectangles at
+# every width it may be. The headers it reads are the game's; gfx::Box wants bgfx's headers only,
+# so never a server's (MU2_SERVER_ONLY has no bgfx).
+if(NOT MU2_SERVER_ONLY)
+  add_executable(market_test EXCLUDE_FROM_ALL
+    tests/market_test.cpp
+  )
+  target_link_libraries(market_test PRIVATE mu_net)
+  target_include_directories(market_test PRIVATE src $<TARGET_PROPERTY:bgfx,INTERFACE_INCLUDE_DIRECTORIES>)
+  target_compile_options(market_test PRIVATE ${MU_WARNINGS})
+endif()
+
 # Sprint 16, step 3: a save names quests, travel rows and skills by what they are, not where
 # they sit. A version 2 character read, written as version 3 and read back the same, and read
 # the same again with its quests reordered and an unknown one in them (tests/save_test.cpp).
@@ -1053,6 +1084,26 @@ target_link_libraries(save_test PRIVATE mu_sim)
 target_compile_definitions(save_test PRIVATE MU2_ASSET_DIR="${MU_ASSETS}"
                                              MU2_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 target_compile_options(save_test PRIVATE ${MU_WARNINGS})
+
+# The pictures' frame buffers without a GPU (tests/stage_test.cpp): bgfx's Noop renderer keeps
+# the real handle pools, so a stage, a portrait and the desk are counted against its 128 -- a
+# desk shut at every gate gives back all it took, and a refused buffer draws nothing.
+add_executable(stage_test EXCLUDE_FROM_ALL
+  tests/stage_test.cpp
+)
+target_link_libraries(stage_test PRIVATE mu_game)
+target_include_directories(stage_test PRIVATE src)
+target_compile_options(stage_test PRIVATE ${MU_WARNINGS})
+
+# The helper's keys without a window (tests/helper_test.cpp): a Play on the cooked Lorencia with
+# no figures, a monster rooted out of reach, and how far off each key's skill was thrown.
+add_executable(helper_test EXCLUDE_FROM_ALL
+  tests/helper_test.cpp
+)
+target_link_libraries(helper_test PRIVATE mu_game)
+target_include_directories(helper_test PRIVATE src)
+target_compile_definitions(helper_test PRIVATE MU2_ASSET_DIR="${MU_ASSETS}")
+target_compile_options(helper_test PRIVATE ${MU_WARNINGS})
 
 # The Lorencia bot: a character played from level one with no window -- hunting, potions,
 # loot, gear and the town's counters -- and what happened, when (tools/bot/bot.cpp).
@@ -1114,6 +1165,13 @@ target_include_directories(raid PRIVATE src)
 target_compile_definitions(raid PRIVATE MU2_ASSET_DIR="${MU_ASSETS}"
                                         MU2_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 target_compile_options(raid PRIVATE -Wall -Wextra -Wno-unused-parameter)
+
+# The Armory's dump: cards, drop odds, skills, talents and rules for mu-classic.com, from the
+# game's own code and the release's packs (docs/plans/armory.md; `armory_dump --help`). Never a
+# server's: server/deploy.sh sends no tools/armory/.
+if(NOT MU2_SERVER_ONLY)
+  include(tools/armory/dump/armory.cmake)
+endif()
 
 # The server build's own: every test that runs without a window, a sound device or the client's
 # meshes (cooked_test reads those; a server has only the tables).

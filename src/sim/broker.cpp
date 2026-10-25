@@ -600,6 +600,11 @@ bool Book::read(const std::vector<uint8_t>& bytes) {
 
 // ---- the Buy tab's search ----------------------------------------------------------------------
 
+int64_t brokerPiecePrice(const content::ItemRow& row, const Listing& listing) {
+    const bool stack = stacks(row) && !ammunition(row) && listing.what.durability > 1;
+    return stack ? listing.price / listing.what.durability : listing.price;
+}
+
 std::vector<const Listing*> brokerMatches(const Book& book, const content::Tables& tables,
                                           const BrokerQuery& query) {
     std::string text = query.text;
@@ -618,6 +623,13 @@ std::vector<const Listing*> brokerMatches(const Book& book, const content::Table
         }
         if (query.excellentOnly && one.what.excellent == 0) continue;
         if (query.sevenUp && one.what.refinement < 7) continue;
+        if (query.luckOnly && !one.what.luck) continue;
+        if (query.socketOnly && one.what.sockets == 0) continue;
+        if (query.minPrice > 0 || query.maxPrice > 0) {
+            const int64_t piece = brokerPiecePrice(row, one);
+            if (query.minPrice > 0 && piece < query.minPrice) continue;
+            if (query.maxPrice > 0 && piece > query.maxPrice) continue;
+        }
         if (!text.empty()) {
             std::string label = row.label;
             std::transform(label.begin(), label.end(), label.begin(),

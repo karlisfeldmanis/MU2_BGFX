@@ -210,7 +210,21 @@ enum class EmitterKind : uint8_t {
     CrystalSpark = 24,
     // Kanturu's tanks' arcs, from and to (Object93, bones 1 and 2), and its plants' spit
     // (Object99, bone 1): game/world/ruin_effects.h.
-    TankArcFrom = 25, TankArcTo = 26, PlantSpit = 27
+    TankArcFrom = 25, TankArcTo = 26, PlantSpit = 27,
+    // The Relics' poles' pulsing flare (Object05, bone 1), drawn with the crystal sparks:
+    // game/world/crystal_sparks.h. `low`/`high` MU's fLumi, `hz` its sine.
+    PoleFlare = 28,
+    // The Relics' jade towers (Object09, bone 4): a pulsing spark and random bolts,
+    // game/world/ruin_effects.h.
+    TowerSpark = 29,
+    // The Relics' hidden lightning boxes (MoveKanturu2ndObject types 54, 56 and 65): a bolt
+    // falling 11 m into the box, a half-metre arc from its west, a 3.5 m bolt from its north;
+    // game/world/ruin_effects.h.
+    VoidStrike = 30, WallArc = 31, NorthBolt = 32,
+    // And its Fenrir thunder boxes (type 55): a crackle flashing within 20 units, one frame in 5.
+    FenrirFlash = 33,
+    // And its water boxes (type 53): a drop of Effect/water rising, one frame in 3.
+    Spray = 34
 };
 struct TownEmitter {
     static constexpr uint16_t kWorld = 0xFFFF;

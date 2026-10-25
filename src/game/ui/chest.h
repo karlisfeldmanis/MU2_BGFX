@@ -1,9 +1,10 @@
-// The vault window: Baz's eight by fifteen, the Zen he keeps, and the two coin buttons.
+// The vault window: Baz's eighteen by fifteen, two columns wide, the Zen he keeps, and the two
+// coin buttons.
 //
-// `CNewUIStorageInventory` on the bag's frame and at its scale, in the column to its left, as the
-// shelf is: MU opens the storage beside the inventory (`INTERFACE_STORAGE` with
-// `INTERFACE_INVENTORY`). The grid is its `CNewUIInventoryCtrl` of 8 x 15 on the skin's shared
-// pitch; the foot is its money strip, `newui_item_money3`, and the first two of its three buttons,
+// `CNewUIStorageInventory` on the bag's frame and at its scale, in the two columns to its left
+// (`column` is the nearer): MU opens the storage beside the inventory (`INTERFACE_STORAGE` with
+// `INTERFACE_INVENTORY`). The grid is its `CNewUIInventoryCtrl`, 18 x 15 here for MU's 8 x 15, on
+// the skin's shared pitch; the foot is its money strip, `newui_item_money3`, and the first two of its three buttons,
 // `newui_Bt_money01` (put Zen in) and `newui_Bt_money02` (take Zen out), in MU's own art.
 //
 // A coin button opens MU's box to type the sum into (CZenReceiptMsgBoxLayout,

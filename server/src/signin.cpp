@@ -27,6 +27,7 @@
 #include <ctime>
 #include <future>
 #include <mutex>
+#include <thread>
 #include <unordered_map>
 
 namespace mu::server {
@@ -393,6 +394,16 @@ void tellOnline(const std::vector<std::unique_ptr<Session>>& sessions) {
     const std::string host = g_host;
     const int port = g_port;
     g_telling = std::async(std::launch::async, [host, port, body] { post(host, port, "/internal/online", body); });
+}
+
+void tellRebirth(const std::string& name, const char* kind, int count) {
+    if (!takesTokens()) return;
+    const std::string body = "{\"region\":" + jsonText(g_region) + ",\"name\":" + jsonText(name) +
+                             ",\"class\":" + jsonText(kind) + ",\"count\":" + std::to_string(count) + "}";
+    const std::string host = g_host;
+    const int port = g_port;
+    // Its own thread, let go: a rebirth is rare, and the post gives up in 3 s.
+    std::thread([host, port, body] { post(host, port, "/internal/rebirth", body); }).detach();
 }
 
 bool signed_(Session& one, std::string& account) {

@@ -1,0 +1,16 @@
+{
+ "world": "kanturu_relics",
+ "summary": "What the extraction cannot know, for the Kanturu Relics: its townspeople. OpenMU stands one here, the Gateway Machine (VersionSeasonSix/Maps/KanturuRelics.cs:46), the way into the tower event (the user, 2026-10-23: 'put it where it has to be'). It is world.json's npcs 0; this is its figure.",
+ "spawns": [
+  {
+   "model": "GatewayMachine",
+   "who": "Gateway Machine",
+   "tile": [
+    141,
+    191
+   ],
+   "facing": 3,
+   "mu": "OpenMU KanturuRelics.cs:46, 141,191 facing south, at the head of the Laser Trap corridor"
+  }
+ ]
+}

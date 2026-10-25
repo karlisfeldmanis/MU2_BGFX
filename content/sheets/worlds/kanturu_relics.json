@@ -1,0 +1,49 @@
+{
+  "note": "Kanturu Relics' light, laid over lighting.json while a character stands in map 38. MU draws an indoor-reading refinery maze lit like a lab: a neutral, bright TerrainLight down the corridors (walkable mean 170, 170, 167) falling to black at their edges, over a desaturated grey-brown stone (walkable sheet x light 41, 36, 33, lum 37, hue 26 / sat 0.18), 42% of the map NoGround round it. The colour is in the blue-glowing tanks, crystal pylons, magma-veined walls and floor glyphs (docs/worlds/kanturu-port.md Part B 8.1). So: the house 52-degree sun, white and a touch cool rather than the Ruins' gold, a cold grey-blue fill, exposure up a little for the stone, a faint cold mist over the void, the grade neutral with a cool shade. Invention on MU's look; first cut 2026-10-23.",
+  "elevation": 52.0,
+  "sun_colour": [
+    0.95,
+    0.97,
+    1.0
+  ],
+  "sun_strength": 3.2,
+  "sky_colour": [
+    0.3,
+    0.35,
+    0.42
+  ],
+  "horizon_paleness": 0.6,
+  "ground_colour": [
+    0.08,
+    0.08,
+    0.08
+  ],
+  "ambient_strength": 0.6,
+  "exposure": 1.35,
+  "dust_colour": [
+    0.5,
+    0.56,
+    0.64
+  ],
+  "dust_density": 0.003,
+  "lamp_strength": 3.14159,
+  "glow_strength": 1.5,
+  "bloom_threshold": 0.95,
+  "bloom_strength": 0.35,
+  "contrast": 0.6,
+  "saturation": 0.9,
+  "split": 0.45,
+  "tint_low": [
+    0.9,
+    0.97,
+    1.06
+  ],
+  "tint_high": [
+    1.03,
+    1.01,
+    0.97
+  ],
+  "water_flow": 0.2,
+  "water_sheen": 0.5,
+  "sheen": 0.0
+}

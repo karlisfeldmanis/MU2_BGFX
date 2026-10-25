@@ -150,7 +150,12 @@ vec3 abyss(vec3 colour, vec3 wpos)
 {
 	if (u_abyss.y <= 0.0) return colour;
 	float level = texture2D(s_abyss, vec2(wpos.x, -wpos.z) * u_abyss.z + u_abyss.w).r;
-	return mix(colour, u_abyssColour.rgb, smoothstep(u_abyss.x, u_abyss.x + u_abyss.y, level - wpos.y));
+	float below = level - wpos.y;
+	// And never darker than the dark itself once under the rim: a sunk wall's face just below
+	// a lip MU paints black stood blacker than Kanturu's chasm round it, slivers in the haze
+	// (the user, 2026-10-24: "i stilll see the spots", 78,91). Black elsewhere, so a no-op.
+	return max(mix(colour, u_abyssColour.rgb, smoothstep(u_abyss.x, u_abyss.x + u_abyss.y, below)),
+	           u_abyssColour.rgb * smoothstep(0.05, u_abyss.x + 0.5, below));
 }
 // And how near the void a point is, 0 at its edge to 1 a few tiles in (the world's void.blend),
 // 1 everywhere else: the ground's own fade into the void, laid after the haze (fs_ground).

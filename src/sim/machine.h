@@ -17,7 +17,9 @@
 //     FixChaosMixesPlugInBase): one or more things at +4 or better carrying the additional
 //     option, one or more Chaos, any Bless and Soul, and nothing else. The rate is the box's
 //     old buying price over 20,000 to at most 100 (MixMgr's ItemValue sum and OpenMU's
-//     NpcPriceDivisor), the price 10,000 Zen a percent. Success makes a Chaos Dragon Axe,
+//     NpcPriceDivisor), the price 10,000 Zen a percent (ours 5,000, kMixZenPerPoint). An
+//     excellent thing at +4 or better adds its price with no option, and stands in for no
+//     optioned thing (ours, the user, 2026-10-23). Success makes a Chaos Dragon Axe,
 //     Nature Bow or Lightning Staff at +0..+4, with its own luck and option rolls
 //     (ChaosWeaponAndFirstWingsCrafting); failure takes the jewels and drops each thing to a
 //     lower plus at random, its option a level down half the time.
@@ -28,10 +30,9 @@
 //     box, MixSystem.cpp:296-305, :537-575). Two or more are wings too, as WebZen's flag is;
 //     OpenMU takes one at most and lets more fall to the Chaos Weapon. Its rate, price and
 //     failure are the Chaos Weapon's. Not 0.75: Version075 has the three wings and no recipe
-//     for them. The wing is the hero's class's, not WebZen's `rand()%3` of any (the user,
-//     2026-10-04: one player, no trading, so another class's wing is dead loot), and comes
-//     out at +0, as WebZen's CHAOS_MIX_WING_ITEMLEVEL_FIX has it, not the base branch's
-//     `rand()%5`. Ours, both.
+//     for them. The wing is WebZen's `rand()%3` of any of the three (the user, 2026-10-13;
+//     Realm::mix), and comes out at +0, as WebZen's CHAOS_MIX_WING_ITEMLEVEL_FIX has it, not
+//     the base branch's `rand()%5`.
 //
 //   * **Dinorant**, below (WebZen's PegasiaChaosMix).
 //   * **Invisibility Cloak**, below (WebZen's Blood Castle ticket).
@@ -191,7 +192,11 @@ struct Need {
     // More than `need` is welcome, not an error: the Chaos Weapon's and the wings' items and
     // Chaos, where each thing past the first raises the rate (exactly()'s `>= 1`).
     bool atLeast = false;
-    bool met() const { return need == 0 ? true : atLeast ? have >= need : have == need; }
+    // A thing the mix has no line for, which spoils the box: `have` of it, and none is wanted.
+    bool remove = false;
+    bool met() const {
+        return remove ? have == 0 : need == 0 ? true : atLeast ? have >= need : have == need;
+    }
 };
 constexpr int kMostNeeds = 5;  // Add Socket's five
 
@@ -305,15 +310,5 @@ bool jewelOfChaos(const content::ItemRow& row);
 bool jewelOfBless(const content::ItemRow& row);
 bool jewelOfSoul(const content::ItemRow& row);
 bool jewelOfLife(const content::ItemRow& row);
-
-// What goes into any mix bound, being spent either way: a quest's Jewel of Chaos, Bless or Soul
-// and Sevina's Loch's Feather. What the mix makes with one is bound (Realm::mix).
-bool spentBound(const content::ItemRow& row);
-
-// What goes into its own rung of the wing ladder bound: a Chaos weapon into the 1st wings, a 1st
-// wing into the 2nd. A mix with a quest's jewel makes them bound, and the next rung refused them
-// (MAGICTOMA on Discord, 2026-10-21: "i still cannot create 1st Wings"). The wing it makes is
-// bound as it was (Realm::mix). Recipe::None asks whether it climbs either.
-bool climbsBound(const content::ItemRow& row, Recipe recipe);
 
 }  // namespace mu::sim

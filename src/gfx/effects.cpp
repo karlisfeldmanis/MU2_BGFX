@@ -33,6 +33,8 @@ float kindOf(Blend blend) {
         case Blend::Smoke: return 3.0f;
         case Blend::Dust: return 4.0f;
         case Blend::Breath: return 5.0f;
+        case Blend::Mist: return 6.0f;
+        case Blend::Glow: return 7.0f;
         case Blend::Alpha:
         case Blend::Minus: break;
     }

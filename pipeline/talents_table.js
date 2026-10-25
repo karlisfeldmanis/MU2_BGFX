@@ -63,7 +63,7 @@ const SMALL = {
   'mana regeneration': fx('ManaRegen'),
   'max life': fx('MaxLife'),
   'bow and crossbow damage': fx('Damage', { hold: 'Bow' }),
-  'Skillshot damage': fx('SkillDamage', { skills: [24] }),
+  'Multi-Shot damage': fx('SkillDamage', { skills: [24] }),
   'Penetration damage': fx('SkillDamage', { skills: [52] }),
   'healing done': fx('HealingDone'),
   'Heal and buff mana cost': fx('AidManaCost'),

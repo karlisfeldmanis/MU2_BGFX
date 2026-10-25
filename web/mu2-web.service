@@ -6,7 +6,7 @@ After=network-online.target
 Wants=network-online.target
 
 [Service]
-ExecStart=/usr/bin/python3 -I /opt/mu2-web/server.py --db /var/lib/mu2-web/accounts.db --site /opt/mu2-web/site --downloads /srv/mu2-web/downloads
+ExecStart=/usr/bin/python3 -I /opt/mu2-web/server.py --db /var/lib/mu2-web/accounts.db --site /opt/mu2-web/site --downloads /srv/mu2-web/downloads --armory /srv/mu2-web/armory
 Restart=always
 RestartSec=2
 # Its own throwaway user, and one folder it may write: /var/lib/mu2-web, the accounts, kept

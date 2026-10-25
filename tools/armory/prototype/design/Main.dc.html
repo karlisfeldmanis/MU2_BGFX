@@ -1,0 +1,2098 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Armory: item database</title>
+<script src="./support.js"></script>
+<script src="/_blob/e8ac4011ea65cde1259905b707215515"></script>
+<script src="/_blob/e87ae6f8af6b825c433645e44d4497fb"></script>
+<script src="/_blob/bc6f30fa9a878d0959f184831fcc5cc0"></script>
+<script src="/_blob/f2ca5ff4bfef10a1cbd6f2ffeaaf088a"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&amp;family=Alegreya+Sans+SC:wght@700&amp;family=Alegreya+Sans:wght@400;500;700&amp;display=swap">
+<style>
+body{margin:0;background:#0D0B0A}
+a{color:#C9BFAE;text-decoration:none}a:hover{color:#F3E8D4}
+.pg{background:#0D0B0A;color:#D9CFBD;font:16px/1.5 'Alegreya Sans',system-ui,sans-serif;min-height:100vh}
+.pg *{box-sizing:border-box}
+.wrap{max-width:1600px;margin:0 auto;padding:0 clamp(20px,4vw,64px)}
+.top{position:relative;overflow:hidden;background:#0A0807;box-shadow:inset 0 -1px 0 #1E1814;margin-bottom:28px}
+.top .head{padding-bottom:20px}
+/* Alegreya's line box isn't centred on its capitals (it sits high or low by browser): pills, tabs
+   and buttons trim their words to cap height so the words sit in the middle, as the site's own
+   server capsule does (web/site/site.css .live). */
+.chip,.tg,.fact,.sb,.kan,.tab,.btn,.pb,.stp,.tb,.vote,.ci,.sh,.pill,.crumb,.here{line-height:1}
+@supports (text-box: trim-both cap alphabetic){
+.chip,.tg,.fact,.sb,.kan,.tab,.btn,.ci,.sh,.pill,.crumb,.here{text-box:trim-both cap alphabetic}
+}
+@supports not (text-box: trim-both cap alphabetic){
+.chip,.tg,.fact,.sb,.kan,.tab,.btn,.ci,.sh,.pill{padding-top:2px}
+}
+.top .bg{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:70% 20%;-webkit-mask-image:linear-gradient(#000 40%,transparent 100%);mask-image:linear-gradient(#000 40%,transparent 100%)}
+.top .shade{position:absolute;inset:0;background:radial-gradient(ellipse 60% 70% at 50% 55%,rgba(13,11,10,.82) 0%,rgba(13,11,10,.55) 60%,rgba(13,11,10,.3) 100%),linear-gradient(0deg,#0D0B0A 0%,rgba(13,11,10,0) 35%)}
+.bar{position:relative;display:flex;justify-content:space-between;align-items:center;height:84px;padding:0 clamp(16px,3vw,40px);font-size:18px}
+.bar img{height:50px;width:auto;display:block}
+.bar-links{display:flex;align-items:center;gap:clamp(14px,2.4vw,26px)}
+.pill{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 14px 0 12px;border-radius:19px;font-size:16px;font-weight:500;background:rgba(13,11,10,.55);box-shadow:inset 0 0 0 1px rgba(201,162,126,.28)}
+.pill svg{color:#C9A27E}
+.head{position:relative;display:flex;flex-wrap:wrap;gap:16px 24px;align-items:center;justify-content:space-between;padding:8px clamp(20px,4vw,64px) 32px}
+.crumbs{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0;padding:0;list-style:none;font-size:16px}
+.crumbs li{display:flex;align-items:center;gap:6px}
+.crumbs li+li::before{content:"/";color:#4A4038}
+.crumb{background:none;border:0;padding:4px 2px;font:inherit;color:#C9BFAE;cursor:pointer;border-radius:2px}
+.crumb:hover{color:#F3E8D4;text-decoration:underline;text-underline-offset:3px}
+.here{color:#F3E8D4;font-weight:500;padding:4px 2px}
+.search{position:relative;flex:0 1 480px;min-width:240px}
+.search svg{position:absolute;left:12px;top:13px;color:#8F8575;pointer-events:none}
+.search input{width:100%;height:44px;padding:0 12px 0 38px;border:1px solid #241B15;border-radius:3px;background:linear-gradient(#020101,#090706);color:#D9CFBD;font:inherit;font-size:16px;box-shadow:inset 0 1px 3px rgba(0,0,0,.7)}
+.search input::placeholder{color:#6F665A}
+.search input:focus{outline:2px solid #A88B6C;outline-offset:-1px}
+.rail{flex:0 0 240px;display:flex;flex-direction:column;gap:32px}
+.rh{margin:0 0 10px;padding:0 12px;font:700 14px/1 'Alegreya Sans SC',sans-serif;letter-spacing:.05em;color:#9C9282}
+.ci{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;min-height:40px;padding:8px 12px;border:0;border-radius:3px;background:none;color:#C9BFAE;font:500 16px/1.25 'Alegreya Sans',sans-serif;text-align:left;cursor:pointer}
+.ci:hover{background:#130F0C;color:#F3E8D4}
+.ci[aria-current="true"]{background:#1E160F;color:#F2D58A}
+.ci.sub{padding-left:28px;font-size:15px;min-height:36px}
+.ci span{font-size:14px;color:#8F8575;font-variant-numeric:tabular-nums}
+.chips{display:flex;flex-wrap:wrap;gap:8px;padding:0 12px}
+.chip{display:inline-flex;align-items:center;min-height:36px;padding:0 14px;border-radius:18px;border:1px solid #2E241D;background:#0E0B09;color:#C9BFAE;font:500 15px/1 'Alegreya Sans',sans-serif;cursor:pointer}
+.chip:hover{border-color:#4A3B2F;color:#F3E8D4}
+.chip[aria-pressed="true"]{background:#2A2014;border-color:#6A5426;color:#F2D58A}
+.ci:focus-visible,.chip:focus-visible,.sh:focus-visible,.pb:focus-visible,.crumb:focus-visible,.open:focus-visible,.vote:focus-visible,.btn:focus-visible,.tab:focus-visible,.stp:focus-visible,.tg:focus-visible{outline:2px solid #A88B6C;outline-offset:1px}
+.tbox{overflow-x:auto;border:1px solid #221A15;border-radius:4px;background:#0A0706}
+.tbl{width:100%;min-width:720px;border-collapse:collapse;font-size:16px}
+.tbl.sm{min-width:0}
+.tbl th{padding:0;text-align:left;border-bottom:1px solid #221A15;background:#0E0B09}
+.tbl th.r .sh{justify-content:flex-end}
+.tbl th.plain{height:44px;padding:0 16px;font:700 14px/1 'Alegreya Sans SC',sans-serif;letter-spacing:.04em;color:#9C9282}
+.sh{display:flex;align-items:center;gap:6px;width:100%;height:44px;padding:0 16px;border:0;background:none;color:#9C9282;font:700 14px/1 'Alegreya Sans SC',sans-serif;letter-spacing:.04em;cursor:pointer;text-align:left}
+.sh:hover{color:#F3E8D4}
+.sh[aria-sort]{color:#F2D58A}
+.tbl td{height:56px;padding:8px 16px;border-top:1px solid #16110E;vertical-align:middle;white-space:nowrap;line-height:1.35}
+.tbl.wrapc td{white-space:normal}
+.tbl tr:first-child td{border-top:0}
+.tbl tbody tr:hover td{background:#120E0B}
+.tbl td.r,.tbl th.r{text-align:right}
+.num{font-variant-numeric:tabular-nums;color:#F3E8D4}
+.mute{color:#8F8575}
+.ico{width:40px;height:40px;display:flex;align-items:center;justify-content:center;border:1px solid #2A211B;border-radius:3px;background:radial-gradient(circle at 50% 40%,#1A1411,#0B0807)}
+.ico img{max-width:30px;max-height:30px;opacity:.8}
+.nm{position:relative;display:inline-flex;align-items:center;gap:10px}
+.open{background:none;border:0;padding:2px 0;font:500 16px/1.3 'Alegreya Sans',sans-serif;color:#F3E8D4;cursor:pointer;text-align:left}
+.open:hover{color:#FFE9C2;text-decoration:underline;text-underline-offset:3px}
+.card{position:absolute;z-index:40;left:calc(100% + 16px);top:50%;transform:translateY(-50%);width:300px;display:flex;flex-direction:column;gap:4px;padding:16px 18px;white-space:normal;background:linear-gradient(#17110E,#0B0807);border:1px solid #3A2D24;border-radius:4px;box-shadow:0 14px 34px rgba(0,0,0,.75);font:400 15px/1.5 'Alegreya Sans',sans-serif;color:#C9BFAE;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .12s,visibility .12s}
+.nm:hover>.card,.nm:focus-within>.card{opacity:1;visibility:visible}
+.c-name{font:700 17px/1.25 Cinzel,serif;color:#F3E8D4}
+.c-rule{height:1px;background:#2E241D;margin:6px 0}
+.upd{font-size:14px;color:#F2C14E}
+.kan{display:inline-flex;align-items:center;height:24px;padding:0 8px;border:1px solid #1E3E48;border-radius:3px;background:#0B1619;font:700 13px/1 'Alegreya Sans SC',sans-serif;color:#7FD7F0}
+.srcs{display:flex;flex-wrap:wrap;gap:6px}
+.sb{display:inline-flex;align-items:center;height:26px;padding:0 10px;border-radius:13px;border:1px solid #2E241D;font:700 13px/1 'Alegreya Sans SC',sans-serif;color:#C9BFAE;background:#0E0B09}
+.pb{min-width:40px;height:40px;border:1px solid #2E241D;border-radius:3px;background:#0E0B09;color:#C9BFAE;font:700 18px/1 'Alegreya Sans',sans-serif;cursor:pointer}
+.pb:hover:not(:disabled){border-color:#4A3B2F;color:#F3E8D4}
+.pb:disabled{color:#3A322B;cursor:default}
+.icard{display:flex;flex-direction:column;gap:6px;padding:24px;background:linear-gradient(#17110E,#0B0807);border:1px solid #3A2D24;border-radius:4px;box-shadow:0 18px 40px rgba(0,0,0,.55);font-size:16px;color:#C9BFAE}
+.kv{display:flex;justify-content:space-between;gap:12px}
+.kv b{color:#F3E8D4;font-weight:500;font-variant-numeric:tabular-nums}
+.ctl{display:flex;flex-direction:column;gap:14px;padding:20px;border:1px solid #221A15;border-radius:4px;background:#0A0706}
+.ctlrow{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:16px}
+.stp{width:40px;height:40px;border:1px solid #3A2D24;border-radius:3px;background:#1A1411;color:#F3E8D4;font:700 18px/1 'Alegreya Sans',sans-serif;cursor:pointer}
+.stp:disabled{color:#3A322B;border-color:#221A15;cursor:default}
+.tg{min-width:72px;height:40px;padding:0 16px;border:1px solid #2E241D;border-radius:20px;background:#0E0B09;color:#C9BFAE;font:500 15px/1 'Alegreya Sans',sans-serif;cursor:pointer}
+.tg[aria-pressed="true"]{background:#2A2014;border-color:#6A5426;color:#F2D58A}
+.tabs{display:flex;flex-wrap:wrap;gap:4px;border-bottom:1px solid #221A15;margin-bottom:28px}
+.tab{position:relative;height:48px;padding:0 16px;border:0;background:none;color:#C9BFAE;font:700 16px/1 'Alegreya Sans SC',sans-serif;letter-spacing:.02em;cursor:pointer}
+.tab:hover{color:#F3E8D4}
+.tab[aria-selected="true"]{color:#F2D58A;box-shadow:inset 0 -2px 0 #C9A24E}
+.tab span{font:500 14px/1 'Alegreya Sans',sans-serif;color:#8F8575;margin-left:6px}
+.h3{margin:0 0 14px;font:700 15px/1 'Alegreya Sans SC',sans-serif;letter-spacing:.04em;color:#9C9282}
+.roll{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.rbox{padding:18px 20px;border:1px solid #221A15;border-radius:4px;background:#0A0706;font-size:16px;line-height:1.55}
+.rbox b{display:block;margin-bottom:8px;color:#F3E8D4;font-weight:500;font-size:17px}
+.tl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.tl li{position:relative;padding:0 0 24px 28px}
+.tl li::before{content:"";position:absolute;left:5px;top:12px;bottom:0;width:1px;background:#2E241D}
+.tl li:last-child{padding-bottom:0}
+.tl li:last-child::before{display:none}
+.pip{position:absolute;left:0;top:5px;width:11px;height:11px;border-radius:50%;box-shadow:0 0 0 3px #0D0B0A}
+.diff{display:grid;grid-template-columns:52px minmax(0,1fr);gap:6px 12px;margin-top:12px;padding:16px 18px;border:1px solid #221A15;border-radius:4px;background:#0A0706;font-size:16px}
+.diff .k{font:700 14px/1.6 'Alegreya Sans SC',sans-serif;letter-spacing:.03em;color:#9C9282}
+.was{color:#8F8575;text-decoration:line-through;text-decoration-color:#5A4E44}
+.field{width:100%;padding:10px 12px;border:1px solid #241B15;border-radius:3px;background:linear-gradient(#020101,#090706);color:#D9CFBD;font:inherit;font-size:16px;resize:vertical}
+.field:focus{outline:2px solid #A88B6C;outline-offset:-1px}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 20px;border:1px solid transparent;border-radius:4px;font:700 16px/1 'Alegreya Sans SC',sans-serif;cursor:pointer}
+.red{background:linear-gradient(#7E1C14,#3A0B07) padding-box,linear-gradient(#E05A4A,#8A2418 45%,#4A100A) border-box;color:#F6E7D0}
+.red:disabled{background:#181210;border-color:#2E251E;color:#6F665A;cursor:default}
+.cm{display:flex;gap:16px;padding:20px 0;border-top:1px solid #1E1814}
+.vote{flex:0 0 48px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;height:56px;border:1px solid #2E241D;border-radius:3px;background:#0E0B09;color:#C9BFAE;font:700 15px/1 'Alegreya Sans',sans-serif;cursor:pointer}
+.vote[aria-pressed="true"]{border-color:#6A5426;color:#F2D58A}
+.sim{display:flex;align-items:center;gap:12px;width:100%;min-height:44px;padding:10px 12px;font-size:16px !important;border:0;border-top:1px solid #16110E;background:none;color:#C9BFAE;font:inherit;text-align:left;cursor:pointer}
+.sim:hover{background:#120E0B;color:#F3E8D4}
+.sim:focus-visible{outline:2px solid #A88B6C;outline-offset:-2px}
+.facts{display:flex;flex-wrap:wrap;gap:8px}
+.fact{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:0 16px;border:1px solid #2A211B;border-radius:18px;background:#0E0B09;font-size:15px;color:#C9BFAE}
+.fact b{color:#F3E8D4;font-weight:500}
+/* The game's item card, drawn as src/game/ui/tip.cpp draws it (1080p pixels): rows from the game's
+   own describe(), sizes and inks from its style table. */
+.gcard{position:relative;width:346px;border:1px solid transparent;border-radius:4px;color:#fff;font:500 14px/21px 'Alegreya Sans',sans-serif;text-shadow:1px 1px 0 rgba(0,0,0,.75);text-align:left;white-space:normal;
+  background:url(/_blob/94b796bdb7af97c95e221118d35d5c43) padding-box,linear-gradient(rgba(13,10,8,.92),rgba(5,3,3,.9)) padding-box,linear-gradient(rgba(107,86,69,.94),rgba(42,32,25,.94)) border-box;
+  box-shadow:0 0 0 1px #000,0 1px 3px rgba(0,0,0,.7),0 8px 14px rgba(0,0,0,.55),0 30px 60px rgba(0,0,0,.55);overflow:hidden}
+.gcard b{font-weight:700}
+.ghead{position:relative;padding:12px 12px}
+.gline{position:absolute;left:4px;right:4px;top:0;height:2px}
+.gtitle{font:500 17px/21px Cinzel,serif;text-transform:uppercase;letter-spacing:.06em;opacity:.94;padding-right:58px}
+.gsub{font-size:14px;line-height:22px;opacity:.94}
+.gbound{font-size:14px;line-height:21px;color:#cc80cc;opacity:.94}
+.gbody{padding:0 12px 8px;opacity:.94}
+.ghl{display:flex;align-items:baseline;gap:8.4px;line-height:31px}
+.ghl b{font-size:24px}
+.ghl span{font-size:15px;color:#c4c1b4}
+.gbr{position:relative;padding:3px 0 0 13px;margin-bottom:12px}
+.gbr::before{content:"";position:absolute;left:3px;top:6px;bottom:6px;width:1px;background:rgba(255,255,255,.169)}
+.gbr div{font-size:13.5px;line-height:21px;color:#96998e}
+.gbr b{margin-right:4.7px}
+.grule{height:1px;background:rgba(255,255,255,.056);margin:8px -12px}
+.gopt{position:relative;padding-left:25px}
+.gmark{position:absolute;left:0;top:0;width:16px;height:21px;display:flex;align-items:center;justify-content:center}
+.gstat{display:flex;justify-content:space-between;gap:12px;padding-left:25px}
+.gstat span{color:#c4c1b4}
+.gfoot{display:flex;justify-content:space-between;gap:12px;padding:8px 12px;background:rgba(0,0,0,.376);box-shadow:inset 0 1px 0 rgba(255,255,255,.06);font-size:13px;line-height:20px;opacity:.94}
+.gfoot .r{display:flex;align-items:center;gap:6px;color:#7d8077;white-space:nowrap}
+.gsell{display:flex;justify-content:space-between;align-items:center;height:36px;padding:0 12px;background:rgba(0,0,0,.517);box-shadow:inset 0 1px 0 rgba(107,86,69,.846)}
+.gsell span{font-size:11.96px;letter-spacing:.12em;color:#7d8077}
+.gsell b{display:flex;align-items:center;gap:5.4px;font-size:14.56px;color:#ffcc1a}
+.gpop{position:absolute;z-index:60;left:calc(100% + 16px);top:50%;transform:translateY(-50%);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .12s,visibility .12s}
+.nm:hover>.gpop,.nm:focus-within>.gpop{opacity:1;visibility:visible}
+@media (min-width:900px){.tbox{overflow:visible}}
+@media (max-width:820px){.gpop{left:0;top:calc(100% + 8px);transform:none}.gcard{width:min(346px,88vw)}}
+.tnode{display:flex;flex-direction:column;align-items:center;gap:4px}
+.tb{width:26px;height:26px;padding:0;border:1px solid #3A2D24;border-radius:3px;background:#1A1411;color:#F3E8D4;font:700 16px/1 'Alegreya Sans',sans-serif;cursor:pointer}
+.tb:disabled{color:#3A322B;border-color:#221A15;background:#110D0B;cursor:default}
+.tb:focus-visible{outline:2px solid #A88B6C;outline-offset:1px}
+.viewer{position:relative;height:320px;border:1px solid #2A211B;border-radius:4px;background:radial-gradient(ellipse at 50% 42%,#2A1F17 0%,#120D0A 62%,#0A0706 100%);overflow:hidden}
+.viewer canvas{display:block;width:100%;height:100%;cursor:grab;touch-action:none}
+.viewer canvas:active{cursor:grabbing}
+.vhint{position:absolute;left:14px;bottom:12px;font-size:14px;color:#9C9282;pointer-events:none}
+.vload{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:15px;color:#9C9282;pointer-events:none}
+.mute{color:#9C9282}
+.kv{padding:3px 0}
+footer{padding:52px 0 36px;box-shadow:inset 0 1px 0 #1E1814;margin-top:72px}
+footer .wrap{display:flex;flex-direction:column;align-items:center;gap:24px}
+footer .logo{height:52px;width:auto;opacity:.3}
+footer p{margin:0 auto;max-width:660px;text-align:center;font-size:13px;line-height:1.7;color:rgba(212,200,184,.5)}
+.foot-links{display:flex;flex-wrap:wrap;justify-content:center;row-gap:8px;font:700 13px/1.2 'Alegreya Sans SC',sans-serif;letter-spacing:.1em}
+.foot-links a{padding:2px 16px;color:#C9BFAE}
+.foot-links a+a{box-shadow:inset 1px 0 0 #3A2E25}
+footer p.foot-legal{margin-top:-8px;font-size:12px;color:rgba(143,133,117,.65)}
+@media (max-width:820px){.rail{flex:1 1 100%}.card{left:0;top:calc(100% + 8px);transform:none}.pill span{display:none}}
+</style>
+</helmet>
+<div class="pg">
+
+<header class="top">
+<div class="bar">
+<a href="https://mu-classic.com/"><img src="/_blob/68b48e377ad6ffbb048aaaea78fa7598" alt="MU Classic" width="435" height="261"></a>
+<div class="bar-links">
+<a class="pill" href="https://discord.gg/frqaT5k3EF"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.3 4.4A19.7 19.7 0 0 0 15.4 3l-.6 1.3a18.3 18.3 0 0 0-5.5 0L8.6 3a19.6 19.6 0 0 0-4.9 1.5C.6 9.1-.3 13.7.1 18.2a19.8 19.8 0 0 0 6 3l1.3-2.1a12.8 12.8 0 0 1-2-1l.5-.4a14.1 14.1 0 0 0 12.2 0l.5.4c-.6.4-1.3.7-2 1l1.3 2.1a19.7 19.7 0 0 0 6-3c.5-5.2-.8-9.8-3.6-13.8zM8 15.4c-1.2 0-2.2-1.1-2.2-2.4S6.8 10.6 8 10.6s2.2 1.1 2.2 2.4-1 2.4-2.2 2.4zm8 0c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4z"></path></svg><span>Discord</span></a>
+<a href="https://mu-classic.com/account" style="font-weight: 500">Sign in</a>
+</div>
+</div>
+<div class="wrap head">
+<nav aria-label="Breadcrumb"><ol class="crumbs">
+<sc-for list="{{crumbs}}" as="c" hint-placeholder-count="3"><li><sc-if value="{{c.link}}" hint-placeholder-val="{{ true }}"><button class="crumb" type="button" onClick="{{c.go}}">{{c.label}}</button></sc-if><sc-if value="{{c.cur}}" hint-placeholder-val="{{ false }}"><span class="here" aria-current="page">{{c.label}}</span></sc-if></li></sc-for>
+</ol></nav>
+<div class="search" role="search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg><label for="q" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Search items</label><input id="q" type="search" placeholder="Search {{total}} items" value="{{q}}" onChange="{{onQ}}"></div>
+</div>
+</header>
+
+<main class="wrap">
+<sc-if value="{{loading}}" hint-placeholder-val="{{ false }}"><p class="mute">Loading the item database…</p></sc-if>
+
+<sc-if value="{{isList}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start">
+<aside class="rail" aria-label="Filters">
+<div>
+<h2 class="rh">Browse</h2>
+<button class="ci" type="button" aria-current="{{browseItems}}" onClick="{{goItems}}">Items<span>{{total}}</span></button>
+<button class="ci" type="button" aria-current="{{browseMons}}" onClick="{{goMons}}">Monsters<span>{{monTotal}}</span></button>
+<button class="ci" type="button" aria-current="{{browseNpcs}}" onClick="{{goNpcs}}">NPCs<span>{{npcTotal}}</span></button>
+<button class="ci" type="button" aria-current="{{browseQuests}}" onClick="{{goQuests}}">Quests<span>{{questTotal}}</span></button>
+<button class="ci" type="button" aria-current="{{browseEvents}}" onClick="{{goEvents}}">Events<span>11</span></button>
+<sc-for list="{{moreBrowse}}" as="b" hint-placeholder-count="5"><button class="ci" type="button" aria-current="{{b.on}}" onClick="{{b.pick}}">{{b.label}}<span>{{b.n}}</span></button></sc-for>
+</div>
+<sc-if value="{{isItemList}}" hint-placeholder-val="{{ true }}">
+<div>
+<h2 class="rh">Category</h2>
+<sc-for list="{{cats}}" as="c" hint-placeholder-count="8"><button class="{{c.cls}}" type="button" aria-current="{{c.on}}" onClick="{{c.pick}}">{{c.label}}<span>{{c.n}}</span></button></sc-for>
+</div>
+<div>
+<h2 class="rh">Class</h2>
+<div class="chips"><sc-for list="{{classes}}" as="k" hint-placeholder-count="4"><button class="chip" type="button" aria-pressed="{{k.on}}" onClick="{{k.pick}}" title="{{k.title}}">{{k.label}}</button></sc-for></div>
+</div>
+<div>
+<h2 class="rh">Source</h2>
+<div class="chips"><sc-for list="{{srcChips}}" as="k" hint-placeholder-count="6"><button class="chip" type="button" aria-pressed="{{k.on}}" onClick="{{k.pick}}">{{k.label}}</button></sc-for></div>
+</div>
+</sc-if>
+<sc-if value="{{isMonList}}" hint-placeholder-val="{{ false }}">
+<div>
+<h2 class="rh">Map</h2>
+<sc-for list="{{monMaps}}" as="c" hint-placeholder-count="6"><button class="ci" type="button" aria-current="{{c.on}}" onClick="{{c.pick}}">{{c.label}}<span>{{c.n}}</span></button></sc-for>
+</div>
+</sc-if>
+</aside>
+
+<sc-if value="{{isMonList}}" hint-placeholder-val="{{ false }}">
+<section style="flex: 999 1 640px; min-width: 0" aria-labelledby="mttl">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 16px">
+<h1 id="mttl" style="margin: 0; font: 700 30px/1.15 Cinzel, serif; color: #F3E8D4">{{monTitle}}</h1>
+<span class="mute" style="font-size: 15px">{{monCount}}</span>
+</div>
+<div class="tbox"><table class="tbl">
+<thead><tr><th scope="col" class="plain">Monster</th><th scope="col" class="plain r">Level</th><th scope="col" class="plain r">Life</th><th scope="col" class="plain r">Damage</th><th scope="col" class="plain r">Defense</th><th scope="col" class="plain">Lives in</th><th scope="col" class="plain r">Drops</th></tr></thead>
+<tbody><sc-for list="{{monRows}}" as="m" hint-placeholder-count="12"><tr><td><button class="open" type="button" onClick="{{m.open}}">{{m.n}}</button></td><td class="r num">{{m.lv}}</td><td class="r num">{{m.hp}}</td><td class="r num">{{m.dmg}}</td><td class="r num">{{m.def}}</td><td class="mute" style="white-space: normal">{{m.where}}</td><td class="r num">{{m.drops}}</td></tr></sc-for></tbody>
+</table></div>
+</section>
+</sc-if>
+
+<sc-if value="{{isNpcList}}" hint-placeholder-val="{{ false }}">
+<section style="flex: 999 1 640px; min-width: 0" aria-labelledby="nttl">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 16px">
+<h1 id="nttl" style="margin: 0; font: 700 30px/1.15 Cinzel, serif; color: #F3E8D4">NPCs</h1>
+<span class="mute" style="font-size: 15px">{{npcCount}}</span>
+</div>
+<div class="tbox"><table class="tbl">
+<thead><tr><th scope="col" class="plain">Name</th><th scope="col" class="plain">Role</th><th scope="col" class="plain">Where</th><th scope="col" class="plain r">Sells</th><th scope="col" class="plain r">Quests</th></tr></thead>
+<tbody><sc-for list="{{npcRows}}" as="n" hint-placeholder-count="12"><tr><td><button class="open" type="button" onClick="{{n.open}}">{{n.name}}</button></td><td class="mute" style="white-space: normal">{{n.role}}</td><td class="mute" style="white-space: normal">{{n.where}}</td><td class="r num">{{n.sells}}</td><td class="r num">{{n.quests}}</td></tr></sc-for></tbody>
+</table></div>
+</section>
+</sc-if>
+
+<sc-if value="{{isEventList}}" hint-placeholder-val="{{ false }}">
+<section style="flex: 999 1 640px; min-width: 0" aria-labelledby="ettl">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 16px">
+<h1 id="ettl" style="margin: 0; font: 700 30px/1.15 Cinzel, serif; color: #F3E8D4">Events</h1>
+<span class="mute" style="font-size: 15px">Each castle and square has its own monsters and drops</span>
+</div>
+<div class="tbox"><table class="tbl">
+<thead><tr><th scope="col" class="plain">Event</th><th scope="col" class="plain">Your level</th><th scope="col" class="plain r">Monster levels</th><th scope="col" class="plain r">Monsters</th><th scope="col" class="plain r">Items drop</th></tr></thead>
+<tbody><sc-for list="{{eventRows}}" as="e" hint-placeholder-count="10"><tr><td><button class="open" type="button" onClick="{{e.open}}">{{e.name}}</button></td><td class="num">{{e.band}}</td><td class="r num">{{e.mlv}}</td><td class="r num">{{e.mons}}</td><td class="r num">{{e.items}}</td></tr></sc-for></tbody>
+</table></div>
+<sc-if value="{{srcLoading}}" hint-placeholder-val="{{ false }}"><p class="mute">Loading drops…</p></sc-if>
+</section>
+</sc-if>
+
+<sc-if value="{{isRuneList}}" hint-placeholder-val="{{ false }}">
+<section style="flex: 999 1 640px; min-width: 0" aria-labelledby="rttl">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 16px">
+<h1 id="rttl" style="margin: 0; font: 700 30px/1.15 Cinzel, serif; color: #F3E8D4">Runes</h1>
+<span class="mute" style="font-size: 15px">{{runeCount}}</span>
+</div>
+<div class="rbox" style="margin-bottom: 20px"><b>How sockets and runes work</b><sc-for list="{{runeRules}}" as="r" hint-placeholder-count="3"><p style="margin: 0 0 8px">{{r}}</p></sc-for></div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px"><sc-for list="{{runeChips}}" as="c" hint-placeholder-count="6"><button class="chip" type="button" aria-pressed="{{c.on}}" onClick="{{c.pick}}" style="color: {{c.color}}">{{c.label}}</button></sc-for></div>
+<div class="tbox"><table class="tbl wrapc">
+<thead><tr><th scope="col" class="plain">Rune</th><th scope="col" class="plain">Effect</th><th scope="col" class="plain r">Level</th><th scope="col" class="plain">Class</th><th scope="col" class="plain">Fits</th></tr></thead>
+<tbody><sc-for list="{{runeRows}}" as="r" hint-placeholder-count="12"><tr><td style="white-space: nowrap"><button class="open" type="button" onClick="{{r.open}}" style="color: {{r.color}}">{{r.name}}</button><span class="mute" style="display: block; font-size: 14px">{{r.rarity}}<sc-if value="{{r.dormant}}" hint-placeholder-val="{{ false }}"> · Kanturu, not yet</sc-if></span></td><td>{{r.effect}}</td><td class="r num">{{r.level}}</td><td class="mute">{{r.classes}}</td><td class="mute">{{r.slots}}</td></tr></sc-for></tbody>
+</table></div>
+</section>
+</sc-if>
+
+<sc-if value="{{isSkillList}}" hint-placeholder-val="{{ false }}">
+<section style="flex: 999 1 640px; min-width: 0" aria-labelledby="sttl">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 16px">
+<h1 id="sttl" style="margin: 0; font: 700 30px/1.15 Cinzel, serif; color: #F3E8D4">Skills</h1>
+<span class="mute" style="font-size: 15px">{{skillCount}}</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px"><sc-for list="{{skillChips}}" as="c" hint-placeholder-count="4"><button class="chip" type="button" aria-pressed="{{c.on}}" onClick="{{c.pick}}">{{c.label}}</button></sc-for></div>
+<div class="tbox"><table class="tbl">
+<thead><tr><th scope="col" class="plain" style="width: 60px"></th><th scope="col" class="plain">Skill</th><th scope="col" class="plain">Class</th><th scope="col" class="plain r">Level</th><th scope="col" class="plain r">Mana</th><th scope="col" class="plain r">Cooldown</th><th scope="col" class="plain r">Range</th><th scope="col" class="plain">Use</th></tr></thead>
+<tbody><sc-for list="{{skillRows}}" as="k" hint-placeholder-count="12"><tr><td><span aria-hidden="true" style="display: block; width: 32px; height: 44px; border-radius: 3px; border: 1px solid #2A211B; background-color: #0E0B09; background-size: {{k.bgSize}}; {{k.iconSm}}"></span></td><td><button class="open" type="button" onClick="{{k.open}}">{{k.name}}</button></td><td class="mute" style="white-space: normal">{{k.cls}}</td><td class="r num">{{k.level}}</td><td class="r num">{{k.mana}}</td><td class="r num">{{k.cd}}</td><td class="r num">{{k.range}}</td><td class="mute">{{k.use}}</td></tr></sc-for></tbody>
+</table></div>
+</section>
+</sc-if>
+
+<sc-if value="{{isTalents}}" hint-placeholder-val="{{ false }}">
+<section style="flex: 999 1 640px; min-width: 0" aria-labelledby="tttl">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 8px">
+<h1 id="tttl" style="margin: 0; font: 700 30px/1.15 Cinzel, serif; color: #F3E8D4">Talent calculator</h1>
+<span class="mute" style="font-size: 15px">{{tal.rule}}</span>
+</div>
+<p class="mute" style="margin: 0 0 20px">Small talents take up to 10 points. A major opens when either small talent above it is full, and taking it opens the next tier. Talents only add; none has a drawback.</p>
+<div style="display: flex; flex-wrap: wrap; gap: 16px 24px; align-items: center; padding: 16px 20px; border: 1px solid #221A15; border-radius: 4px; background: #0A0706; margin-bottom: 24px">
+<div style="display: flex; flex-wrap: wrap; gap: 8px"><sc-for list="{{tal.classes}}" as="c" hint-placeholder-count="4"><button class="chip" type="button" aria-pressed="{{c.on}}" onClick="{{c.pick}}">{{c.label}}</button></sc-for></div>
+<div class="ctlrow" style="gap: 10px"><span>Level</span><button class="stp" type="button" aria-label="10 levels less" onClick="{{tal.lvLess}}">−</button><b class="num" style="min-width: 40px; text-align: center">{{tal.level}}</b><button class="stp" type="button" aria-label="10 levels more" onClick="{{tal.lvMore}}">+</button></div>
+<div class="ctlrow" style="gap: 10px"><span>Rebirths</span><button class="stp" type="button" aria-label="One rebirth less" onClick="{{tal.rbLess}}">−</button><b class="num" style="min-width: 24px; text-align: center">{{tal.reb}}</b><button class="stp" type="button" aria-label="One rebirth more" onClick="{{tal.rbMore}}">+</button></div>
+<div style="margin-left: auto; display: flex; gap: 16px; align-items: center"><span style="font-size: 17px">Points left <b class="num" style="color: #F2D58A; font-size: 22px">{{tal.left}}</b> <span class="mute">of {{tal.total}}</span></span><button class="btn" type="button" onClick="{{tal.reset}}" style="background: #1A1411; border-color: #3A2D24; color: #D9CFBD; min-height: 40px">Reset</button></div>
+</div>
+<div style="overflow-x: auto; padding-bottom: 8px">
+<div style="display: flex; gap: 12px; min-width: max-content">
+<sc-for list="{{tal.columns}}" as="col" hint-placeholder-count="6">
+<div style="width: 176px; padding: 14px 10px 18px; border: 1px solid #221A15; border-radius: 4px; background: linear-gradient(#15100D, #0B0807)">
+<div style="font: 700 17px/1.2 'Alegreya Sans SC', sans-serif; color: #F3E8D4; text-align: center">{{col.name}}</div>
+<div class="mute" style="font-size: 14px; text-align: center; min-height: 40px; margin: 4px 0 10px">{{col.sub}}</div>
+<sc-for list="{{col.tiers}}" as="t" hint-placeholder-count="3">
+<div style="display: flex; justify-content: center; gap: 14px; margin-bottom: 8px">
+<sc-for list="{{t.smalls}}" as="n" hint-placeholder-count="2"><div class="tnode" title="{{n.tip}}" style="opacity: {{n.op}}">
+<span aria-hidden="true" style="display: block; width: 46px; height: 64px; border-radius: 3px; border: 1px solid {{n.edge}}; filter: {{n.filter}}; {{n.icon}}"></span>
+<span class="num" style="font-size: 14px; color: {{n.color}}">{{n.pts}}/{{n.max}}</span>
+<span style="display: flex; gap: 4px"><button class="tb" type="button" aria-label="Take a point from {{n.name}}" disabled="{{n.noSub}}" onClick="{{n.sub}}">−</button><button class="tb" type="button" aria-label="Add a point to {{n.name}}" disabled="{{n.noAdd}}" onClick="{{n.add}}">+</button></span>
+</div></sc-for>
+</div>
+<sc-for list="{{t.majors}}" as="n" hint-placeholder-count="1"><div class="tnode" title="{{n.tip}}" style="opacity: {{n.op}}; margin: 0 auto 16px">
+<span aria-hidden="true" style="display: block; width: 52px; height: 72px; border-radius: 3px; border: 2px solid {{n.edge}}; filter: {{n.filter}}; background-size: {{n.bgSizeL}}; {{n.iconL}}"></span>
+<span style="font-size: 14px; color: {{n.color}}; text-align: center; line-height: 1.2">{{n.name}}</span>
+<span style="display: flex; gap: 4px"><button class="tb" type="button" aria-label="Take back {{n.name}}" disabled="{{n.noSub}}" onClick="{{n.sub}}">−</button><button class="tb" type="button" aria-label="Take {{n.name}}" disabled="{{n.noAdd}}" onClick="{{n.add}}">+</button></span>
+</div></sc-for>
+</sc-for>
+</div>
+</sc-for>
+</div>
+</div>
+<div class="rbox" style="margin-top: 20px"><b>Your picks</b>
+<sc-if value="{{tal.noPicks}}" hint-placeholder-val="{{ true }}"><span class="mute">Nothing taken yet. Hover over a talent to read it.</span></sc-if>
+<sc-for list="{{tal.picks}}" as="p" hint-placeholder-count="2"><div style="padding: 3px 0"><b style="display: inline; color: {{p.color}}; font-size: 16px; margin: 0">{{p.name}}</b> <span class="mute">{{p.text}}</span></div></sc-for>
+</div>
+</section>
+</sc-if>
+
+<sc-if value="{{isMixList}}" hint-placeholder-val="{{ false }}">
+<section style="flex: 999 1 640px; min-width: 0" aria-labelledby="mxttl">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 16px">
+<h1 id="mxttl" style="margin: 0; font: 700 30px/1.15 Cinzel, serif; color: #F3E8D4">Chaos Machine and Jeweler</h1>
+<span class="mute" style="font-size: 15px">{{mixCount}}</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 16px">
+<sc-for list="{{mixCards}}" as="m" hint-placeholder-count="4">
+<article class="rbox" style="padding: 20px 24px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 16px; align-items: baseline; margin-bottom: 12px">
+<h2 style="margin: 0; font: 700 22px/1.2 Cinzel, serif; color: #F3E8D4">{{m.name}}</h2>
+<button class="crumb" type="button" onClick="{{m.openNpc}}" style="color: #F2D58A">{{m.npc}}</button>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px 28px">
+<div><div class="h3" style="margin-bottom: 8px">Put in</div><sc-for list="{{m.needs}}" as="n" hint-placeholder-count="3"><div style="padding: 2px 0"><sc-if value="{{n.link}}" hint-placeholder-val="{{ true }}"><button class="open" type="button" onClick="{{n.open}}" style="font-size: 16px">{{n.name}}</button></sc-if><sc-if value="{{n.plainName}}" hint-placeholder-val="{{ false }}"><span style="color: #F3E8D4">{{n.name}}</span></sc-if> <span class="mute">{{n.meta}}</span></div></sc-for></div>
+<div><div class="h3" style="margin-bottom: 8px">Success</div><sc-for list="{{m.rate}}" as="r" hint-placeholder-count="2"><div class="kv"><span>{{r.k}}</span><b>{{r.v}}</b></div></sc-for><sc-for list="{{m.zen}}" as="z" hint-placeholder-count="1"><div class="kv"><span>{{z.k}}</span><b style="color: #F2C14E">{{z.v}}</b></div></sc-for></div>
+<div><div class="h3" style="margin-bottom: 8px">You get</div><sc-for list="{{m.result}}" as="r" hint-placeholder-count="1"><div style="padding: 2px 0"><sc-if value="{{r.link}}" hint-placeholder-val="{{ false }}"><button class="open" type="button" onClick="{{r.open}}" style="font-size: 16px">{{r.name}}</button></sc-if> <span class="mute">{{r.note}}</span></div></sc-for>
+<div style="margin-top: 8px; color: #E8A15A; font-size: 15px">{{m.fail}}</div></div>
+</div>
+<sc-for list="{{m.notes}}" as="t" hint-placeholder-count="0"><p class="mute" style="margin: 10px 0 0; font-size: 15px">{{t}}</p></sc-for>
+</article>
+</sc-for>
+</div>
+</section>
+</sc-if>
+
+<sc-if value="{{isEliteList}}" hint-placeholder-val="{{ false }}">
+<section style="flex: 999 1 640px; min-width: 0" aria-labelledby="elttl">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 16px">
+<h1 id="elttl" style="margin: 0; font: 700 30px/1.15 Cinzel, serif; color: #F2C14E">Elite monsters</h1>
+<span class="mute" style="font-size: 15px">{{eliteCount}}</span>
+</div>
+<div class="roll" style="margin-bottom: 20px">
+<div class="rbox"><b>Loot</b><sc-for list="{{eliteLoot}}" as="l" hint-placeholder-count="3"><div>· {{l}}</div></sc-for></div>
+<div class="rbox"><b>What sets them apart</b><sc-for list="{{eliteRules}}" as="l" hint-placeholder-count="3"><div>· {{l}}</div></sc-for></div>
+</div>
+<div class="tbox"><table class="tbl wrapc">
+<thead><tr><th scope="col" class="plain">Map</th><th scope="col" class="plain r">At once</th><th scope="col" class="plain r">Life</th><th scope="col" class="plain r">Damage</th><th scope="col" class="plain r">Defense</th><th scope="col" class="plain">Can be</th></tr></thead>
+<tbody><sc-for list="{{eliteRows}}" as="e" hint-placeholder-count="9"><tr><td style="color: #F3E8D4; white-space: nowrap">{{e.map}}</td><td class="r num">{{e.count}}</td><td class="r num" style="color: #F2C14E">×{{e.life}}</td><td class="r num">×{{e.dmg}}</td><td class="r num">×{{e.def}}</td><td><sc-for list="{{e.breeds}}" as="b" hint-placeholder-count="3"><button class="crumb" type="button" onClick="{{b.open}}" style="margin-right: 10px">{{b.name}} <span class="mute">{{b.level}}</span></button></sc-for></td></tr></sc-for></tbody>
+</table></div>
+</section>
+</sc-if>
+
+<sc-if value="{{isQuestList}}" hint-placeholder-val="{{ false }}">
+<section style="flex: 999 1 640px; min-width: 0" aria-labelledby="qttl">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 16px">
+<h1 id="qttl" style="margin: 0; font: 700 30px/1.15 Cinzel, serif; color: #F3E8D4">Quests</h1>
+<span class="mute" style="font-size: 15px">{{questCount}}</span>
+</div>
+<div class="tbox"><table class="tbl">
+<thead><tr><th scope="col" class="plain">Quest</th><th scope="col" class="plain">Given by</th><th scope="col" class="plain">Map</th><th scope="col" class="plain r">Level</th><th scope="col" class="plain r">Experience</th><th scope="col" class="plain r">Zen</th><th scope="col" class="plain">Repeats</th></tr></thead>
+<tbody><sc-for list="{{questRows}}" as="q" hint-placeholder-count="12"><tr><td><button class="open" type="button" onClick="{{q.open}}">{{q.name}}</button></td><td><button class="crumb" type="button" onClick="{{q.openGiver}}">{{q.giver}}</button></td><td class="mute">{{q.map}}</td><td class="r num">{{q.level}}</td><td class="r"><span class="num" style="color: #B9A2F2">{{q.exp}}</span><sc-if value="{{q.firstExp}}" hint-placeholder-val="{{ false }}"><span class="mute" style="display: block; font-size: 14px">{{q.firstExp}}</span></sc-if></td><td class="r num" style="color: #F2C14E">{{q.zen}}</td><td class="mute">{{q.repeat}}</td></tr></sc-for></tbody>
+</table></div>
+</section>
+</sc-if>
+
+<sc-if value="{{isItemList}}" hint-placeholder-val="{{ true }}">
+<section style="flex: 999 1 640px; min-width: 0" aria-labelledby="ttl">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 16px">
+<h1 id="ttl" style="margin: 0; font: 700 30px/1.15 Cinzel, serif; color: #F3E8D4">{{title}}</h1>
+<span class="mute" style="font-size: 15px">{{rangeText}}</span>
+</div>
+<div class="tbox">
+<table class="tbl">
+<thead><tr>
+<th scope="col" style="width: 64px"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Icon</span></th>
+<sc-for list="{{cols}}" as="h" hint-placeholder-count="6"><th scope="col" class="{{h.cls}}" aria-sort="{{h.aria}}"><button class="sh" type="button" onClick="{{h.pick}}">{{h.label}}<span aria-hidden="true">{{h.arrow}}</span></button></th></sc-for>
+<th scope="col" class="plain">Source</th>
+</tr></thead>
+<tbody>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="12">
+<tr>
+<td><span class="ico"><sc-if value="{{r.icon}}" hint-placeholder-val="{{ true }}"><img src="{{r.icon}}" alt=""></sc-if></span></td>
+<td><span class="nm"><button class="open" type="button" aria-describedby="{{r.tid}}" onClick="{{r.open}}">{{r.n}}</button><sc-if value="{{r.dorm}}" hint-placeholder-val="{{ false }}"><span class="kan">Kanturu</span></sc-if>
+<sc-if value="{{r.hasGc}}" hint-placeholder-val="{{ false }}"><span class="gpop" role="tooltip" id="{{r.tid}}">
+<div class="gcard">
+<div class="ghead" style="background: {{r.gc.headBg}}"><span class="gline" style="background: {{r.gc.lineBg}}"></span>
+<div class="gtitle" style="color: {{r.gc.tone}}">{{r.gc.title}}</div>
+<sc-if value="{{r.gc.sub}}" hint-placeholder-val="{{ true }}"><div class="gsub" style="color: {{r.gc.tone}}">{{r.gc.sub}}</div></sc-if>
+<sc-if value="{{r.gc.bound}}" hint-placeholder-val="{{ false }}"><div class="gbound">{{r.gc.bound}}</div></sc-if>
+</div>
+<div class="gbody">
+<sc-for list="{{r.gc.rows}}" as="gr" hint-placeholder-count="6">
+<sc-if value="{{gr.isHead}}" hint-placeholder-val="{{ false }}"><div class="ghl"><b style="color: {{gr.color}}">{{gr.text}}</b><span>{{gr.word}}</span></div></sc-if>
+<sc-if value="{{gr.isBreak}}" hint-placeholder-val="{{ false }}"><div class="gbr"><sc-for list="{{gr.items}}" as="gb" hint-placeholder-count="3"><div><b style="color: {{gb.color}}">{{gb.figure}}</b>{{gb.text}}</div></sc-for></div></sc-if>
+<sc-if value="{{gr.isRule}}" hint-placeholder-val="{{ false }}"><div class="grule"></div></sc-if>
+<sc-if value="{{gr.isOpt}}" hint-placeholder-val="{{ true }}"><div class="gopt" style="margin-top: {{gr.gap}}"><span class="gmark" aria-hidden="true"><sc-if value="{{gr.mDia}}" hint-placeholder-val="{{ false }}"><svg width="16" height="21" viewBox="-8 -10.5 16 21"><rect x="-2.48" y="-2.48" width="4.96" height="4.96" fill="{{gr.mColor}}"></rect></svg></sc-if><sc-if value="{{gr.mStar}}" hint-placeholder-val="{{ false }}"><svg width="16" height="21" viewBox="-8 -10.5 16 21"><polygon points="0,-4 1.28,-1.28 4,0 1.28,1.28 0,4 -1.28,1.28 -4,0 -1.28,-1.28" fill="{{gr.mColor}}"></polygon></svg></sc-if><sc-if value="{{gr.mSocket}}" hint-placeholder-val="{{ false }}"><svg width="16" height="21" viewBox="-8 -10.5 16 21"><rect x="-2.5" y="-2.5" width="5" height="5" fill="none" stroke="{{gr.mColor}}" stroke-width="1"></rect></svg></sc-if><sc-if value="{{gr.mRing}}" hint-placeholder-val="{{ false }}"><svg width="18" height="21" viewBox="-9 -10.5 18 21"><polygon points="0,-9 7.2,0 0,9 -7.2,0" fill="rgba(0,0,0,.7)"></polygon><polygon points="0,-7.92 6.34,0 0,7.92 -6.34,0" fill="#9e733d"></polygon><polygon points="0,-5.4 4.32,0 0,5.4 -4.32,0" fill="#0d0908"></polygon></svg></sc-if><sc-if value="{{gr.mSet}}" hint-placeholder-val="{{ false }}"><svg width="18" height="21" viewBox="-9 -10.5 18 21"><polygon points="0,-9 7.2,0 0,9 -7.2,0" fill="rgba(0,0,0,.7)"></polygon><polygon points="0,-7.92 6.34,0 0,7.92 -6.34,0" fill="#9e733d"></polygon><polygon points="0,-5.4 4.32,0 0,5.4 -4.32,0" fill="#0d0908"></polygon><polygon points="0,-5.58 4.46,0 0,5.58 -4.46,0" fill="#8c80ff"></polygon><polygon points="0,-3.6 2.88,0 0,3.6 -2.88,0" fill="#ff63b3"></polygon></svg></sc-if></span><sc-if value="{{gr.keyword}}" hint-placeholder-val="{{ false }}"><span style="color: {{gr.kwColor}}">{{gr.keyword}}</span> · </sc-if><span style="color: {{gr.color}}">{{gr.text}}</span> <b style="color: {{gr.tailColor}}">{{gr.tail}}</b></div></sc-if>
+<sc-if value="{{gr.isStat}}" hint-placeholder-val="{{ false }}"><div class="gstat" style="margin-top: {{gr.gap}}"><span style="color: {{gr.labelColor}}">{{gr.label}}</span><b style="color: {{gr.tailColor}}">{{gr.tail}}</b></div></sc-if>
+</sc-for>
+</div>
+<sc-if value="{{r.gc.hasFoot}}" hint-placeholder-val="{{ true }}"><div class="gfoot"><div><sc-for list="{{r.gc.footL}}" as="fl" hint-placeholder-count="2"><div style="color: {{fl.color}}">{{fl.text}}</div></sc-for></div><div><sc-for list="{{r.gc.footR}}" as="fr" hint-placeholder-count="1"><div class="r"><sc-if value="{{fr.ring}}" hint-placeholder-val="{{ true }}"><svg width="19" height="19" viewBox="-9.5 -9.5 19 19" aria-hidden="true"><circle r="8" fill="none" stroke="rgba(255,255,255,.113)" stroke-width="3"></circle><circle r="8" fill="none" stroke="#e6dbc2" stroke-width="3" stroke-dasharray="{{fr.dash}}" transform="rotate(-90)"></circle></svg></sc-if>{{fr.text}}</div></sc-for></div></div></sc-if>
+<sc-if value="{{r.gc.sell}}" hint-placeholder-val="{{ true }}"><div class="gsell"><span>SELLS FOR</span><b><svg width="15" height="15" viewBox="-7.5 -7.5 15 15" aria-hidden="true"><circle r="6.5" fill="#d9a52b" stroke="#7a5512" stroke-width="1"></circle><circle r="3.6" fill="none" stroke="#f5d27a" stroke-width="1"></circle></svg>{{r.gc.sell}}</b></div></sc-if>
+</div>
+</span></sc-if>
+<sc-if value="{{r.noGc}}" hint-placeholder-val="{{ true }}"><span class="card" role="tooltip" id="{{r.tid}}">
+<span class="c-name">{{r.n}}</span>
+<span class="mute" style="font-size: 14px">{{r.kind}}</span>
+<span class="c-rule"></span>
+<sc-if value="{{r.statText}}" hint-placeholder-val="{{ true }}"><span><b style="color: #F2C14E; font-size: 17px">{{r.statText}}</b> {{r.statName}}</span></sc-if>
+<sc-if value="{{r.sp}}" hint-placeholder-val="{{ false }}"><span>Attack speed {{r.sp}}</span></sc-if>
+<span>{{r.reqText}}</span>
+<span style="color: #7FD66A">{{r.clsLong}}</span>
+<sc-if value="{{r.srcText}}" hint-placeholder-val="{{ true }}"><span class="mute" style="font-size: 14px">{{r.srcText}}</span></sc-if>
+<sc-if value="{{r.updText}}" hint-placeholder-val="{{ false }}"><span class="c-rule"></span><span class="upd">{{r.updText}}</span></sc-if>
+</span></sc-if></span></td>
+<td class="mute">{{r.s}}</td>
+<td class="r num">{{r.lvText}}</td>
+<td class="r num">{{r.statCol}}</td>
+<td class="mute">{{r.reqShort}}</td>
+<td class="mute">{{r.clsShort}}</td>
+<td><span class="srcs"><sc-for list="{{r.srcs}}" as="b" hint-placeholder-count="2"><span class="sb" title="{{b.title}}">{{b.label}}</span></sc-for></span></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+<sc-if value="{{noRows}}" hint-placeholder-val="{{ false }}"><p class="mute" style="padding: 20px 0">No item matches. <button class="crumb" type="button" onClick="{{clear}}" style="text-decoration: underline">Clear the filters</button></p></sc-if>
+<div style="display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 16px; font-size: 15px">
+<span class="mute" style="margin-right: 6px">Page {{page}} of {{pages}}</span>
+<button class="pb" type="button" aria-label="Previous page" disabled="{{noPrev}}" onClick="{{prev}}">‹</button>
+<button class="pb" type="button" aria-label="Next page" disabled="{{noNext}}" onClick="{{next}}">›</button>
+</div>
+</section>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{isItem}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-wrap: wrap; gap: 16px 24px; align-items: center; margin-bottom: 28px">
+<span class="ico" style="width: 64px; height: 64px; flex: 0 0 64px"><sc-if value="{{it.icon}}" hint-placeholder-val="{{ true }}"><img src="{{it.icon}}" alt="" style="max-width: 46px; max-height: 46px"></sc-if></span>
+<div style="flex: 1 1 300px; min-width: 0">
+<h1 style="margin: 0; font: 700 34px/1.1 Cinzel, serif; color: #F3E8D4">{{it.n}}</h1>
+<div class="mute" style="font-size: 15px; margin-top: 4px">{{it.kind}}</div>
+</div>
+<div class="facts">
+<sc-for list="{{it.facts}}" as="f" hint-placeholder-count="4"><span class="fact" style="color: {{f.color}}">{{f.k}} <b>{{f.v}}</b></span></sc-for>
+</div>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 40px; align-items: flex-start">
+<aside style="flex: 1 1 320px; max-width: 360px; display: flex; flex-direction: column; gap: 20px">
+<div class="viewer"><canvas ref="{{setCanvas}}" role="img" aria-label="3D model of {{it.n}}. Drag to turn it, scroll to zoom."></canvas><span class="vhint">Drag to turn · scroll to zoom</span><sc-if value="{{model3dLoading}}" hint-placeholder-val="{{ false }}"><span class="vload">Loading the model…</span></sc-if></div>
+<sc-if value="{{it.hasGc}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-wrap: wrap; gap: 8px"><sc-for list="{{it.gcStates}}" as="gs" hint-placeholder-count="4"><button class="chip" type="button" aria-pressed="{{gs.on}}" onClick="{{gs.pick}}">{{gs.label}}</button></sc-for></div>
+<div class="gcard">
+<div class="ghead" style="background: {{it.gc.headBg}}"><span class="gline" style="background: {{it.gc.lineBg}}"></span>
+<div class="gtitle" style="color: {{it.gc.tone}}">{{it.gc.title}}</div>
+<sc-if value="{{it.gc.sub}}" hint-placeholder-val="{{ true }}"><div class="gsub" style="color: {{it.gc.tone}}">{{it.gc.sub}}</div></sc-if>
+<sc-if value="{{it.gc.bound}}" hint-placeholder-val="{{ false }}"><div class="gbound">{{it.gc.bound}}</div></sc-if>
+</div>
+<div class="gbody">
+<sc-for list="{{it.gc.rows}}" as="gr" hint-placeholder-count="6">
+<sc-if value="{{gr.isHead}}" hint-placeholder-val="{{ false }}"><div class="ghl"><b style="color: {{gr.color}}">{{gr.text}}</b><span>{{gr.word}}</span></div></sc-if>
+<sc-if value="{{gr.isBreak}}" hint-placeholder-val="{{ false }}"><div class="gbr"><sc-for list="{{gr.items}}" as="gb" hint-placeholder-count="3"><div><b style="color: {{gb.color}}">{{gb.figure}}</b>{{gb.text}}</div></sc-for></div></sc-if>
+<sc-if value="{{gr.isRule}}" hint-placeholder-val="{{ false }}"><div class="grule"></div></sc-if>
+<sc-if value="{{gr.isOpt}}" hint-placeholder-val="{{ true }}"><div class="gopt" style="margin-top: {{gr.gap}}"><span class="gmark" aria-hidden="true"><sc-if value="{{gr.mDia}}" hint-placeholder-val="{{ false }}"><svg width="16" height="21" viewBox="-8 -10.5 16 21"><rect x="-2.48" y="-2.48" width="4.96" height="4.96" fill="{{gr.mColor}}"></rect></svg></sc-if><sc-if value="{{gr.mStar}}" hint-placeholder-val="{{ false }}"><svg width="16" height="21" viewBox="-8 -10.5 16 21"><polygon points="0,-4 1.28,-1.28 4,0 1.28,1.28 0,4 -1.28,1.28 -4,0 -1.28,-1.28" fill="{{gr.mColor}}"></polygon></svg></sc-if><sc-if value="{{gr.mSocket}}" hint-placeholder-val="{{ false }}"><svg width="16" height="21" viewBox="-8 -10.5 16 21"><rect x="-2.5" y="-2.5" width="5" height="5" fill="none" stroke="{{gr.mColor}}" stroke-width="1"></rect></svg></sc-if><sc-if value="{{gr.mRing}}" hint-placeholder-val="{{ false }}"><svg width="18" height="21" viewBox="-9 -10.5 18 21"><polygon points="0,-9 7.2,0 0,9 -7.2,0" fill="rgba(0,0,0,.7)"></polygon><polygon points="0,-7.92 6.34,0 0,7.92 -6.34,0" fill="#9e733d"></polygon><polygon points="0,-5.4 4.32,0 0,5.4 -4.32,0" fill="#0d0908"></polygon></svg></sc-if><sc-if value="{{gr.mSet}}" hint-placeholder-val="{{ false }}"><svg width="18" height="21" viewBox="-9 -10.5 18 21"><polygon points="0,-9 7.2,0 0,9 -7.2,0" fill="rgba(0,0,0,.7)"></polygon><polygon points="0,-7.92 6.34,0 0,7.92 -6.34,0" fill="#9e733d"></polygon><polygon points="0,-5.4 4.32,0 0,5.4 -4.32,0" fill="#0d0908"></polygon><polygon points="0,-5.58 4.46,0 0,5.58 -4.46,0" fill="#8c80ff"></polygon><polygon points="0,-3.6 2.88,0 0,3.6 -2.88,0" fill="#ff63b3"></polygon></svg></sc-if></span><sc-if value="{{gr.keyword}}" hint-placeholder-val="{{ false }}"><span style="color: {{gr.kwColor}}">{{gr.keyword}}</span> · </sc-if><span style="color: {{gr.color}}">{{gr.text}}</span> <b style="color: {{gr.tailColor}}">{{gr.tail}}</b></div></sc-if>
+<sc-if value="{{gr.isStat}}" hint-placeholder-val="{{ false }}"><div class="gstat" style="margin-top: {{gr.gap}}"><span style="color: {{gr.labelColor}}">{{gr.label}}</span><b style="color: {{gr.tailColor}}">{{gr.tail}}</b></div></sc-if>
+</sc-for>
+</div>
+<sc-if value="{{it.gc.hasFoot}}" hint-placeholder-val="{{ true }}"><div class="gfoot"><div><sc-for list="{{it.gc.footL}}" as="fl" hint-placeholder-count="2"><div style="color: {{fl.color}}">{{fl.text}}</div></sc-for></div><div><sc-for list="{{it.gc.footR}}" as="fr" hint-placeholder-count="1"><div class="r"><sc-if value="{{fr.ring}}" hint-placeholder-val="{{ true }}"><svg width="19" height="19" viewBox="-9.5 -9.5 19 19" aria-hidden="true"><circle r="8" fill="none" stroke="rgba(255,255,255,.113)" stroke-width="3"></circle><circle r="8" fill="none" stroke="#e6dbc2" stroke-width="3" stroke-dasharray="{{fr.dash}}" transform="rotate(-90)"></circle></svg></sc-if>{{fr.text}}</div></sc-for></div></div></sc-if>
+<sc-if value="{{it.gc.sell}}" hint-placeholder-val="{{ true }}"><div class="gsell"><span>SELLS FOR</span><b><svg width="15" height="15" viewBox="-7.5 -7.5 15 15" aria-hidden="true"><circle r="6.5" fill="#d9a52b" stroke="#7a5512" stroke-width="1"></circle><circle r="3.6" fill="none" stroke="#f5d27a" stroke-width="1"></circle></svg>{{it.gc.sell}}</b></div></sc-if>
+</div>
+<span class="mute" style="font-size: 14px">The card exactly as the game draws it. The scaling table covers every other plus.</span>
+</sc-if>
+<sc-if value="{{it.noGc}}" hint-placeholder-val="{{ true }}">
+<div class="icard">
+<div style="font: 700 20px/1.2 Cinzel, serif; color: {{it.nameColor}}">{{it.cardName}}</div>
+<span class="mute" style="font-size: 14px">{{it.cardKind}}</span>
+<div class="c-rule"></div>
+<sc-if value="{{it.statText}}" hint-placeholder-val="{{ true }}"><div><b style="font: 700 24px/1.2 'Alegreya Sans', sans-serif; color: #F2C14E">{{it.statText}}</b> {{it.statName}}</div></sc-if>
+<sc-for list="{{it.kv}}" as="x" hint-placeholder-count="3"><div class="kv"><span>{{x.k}}</span><b>{{x.v}}</b></div></sc-for>
+<sc-for list="{{it.lines}}" as="l" hint-placeholder-count="0"><span style="color: {{l.color}}">{{l.text}}</span></sc-for>
+<div class="c-rule"></div>
+<span>{{it.reqText}}</span>
+<span style="color: #7FD66A">{{it.clsLong}}</span>
+</div>
+</sc-if>
+<sc-if value="{{it.showCtl}}" hint-placeholder-val="{{ false }}">
+<div class="ctl" aria-label="Try a version of it">
+<div class="ctlrow"><span>Plus</span><span style="display: flex; align-items: center; gap: 10px"><button class="stp" type="button" aria-label="One plus less" disabled="{{it.noLess}}" onClick="{{less}}">−</button><b class="num" style="min-width: 32px; text-align: center">+{{plus}}</b><button class="stp" type="button" aria-label="One plus more" disabled="{{it.noMore}}" onClick="{{more}}">+</button></span></div>
+<sc-if value="{{it.canExc}}" hint-placeholder-val="{{ true }}"><div class="ctlrow"><span>Excellent</span><button class="tg" type="button" aria-pressed="{{excOn}}" onClick="{{togExc}}">{{excLabel}}</button></div></sc-if>
+<sc-if value="{{it.canOpt}}" hint-placeholder-val="{{ true }}"><div class="ctlrow"><span>Luck</span><button class="tg" type="button" aria-pressed="{{luckOn}}" onClick="{{togLuck}}">{{luckLabel}}</button></div>
+<div class="ctlrow"><span>Option</span><span style="display: flex; align-items: center; gap: 10px"><button class="stp" type="button" aria-label="Lower option" disabled="{{noOptLess}}" onClick="{{optLess}}">−</button><b class="num" style="min-width: 32px; text-align: center">{{optText}}</b><button class="stp" type="button" aria-label="Higher option" disabled="{{noOptMore}}" onClick="{{optMore}}">+</button></span></div></sc-if>
+<span class="mute" style="font-size: 14px">Drops reach +9. The Chaos Machine takes it to +11.</span>
+</div>
+</sc-if>
+<sc-for list="{{it.teaches}}" as="t" hint-placeholder-count="0"><button class="sim" type="button" onClick="{{t.open}}" style="border: 1px solid #6A5426; border-radius: 3px; color: #F2D58A">Teaches {{t.name}}</button></sc-for>
+<sc-if value="{{it.isRune}}" hint-placeholder-val="{{ false }}"><button class="sim" type="button" onClick="{{goRunes}}" style="border: 1px solid #6A5426; border-radius: 3px; color: #F2D58A">Every rune power</button></sc-if>
+<div>
+<h2 class="rh" style="padding: 0">More {{it.subLower}}</h2>
+<sc-for list="{{similar}}" as="m" hint-placeholder-count="5"><button class="sim" type="button" onClick="{{m.open}}"><span style="flex: 1">{{m.n}}</span><span class="mute num" style="font-size: 14px">{{m.lvText}}</span></button></sc-for>
+</div>
+</aside>
+
+<div style="flex: 999 1 560px; min-width: 0">
+<div class="tabs" role="tablist" aria-label="About this item">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="5"><button class="tab" type="button" role="tab" aria-selected="{{t.on}}" onClick="{{t.pick}}">{{t.label}}<span>{{t.n}}</span></button></sc-for>
+</div>
+<sc-if value="{{srcLoading}}" hint-placeholder-val="{{ false }}"><p class="mute">Loading where it comes from…</p></sc-if>
+
+<sc-if value="{{tabScale}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 14px"><h2 class="h3" style="margin: 0">By plus{{excNote}}</h2><sc-if value="{{it.canExc}}" hint-placeholder-val="{{ true }}"><button class="tg" type="button" aria-pressed="{{excOn}}" onClick="{{togExc}}">Excellent</button></sc-if></div>
+<div class="tbox" style="margin-bottom: 24px">
+<table class="tbl" style="min-width: 760px">
+<thead><tr><th scope="col" class="plain"></th><sc-for list="{{scaleHead}}" as="h" hint-placeholder-count="12"><th scope="col" class="plain r" style="color: {{h.color}}">{{h.label}}</th></sc-for></tr></thead>
+<tbody>
+<sc-for list="{{scaleRows}}" as="row" hint-placeholder-count="4"><tr><th scope="row" class="plain" style="background: none">{{row.label}}</th><sc-for list="{{row.cells}}" as="c" hint-placeholder-count="12"><td class="r num" style="color: {{c.color}}; background: {{c.bg}}">{{c.v}}</td></sc-for></tr></sc-for>
+</tbody>
+</table>
+</div>
+<h2 class="h3">What it can roll</h2>
+<div class="roll">
+<sc-for list="{{rolls}}" as="r" hint-placeholder-count="3"><div class="rbox"><b>{{r.title}}</b><sc-for list="{{r.lines}}" as="l" hint-placeholder-count="2"><div style="color: {{r.color}}">{{l}}</div></sc-for><sc-if value="{{r.note}}" hint-placeholder-val="{{ false }}"><div class="mute" style="font-size: 14px; margin-top: 4px">{{r.note}}</div></sc-if></div></sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{tabUse}}" hint-placeholder-val="{{ false }}">
+<div class="rbox" style="margin-bottom: 20px"><sc-for list="{{use.does}}" as="d" hint-placeholder-count="2"><p style="margin: 0 0 8px; font-size: 17px">{{d}}</p></sc-for></div>
+<sc-if value="{{use.hasRates}}" hint-placeholder-val="{{ true }}"><div class="tbox" style="margin-bottom: 20px"><table class="tbl sm wrapc"><tbody><sc-for list="{{use.rates}}" as="x" hint-placeholder-count="3"><tr><th scope="row" class="plain" style="background: none; width: 34%">{{x.k}}</th><td>{{x.v}}</td></tr></sc-for></tbody></table></div></sc-if>
+<sc-if value="{{use.hasBox}}" hint-placeholder-val="{{ false }}">
+<h2 class="h3">What it can hold</h2>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px"><sc-for list="{{use.tiers}}" as="t" hint-placeholder-count="3"><button class="chip" type="button" aria-pressed="{{t.on}}" onClick="{{t.pick}}">{{t.label}}</button></sc-for></div>
+<div class="tbox"><table class="tbl sm">
+<thead><tr><th scope="col" class="plain">Item</th><th scope="col" class="plain r">Chance a box</th><th scope="col" class="plain r">As excellent</th></tr></thead>
+<tbody><sc-for list="{{use.box}}" as="b" hint-placeholder-count="8"><tr><td><button class="open" type="button" onClick="{{b.open}}" style="font-size: 16px">{{b.name}}</button></td><td class="r"><b class="num" style="font-weight: 500">{{b.one}}</b><span class="mute" style="display: block; font-size: 14px">{{b.pct}}</span></td><td class="r num" style="color: #7FD66A">{{b.exc}}</td></tr></sc-for></tbody>
+</table></div>
+<sc-if value="{{use.boxMore}}" hint-placeholder-val="{{ false }}"><button class="chip" type="button" style="margin-top: 12px" onClick="{{use.showAll}}">{{use.boxMore}}</button></sc-if>
+</sc-if>
+</sc-if>
+
+<sc-if value="{{tabPowers}}" hint-placeholder-val="{{ false }}">
+<div class="rbox" style="margin-bottom: 20px"><p style="margin: 0; font-size: 17px">{{pw.summary}}</p></div>
+<sc-if value="{{pw.hasKv}}" hint-placeholder-val="{{ true }}"><div class="tbox" style="margin-bottom: 20px"><table class="tbl sm wrapc"><tbody><sc-for list="{{pw.kv}}" as="x" hint-placeholder-count="4"><tr><th scope="row" class="plain" style="background: none; width: 30%">{{x.k}}</th><td>{{x.v}}</td></tr></sc-for></tbody></table></div></sc-if>
+<sc-for list="{{pw.tables}}" as="tb" hint-placeholder-count="1">
+<h2 class="h3">{{tb.title}}</h2>
+<div class="tbox" style="margin-bottom: 20px"><table class="tbl">
+<thead><tr><sc-for list="{{tb.head}}" as="h" hint-placeholder-count="5"><th scope="col" class="plain r">{{h}}</th></sc-for></tr></thead>
+<tbody><sc-for list="{{tb.rows}}" as="r" hint-placeholder-count="6"><tr><sc-for list="{{r}}" as="c" hint-placeholder-count="5"><td class="r num">{{c}}</td></sc-for></tr></sc-for></tbody>
+</table></div>
+</sc-for>
+</sc-if>
+
+<sc-if value="{{tabDrops}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px"><sc-for list="{{mapChips}}" as="m" hint-placeholder-count="4"><button class="chip" type="button" aria-pressed="{{m.on}}" onClick="{{m.pick}}">{{m.label}}</button></sc-for></div>
+<div class="tbox"><table class="tbl sm">
+<thead><tr><th scope="col" class="plain">Monster</th><th scope="col" class="plain r">Level</th><th scope="col" class="plain">Map</th><th scope="col" class="plain">How</th><th scope="col" class="plain r">Chance a kill</th></tr></thead>
+<tbody><sc-for list="{{drops}}" as="d" hint-placeholder-count="8"><tr><td><button class="open" type="button" onClick="{{d.open}}" style="font-size: 15px">{{d.name}}</button><sc-if value="{{d.elite}}" hint-placeholder-val="{{ false }}"><span class="sb" style="margin-left: 8px; color: #F2C14E; border-color: #6A5426">Elite</span></sc-if></td><td class="r num">{{d.level}}</td><td class="mute">{{d.map}}</td><td style="color: {{d.howColor}}">{{d.how}}<sc-if value="{{d.split}}" hint-placeholder-val="{{ false }}"><span class="mute" style="display: block; font-size: 14px">{{d.split}}</span></sc-if></td><td class="r"><b class="num" style="font-weight: 500">{{d.one}}</b><span class="mute" style="display: block; font-size: 14px">{{d.pct}}</span></td></tr></sc-for></tbody>
+</table></div>
+<sc-if value="{{dropsMore}}" hint-placeholder-val="{{ false }}"><button class="chip" type="button" style="margin-top: 12px" onClick="{{showAllDrops}}">{{dropsMore}}</button></sc-if>
+<p class="mute" style="font-size: 14px; margin: 14px 0 0">Best chance first. Chances are per kill for one player, before Item Find, talents and party bonuses. A monster drops gear whose drop level is up to 15 below its own; excellent pieces come from monsters 25 levels above that.</p>
+</sc-if>
+
+<sc-if value="{{tabShops}}" hint-placeholder-val="{{ false }}">
+<div class="tbox"><table class="tbl sm">
+<thead><tr><th scope="col" class="plain">Sold by</th><th scope="col" class="plain">Map</th><th scope="col" class="plain r">Plus</th><th scope="col" class="plain r">Price</th></tr></thead>
+<tbody><sc-for list="{{shops}}" as="s" hint-placeholder-count="2"><tr><td><button class="open" type="button" onClick="{{s.open}}" style="font-size: 15px">{{s.npc}}</button></td><td class="mute">{{s.map}}</td><td class="r num">{{s.plus}}</td><td class="r num" style="color: #F2C14E">{{s.price}}</td></tr></sc-for></tbody>
+</table></div>
+</sc-if>
+
+<sc-if value="{{tabCrafts}}" hint-placeholder-val="{{ false }}">
+<sc-for list="{{crafts}}" as="c" hint-placeholder-count="1"><div class="rbox" style="margin-bottom: 12px"><b>{{c.recipe}}</b><sc-for list="{{c.needs}}" as="n" hint-placeholder-count="3"><div>· {{n}}</div></sc-for><sc-if value="{{c.note}}" hint-placeholder-val="{{ false }}"><div class="mute" style="font-size: 14px; margin-top: 6px">{{c.note}}</div></sc-if></div></sc-for>
+</sc-if>
+
+<sc-if value="{{tabUsed}}" hint-placeholder-val="{{ false }}">
+<sc-for list="{{used}}" as="u" hint-placeholder-count="2"><div class="rbox" style="margin-bottom: 8px"><b style="margin: 0">{{u.recipe}}</b><sc-if value="{{u.note}}" hint-placeholder-val="{{ false }}"><div class="mute" style="font-size: 14px">{{u.note}}</div></sc-if></div></sc-for>
+</sc-if>
+
+<sc-if value="{{tabRewards}}" hint-placeholder-val="{{ false }}">
+<sc-if value="{{hasQuests}}" hint-placeholder-val="{{ true }}"><h2 class="h3">Quests</h2>
+<div class="tbox" style="margin-bottom: 20px"><table class="tbl sm wrapc">
+<thead><tr><th scope="col" class="plain">Quest</th><th scope="col" class="plain">Given by</th><th scope="col" class="plain">When</th><th scope="col" class="plain">Pays</th></tr></thead>
+<tbody><sc-for list="{{quests}}" as="q" hint-placeholder-count="2"><tr><td><button class="open" type="button" onClick="{{q.open}}" style="font-size: 15px">{{q.quest}}</button></td><td><button class="crumb" type="button" onClick="{{q.openGiver}}">{{q.npc}}</button> <span class="mute">· {{q.map}}</span></td><td>{{q.when}}</td><td>{{q.pays}}</td></tr></sc-for></tbody>
+</table></div></sc-if>
+<sc-if value="{{hasEvents}}" hint-placeholder-val="{{ false }}"><h2 class="h3">Events and raids</h2>
+<sc-for list="{{events}}" as="e" hint-placeholder-count="2"><div class="kv" style="padding: 10px 0; border-top: 1px solid #16110E"><span style="color: #F3E8D4">{{e.event}}</span><span class="mute">{{e.note}}</span></div></sc-for></sc-if>
+<sc-if value="{{hasBoxes}}" hint-placeholder-val="{{ false }}"><h2 class="h3" style="margin-top: 20px">Found in</h2>
+<div style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{boxes}}" as="b" hint-placeholder-count="2"><span class="fact">{{b.box}}<sc-if value="{{b.excellent}}" hint-placeholder-val="{{ false }}"><b style="color: #7FD66A">· can be excellent</b></sc-if></span></sc-for></div></sc-if>
+</sc-if>
+
+<sc-if value="{{tabUpdates}}" hint-placeholder-val="{{ false }}">
+<ol class="tl">
+<sc-for list="{{hist}}" as="h" hint-placeholder-count="2">
+<li><span class="pip" aria-hidden="true" style="background: {{h.pip}}"></span>
+<div style="display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline"><span style="font: 700 15px/1.3 'Alegreya Sans SC', sans-serif; color: {{h.dateColor}}">{{h.date}}</span><span style="color: #F3E8D4; font-weight: 500">{{h.title}}</span></div>
+<sc-if value="{{h.hasDiff}}" hint-placeholder-val="{{ true }}"><div class="diff"><span class="k">Was</span><span class="was">{{h.was}}</span><span class="k">Now</span><span style="color: #F3E8D4">{{h.now}}</span></div></sc-if>
+<sc-if value="{{h.note}}" hint-placeholder-val="{{ false }}"><p class="mute" style="margin: 6px 0 0; font-size: 15px">{{h.note}}</p></sc-if>
+<sc-if value="{{h.about}}" hint-placeholder-val="{{ false }}"><button class="chip" type="button" style="margin-top: 10px" onClick="{{h.show}}">{{h.cmtText}}</button></sc-if>
+</li>
+</sc-for>
+</ol>
+</sc-if>
+
+<sc-if value="{{tabComments}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 16px; border: 1px solid #221A15; border-radius: 4px; background: #0A0706; margin-bottom: 16px">
+<label for="cmt" style="font-size: 15px; color: #C9BFAE">Comment as <b style="color: #F3E8D4">[YOUR ACCOUNT NAME]</b></label>
+<textarea id="cmt" class="field" rows="3" placeholder="How does it play? Where did it drop?" value="{{draft}}" onChange="{{onDraft}}"></textarea>
+<div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between">
+<div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center"><span class="mute" style="font-size: 14px">About</span>
+<sc-for list="{{abouts}}" as="t" hint-placeholder-count="2"><button class="chip" type="button" aria-pressed="{{t.on}}" onClick="{{t.pick}}">{{t.label}}</button></sc-for>
+</div>
+<button class="btn red" type="button" disabled="{{noPost}}" onClick="{{post}}">Post</button>
+</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px">
+<sc-for list="{{cfilters}}" as="f" hint-placeholder-count="2"><button class="chip" type="button" aria-pressed="{{f.on}}" onClick="{{f.pick}}">{{f.label}}</button></sc-for>
+</div>
+<sc-if value="{{noComments}}" hint-placeholder-val="{{ false }}"><p class="mute" style="padding: 16px 0; margin: 0; border-top: 1px solid #1E1814">No comments yet.</p></sc-if>
+<sc-for list="{{comments}}" as="c" hint-placeholder-count="2">
+<article class="cm">
+<button class="vote" type="button" aria-pressed="{{c.mine}}" aria-label="Agree" onClick="{{c.vote}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M5 15l7-7 7 7"></path></svg>{{c.votes}}</button>
+<div style="min-width: 0; display: flex; flex-direction: column; gap: 4px">
+<div style="display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; font-size: 14px"><b style="color: #F3E8D4; font-size: 15px">{{c.who}}</b><span style="color: #F2C14E">{{c.aboutLabel}}</span><span class="mute">{{c.when}}</span></div>
+<p style="margin: 0">{{c.text}}</p>
+</div>
+</article>
+</sc-for>
+</sc-if>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{isMon}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-wrap: wrap; gap: 16px 24px; align-items: center; margin-bottom: 28px">
+<div style="flex: 1 1 300px; min-width: 0">
+<h1 style="margin: 0; font: 700 34px/1.1 Cinzel, serif; color: {{mo.nameColor}}">{{mo.n}}</h1>
+<div class="mute" style="font-size: 15px; margin-top: 4px">{{mo.kind}}</div>
+</div>
+<div class="facts"><sc-for list="{{mo.facts}}" as="f" hint-placeholder-count="3"><span class="fact">{{f.k}} <b>{{f.v}}</b></span></sc-for></div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 40px; align-items: flex-start">
+<aside style="flex: 1 1 300px; max-width: 340px; display: flex; flex-direction: column; gap: 20px">
+<div class="viewer" style="height: 360px"><canvas ref="{{setCanvas}}" role="img" aria-label="3D model of {{mo.n}}. Drag to turn it, scroll to zoom."></canvas><span class="vhint">Drag to turn · scroll to zoom</span><sc-if value="{{model3dLoading}}" hint-placeholder-val="{{ false }}"><span class="vload">Loading the model…</span></sc-if></div>
+<div class="icard">
+<div style="font: 700 20px/1.2 Cinzel, serif; color: {{mo.nameColor}}">{{mo.n}}</div>
+<span class="mute" style="font-size: 14px">Level {{mo.lv}}</span>
+<div class="c-rule"></div>
+<sc-for list="{{mo.kv}}" as="x" hint-placeholder-count="6"><div class="kv"><span>{{x.k}}</span><b>{{x.v}}</b></div></sc-for>
+<sc-if value="{{mo.eliteNote}}" hint-placeholder-val="{{ false }}"><div class="c-rule"></div><span style="font-size: 14px; color: #F2C14E">{{mo.eliteNote}}</span></sc-if>
+</div>
+<div>
+<h2 class="rh" style="padding: 0">Lives in</h2>
+<sc-for list="{{mo.where}}" as="w" hint-placeholder-count="2"><button class="sim" type="button" onClick="{{w.pick}}" aria-pressed="{{w.on}}" style="background: {{w.bg}}"><span style="flex: 1; color: {{w.color}}">{{w.map}}</span><span class="mute" style="font-size: 14px">{{w.count}}</span></button></sc-for>
+<sc-if value="{{mo.ctx}}" hint-placeholder-val="{{ false }}"><button class="crumb" type="button" onClick="{{mo.clearCtx}}" style="margin-top: 8px; text-decoration: underline">Show every map</button></sc-if>
+</div>
+<sc-if value="{{mo.hasWanted}}" hint-placeholder-val="{{ false }}"><div>
+<h2 class="rh" style="padding: 0">Wanted by quests</h2>
+<sc-for list="{{mo.wanted}}" as="w" hint-placeholder-count="2"><button class="sim" type="button" onClick="{{w.open}}"><span style="flex: 1">{{w.name}}</span><span class="mute num" style="font-size: 14px">{{w.count}}</span></button></sc-for>
+</div></sc-if>
+<sc-if value="{{mo.hasElite}}" hint-placeholder-val="{{ false }}"><button class="sim" type="button" onClick="{{mo.openElite}}" style="border: 1px solid #6A5426; border-radius: 3px; color: #F2C14E">{{mo.eliteLink}}</button></sc-if>
+<sc-if value="{{mo.hasBase}}" hint-placeholder-val="{{ false }}"><button class="sim" type="button" onClick="{{mo.openBase}}" style="border: 1px solid #2E241D; border-radius: 3px">{{mo.baseLink}}</button></sc-if>
+</aside>
+<div style="flex: 999 1 560px; min-width: 0">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 14px">
+<h2 style="margin: 0; font: 700 24px/1.2 Cinzel, serif; color: #F3E8D4">Drops</h2>
+<span class="mute" style="font-size: 15px">{{mo.dropCount}}</span>
+</div>
+<sc-if value="{{srcLoading}}" hint-placeholder-val="{{ false }}"><p class="mute">Loading its drops…</p></sc-if>
+<div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px"><sc-for list="{{mo.cats}}" as="c" hint-placeholder-count="4"><button class="chip" type="button" aria-pressed="{{c.on}}" onClick="{{c.pick}}">{{c.label}}</button></sc-for></div>
+<div class="tbox"><table class="tbl sm">
+<thead><tr><th scope="col" class="plain">Item</th><th scope="col" class="plain">Type</th><th scope="col" class="plain r">Drop level</th><th scope="col" class="plain">How</th><th scope="col" class="plain r">Chance a kill</th></tr></thead>
+<tbody><sc-for list="{{mo.drops}}" as="d" hint-placeholder-count="10"><tr><td><button class="open" type="button" onClick="{{d.open}}" style="font-size: 15px">{{d.n}}</button></td><td class="mute">{{d.s}}</td><td class="r num">{{d.dl}}</td><td style="color: {{d.howColor}}">{{d.how}}</td><td class="r"><b class="num" style="font-weight: 500">{{d.one}}</b><span class="mute" style="display: block; font-size: 14px">{{d.pct}}</span></td></tr></sc-for></tbody>
+</table></div>
+<sc-if value="{{mo.more}}" hint-placeholder-val="{{ false }}"><button class="chip" type="button" style="margin-top: 12px" onClick="{{mo.showAll}}">{{mo.more}}</button></sc-if>
+<p class="mute" style="font-size: 14px; margin: 14px 0 0">Best chance first, per kill for one player before Item Find, talents and party bonuses. Gear up to 15 levels below it, jewels and pets at or below its level, and excellent pieces as from a monster 25 levels lower.</p>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{isEvent}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-wrap: wrap; gap: 16px 24px; align-items: center; margin-bottom: 24px">
+<div style="flex: 1 1 300px; min-width: 0">
+<h1 style="margin: 0; font: 700 34px/1.1 Cinzel, serif; color: #F3E8D4">{{ev.name}}</h1>
+<div class="mute" style="font-size: 16px; margin-top: 6px">{{ev.lede}}</div>
+</div>
+<div class="facts"><sc-for list="{{ev.facts}}" as="f" hint-placeholder-count="3"><span class="fact">{{f.k}} <b>{{f.v}}</b></span></sc-for></div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 32px"><sc-for list="{{ev.siblings}}" as="c" hint-placeholder-count="6"><button class="chip" type="button" aria-pressed="{{c.on}}" onClick="{{c.pick}}">{{c.label}}</button></sc-for></div>
+<sc-if value="{{srcLoading}}" hint-placeholder-val="{{ false }}"><p class="mute">Loading its monsters and drops…</p></sc-if>
+<div style="display: flex; flex-wrap: wrap; gap: 40px; align-items: flex-start">
+<aside style="flex: 1 1 320px; max-width: 380px; display: flex; flex-direction: column; gap: 28px">
+<section aria-labelledby="evm">
+<h2 id="evm" style="margin: 0 0 12px; font: 700 24px/1.2 Cinzel, serif; color: #F3E8D4">Monsters</h2>
+<sc-for list="{{ev.monsters}}" as="m" hint-placeholder-count="5"><button class="sim" type="button" onClick="{{m.open}}"><span style="flex: 1; color: #F3E8D4">{{m.name}}</span><span class="mute num" style="font-size: 14px">Lv {{m.level}} · {{m.n}} items</span></button></sc-for>
+</section>
+<sc-if value="{{ev.hasWin}}" hint-placeholder-val="{{ false }}">
+<section aria-labelledby="evw">
+<h2 id="evw" style="margin: 0 0 12px; font: 700 24px/1.2 Cinzel, serif; color: #F3E8D4">Win reward</h2>
+<div class="rbox"><sc-for list="{{ev.win}}" as="w" hint-placeholder-count="3"><div style="padding: 3px 0"><button class="open" type="button" onClick="{{w.open}}" style="font-size: 16px">{{w.name}}</button> <span class="mute" style="font-size: 14px">{{w.note}}</span></div></sc-for></div>
+</section>
+</sc-if>
+</aside>
+<section style="flex: 999 1 560px; min-width: 0" aria-labelledby="evd">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 14px">
+<h2 id="evd" style="margin: 0; font: 700 24px/1.2 Cinzel, serif; color: #F3E8D4">Drops here</h2>
+<span class="mute" style="font-size: 15px">{{ev.dropCount}}</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px"><sc-for list="{{ev.cats}}" as="c" hint-placeholder-count="4"><button class="chip" type="button" aria-pressed="{{c.on}}" onClick="{{c.pick}}">{{c.label}}</button></sc-for></div>
+<div class="tbox"><table class="tbl sm">
+<thead><tr><th scope="col" class="plain">Item</th><th scope="col" class="plain">Type</th><th scope="col" class="plain">Best from</th><th scope="col" class="plain r">Chance a kill</th></tr></thead>
+<tbody><sc-for list="{{ev.drops}}" as="d" hint-placeholder-count="10"><tr><td><button class="open" type="button" onClick="{{d.open}}" style="font-size: 16px">{{d.n}}</button><sc-if value="{{d.exc}}" hint-placeholder-val="{{ false }}"><span class="mute" style="display: block; font-size: 14px; color: #7FD66A">{{d.exc}}</span></sc-if></td><td class="mute">{{d.s}}</td><td><button class="crumb" type="button" onClick="{{d.openMon}}">{{d.from}}</button></td><td class="r"><b class="num" style="font-weight: 500">{{d.one}}</b><span class="mute" style="display: block; font-size: 14px">{{d.pct}}</span></td></tr></sc-for></tbody>
+</table></div>
+<sc-if value="{{ev.more}}" hint-placeholder-val="{{ false }}"><button class="chip" type="button" style="margin-top: 14px" onClick="{{ev.showAll}}">{{ev.more}}</button></sc-if>
+<p class="mute" style="font-size: 14px; margin: 16px 0 0">Chances are per kill of the monster named, for one player, before Item Find, talents and party bonuses.</p>
+</section>
+</div>
+</sc-if>
+
+<sc-if value="{{isGold}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-wrap: wrap; gap: 16px 24px; align-items: center; margin-bottom: 28px">
+<div style="flex: 1 1 360px; min-width: 0">
+<h1 style="margin: 0; font: 700 38px/1.1 Cinzel, serif; color: #F2C14E">Golden Dragon</h1>
+<div style="font-size: 18px; margin-top: 8px; max-width: 760px">{{gd.lede}}</div>
+</div>
+<div class="facts"><sc-for list="{{gd.facts}}" as="f" hint-placeholder-count="4"><span class="fact">{{f.k}} <b>{{f.v}}</b></span></sc-for></div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 40px; align-items: flex-start">
+<aside style="flex: 1 1 320px; max-width: 400px; display: flex; flex-direction: column; gap: 20px">
+<sc-if value="{{gd.hasModel}}" hint-placeholder-val="{{ true }}"><div class="viewer" style="height: 360px"><canvas ref="{{setCanvas}}" role="img" aria-label="3D model of the Golden Dragon. Drag to turn it, scroll to zoom."></canvas><span class="vhint">Drag to turn · scroll to zoom</span><sc-if value="{{model3dLoading}}" hint-placeholder-val="{{ false }}"><span class="vload">Loading the model…</span></sc-if></div></sc-if>
+<div class="icard" style="border-color: #6A5426">
+<div style="font: 700 20px/1.2 Cinzel, serif; color: #F2C14E">The raid</div>
+<sc-for list="{{gd.kv}}" as="x" hint-placeholder-count="6"><div class="kv"><span>{{x.k}}</span><b style="text-align: right">{{x.v}}</b></div></sc-for>
+</div>
+<div class="rbox"><b>Its minions</b><button class="open" type="button" onClick="{{gd.openBudge}}" style="font-size: 16px">Golden Budge Dragon</button><sc-for list="{{gd.minions}}" as="l" hint-placeholder-count="3"><div>· {{l}}</div></sc-for></div>
+</aside>
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 32px">
+<section>
+<h2 style="margin: 0 0 14px; font: 700 24px/1.2 Cinzel, serif; color: #F3E8D4">The fight, stage by stage</h2>
+<div class="roll"><sc-for list="{{gd.stages}}" as="st" hint-placeholder-count="4"><div class="rbox"><b>{{st.name}}</b><div class="mute" style="font-size: 15px; margin: -4px 0 8px">{{st.hp}}</div><sc-for list="{{st.lines}}" as="l" hint-placeholder-count="3"><div>· {{l}}</div></sc-for></div></sc-for></div>
+<div class="rbox" style="margin-top: 16px; border-color: #5A2A1A"><b style="color: #E8A15A">Dragonfire</b><sc-for list="{{gd.dragonfire}}" as="l" hint-placeholder-count="2"><div>{{l}}</div></sc-for></div>
+</section>
+<section>
+<h2 style="margin: 0 0 14px; font: 700 24px/1.2 Cinzel, serif; color: #F3E8D4">Its hoard</h2>
+<div class="roll"><div class="rbox"><b>When the dragon falls</b><sc-for list="{{gd.hoard}}" as="h" hint-placeholder-count="4"><div style="padding: 2px 0"><sc-if value="{{h.link}}" hint-placeholder-val="{{ false }}"><button class="open" type="button" onClick="{{h.open}}" style="font-size: 16px">{{h.name}}</button></sc-if><sc-if value="{{h.plainName}}" hint-placeholder-val="{{ true }}"><span style="color: #F3E8D4">{{h.name}}</span></sc-if> <span class="mute">{{h.note}}</span></div></sc-for></div></div>
+</section>
+<section>
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 12px">
+<h2 style="margin: 0; font: 700 24px/1.2 Cinzel, serif; color: #F3E8D4">Where it lands</h2>
+<span class="mute" style="font-size: 15px">One of three fields in the invaded town’s land</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px"><sc-for list="{{gd.towns}}" as="t" hint-placeholder-count="3"><button class="chip" type="button" aria-pressed="{{t.on}}" onClick="{{t.pick}}">{{t.label}}</button></sc-for></div>
+<div style="position: relative; width: 100%; max-width: 560px; aspect-ratio: 1 / 1; border: 1px solid #2A211B; border-radius: 4px; overflow: hidden; background: #0D0B0A">
+<img src="{{gd.mapPng}}" alt="Map of {{gd.town}}" style="display: block; width: 100%; height: 100%">
+<sc-for list="{{gd.fields}}" as="f" hint-placeholder-count="3"><span aria-hidden="true" style="position: absolute; left: {{f.left}}; top: {{f.top}}; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; border: 2px solid #F2C14E; background: rgba(242,193,78,.25); box-shadow: 0 0 18px rgba(242,193,78,.7)"></span><span style="position: absolute; left: {{f.left}}; top: {{f.top}}; transform: translate(-50%, -170%); padding: 3px 8px; border-radius: 3px; background: rgba(13,11,10,.9); border: 1px solid #6A5426; font-size: 14px; color: #F2D58A; white-space: nowrap">{{f.label}}</span></sc-for>
+</div>
+</section>
+<section>
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 12px">
+<h2 style="margin: 0; font: 700 24px/1.2 Cinzel, serif; color: #F3E8D4">Also drops, per kill</h2>
+<span class="mute" style="font-size: 15px">{{gd.dropCount}}</span>
+</div>
+<div class="tbox"><table class="tbl sm">
+<thead><tr><th scope="col" class="plain">Item</th><th scope="col" class="plain">Type</th><th scope="col" class="plain">From</th><th scope="col" class="plain r">Chance a kill</th></tr></thead>
+<tbody><sc-for list="{{gd.drops}}" as="d" hint-placeholder-count="8"><tr><td><button class="open" type="button" onClick="{{d.open}}" style="font-size: 16px">{{d.n}}</button></td><td class="mute">{{d.s}}</td><td class="mute">{{d.from}}</td><td class="r"><b class="num" style="font-weight: 500">{{d.one}}</b><span class="mute" style="display: block; font-size: 14px">{{d.pct}}</span></td></tr></sc-for></tbody>
+</table></div>
+<sc-if value="{{gd.more}}" hint-placeholder-val="{{ false }}"><button class="chip" type="button" style="margin-top: 14px" onClick="{{gd.showAll}}">{{gd.more}}</button></sc-if>
+</section>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{isRune}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-wrap: wrap; gap: 40px; align-items: flex-start">
+<aside style="flex: 1 1 320px; max-width: 380px; display: flex; flex-direction: column; gap: 20px">
+<div class="icard" style="border-color: {{ru.color}}">
+<div style="font: 700 24px/1.2 Cinzel, serif; color: {{ru.color}}">{{ru.name}}</div>
+<span style="font-size: 15px; color: {{ru.color}}">{{ru.rarity}} rune</span>
+<div class="c-rule"></div>
+<span style="font-size: 17px; color: #E8A15A">{{ru.effect}}</span>
+<div class="c-rule"></div>
+<sc-for list="{{ru.kv}}" as="x" hint-placeholder-count="4"><div class="kv"><span>{{x.k}}</span><b style="text-align: right">{{x.v}}</b></div></sc-for>
+<sc-if value="{{ru.dormant}}" hint-placeholder-val="{{ false }}"><div class="c-rule"></div><span style="color: #7FD7F0">Drops only in Kanturu, which isn’t open yet.</span></sc-if>
+</div>
+<button class="sim" type="button" onClick="{{ru.openRune}}" style="border: 1px solid #2E241D; border-radius: 3px">The Rune of Creation item</button>
+</aside>
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 28px">
+<section>
+<h2 style="margin: 0 0 12px; font: 700 24px/1.2 Cinzel, serif; color: #F3E8D4">Where it comes from</h2>
+<sc-if value="{{ru.hasDrop}}" hint-placeholder-val="{{ true }}">
+<p class="mute" style="margin: 0 0 12px">Chance per kill that a Rune of Creation with this power drops, by your class and the monster’s level.</p>
+<div class="tbox"><table class="tbl sm">
+<thead><tr><th scope="col" class="plain">Monster level</th><sc-for list="{{ru.dropCols}}" as="c" hint-placeholder-count="4"><th scope="col" class="plain r">{{c}}</th></sc-for></tr></thead>
+<tbody><sc-for list="{{ru.dropRows}}" as="r" hint-placeholder-count="4"><tr><td class="num">{{r.band}}</td><sc-for list="{{r.cells}}" as="c" hint-placeholder-count="4"><td class="r num">{{c}}</td></sc-for></tr></sc-for></tbody>
+</table></div>
+</sc-if>
+<sc-for list="{{ru.other}}" as="o" hint-placeholder-count="2"><div style="display: flex; gap: 10px; align-items: baseline; padding: 10px 0; border-top: 1px solid #16110E"><span class="sb">{{o.type}}</span><sc-if value="{{o.link}}" hint-placeholder-val="{{ false }}"><button class="open" type="button" onClick="{{o.open}}" style="font-size: 16px">{{o.name}}</button></sc-if><sc-if value="{{o.plainName}}" hint-placeholder-val="{{ true }}"><span>{{o.name}}</span></sc-if><span class="mute">{{o.note}}</span></div></sc-for>
+</section>
+<section class="rbox"><b>How runes work</b><sc-for list="{{runeRules}}" as="r" hint-placeholder-count="3"><p style="margin: 0 0 8px">{{r}}</p></sc-for></section>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{isSkill}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-wrap: wrap; gap: 40px; align-items: flex-start">
+<aside style="flex: 1 1 320px; max-width: 380px; display: flex; flex-direction: column; gap: 20px">
+<div class="icard">
+<div style="display: flex; gap: 16px; align-items: center">
+<span aria-hidden="true" style="flex: 0 0 auto; display: block; width: 46px; height: 64px; border-radius: 3px; border: 1px solid #6A5426; background-color: #0E0B09; {{sk.icon}}"></span>
+<div><h1 style="margin: 0; font: 700 24px/1.2 Cinzel, serif; color: #F3E8D4">{{sk.name}}</h1><span class="mute" style="font-size: 15px">{{sk.cls}}</span></div>
+</div>
+<div class="c-rule"></div>
+<sc-for list="{{sk.card}}" as="l" hint-placeholder-count="4"><span style="font-size: 16px">{{l}}</span></sc-for>
+</div>
+</aside>
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 28px">
+<section>
+<h2 style="margin: 0 0 12px; font: 700 24px/1.2 Cinzel, serif; color: #F3E8D4">Numbers</h2>
+<div class="tbox"><table class="tbl sm wrapc"><tbody><sc-for list="{{sk.kv}}" as="x" hint-placeholder-count="6"><tr><th scope="row" class="plain" style="background: none; width: 34%">{{x.k}}</th><td>{{x.v}}</td></tr></sc-for></tbody></table></div>
+</section>
+<sc-if value="{{sk.hasFrom}}" hint-placeholder-val="{{ true }}"><section>
+<h2 style="margin: 0 0 12px; font: 700 24px/1.2 Cinzel, serif; color: #F3E8D4">How to learn it</h2>
+<sc-for list="{{sk.from}}" as="f" hint-placeholder-count="1"><div style="display: flex; gap: 10px; align-items: baseline; padding: 10px 0; border-top: 1px solid #16110E"><sc-if value="{{f.link}}" hint-placeholder-val="{{ true }}"><button class="open" type="button" onClick="{{f.open}}" style="font-size: 16px">{{f.name}}</button></sc-if><sc-if value="{{f.plainName}}" hint-placeholder-val="{{ false }}"><span>{{f.name}}</span></sc-if><span class="mute">{{f.note}}</span></div></sc-for>
+</section></sc-if>
+<sc-if value="{{sk.hasTalents}}" hint-placeholder-val="{{ false }}"><section class="rbox"><b>Talent columns that feed it</b><sc-for list="{{sk.talents}}" as="t" hint-placeholder-count="1"><div>· {{t}}</div></sc-for><button class="crumb" type="button" onClick="{{goTalents}}" style="margin-top: 8px; text-decoration: underline">Open the talent calculator</button></section></sc-if>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{isNpc}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-wrap: wrap; gap: 16px 24px; align-items: center; margin-bottom: 28px">
+<div style="flex: 1 1 300px; min-width: 0">
+<h1 style="margin: 0; font: 700 34px/1.1 Cinzel, serif; color: #F3E8D4">{{np.name}}</h1>
+<div class="mute" style="font-size: 15px; margin-top: 4px">{{np.role}}</div>
+</div>
+<div class="facts"><sc-for list="{{np.facts}}" as="f" hint-placeholder-count="2"><span class="fact">{{f.k}} <b>{{f.v}}</b></span></sc-for></div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 40px; align-items: flex-start">
+<aside style="flex: 1 1 300px; max-width: 360px; display: flex; flex-direction: column; gap: 20px">
+<sc-if value="{{np.hasModel}}" hint-placeholder-val="{{ true }}"><div class="viewer" style="height: 340px"><canvas ref="{{setCanvas}}" role="img" aria-label="3D model of {{np.name}}. Drag to turn it, scroll to zoom."></canvas><span class="vhint">Drag to turn · scroll to zoom</span><sc-if value="{{model3dLoading}}" hint-placeholder-val="{{ false }}"><span class="vload">Loading the model…</span></sc-if></div></sc-if>
+<div class="icard">
+<div style="font: 700 20px/1.2 Cinzel, serif; color: #F3E8D4">{{np.name}}</div>
+<span class="mute" style="font-size: 14px">{{np.role}}</span>
+<sc-if value="{{np.about}}" hint-placeholder-val="{{ false }}"><div class="c-rule"></div><span style="font-size: 15px">{{np.about}}</span></sc-if>
+<div class="c-rule"></div>
+<sc-for list="{{np.services}}" as="sv" hint-placeholder-count="2"><span style="font-size: 15px">· {{sv}}</span></sc-for>
+</div>
+</aside>
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 32px">
+<section aria-labelledby="where">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 12px">
+<h2 id="where" style="margin: 0; font: 700 24px/1.2 Cinzel, serif; color: #F3E8D4">Where to find {{np.short}}</h2>
+<span class="mute" style="font-size: 15px">{{np.at}}</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px"><sc-for list="{{np.maps}}" as="m" hint-placeholder-count="1"><button class="chip" type="button" aria-pressed="{{m.on}}" onClick="{{m.pick}}">{{m.label}}</button></sc-for></div>
+<div style="position: relative; width: 100%; max-width: 520px; aspect-ratio: 1 / 1; border: 1px solid #2A211B; border-radius: 4px; overflow: hidden; background: #0D0B0A">
+<img src="{{np.mapPng}}" alt="Map of {{np.mapName}}" style="display: block; width: 100%; height: 100%">
+<span aria-hidden="true" style="position: absolute; left: {{np.left}}; top: {{np.top}}; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: #F2C14E; box-shadow: 0 0 0 3px rgba(13,11,10,.85), 0 0 14px rgba(242,193,78,.8)"></span>
+<span style="position: absolute; left: {{np.left}}; top: {{np.top}}; transform: translate(-50%, -150%); padding: 3px 8px; border-radius: 3px; background: rgba(13,11,10,.9); border: 1px solid #6A5426; font-size: 14px; color: #F2D58A; white-space: nowrap">{{np.short}}</span>
+</div>
+</section>
+<sc-if value="{{np.hasSells}}" hint-placeholder-val="{{ true }}">
+<section aria-labelledby="sells">
+<h2 id="sells" style="margin: 0 0 12px; font: 700 24px/1.2 Cinzel, serif; color: #F3E8D4">Sells</h2>
+<div class="tbox"><table class="tbl sm">
+<thead><tr><th scope="col" class="plain" style="width: 56px"></th><th scope="col" class="plain">Item</th><th scope="col" class="plain">Type</th><th scope="col" class="plain r">Plus</th><th scope="col" class="plain r">Price</th></tr></thead>
+<tbody><sc-for list="{{np.sells}}" as="x" hint-placeholder-count="6"><tr><td><span class="ico" style="width: 34px; height: 34px"><sc-if value="{{x.icon}}" hint-placeholder-val="{{ true }}"><img src="{{x.icon}}" alt="" style="max-width: 24px; max-height: 24px"></sc-if></span></td><td><button class="open" type="button" onClick="{{x.open}}" style="font-size: 15px">{{x.n}}</button></td><td class="mute">{{x.s}}</td><td class="r num">{{x.plus}}</td><td class="r num" style="color: #F2C14E">{{x.price}}</td></tr></sc-for></tbody>
+</table></div>
+</section>
+</sc-if>
+<sc-if value="{{np.hasQuests}}" hint-placeholder-val="{{ false }}">
+<section aria-labelledby="nq">
+<h2 id="nq" style="margin: 0 0 12px; font: 700 24px/1.2 Cinzel, serif; color: #F3E8D4">Quests</h2>
+<sc-for list="{{np.quests}}" as="q" hint-placeholder-count="2"><button class="sim" type="button" onClick="{{q.open}}"><span style="flex: 1; color: #F3E8D4">{{q.name}}</span><span class="mute" style="font-size: 14px">{{q.meta}}</span></button></sc-for>
+</section>
+</sc-if>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{isQuest}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-wrap: wrap; gap: 16px 24px; align-items: center; margin-bottom: 28px">
+<div style="flex: 1 1 300px; min-width: 0">
+<h1 style="margin: 0; font: 700 34px/1.1 Cinzel, serif; color: #F3E8D4">{{qu.name}}</h1>
+<div class="mute" style="font-size: 15px; margin-top: 4px">Given by <button class="crumb" type="button" onClick="{{qu.openGiver}}" style="color: #F2D58A">{{qu.giver}}</button> in {{qu.map}}</div>
+</div>
+<div class="facts"><sc-for list="{{qu.facts}}" as="f" hint-placeholder-count="3"><span class="fact">{{f.k}} <b>{{f.v}}</b></span></sc-for></div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 40px; align-items: flex-start">
+<aside style="flex: 1 1 300px; max-width: 360px; display: flex; flex-direction: column; gap: 20px">
+<sc-if value="{{qu.hasModel}}" hint-placeholder-val="{{ true }}"><div class="viewer" style="height: 300px"><canvas ref="{{setCanvas}}" role="img" aria-label="3D model of {{qu.giver}}. Drag to turn it, scroll to zoom."></canvas><span class="vhint">{{qu.giver}} · drag to turn</span><sc-if value="{{model3dLoading}}" hint-placeholder-val="{{ false }}"><span class="vload">Loading the model…</span></sc-if></div></sc-if>
+<div class="icard">
+<span class="h3" style="margin: 0">Requirements</span>
+<sc-for list="{{qu.reqs}}" as="r" hint-placeholder-count="2"><div class="kv"><span>{{r.k}}</span><b style="text-align: right">{{r.v}}</b></div></sc-for>
+<sc-if value="{{qu.hasPrereq}}" hint-placeholder-val="{{ false }}"><div class="c-rule"></div><span class="mute" style="font-size: 14px">{{qu.prereqLabel}}</span>
+<sc-for list="{{qu.prereq}}" as="p" hint-placeholder-count="1"><button class="sim" type="button" onClick="{{p.open}}" style="padding-left: 0">{{p.name}}</button></sc-for></sc-if>
+<sc-if value="{{qu.hasNext}}" hint-placeholder-val="{{ false }}"><div class="c-rule"></div><span class="mute" style="font-size: 14px">Leads to</span>
+<sc-for list="{{qu.next}}" as="p" hint-placeholder-count="1"><button class="sim" type="button" onClick="{{p.open}}" style="padding-left: 0">{{p.name}}</button></sc-for></sc-if>
+</div>
+</aside>
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 32px">
+<sc-if value="{{qu.text}}" hint-placeholder-val="{{ true }}">
+<blockquote style="margin: 0; padding: 18px 22px; border: 1px solid #2A211B; border-radius: 4px; background: linear-gradient(#17110E, #0E0A08); font: italic 17px/1.6 'Alegreya Sans', sans-serif; color: #D9CFBD; white-space: pre-line">{{qu.text}}</blockquote>
+</sc-if>
+<section aria-labelledby="obj">
+<h2 id="obj" style="margin: 0 0 12px; font: 700 24px/1.2 Cinzel, serif; color: #F3E8D4">Objectives</h2>
+<sc-for list="{{qu.objectives}}" as="o" hint-placeholder-count="3"><div style="display: flex; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid #16110E"><span style="width: 18px; height: 18px; flex: 0 0 18px; border: 1px solid #6A5426; border-radius: 3px"></span>
+<sc-if value="{{o.isKill}}" hint-placeholder-val="{{ true }}"><span>Kill <b class="num">{{o.count}}</b> <button class="open" type="button" onClick="{{o.open}}" style="font-size: 16px">{{o.monster}}</button> <span class="mute">in {{o.map}} · level {{o.level}}</span></span></sc-if>
+<sc-if value="{{o.isText}}" hint-placeholder-val="{{ false }}"><span>{{o.text}}</span></sc-if>
+</div></sc-for>
+</section>
+<section aria-labelledby="rew">
+<h2 id="rew" style="margin: 0 0 12px; font: 700 24px/1.2 Cinzel, serif; color: #F3E8D4">Rewards</h2>
+<sc-if value="{{qu.hasPay}}" hint-placeholder-val="{{ true }}">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 16px">
+<sc-for list="{{qu.pay}}" as="p" hint-placeholder-count="3"><div style="padding: 16px 18px; border: 1px solid #2A211B; border-radius: 4px; background: linear-gradient(#17110E, #0E0A08)">
+<div style="font: 700 14px/1 'Alegreya Sans SC', sans-serif; letter-spacing: .04em; color: #9C9282">{{p.k}}</div>
+<div class="num" style="font: 700 26px/1.2 'Alegreya Sans', sans-serif; color: {{p.color}}; margin-top: 8px">{{p.v}}</div>
+<div class="mute" style="font-size: 14px; margin-top: 4px">{{p.sub}}</div>
+</div></sc-for>
+</div>
+</sc-if>
+<div class="roll">
+<sc-for list="{{qu.rewards}}" as="g" hint-placeholder-count="2"><div class="rbox"><b>{{g.title}}</b><sc-if value="{{g.sub}}" hint-placeholder-val="{{ false }}"><div class="mute" style="font-size: 14px; margin-bottom: 6px">{{g.sub}}</div></sc-if>
+<sc-for list="{{g.lines}}" as="l" hint-placeholder-count="3"><div style="padding: 3px 0"><sc-if value="{{l.k}}" hint-placeholder-val="{{ true }}"><button class="open" type="button" onClick="{{l.open}}" style="font-size: 15px">{{l.name}}</button></sc-if><sc-if value="{{l.plainText}}" hint-placeholder-val="{{ false }}"><span style="color: #F3E8D4">{{l.name}}</span></sc-if> <span class="mute" style="font-size: 14px">{{l.meta}}</span></div></sc-for></div></sc-for>
+</div>
+</section>
+</div>
+</div>
+</sc-if>
+</main>
+
+<footer>
+<div class="wrap">
+<img class="logo" src="/_blob/68b48e377ad6ffbb048aaaea78fa7598" alt="MU Classic" width="435" height="261">
+<p>To WebZen, and to MU Online fans across the years: This is a love letter, not a business. MU Online was part of our childhood: the first steps out of Lorencia, the nights spent hunting in Dungeon and Devias, the friends we made and the hours we lost together in a world that felt like our own. For many of us, those memories never faded, and this game was made out of that love. Every character, item, monster, map, sound and name in it belongs to WebZen Inc., who created MU and gave a whole generation those memories. This is not our game; it's a tribute to theirs.</p>
+<nav class="foot-links" aria-label="Site"><a href="https://mu-classic.com/mac">Mac</a><a href="https://mu-classic.com/linux">Linux</a><a href="https://discord.gg/frqaT5k3EF">Discord</a><a href="https://mu-classic.com/privacy">Privacy</a><a href="https://mu-classic.com/contact">Contact</a></nav>
+<span style="display: inline-flex; align-items: center; justify-content: center; width: 168px; height: 67px; border: 1px dashed #3A2D24; border-radius: 3px; font-size: 14px; color: #8F8575">[Nostalgic.gg vote]</span>
+<p class="foot-legal">© 2026 MU Classic · MU Online is a trademark of WebZen Inc. · Unofficial and non-commercial</p>
+</div>
+</footer>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"perPage":{"editor":"int","default":20,"min":10,"max":100},"$preview":{"width":1280,"height":1800}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { sysA: null, sysB: null, icons: null, rune: '', skill: '', runeR: '', skillC: '', tcls: 'DK', tlv: 400, treb: 0, tpts: {}, boxTier: '', boxAll: false,
+      items: [], monsters: [], npcs: [], quests: [], modelIdx: null, npc: '', quest: '', npcMapIx: 0, browse: 'items', mon: '', monMap: '', monCat: '', monAll: false, loading: true, src: null, srcLoading: false, view: 'list', sel: '', q: '', cat: 'All', sub: '', cls: '', srcf: '', sort: 'lv', dir: 1, page: 1,
+      tab: '', plus: 0, exc: false, luck: false, opt: 0, mapf: '', allDrops: false,
+      draft: '', about: 'item', cfilter: 'all',
+      notes: { Sword17: [
+        { id: 1, who: '[PLAYER]', about: 'dual', when: '23 Oct', text: '[Sample comment about dual wielding two of these after the update]', votes: 7, mine: false },
+        { id: 3, who: '[PLAYER]', about: 'item', when: '18 Oct', text: '[Sample comment about where it drops]', votes: 1, mine: false } ] } };
+  }
+  componentDidMount() {
+    var self = this;
+    fetch('/_blob/ceed3c3fce978033027a1f049bed36b8').then(function (r) { return r.json(); }).then(function (items) {
+      self.setState({ items: items, loading: false });
+    }).catch(function () { self.setState({ loading: false }); });
+    fetch('/_blob/8c240f153da825e4e33a3e7ab6e7574c').then(function (r) { return r.json(); }).then(function (monsters) {
+      self.setState({ monsters: monsters });
+    }).catch(function () {});
+    fetch('/_blob/06e7c02e6d1dce5bac6986962ece6e8f').then(function (r) { return r.json(); }).then(function (d) { self.setState({ npcs: d.npcs || [] }); }).catch(function () {});
+    fetch('/_blob/257eb7fcc386075ed18407a8bdeac056').then(function (r) { return r.json(); }).then(function (d) { self.setState({ quests: d.quests || [] }); }).catch(function () {});
+    this.modelIndex().then(function (idx) { self.setState({ modelIdx: idx }); }).catch(function () {});
+    fetch('/_blob/da10a99d60c5cfab22bf48de6343a228').then(function (r) { return r.json(); }).then(function (d) { self.setState({ sysA: d }); }).catch(function () {});
+    fetch('/_blob/159bc721afdc0d66d9650517e3e24210').then(function (r) { return r.json(); }).then(function (d) { self.setState({ sysB: d }); }).catch(function () {});
+    fetch('/_blob/417d01ca9f375bdb3bfe9887dce26763').then(function (r) { return r.json(); }).then(function (d) { self.setState({ cards: d }); }).catch(function () {});
+    fetch('./icons/index.json').then(function (r) { return r.json(); }).then(function (d) { self.setState({ icons: d }); }).catch(function () {});
+  }
+  // Every monster's drops: the sources turned round, built once.
+  dropsByMonster(src) {
+    if (this._revOf === src) return this._rev;
+    var rev = {}, lv = {};
+    this._lv = lv;
+    Object.keys(src).forEach(function (k) {
+      if (k.charAt(0) === '_') return;
+      (src[k].monsters || []).forEach(function (m) {
+        var list = rev[m.name] || (rev[m.name] = {});
+        var had = list[k];
+        lv[m.name] = lv[m.name] || {};
+        lv[m.name][m.map] = m.level;
+        var bm = {}; bm[m.map] = m.chance || 0;
+        if (!had) list[k] = { k: k, maps: [m.map], plain: m.plain !== false, excellent: !!m.excellent, how: m.how || '', chance: m.chance || 0, byMap: bm, exc: m.chance_excellent || 0 };
+        else {
+          if (had.maps.indexOf(m.map) < 0) had.maps.push(m.map);
+          had.byMap[m.map] = Math.max(had.byMap[m.map] || 0, m.chance || 0);
+          had.chance = Math.max(had.chance, m.chance || 0);
+          had.plain = had.plain || m.plain !== false;
+          had.excellent = had.excellent || !!m.excellent;
+        }
+      });
+    });
+    this._revOf = src; this._rev = rev;
+    return rev;
+  }
+  // The 3D viewer: one renderer on whichever page's canvas is showing, the models packed in
+  // ./models/pNN.bin (index.json says which pack, where and how long).
+  setCanvasEl(el) {
+    if (el === this._canvas) return;
+    this.stopViewer();
+    this._canvas = el;
+    if (!el || typeof THREE === 'undefined') return;
+    var self = this;
+    var renderer = new THREE.WebGLRenderer({ canvas: el, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+    var scene = new THREE.Scene();
+    if (THREE.RoomEnvironment) {
+      var pm = new THREE.PMREMGenerator(renderer);
+      scene.environment = pm.fromScene(new THREE.RoomEnvironment(), 0.04).texture;
+    }
+    scene.add(new THREE.HemisphereLight(0xfff1dc, 0x1a120c, 0.7));
+    var key = new THREE.DirectionalLight(0xffe2bf, 1.6); key.position.set(2, 3, 4); scene.add(key);
+    var rim = new THREE.DirectionalLight(0x9fb7ff, 0.5); rim.position.set(-3, 1, -3); scene.add(rim);
+    var camera = new THREE.PerspectiveCamera(32, 1, 0.01, 100);
+    var controls = new THREE.OrbitControls(camera, el);
+    controls.enableDamping = true; controls.enablePan = false; controls.autoRotate = true; controls.autoRotateSpeed = 1.6;
+    controls.addEventListener('start', function () { controls.autoRotate = false; });
+    var fit = function () {
+      var w = el.clientWidth || 300, h = el.clientHeight || 300;
+      renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+    };
+    fit();
+    var ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(fit) : null;
+    if (ro) ro.observe(el);
+    var tick = function () {
+      if (!self._three || self._three.renderer !== renderer) return;
+      controls.update(); renderer.render(scene, camera);
+      self._three.raf = requestAnimationFrame(tick);
+    };
+    this._three = { renderer: renderer, scene: scene, camera: camera, controls: controls, ro: ro, model: null, loaded: '' };
+    this._three.raf = requestAnimationFrame(tick);
+    this.syncModel();
+  }
+  stopViewer() {
+    var t = this._three;
+    if (!t) return;
+    cancelAnimationFrame(t.raf);
+    if (t.ro) t.ro.disconnect();
+    t.controls.dispose(); t.renderer.dispose();
+    this._three = null;
+  }
+  componentDidUpdate() { this.syncModel(); }
+  componentWillUnmount() { this.stopViewer(); }
+  modelIndex() {
+    if (!this._modelIndex) this._modelIndex = fetch('./models/index.json').then(function (r) { return r.json(); });
+    return this._modelIndex;
+  }
+  modelPack(n, name) {
+    this._packs = this._packs || {};
+    // Packs travel as base64 text: the canvas serves no raw binary.
+    if (!this._packs[n]) this._packs[n] = fetch('./models/' + name).then(function (r) { return r.text(); }).then(function (b64) {
+      var bin = atob(b64.trim()), bytes = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return bytes.buffer;
+    });
+    return this._packs[n];
+  }
+  syncModel() {
+    var t = this._three, want = this._want || '';
+    if (!t || t.loaded === want) return;
+    t.loaded = want;
+    if (t.model) { t.scene.remove(t.model); t.model = null; }
+    if (!want) return;
+    var self = this, kind = want.charAt(0), key = want.slice(2), gold = want.indexOf('|elite') > 0;
+    if (gold) key = key.split('|')[0];
+    if (!this.state.model3dLoading) this.setState({ model3dLoading: true });
+    this.modelIndex().then(function (idx) {
+      var at = (kind === 'i' ? idx.items : kind === 'n' ? (idx.npcs || {}) : idx.monsters)[key];
+      if (!at) throw new Error('no model');
+      return self.modelPack(at[0], idx.packs[at[0]]).then(function (buf) { return buf.slice(at[1], at[1] + at[2]); });
+    }).then(function (glb) {
+      return new Promise(function (ok, bad) { new THREE.GLTFLoader().parse(glb, '', ok, bad); });
+    }).then(function (gltf) {
+      var t2 = self._three;
+      if (!t2 || t2.loaded !== want) return;
+      var root = gltf.scene;
+      root.traverse(function (o) {
+        if (!o.isMesh) return;
+        var m = o.material;
+        if (m.userData && m.userData.mu_additive) { m.blending = THREE.AdditiveBlending; m.depthWrite = false; }
+        else if (m.transparent) m.depthWrite = false;
+        if (gold && m.color) { m.color.setRGB(1.0, 0.76, 0.22); m.metalness = 0.85; m.roughness = 0.35; }
+      });
+      var box = new THREE.Box3().setFromObject(root), size = box.getSize(new THREE.Vector3()), mid = box.getCenter(new THREE.Vector3());
+      root.position.sub(mid);
+      var r = Math.max(size.x, size.y, size.z) || 1;
+      t2.camera.near = r / 100; t2.camera.far = r * 20; t2.camera.updateProjectionMatrix();
+      t2.camera.position.set(0, size.y * 0.08, r * 1.9);
+      t2.controls.target.set(0, 0, 0); t2.controls.minDistance = r * 0.6; t2.controls.maxDistance = r * 5; t2.controls.autoRotate = true; t2.controls.update();
+      t2.scene.add(root); t2.model = root;
+      self.setState({ model3dLoading: false });
+    }).catch(function () { self.setState({ model3dLoading: false }); });
+  }
+  loadSources() {
+    var self = this;
+    if (this.state.src || this.state.srcLoading) return;
+    this.setState({ srcLoading: true });
+    fetch('/_blob/c8712a62ee868bd96effa7b1a3edcd01').then(function (r) { return r.json(); }).then(function (src) {
+      self.setState({ src: src, srcLoading: false });
+    }).catch(function () { self.setState({ srcLoading: false }); });
+  }
+  renderVals() {
+    var self = this, s = this.state, per = this.props.perPage ?? 20;
+    var ICON = { Helms: 'cae34e2d837033d4fbe028f277ab0147', Armour: 'c458dd2f18b586b553b1022dffad73d5', Pants: '8b2c1dc3a7aafc5c077bf32757cb316a', Gloves: '36eb263c5ad90a0dd49cb3d3a4924254', Boots: '46bcf3cc94ab82ddf08ccb0ee0199f7c', Shields: '9f21a8bd86ec8b9d85d91199b4226603', Wings: '1edf1bf35542a629ae273cb8b74a95af', Pendants: '9585bfb302f5646fb0edc8c633849890', Rings: '03b340573b0d3ecf92a7cb61ad8a2337', Pets: '4192e4a080a1846335a85cbfe1551fc6' };
+    var WEAPON = '50b11c9a873df13bc1cd503e58bec9b0';
+    var ORDER = ['Weapons', 'Armour', 'Shields', 'Wings', 'Jewellery', 'Pets', 'Other'];
+    var CLS = { DK: 'Dark Knight', DW: 'Dark Wizard', FE: 'Fairy Elf', MG: 'Magic Gladiator' };
+    var SRC = { d: ['Drop', 'Dropped by monsters'], s: ['Shop', 'Sold by an NPC'], c: ['Craft', 'Made in a mix'], q: ['Quest', 'A quest reward'], e: ['Event', 'An event or raid reward'], b: ['Box', 'Found in a box'] };
+    var UPD = { '23': '23 October update', '21': '21 October update' };
+    // The game's own tables (src/sim/items.cpp, wear.cpp, realm_items.cpp).
+    var DMG = [0, 3, 6, 9, 12, 15, 18, 21, 24, 27, 31, 36];
+    var DEF = [0, 3, 6, 9, 12, 15, 18, 21, 24, 27, 31, 36];
+    var SHD = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+    var DUR = [0, 1, 2, 3, 4, 6, 8, 10, 12, 14, 17, 21];
+    var WIZE = [0, 3, 7, 10, 14, 17, 21, 24, 28, 31, 35, 40], WIZO = [0, 4, 7, 11, 14, 18, 21, 25, 28, 32, 36, 40];
+    var EXC_DEF = ['Zen from kills +80%', 'Defense success rate +20%', 'Reflect damage +10%', 'Damage decrease +8%', 'Max mana +8%', 'Max life +8%'];
+    var EXC_ATK = ['Mana per kill +mana/4', 'Life per kill +life/4', 'Attack speed +14', 'Damage +4%', 'Damage +level/10', 'Excellent damage chance +20%'];
+    var EXC_WIZ = ['Mana per kill +mana/4', 'Life per kill +life/4', 'Attack speed +14', 'Wizardry damage +4%', 'Wizardry damage +level/10', 'Excellent damage chance +20%'];
+    var all = s.items;
+    var iconOf = function (i) { return ICON[i.s] ? '/_blob/' + ICON[i.s] : (i.c === 'Weapons' ? '/_blob/' + WEAPON : ''); };
+    var dual = function (i) { return i.aff.indexOf('dual') >= 0; };
+    var shield = function (i) { return i.c === 'Shields'; };
+    var gear = function (i) { return (i.c === 'Weapons' && i.s !== 'Ammo') || i.c === 'Armour' || i.c === 'Shields'; };
+    var jewel = function (i) { return i.c === 'Jewellery'; };
+    var excellentable = function (i) { return gear(i) || jewel(i); };
+    var tunable = function (i) { return gear(i) || i.c === 'Wings' || jewel(i); };
+    var maxPlus = function (i) { return jewel(i) ? 4 : 11; };
+    var need = function (raw, mult, i, plus, exc) {
+      if (!raw) return 0;
+      return Math.floor(mult * (i.dl + 3 * plus + (exc ? 25 : 0)) * raw / 100) + 20;
+    };
+    var needs = function (i, plus, exc) {
+      var lvl = i.lv + (i.c === 'Wings' ? (i.num <= 2 ? 4 : 5) * plus : 0);
+      return { lv: lvl, str: need(i.str, 3, i, plus, exc), agi: need(i.agi, 3, i, plus, exc), ene: need(i.ene, 4, i, plus, exc) };
+    };
+    var reqText = function (n) {
+      var r = [];
+      if (n.lv) r.push('Level ' + n.lv);
+      if (n.str) r.push('Strength ' + n.str);
+      if (n.agi) r.push('Agility ' + n.agi);
+      if (n.ene) r.push('Energy ' + n.ene);
+      return r.length ? 'Requires ' + r.join(', ') : 'No requirements';
+    };
+    var excDmg = function (i) { return i.dmg && i.dmg[0] > 0 ? Math.floor(i.dmg[0] * 25 / Math.max(1, i.dl)) + 5 : 0; };
+    var excDef = function (i) { return i.def && !shield(i) && i.c === 'Armour' ? Math.floor(i.def * 12 / Math.max(1, i.dl)) + Math.floor(Math.max(1, i.dl) / 5) + 4 : 0; };
+    var excBlock = function (i) { return shield(i) && i.dr ? Math.floor(i.dr * 25 / Math.max(1, i.dl)) + 5 : 0; };
+    var dmgAt = function (i, p, exc) { var b = DMG[p] + (exc ? excDmg(i) : 0); return [i.dmg[0] + b, i.dmg[1] + b]; };
+    var defAt = function (i, p, exc) { return i.def + (shield(i) ? SHD[p] : DEF[p]) + (exc ? excDef(i) : 0); };
+    var wizAt = function (i, p) { return Math.floor(i.mp / 2) + (i.mp % 2 === 0 ? WIZE[p] : WIZO[p]); };
+    var durAt = function (i, p, exc) { return Math.min(255, i.dur + DUR[p] + (exc ? 15 : 0)); };
+    var statOf = function (i) { return i.dmg ? i.dmg[0] + ' ~ ' + i.dmg[1] : i.def ? String(i.def) : ''; };
+    var statName = function (i) { return i.dmg ? 'Damage' : i.def ? 'Defense' : ''; };
+    var lvText = function (i) { return i.lv ? 'Lv ' + i.lv : i.dl ? 'Drop ' + i.dl : '—'; };
+    var kindOf = function (i) { return (i.two ? 'Two-handed ' : '') + i.s.replace(/s$/, '').toLowerCase() + (i.cl2 ? ' · second class' : ''); };
+    var clsLong = function (i) { return i.cls.length === 4 ? 'Every class' : i.cls.map(function (c) { return CLS[c]; }).join(', '); };
+    var updText = function (i) {
+      if (i.add !== 'base') return 'New in the ' + UPD[i.add];
+      if (dual(i)) return 'Changed in the 23 October update';
+      return '';
+    };
+    var open = function (k) { return function () { self.loadSources(); self.setState({ view: 'item', sel: k, tab: '', gcState: '', plus: 0, exc: false, luck: false, opt: 0, mapf: '', allDrops: false, draft: '', about: 'item', cfilter: 'all' }); }; };
+    var toList = function (cat, sub) { return function () { self.setState({ view: 'list', browse: 'items', cat: cat, sub: sub, page: 1 }); }; };
+    var openMon = function (name, map) { return function () { self.loadSources(); self.setState({ view: 'mon', mon: name, monCtx: map || '', monCat: '', monAll: false }); }; };
+    var EVENTS = [['bc1', 'Blood Castle 1', '15–80'], ['bc2', 'Blood Castle 2', '81–130'], ['bc3', 'Blood Castle 3', '131–180'], ['bc4', 'Blood Castle 4', '181–230'], ['bc5', 'Blood Castle 5', '231–280'], ['bc6', 'Blood Castle 6', '281 and up'],
+      ['ds1', 'Devil Square 1', '10–99'], ['ds2', 'Devil Square 2', '100–179'], ['ds3', 'Devil Square 3', '180–249'], ['ds4', 'Devil Square 4', '250 and up'],
+      ['gd', 'Golden Dragon', 'a party of 10']];
+    var openEvent = function (id) { return function () { self.loadSources(); self.setState({ view: 'event', event: id, evCat: '', evAll: false }); }; };
+    var toEvents = function () { self.loadSources(); self.setState({ view: 'list', browse: 'events' }); };
+    var toMons = function (map) { return function () { self.loadSources(); self.setState({ view: 'list', browse: 'monsters', monMap: map }); }; };
+    var npcById = {}, npcByName = {}, questById = {}, questByName = {};
+    s.npcs.forEach(function (n) { npcById[n.id] = n; npcByName[n.name.toLowerCase()] = n; });
+    s.quests.forEach(function (q) { questById[q.id] = q; questByName[q.name.toLowerCase()] = q; });
+    var openNpc = function (id) { return function () { self.setState({ view: 'npc', npc: id, npcMapIx: 0 }); }; };
+    var openQuest = function (id) { return function () { self.setState({ view: 'quest', quest: id }); }; };
+    var openNpcNamed = function (name) {
+      var n = npcByName[String(name).toLowerCase()];
+      if (!n) { var bare = String(name).replace(/\s*\(.*\)$/, '').replace(/^the /i, '').toLowerCase(); n = s.npcs.filter(function (x) { return x.name.toLowerCase().indexOf(bare) >= 0; })[0]; }
+      return n ? openNpc(n.id) : function () {};
+    };
+    var itemByKey = function (k) { for (var i = 0; i < s.items.length; i++) if (s.items[i].k === k) return s.items[i]; return null; };
+    // The game's item card: its own rows (scratchpad cards.json, from src/game/ui/describe.cpp) turned
+    // into what the markup draws. Inks are tip.cpp's tones; a tail is its tone a third toward white.
+    var TONE = { White: ['#ffffff', '#ffffff'], Blue: ['#80b2ff', '#accdff'], Red: ['#ff331a', '#ff7a6a'], Yellow: ['#ffcc1a', '#ffde6a'], Green: ['#1aff80', '#6affac'],
+      Gray: ['#96998e', '#bbbdb6'], Violet: ['#b266ff', '#cd9cff'], RedPurple: ['#cc80cc', '#deacde'], Orange: ['#e66b0a', '#ef9f60'], Uncommon: ['#ffffff', '#ffffff'],
+      Rare: ['#0070dd', '#59a2e9'], Epic: ['#a335ee', '#c37cf4'], Legendary: ['#1eff00', '#6dff59'], Artifact: ['#ffd100', '#ffe159'], Quest: ['#d685ff', '#e4b0ff'],
+      RuneLegendary: ['#ff8000', '#ffac59'], RuneAncient: ['#00ccff', '#59deff'] };
+    var ink = function (t, d) { return t && TONE[t] ? TONE[t][0] : (d || '#ffffff'); };
+    var tailInk = function (t) { return t && TONE[t] ? TONE[t][1] : '#ffffff'; };
+    var rgba = function (hex, a) { var n = parseInt(hex.slice(1), 16); return 'rgba(' + (n >> 16) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')'; };
+    var cardView = function (card) {
+      if (!card || !card.rows) return null;
+      var v = { title: '', sub: '', bound: '', tone: '#ffffff', rows: [], footL: [], footR: [], hasFoot: false, sell: '' };
+      var brk = null;
+      card.rows.forEach(function (r) {
+        if (r.kind !== 'breakdown') brk = null;
+        if (r.kind === 'title') { v.title = r.text; v.tone = ink(r.tone); }
+        else if (r.kind === 'subtitle') v.sub = r.text;
+        else if (r.kind === 'bound') v.bound = r.text;
+        else if (r.kind === 'headline') v.rows.push({ isHead: true, text: r.text, color: ink(r.tone, '#ffcc1a'), word: r.word || '' });
+        else if (r.kind === 'breakdown') {
+          if (!brk) { brk = { isBreak: true, items: [] }; v.rows.push(brk); }
+          brk.items.push({ figure: r.figure || '', color: r.figureTone ? ink(r.figureTone) : '#c4c1b4', text: r.text || '' });
+        }
+        else if (r.kind === 'rule') v.rows.push({ isRule: true });
+        else if (r.kind === 'stat') v.rows.push({ isStat: true, label: r.label || r.text || '', labelColor: r.labelTone ? ink(r.labelTone) : '#c4c1b4',
+          tail: r.tail || (r.values ? r.values.map(function (x) { return x.text || x; }).join(' · ') : ''), tailColor: ink(r.tailTone), gap: r.gap ? '9px' : '0' });
+        else if (r.kind === 'foot') {
+          v.hasFoot = true;
+          (r.left || []).forEach(function (l) { v.footL.push({ text: l.text, color: l.tone === 'Red' ? '#ff331a' : l.quiet ? '#7d8077' : ink(l.tone, '#7d8077') }); });
+          (r.right || []).forEach(function (l) { var w = l.worn != null ? l.worn : null; var c = 2 * Math.PI * 8; v.footR.push({ text: l.text, ring: w != null, dash: w != null ? (c * w).toFixed(2) + ' ' + c.toFixed(2) : '' }); });
+        }
+        else if (r.kind === 'sell') v.sell = r.text;
+        else if (r.kind === 'gap') v.rows.push({ isOpt: true, text: '', gap: '9px' });
+        else {
+          var m = r.mark || '';
+          v.rows.push({ isOpt: true, keyword: r.keyword || '', kwColor: r.keywordTone ? ink(r.keywordTone) : '#ffffff', text: r.text || '', color: ink(r.tone),
+            tail: r.tail || '', tailColor: tailInk(r.tone), gap: r.gap ? '9px' : '0', mColor: ink(r.markTone, ink(r.tone)),
+            mDia: m === 'Diamond', mStar: m === 'Star', mSocket: m === 'Socket', mRing: m === 'Ring', mSet: m === 'RingSet' });
+        }
+      });
+      v.headBg = 'linear-gradient(' + rgba(v.tone, 0.12) + ', rgba(0,0,0,0))';
+      v.lineBg = 'linear-gradient(90deg, rgba(0,0,0,0), ' + rgba(v.tone, 0.8) + ', rgba(0,0,0,0))';
+      return v;
+    };
+    var CARDS = s.cards || null;
+    var hasFigure = function (fig) { return !!(fig && s.modelIdx && s.modelIdx.npcs && s.modelIdx.npcs[fig]); };
+    var monByName = {};
+    s.monsters.forEach(function (m) { monByName[m.n] = m; });
+    var rev = s.src ? this.dropsByMonster(s.src) : null;
+    var ELITE_LIFE = { Lorencia: 8, Noria: 6, Devias: 3, Dungeon: 3, 'Lost Tower': 2.5, Atlans: 2.5, Tarkan: 2, Icarus: 2, Aida: 1.5 };
+    // A per-kill chance said as players say it: "1 in 263", with the percent beside.
+    var odds = function (c) {
+      if (!c) return { one: '—', pct: '' };
+      if (c >= 0.999) return { one: 'Always', pct: '' };
+      var pct = c * 100;
+      var p = pct >= 10 ? pct.toFixed(0) : pct >= 1 ? pct.toFixed(1) : pct >= 0.01 ? pct.toFixed(2) : pct.toPrecision(2);
+      return { one: c >= 0.2 ? pct.toFixed(0) + '%' : '1 in ' + Math.round(1 / c).toLocaleString('en'), pct: c >= 0.2 ? '' : p + '%' };
+    };
+    var baseOf = function (name) { return !monByName[name] && name.indexOf('Elite ') === 0 ? name.slice(6) : ''; };
+
+    var q = s.q.trim().toLowerCase();
+    var base = all.filter(function (i) { return (!q || i.n.toLowerCase().indexOf(q) >= 0) && (!s.cls || i.cls.indexOf(s.cls) >= 0) && (!s.srcf || i.src.indexOf(s.srcf) >= 0); });
+    var cats = [{ cls: 'ci', label: 'All items', n: base.length, on: s.cat === 'All' ? 'true' : 'false', pick: toList('All', '') }];
+    ORDER.forEach(function (c) {
+      var inC = base.filter(function (i) { return i.c === c; });
+      cats.push({ cls: 'ci', label: c, n: inC.length, on: s.cat === c && !s.sub ? 'true' : 'false', pick: toList(c, '') });
+      if (s.cat === c) {
+        var subs = [];
+        inC.forEach(function (i) { if (subs.indexOf(i.s) < 0) subs.push(i.s); });
+        if (subs.length > 1) subs.forEach(function (sb) {
+          cats.push({ cls: 'ci sub', label: sb, n: inC.filter(function (i) { return i.s === sb; }).length, on: s.sub === sb ? 'true' : 'false', pick: toList(c, sb) });
+        });
+      }
+    });
+    var list = base.filter(function (i) { return (s.cat === 'All' || i.c === s.cat) && (!s.sub || i.s === s.sub); });
+    var sortStat = function (i) { return i.dmg ? i.dmg[1] : (i.def || i.mp || 0); };
+    var key = { n: function (i) { return i.n; }, s: function (i) { return i.s; }, lv: function (i) { return i.lv || i.dl; }, st: sortStat, rq: function (i) { var n = needs(i, 0, false); return n.str + n.agi + n.ene; }, cl: function (i) { return i.cls.join(''); } }[s.sort];
+    list.sort(function (a, b) { var x = key(a), y = key(b); return (x > y ? 1 : x < y ? -1 : a.n > b.n ? 1 : -1) * s.dir; });
+    var pages = Math.max(1, Math.ceil(list.length / per));
+    var page = Math.min(s.page, pages);
+    var cols = [['n', 'Name', ''], ['s', 'Type', ''], ['lv', 'Level', 'r'], ['st', 'Damage / Def', 'r'], ['rq', 'Requires', ''], ['cl', 'Class', '']].map(function (c) {
+      var on = s.sort === c[0];
+      return { label: c[1], cls: c[2], arrow: on ? (s.dir > 0 ? ' ▲' : ' ▼') : '', aria: on ? (s.dir > 0 ? 'ascending' : 'descending') : undefined,
+        pick: function () { self.setState({ sort: c[0], dir: on ? -s.dir : 1, page: 1 }); } };
+    });
+    var rows = list.slice((page - 1) * per, page * per).map(function (i, ix) {
+      var n = needs(i, 0, false);
+      var gcv = CARDS && CARDS[i.k] ? cardView(CARDS[i.k].plain || CARDS[i.k][Object.keys(CARDS[i.k])[0]]) : null;
+      return { gc: gcv || {}, hasGc: !!gcv, noGc: !gcv, tid: 'tt' + ix, n: i.n, s: i.s, icon: iconOf(i), kind: kindOf(i), dorm: !!i.dorm,
+        lvText: lvText(i), statCol: statOf(i) || (i.mp ? 'Wiz ' + wizAt(i, 0) + '%' : '—'), statText: statOf(i), statName: statName(i), sp: i.sp || 0,
+        reqText: reqText(n), reqShort: [n.str ? 'Str ' + n.str : '', n.agi ? 'Agi ' + n.agi : '', n.ene ? 'Ene ' + n.ene : ''].filter(Boolean).join(' · ') || '—',
+        clsLong: clsLong(i), clsShort: i.cls.length === 4 ? 'All' : i.cls.join(' ') || '—', updText: updText(i), open: open(i.k),
+        srcs: i.src.split('').filter(function (c) { return SRC[c]; }).map(function (c) { return { label: SRC[c][0], title: SRC[c][1] }; }),
+        srcText: i.src ? i.src.split('').map(function (c) { return SRC[c][1]; }).join(' · ') : (i.dorm ? 'Drops when Kanturu opens' : '') };
+    });
+    var from = list.length ? (page - 1) * per + 1 : 0, to = Math.min(page * per, list.length);
+    var srcChips = ['d', 's', 'c', 'q', 'e', 'b'].map(function (c) {
+      return { label: SRC[c][0], on: s.srcf === c ? 'true' : 'false', pick: function () { self.setState({ srcf: s.srcf === c ? '' : c, page: 1 }); } };
+    });
+
+    var sel = all.filter(function (i) { return i.k === s.sel; })[0];
+    var isItem = s.view === 'item' && !!sel;
+    var isMon = s.view === 'mon' && !!s.mon;
+    var npcSel = npcById[s.npc], questSel = questById[s.quest];
+    var isNpc = s.view === 'npc' && !!npcSel, isQuest = s.view === 'quest' && !!questSel;
+    var evSel = EVENTS.filter(function (e) { return e[0] === s.event; })[0];
+    var isGold = s.view === 'event' && !!evSel && evSel[0] === 'gd';
+    var isEvent = s.view === 'event' && !!evSel && !isGold;
+    var A = s.sysA || {}, B = s.sysB || {};
+    var RUNES = (A.runes && A.runes.runes) || [], SKILLS = (B.skills && B.skills.skills) || [];
+    var runeSel = RUNES.filter(function (r) { return r.id === s.rune; })[0];
+    var skillSel = SKILLS.filter(function (k) { return String(k.id) === String(s.skill); })[0];
+    var isRune = s.view === 'rune' && !!runeSel, isSkill = s.view === 'skill' && !!skillSel;
+    var openRune = function (id) { return function () { self.setState({ view: 'rune', rune: id }); }; };
+    var openSkill = function (id) { return function () { self.setState({ view: 'skill', skill: String(id) }); }; };
+    var goBrowse = function (b) { return function () { self.setState({ view: 'list', browse: b }); }; };
+    var detail = isItem || isMon || isNpc || isQuest || isEvent || isRune || isSkill || isGold;
+    var isEventList = !detail && s.browse === 'events';
+    var isRuneList = !detail && s.browse === 'runes', isSkillList = !detail && s.browse === 'skills', isTalents = !detail && s.browse === 'talents';
+    var isMixList = !detail && s.browse === 'mixes', isEliteList = !detail && s.browse === 'elites';
+    var BROWSE_NAMES = { runes: 'Runes', skills: 'Skills', talents: 'Talents', mixes: 'Chaos Machine', elites: 'Elites' };
+    var isMonList = !detail && s.browse === 'monsters';
+    var isNpcList = !detail && s.browse === 'npcs';
+    var isQuestList = !detail && s.browse === 'quests';
+    var toNpcs = function () { self.setState({ view: 'list', browse: 'npcs' }); };
+    var toQuests = function () { self.setState({ view: 'list', browse: 'quests' }); };
+    var crumbs = [{ label: 'Armory', link: true, go: toList('All', '') }];
+    if (isGold) {
+      crumbs.push({ label: 'Events', link: true, go: toEvents });
+      crumbs.push({ label: 'Golden Dragon', cur: true });
+    } else if (isRune) {
+      crumbs.push({ label: 'Runes', link: true, go: goBrowse('runes') });
+      crumbs.push({ label: runeSel.name, cur: true });
+    } else if (isSkill) {
+      crumbs.push({ label: 'Skills', link: true, go: goBrowse('skills') });
+      crumbs.push({ label: skillSel.name, cur: true });
+    } else if (!detail && BROWSE_NAMES[s.browse]) {
+      crumbs.push({ label: BROWSE_NAMES[s.browse], cur: true });
+    } else if (isEvent) {
+      crumbs.push({ label: 'Events', link: true, go: toEvents });
+      crumbs.push({ label: evSel[1], cur: true });
+    } else if (isEventList) {
+      crumbs.push({ label: 'Events', cur: true });
+    } else if (isMon && s.monCtx && /^(Blood Castle|Devil Square)/.test(s.monCtx)) {
+      var evOf = EVENTS.filter(function (e) { return e[1] === s.monCtx; })[0];
+      crumbs.push({ label: 'Events', link: true, go: toEvents });
+      if (evOf) crumbs.push({ label: evOf[1], link: true, go: openEvent(evOf[0]) });
+      crumbs.push({ label: s.mon, cur: true });
+    } else if (isNpc) {
+      crumbs.push({ label: 'NPCs', link: true, go: toNpcs });
+      crumbs.push({ label: npcSel.name, cur: true });
+    } else if (isQuest) {
+      crumbs.push({ label: 'Quests', link: true, go: toQuests });
+      crumbs.push({ label: questSel.name, cur: true });
+    } else if (isNpcList) {
+      crumbs.push({ label: 'NPCs', cur: true });
+    } else if (isQuestList) {
+      crumbs.push({ label: 'Quests', cur: true });
+    } else if (isMon) {
+      crumbs.push({ label: 'Monsters', link: true, go: toMons('') });
+      crumbs.push({ label: s.mon, cur: true });
+    } else if (isMonList) {
+      if (s.monMap) { crumbs.push({ label: 'Monsters', link: true, go: toMons('') }); crumbs.push({ label: s.monMap, cur: true }); }
+      else crumbs.push({ label: 'Monsters', cur: true });
+    } else if (isItem) {
+      crumbs.push({ label: 'Items', link: true, go: toList('All', '') });
+      crumbs.push({ label: sel.c, link: true, go: toList(sel.c, '') });
+      if (sel.s !== sel.c) crumbs.push({ label: sel.s, link: true, go: toList(sel.c, sel.s) });
+      crumbs.push({ label: sel.n, cur: true });
+    } else {
+      var trail = [['Items', 'All', '']];
+      if (s.cat !== 'All') trail.push([s.cat, s.cat, '']);
+      if (s.sub) trail.push([s.sub, s.cat, s.sub]);
+      trail.forEach(function (t, ix) {
+        if (ix === trail.length - 1) crumbs.push({ label: t[0], cur: true });
+        else crumbs.push({ label: t[0], link: true, go: toList(t[1], t[2]) });
+      });
+    }
+
+    var out = { it: {}, hist: [], similar: [], abouts: [], cfilters: [], comments: [], tabs: [], scaleHead: [], scaleRows: [], rolls: [],
+      drops: [], mapChips: [], shops: [], crafts: [], used: [], quests: [], events: [], boxes: [] };
+    if (isItem) {
+      var mp = maxPlus(sel), plus = Math.min(s.plus, mp);
+      var canExc = excellentable(sel), exc = canExc && s.exc;
+      var canOpt = gear(sel) || sel.c === 'Wings';
+      var src = (s.src && s.src[sel.k]) || {};
+      // The card at the chosen plus.
+      var kv = [], lines = [];
+      var statText = '', sName = '';
+      if (sel.dmg) { var d = dmgAt(sel, plus, exc); statText = d[0] + ' ~ ' + d[1]; sName = 'Damage'; }
+      else if (sel.def) { statText = String(defAt(sel, plus, exc)); sName = 'Defense'; }
+      if (sel.mp) kv.push({ k: 'Wizardry', v: '+' + wizAt(sel, plus) + '%' });
+      if (sel.sp) kv.push({ k: 'Attack speed', v: sel.sp });
+      if (sel.dr) kv.push({ k: 'Defense rate', v: sel.dr + (exc ? excBlock(sel) : 0) });
+      if (sel.res) kv.push({ k: sel.res.charAt(0).toUpperCase() + sel.res.slice(1) + ' resistance', v: plus });
+      if (sel.dur) kv.push({ k: 'Durability', v: tunable(sel) ? durAt(sel, plus, exc) : sel.dur });
+      if (sel.sz) kv.push({ k: 'Size', v: sel.sz[0] + ' × ' + sel.sz[1] });
+      if (s.luck && canOpt) lines.push({ text: 'Luck · +5% critical, +25% Jewel of Soul success', color: '#7FB2FF' });
+      if (s.opt && canOpt) lines.push({ text: shield(sel) ? 'Additional defense rate +' + s.opt * 5 : sel.mp ? 'Additional wizardry +' + s.opt * 4 + '%' : sel.def && !sel.dmg ? 'Additional defense +' + s.opt * 4 : 'Additional damage +' + s.opt * 4, color: '#7FB2FF' });
+      if (exc) lines.push({ text: 'Excellent: one or two options of six', color: '#7FD66A' });
+      var nd = needs(sel, plus, exc);
+      var gcAll = CARDS && CARDS[sel.k] ? CARDS[sel.k] : null;
+      var gcKeys = gcAll ? Object.keys(gcAll) : [];
+      var gcKey = gcKeys.indexOf(s.gcState) >= 0 ? s.gcState : gcKeys[0];
+      var gcSel = gcAll ? cardView(gcAll[gcKey]) : null;
+      var gcLabel = function (g) {
+        if (g === 'plain') return 'Plain';
+        if (/unmet/.test(g)) return 'Not wearable yet';
+        return g.replace(/\(bits[^)]*\)\s*/, '').replace(/ 3 sockets/, ', 3 runes').replace(/luck/g, 'Luck').replace(/excellent/g, 'Excellent');
+      };
+      var runeHit = sel.k === 'Jewel22';
+      var changes = (sel.add !== 'base' ? 1 : 0) + (dual(sel) ? 1 : 0) + (runeHit ? 1 : 0);
+      var facts = [];
+      if (sel.dl) facts.push({ k: 'Drop level', v: sel.dl, color: '#C9BFAE' });
+      if (sel.lv) facts.push({ k: 'Level', v: sel.lv, color: '#C9BFAE' });
+      if (sel.src) facts.push({ k: 'From', v: sel.src.split('').map(function (c) { return SRC[c][0]; }).join(' · '), color: '#C9BFAE' });
+      if (sel.dorm) facts.push({ k: 'Kanturu', v: 'not dropping yet', color: '#7FD7F0' });
+      if (changes) facts.push({ k: 'Updates', v: changes === 1 ? '1 change' : changes + ' changes', color: '#F2C14E' });
+      out.it = { n: sel.n, icon: iconOf(sel), kind: kindOf(sel), facts: facts,
+        cardName: sel.n + (plus ? ' +' + plus : ''), nameColor: exc ? '#7FD66A' : plus >= 7 ? '#F2C14E' : '#F3E8D4',
+        cardKind: (exc ? 'Excellent ' : '') + kindOf(sel), statText: statText, statName: sName, kv: kv, lines: lines,
+        reqText: reqText(nd), clsLong: clsLong(sel), tunable: tunable(sel), canExc: canExc, canOpt: canOpt,
+        noLess: plus <= 0, noMore: plus >= mp, subLower: sel.s.toLowerCase(), isRune: sel.k === 'Jewel22',
+        gc: gcSel || {}, hasGc: !!gcSel, noGc: !gcSel, showCtl: !gcSel && tunable(sel),
+        gcStates: gcKeys.length > 1 ? gcKeys.map(function (g) { return { label: gcLabel(g), on: g === gcKey ? 'true' : 'false', pick: function () { self.setState({ gcState: g }); } }; }) : [],
+        teaches: SKILLS.filter(function (k) { return (k.learned_from || []).some(function (f) { return f.item === sel.k; }); }).map(function (k) { return { name: k.name, open: openSkill(k.id) }; }) };
+
+      // The scaling table.
+      if (tunable(sel)) {
+        var ps = []; for (var p = 0; p <= mp; p++) ps.push(p);
+        out.scaleHead = ps.map(function (p) { return { label: '+' + p, color: p === plus ? '#F2D58A' : '#8F8575' }; });
+        var cell = function (p, v) { return { v: v, color: p === plus ? '#F2D58A' : '#F3E8D4', bg: p === plus ? '#1E160F' : 'transparent' }; };
+        var srow = function (label, f) { return { label: label, cells: ps.map(function (p) { return cell(p, f(p)); }) }; };
+        if (sel.dmg) out.scaleRows.push(srow('Damage', function (p) { var d = dmgAt(sel, p, exc); return d[0] + '~' + d[1]; }));
+        if (sel.mp) out.scaleRows.push(srow('Wizardry %', function (p) { return wizAt(sel, p); }));
+        if (sel.def) out.scaleRows.push(srow('Defense', function (p) { return defAt(sel, p, exc); }));
+        if (sel.dur) out.scaleRows.push(srow('Durability', function (p) { return durAt(sel, p, exc); }));
+        if (sel.c === 'Wings') out.scaleRows.push(srow('Level', function (p) { return needs(sel, p, exc).lv; }));
+        if (sel.str) out.scaleRows.push(srow('Strength', function (p) { return needs(sel, p, exc).str; }));
+        if (sel.agi) out.scaleRows.push(srow('Agility', function (p) { return needs(sel, p, exc).agi; }));
+        if (sel.ene) out.scaleRows.push(srow('Energy', function (p) { return needs(sel, p, exc).ene; }));
+        if (sel.res) out.scaleRows.push(srow('Resistance', function (p) { return p; }));
+        if (gear(sel)) out.rolls.push({ title: 'Luck', color: '#7FB2FF', lines: ['+5% critical damage chance', '+25% Jewel of Soul success'] });
+        if (canOpt) out.rolls.push({ title: 'Additional option', color: '#7FB2FF', lines: [shield(sel) ? 'Defense rate +5, +10, +15, +20' : sel.mp ? 'Wizardry +4% to +16%' : sel.def && !sel.dmg ? 'Defense +4, +8, +12, +16' : 'Damage +4, +8, +12, +16'], note: 'Drops roll up to +12. A Jewel of Life adds a step.' });
+        if (canExc) out.rolls.push({ title: 'Excellent options', color: '#7FD66A', lines: (sel.c === 'Armour' || shield(sel) || sel.s === 'Rings') ? EXC_DEF : sel.mp ? EXC_WIZ : EXC_ATK,
+          note: (excDmg(sel) ? 'Damage +' + excDmg(sel) + '. ' : excDef(sel) ? 'Defense +' + excDef(sel) + '. ' : excBlock(sel) ? 'Defense rate +' + excBlock(sel) + '. ' : '') + 'Asks as if it dropped 25 levels deeper.' });
+        if (gear(sel) || jewel(sel)) out.rolls.push({ title: 'Sockets', color: '#C58CF5', lines: [jewel(sel) && sel.s === 'Rings' ? 'Up to 1 socket' : 'Up to 3 sockets'], note: 'A rare roll. Its runes can raise the level it asks.' });
+      }
+
+      // Where it comes from.
+      var mons = (src.monsters || []).slice().sort(function (a, b) { return (b.chance || 0) - (a.chance || 0) || a.level - b.level; });
+      var maps = [];
+      mons.forEach(function (m) { if (maps.indexOf(m.map) < 0) maps.push(m.map); });
+      var mapf = maps.indexOf(s.mapf) >= 0 ? s.mapf : '';
+      var mf = mons.filter(function (m) { return !mapf || m.map === mapf; });
+      out.mapChips = maps.length > 1 ? [{ label: 'All maps · ' + mons.length, on: !mapf ? 'true' : 'false', pick: function () { self.setState({ mapf: '' }); } }].concat(maps.map(function (m) {
+        return { label: m, on: mapf === m ? 'true' : 'false', pick: function () { self.setState({ mapf: m, allDrops: true }); } };
+      })) : [];
+      out.drops = (s.allDrops ? mf : mf.slice(0, 20)).map(function (m) {
+        var how = m.how ? m.how : m.plain === false ? 'Excellent only' : m.excellent ? 'Plain or excellent' : 'Plain';
+        var o = odds(m.chance);
+        var split = m.chance_plain != null && m.chance_excellent ? odds(m.chance_plain).one + ' plain · ' + odds(m.chance_excellent).one + ' excellent' : '';
+        return { name: m.name, level: m.level, map: m.map, elite: !!m.elite, how: how, howColor: m.plain === false ? '#7FD66A' : m.how ? '#F2C14E' : '#C9BFAE', open: openMon(m.name),
+          one: o.one, pct: o.pct, split: split, open: openMon(m.name, m.map) };
+      });
+      out.dropsMore = !s.allDrops && mf.length > 20 ? 'Show all ' + mf.length : '';
+      out.shops = (src.shops || []).map(function (x) { return { npc: x.npc, open: openNpcNamed(x.npc), map: x.map, plus: x.plus ? '+' + x.plus : '—', price: x.price ? x.price.toLocaleString('en') + ' Zen' + (x.pieces > 1 ? ' for ' + x.pieces : '') : '—' }; });
+      out.crafts = (src.crafts || []).map(function (c) { return { recipe: c.recipe, needs: c.needs || [], note: c.note || '' }; });
+      out.used = (src.used_in || []).map(function (u) { return { recipe: u.recipe, note: u.note || '' }; });
+      out.quests = (src.quests || []).map(function (x) {
+        var pays = [(x.count ? x.count + ' ×' : '1 ×'), x.plus ? '+' + x.plus : '', x['class'] ? 'for a ' + x['class'] : '', x.rank ? '(' + x.rank + ')' : ''].filter(Boolean).join(' ');
+        var qq = questByName[String(x.quest).toLowerCase()];
+        return { quest: x.quest, npc: x.npc, map: x.map, open: qq ? openQuest(qq.id) : function () {}, openGiver: qq ? openNpc(qq.giver) : openNpcNamed(x.npc), when: x.when + (x.repeat ? ', every ' + x.repeat : ''), pays: pays + (x.note ? ' · ' + x.note : '') };
+      });
+      out.events = (src.events || []).map(function (e) { return { event: e.event, note: e.note || '' }; });
+      out.boxes = (src.boxes || []).map(function (b) { return { box: b.box + (b.chance ? ' · ' + odds(b.chance).one + (odds(b.chance).pct ? ' (' + odds(b.chance).pct + ')' : '') : ''), excellent: !!b.excellent }; });
+      var rewardN = out.quests.length + out.events.length + out.boxes.length;
+      out.hasQuests = out.quests.length > 0; out.hasEvents = out.events.length > 0; out.hasBoxes = out.boxes.length > 0;
+
+      // Updates.
+      var notes = s.notes[sel.k] || [];
+      var count = function (a) { return notes.filter(function (c) { return c.about === a; }).length; };
+      var showAbout = function (a) { return function () { self.setState({ tab: 'comments', cfilter: a }); }; };
+      var label = { item: 'The item', dual: 'Dual wield change', runes: 'Rune level change', added: 'Its arrival' };
+      var hist = [];
+      if (sel.add !== 'base') hist.push({ date: UPD[sel.add], title: 'Added to the game', pip: '#F2C14E', dateColor: '#F2C14E', hasDiff: false,
+        note: sel.dorm ? 'In the database now. It drops once Kanturu opens.' : 'Drops on the maps its level fits.', about: 'added', cmtText: count('added') + ' comments', show: showAbout('added') });
+      if (dual(sel)) hist.push({ date: UPD['23'], title: 'Stronger with a second weapon', pip: '#F2C14E', dateColor: '#F2C14E', hasDiff: true,
+        was: 'Two matched weapons hit at 55% each; mixed 43%', now: 'Two matched weapons hit at 62% each; mixed 49%', about: 'dual', cmtText: count('dual') + ' comments on this change', show: showAbout('dual') });
+      if (runeHit) hist.push({ date: UPD['23'], title: 'Runes ask a hero level', pip: '#F2C14E', dateColor: '#F2C14E', hasDiff: true,
+        was: 'A rune asked no level', now: 'Common 20, Rare 80, Epic 150, Legendary 250. Gear asks the highest level of its runes. Any rebirth meets them all.', about: 'runes', cmtText: count('runes') + ' comments on this change', show: showAbout('runes') });
+      if (sel.add === 'base' && hist.length) hist.push({ date: '14 October 2026', title: 'In the game since the first release', pip: '#4A4038', dateColor: '#8F8575', hasDiff: false });
+      out.hist = hist;
+
+      var tabDefs = [];
+      var cons = A.consumables && A.consumables[sel.k];
+      var gp = B.gear_powers && B.gear_powers[sel.k];
+      if (cons) tabDefs.push(['use', 'What it does', '']);
+      if (gp) tabDefs.push(['powers', 'Powers', '']);
+      if (tunable(sel)) tabDefs.push(['scale', 'Stats & scaling', '']);
+      if (mons.length) tabDefs.push(['drops', 'Dropped by', mons.length]);
+      if (out.shops.length) tabDefs.push(['shops', 'Sold by', out.shops.length]);
+      if (out.crafts.length) tabDefs.push(['crafts', 'Created by', out.crafts.length]);
+      if (out.used.length) tabDefs.push(['used', 'Used in', out.used.length]);
+      if (rewardN) tabDefs.push(['rewards', 'Reward from', rewardN]);
+      if (changes) tabDefs.push(['updates', 'Updates', changes]);
+      tabDefs.push(['comments', 'Comments', notes.length || '']);
+      var ids = tabDefs.map(function (t) { return t[0]; });
+      var tab = ids.indexOf(s.tab) >= 0 ? s.tab : ids[0];
+      out.tabs = tabDefs.map(function (t) { return { label: t[1], n: t[2], on: t[0] === tab ? 'true' : 'false', pick: function () { self.setState({ tab: t[0] }); } }; });
+      out.tabUse = tab === 'use'; out.tabPowers = tab === 'powers';
+      var pretty = function (k) { k = String(k).replace(/_/g, ' '); return k.charAt(0).toUpperCase() + k.slice(1); };
+      var scalar = function (v) { return v == null ? '' : typeof v === 'object' ? '' : typeof v === 'number' ? v.toLocaleString('en') : String(v); };
+      out.use = {};
+      if (cons) {
+        var rates = [];
+        Object.keys(cons.rates || {}).forEach(function (k) { var v = cons.rates[k]; if (scalar(v)) rates.push({ k: pretty(k), v: scalar(v) + (typeof v === 'number' && /rate|success|luck|chance|item|excellent/i.test(k) ? '%' : '') }); });
+        if (cons.rates && cons.rates.tiers) cons.rates.tiers.forEach(function (t) { rates.push({ k: '+' + t.plus + ' box', v: [t.item != null ? t.item + '% an item' : '', t.excellent_of_items != null ? t.excellent_of_items + '% of those excellent' : '', t.plain_plus ? 'plain ones ' + t.plain_plus : '', t.zen ? 'else ' + t.zen.toLocaleString('en') + ' Zen' : ''].filter(Boolean).join(' · ') }); });
+        if (cons.stack) rates.push({ k: 'Stacks', v: cons.stack + ' a cell' });
+        if (cons.price) rates.push({ k: 'Price', v: cons.price.toLocaleString('en') + ' Zen' + (cons.sells_for ? ' · sells for ' + cons.sells_for.toLocaleString('en') : '') });
+        var contents = cons.contents, tierKeys = contents && !Array.isArray(contents) ? Object.keys(contents) : [];
+        var tierK = tierKeys.indexOf(s.boxTier) >= 0 ? s.boxTier : tierKeys[tierKeys.length - 1];
+        var list = Array.isArray(contents) ? contents : contents ? contents[tierK] || [] : [];
+        list = list.slice().sort(function (a, b) { return (b.chance || 0) - (a.chance || 0); });
+        out.use = { does: cons.does || [], rates: rates, hasRates: rates.length > 0, hasBox: list.length > 0,
+          tiers: tierKeys.length > 1 ? tierKeys.map(function (t) { return { label: t + ' box', on: t === tierK ? 'true' : 'false', pick: function () { self.setState({ boxTier: t }); } }; }) : [],
+          box: (s.boxAll ? list : list.slice(0, 25)).map(function (b) { var o = odds(b.chance); return { name: b.name || (itemByKey(b.k) || {}).n || b.k, one: o.one, pct: o.pct, exc: b.excellent_chance ? odds(b.excellent_chance).one : '—', open: itemByKey(b.k) ? open(b.k) : function () {} }; }),
+          boxMore: !s.boxAll && list.length > 25 ? 'Show all ' + list.length : '', showAll: function () { self.setState({ boxAll: true }); } };
+      }
+      out.pw = {};
+      if (gp) {
+        var pkv = [], tables = [];
+        Object.keys(gp).forEach(function (k) {
+          var v = gp[k];
+          if (['name', 'kind', 'summary', 'slot'].indexOf(k) >= 0 || v == null) return;
+          if (Array.isArray(v) && v.length && typeof v[0] === 'object') {
+            var head = Object.keys(v[0]);
+            tables.push({ title: pretty(k), head: head.map(pretty), rows: v.map(function (r) { return head.map(function (h) { return scalar(r[h]) || (Array.isArray(r[h]) ? r[h].join(', ') : '—'); }); }) });
+          } else if (Array.isArray(v)) {
+            pkv.push({ k: pretty(k), v: v.join(' · ') });
+          } else if (typeof v === 'object') {
+            if (v.by_plus && typeof v.by_plus === 'object' && !Array.isArray(v.by_plus)) {
+              var ks = Object.keys(v.by_plus);
+              tables.push({ title: pretty(k) + (v.element ? ' · ' + v.element : ''), head: ks, rows: [ks.map(function (p) { return scalar(v.by_plus[p]); })] });
+            }
+            Object.keys(v).forEach(function (sk2) { if (sk2 !== 'by_plus' && scalar(v[sk2])) pkv.push({ k: pretty(k) + ' · ' + sk2.replace(/_/g, ' '), v: scalar(v[sk2]) }); });
+          } else pkv.push({ k: pretty(k), v: scalar(v) });
+        });
+        out.pw = { summary: gp.summary || '', kv: pkv, hasKv: pkv.length > 0, tables: tables };
+      }
+      out.tabScale = tab === 'scale'; out.tabDrops = tab === 'drops'; out.tabShops = tab === 'shops'; out.tabCrafts = tab === 'crafts';
+      out.tabUsed = tab === 'used'; out.tabRewards = tab === 'rewards'; out.tabUpdates = tab === 'updates'; out.tabComments = tab === 'comments';
+
+      var lv = function (i) { return i.lv || i.dl; };
+      out.similar = all.filter(function (i) { return i.s === sel.s && i.k !== sel.k; })
+        .sort(function (a, b) { return Math.abs(lv(a) - lv(sel)) - Math.abs(lv(b) - lv(sel)); })
+        .slice(0, 6).map(function (i) { return { n: i.n, lvText: lvText(i), open: open(i.k) }; });
+      var keys = ['item'].concat(hist.filter(function (h) { return h.about; }).map(function (h) { return h.about; }));
+      out.abouts = keys.map(function (k) { return { label: label[k], on: s.about === k ? 'true' : 'false', pick: function () { self.setState({ about: k }); } }; });
+      out.cfilters = notes.length ? [{ k: 'all', l: 'All · ' + notes.length }].concat(keys.map(function (k) { return { k: k, l: label[k] + ' · ' + count(k) }; })).map(function (f) {
+        return { label: f.l, on: s.cfilter === f.k ? 'true' : 'false', pick: function () { self.setState({ cfilter: f.k }); } };
+      }) : [];
+      out.comments = notes.filter(function (c) { return s.cfilter === 'all' || c.about === s.cfilter; }).map(function (c) {
+        return Object.assign({}, c, { aboutLabel: c.about === 'item' ? '' : 'on ' + label[c.about].toLowerCase(), vote: function () {
+          var n = Object.assign({}, self.state.notes);
+          n[sel.k] = (n[sel.k] || []).map(function (x) { return x.id === c.id ? Object.assign({}, x, { mine: !x.mine, votes: x.votes + (x.mine ? -1 : 1) }) : x; });
+          self.setState({ notes: n });
+        } });
+      });
+      out.plus = plus;
+      out.excNote = exc ? ' · excellent' : '';
+    }
+
+    // Monsters: the list, and one monster's page.
+    var whereOf = function (name) {
+      var m = monByName[name] || monByName[baseOf(name)];
+      var w = m && !baseOf(name) ? m.where.map(function (x) { return x.map; }) : [];
+      if (rev && rev[name]) Object.keys(rev[name]).forEach(function (k) { rev[name][k].maps.forEach(function (mp) { if (w.indexOf(mp) < 0) w.push(mp); }); });
+      return w;
+    };
+    var dropN = function (name) { return rev && rev[name] ? Object.keys(rev[name]).length : 0; };
+    var mons = s.monsters.slice().sort(function (a, b) { return a.lv - b.lv || (a.n > b.n ? 1 : -1); });
+    var monMapCount = {};
+    mons.forEach(function (m) { m.where.forEach(function (w) { monMapCount[w.map] = (monMapCount[w.map] || 0) + 1; }); });
+    out.monMaps = [{ label: 'Every map', n: mons.length, on: !s.monMap ? 'true' : 'false', pick: toMons('') }].concat(Object.keys(monMapCount).map(function (mp) {
+      return { label: mp, n: monMapCount[mp], on: s.monMap === mp ? 'true' : 'false', pick: toMons(mp) };
+    }));
+    var monList = mons.filter(function (m) { return (!s.monMap || m.where.some(function (w) { return w.map === s.monMap; })) && (!q || m.n.toLowerCase().indexOf(q) >= 0); });
+    out.monRows = monList.map(function (m) {
+      return { n: m.n, lv: m.lv, hp: m.hp != null ? m.hp.toLocaleString('en') : '—', dmg: m.dmg[0] != null ? m.dmg[0] + ' ~ ' + m.dmg[1] : '—', def: m.def != null ? m.def : '—',
+        where: m.where.map(function (w) { return w.map; }).join(', ') || m.home || '—', drops: rev ? dropN(m.n) : '…', open: openMon(m.n) };
+    });
+    out.monTitle = s.monMap ? 'Monsters in ' + s.monMap : 'Monsters';
+    out.monCount = monList.length + ' monsters';
+    out.mo = {};
+    if (isMon) {
+      var bn = baseOf(s.mon), mb = monByName[s.mon] || monByName[bn] || {};
+      var elite = !!bn;
+      var wh = whereOf(s.mon);
+      // One name can be several monsters (a castle's skeleton at each castle's level): the map
+      // it was opened from picks which, by the level the drops list gives it there.
+      var ctx = s.monCtx && wh.indexOf(s.monCtx) >= 0 ? s.monCtx : '';
+      var lvHere = ctx && this._lv && this._lv[s.mon] ? this._lv[s.mon][ctx] : null;
+      if (lvHere != null) {
+        var same = s.monsters.filter(function (m) { return m.n === (bn || s.mon); });
+        mb = same.filter(function (m) { return m.lv === lvHere || m.lv + 2 === lvHere; })[0] || mb;
+      }
+      var eliteRow = elite ? ((A.elites && A.elites.elites) || []).filter(function (e) { return e.map === (ctx || wh[0]); })[0] : null;
+      var lifeX = elite ? (eliteRow ? eliteRow.life_x : (ELITE_LIFE[ctx || wh[0]] || 2)) : 1;
+      var dmgX = elite ? (eliteRow ? eliteRow.damage_x : 2) : 1, defX = elite ? (eliteRow ? eliteRow.defense_x : 1.5) : 1;
+      var lvl = (mb.lv || 0) + (elite ? 2 : 0);
+      var kv = [];
+      if (mb.hp != null) kv.push({ k: 'Life', v: Math.round(mb.hp * lifeX).toLocaleString('en') });
+      if (mb.dmg && mb.dmg[0] != null) kv.push({ k: 'Damage', v: Math.round(mb.dmg[0] * dmgX) + ' ~ ' + Math.round(mb.dmg[1] * dmgX) });
+      if (mb.def != null) kv.push({ k: 'Defense', v: Math.round(mb.def * defX) });
+      if (mb.ar != null) kv.push({ k: 'Attack rate', v: mb.ar });
+      if (mb.dr != null) kv.push({ k: 'Defense rate', v: mb.dr });
+      if (mb.rng != null) kv.push({ k: 'Attack range', v: mb.rng + (mb.rng === 1 ? ' tile' : ' tiles') });
+      if (mb.view != null) kv.push({ k: 'Sees', v: mb.view + ' tiles' });
+      if (mb.spd != null) kv.push({ k: 'Attacks every', v: (mb.spd / 1000).toFixed(1) + ' s' });
+      var dl = rev && rev[s.mon] ? Object.keys(rev[s.mon]).map(function (k) {
+        var e = rev[s.mon][k]; var it = all.filter(function (i) { return i.k === k; })[0];
+        if (!it || (ctx && e.byMap[ctx] == null)) return null;
+        return { e: ctx ? Object.assign({}, e, { chance: e.byMap[ctx] }) : e, it: it };
+      }).filter(Boolean) : [];
+      dl.sort(function (a, b) { return (b.e.chance || 0) - (a.e.chance || 0) || (a.it.n > b.it.n ? 1 : -1); });
+      var cats = [];
+      dl.forEach(function (x) { if (cats.indexOf(x.it.c) < 0) cats.push(x.it.c); });
+      var monCat = cats.indexOf(s.monCat) >= 0 ? s.monCat : '';
+      var shown = dl.filter(function (x) { return !monCat || x.it.c === monCat; });
+      var where = mb.where && !elite ? mb.where.map(function (w) { return { map: w.map, count: w.count + ' in its nests' }; }) : [];
+      wh.forEach(function (mp) { if (!where.some(function (w) { return w.map === mp; })) where.push({ map: mp, count: elite ? 'one or two at a time' : (self._lv && self._lv[s.mon] && self._lv[s.mon][mp] != null ? 'level ' + self._lv[s.mon][mp] : 'event') }); });
+      where = where.map(function (w) { var on = ctx === w.map; return Object.assign({}, w, { on: on ? 'true' : 'false', bg: on ? '#1E160F' : 'transparent', color: on ? '#F2D58A' : '#C9BFAE', pick: openMon(s.mon, w.map) }); });
+      var eliteName = 'Elite ' + s.mon;
+      var wanted = s.quests.filter(function (q) { return (q.kills || []).some(function (k) { return k.monster === s.mon || k.monster + 's' === s.mon; }); }).map(function (q) {
+        var k = q.kills.filter(function (k) { return k.monster === s.mon || k.monster + 's' === s.mon; })[0];
+        return { name: q.name, count: '×' + k.count, open: openQuest(q.id) };
+      });
+      if (lvHere != null) lvl = lvHere;
+      out.mo = { n: s.mon, nameColor: elite ? '#F2C14E' : '#F3E8D4', lv: lvl, ctx: ctx, clearCtx: openMon(s.mon, ''),
+        kind: (elite ? 'Elite · ' : '') + 'Level ' + lvl + (ctx ? ' · in ' + ctx : wh.length ? ' · ' + wh.slice(0, 3).join(', ') + (wh.length > 3 ? ' and more' : '') : ''),
+        facts: [{ k: 'Level', v: lvl }].concat(mb.hp != null ? [{ k: 'Life', v: Math.round(mb.hp * lifeX).toLocaleString('en') }] : []).concat(rev ? [{ k: 'Drops', v: dl.length + ' items' }] : []),
+        kv: kv, where: where,
+        eliteNote: elite ? 'An Elite: ×' + lifeX + ' life in ' + (ctx || wh[0] || 'its map') + ', ×' + dmgX + ' damage, ×' + defX + ' defense, 2 levels higher. ' + (eliteRow && eliteRow.immune ? 'It shrugs off ' + eliteRow.immune.join(', ') + '.' : 'Stuns, freezes and slows don’t hold it.') : '',
+        hasElite: !elite && !!(rev && rev[eliteName]), eliteLink: 'Its Elite: ' + eliteName, openElite: openMon(eliteName),
+        hasBase: elite, baseLink: 'The ordinary ' + bn, openBase: openMon(bn),
+        hasWanted: wanted.length > 0, wanted: wanted,
+        dropCount: rev ? shown.length + ' items' : '',
+        cats: cats.length > 1 ? [{ label: 'All · ' + dl.length, on: !monCat ? 'true' : 'false', pick: function () { self.setState({ monCat: '' }); } }].concat(cats.map(function (c) {
+          return { label: c + ' · ' + dl.filter(function (x) { return x.it.c === c; }).length, on: monCat === c ? 'true' : 'false', pick: function () { self.setState({ monCat: c, monAll: true }); } };
+        })) : [],
+        drops: (s.monAll ? shown : shown.slice(0, 25)).map(function (x) {
+          var how = x.e.how ? x.e.how : !x.e.plain ? 'Excellent only' : x.e.excellent ? 'Plain or excellent' : 'Plain';
+          var o = odds(x.e.chance);
+          return { n: x.it.n, s: x.it.s, dl: x.it.dl || '—', how: how, howColor: !x.e.plain ? '#7FD66A' : x.e.how ? '#F2C14E' : '#C9BFAE', open: open(x.it.k), one: o.one, pct: o.pct };
+        }),
+        more: !s.monAll && shown.length > 25 ? 'Show all ' + shown.length : '',
+        showAll: function () { self.setState({ monAll: true }); } };
+    }
+
+    // Events: each castle and square is its own map in the sources, so its monsters and drops
+    // are the entries filed under that map.
+    var eventInfo = function (name) {
+      var monsters = {}, items = {};
+      if (rev) Object.keys(rev).forEach(function (mn) {
+        Object.keys(rev[mn]).forEach(function (k) {
+          var c = rev[mn][k].byMap[name];
+          if (c == null) return;
+          monsters[mn] = monsters[mn] || { name: mn, level: self._lv[mn][name], n: 0 };
+          monsters[mn].n++;
+          if (!items[k] || c > items[k].chance) items[k] = { k: k, chance: c, from: mn };
+        });
+      });
+      return { monsters: monsters, items: items };
+    };
+    out.eventRows = EVENTS.map(function (e) {
+      var inf = eventInfo(e[0] === 'gd' ? 'Lorencia (Golden Invasion)' : e[1]);
+      var lvs = Object.keys(inf.monsters).map(function (m) { return inf.monsters[m].level; });
+      return { name: e[1], band: e[2], open: openEvent(e[0]), mons: rev ? Object.keys(inf.monsters).length : '…', items: rev ? Object.keys(inf.items).length : '…',
+        mlv: lvs.length ? Math.min.apply(null, lvs) + '–' + Math.max.apply(null, lvs) : '—' };
+    });
+    // The Golden Dragon: its rules from src/sim/invasion.h and raid.h, its drops from the sources.
+    out.gd = {};
+    if (isGold) {
+      var TOWNS = [['Lorencia', 'lorencia', [[86, 111, 'West field'], [183, 111, 'East field'], [145, 175, 'South field']]],
+        ['Devias', 'devias', [[165, 42, 'Field 1'], [241, 87, 'Field 2'], [200, 84, 'Field 3']]],
+        ['Noria', 'noria', [[211, 92, 'Field 1'], [128, 138, 'Field 2'], [199, 168, 'Field 3']]]];
+      var town = TOWNS.filter(function (t) { return t[0] === s.gdTown; })[0] || TOWNS[0];
+      var ginf = eventInfo(town[0] + ' (Golden Invasion)');
+      var glist = Object.keys(ginf.items).map(function (k2) { return { x: ginf.items[k2], it: itemByKey(k2) }; }).filter(function (o) { return o.it; })
+        .sort(function (a, b) { return b.x.chance - a.x.chance; });
+      var dragonModel = monByName['Golden Dragon'];
+      var hoardItem = function (k2, name, note) { var it = k2 ? itemByKey(k2) : null; return { link: !!it, plainName: !it, name: it ? it.n : name, open: it ? open(k2) : function () {}, note: note }; };
+      out.gd = {
+        lede: 'It comes with the rain. Each storm over Lorencia, Devias or Noria has a one-in-three chance of bringing it: Golden Budge Dragons cross the sky, and the Golden Dragon comes down on a field outside the town. The storm holds until it dies or flies away.',
+        facts: [{ k: 'Health', v: '1,800,000' }, { k: 'Built for', v: '10 players' }, { k: 'Time to kill', v: '8 minutes' }, { k: 'Towns', v: 'Lorencia · Devias · Noria' }],
+        hasModel: !!dragonModel,
+        kv: [{ k: 'Health', v: '1,800,000, the same for any party' }, { k: 'Stays', v: '30 minutes once landed' }, { k: 'Not struck', v: 'flies away after 2 minutes' }, { k: 'Clock', v: 'flies away 8 minutes into the fight' },
+          { k: 'Crowd control', v: 'immune' }, { k: 'Tuned against', v: 'ten level-400, +11 heroes, no rebirth' }, { k: 'On the map', v: 'shown on every player’s minimap while it stands' }],
+        openBudge: openMon('Golden Budge Dragon', town[0] + ' (Golden Invasion)'),
+        minions: ['Up to 24 at once, from the Flight stage on', 'Each leaves a Box of Luck', 'A jewel 1 in 4 · a rune 1 in 10'],
+        stages: [{ name: 'Ground', hp: '100% to 70% health', lines: ['Bite, fire breath in a 60° cone of 6 tiles', 'Roar: a shock wave 2 tiles round it'] },
+          { name: 'Flight', hp: '70% to 40%', lines: ['Golden Budge Dragons join; a second wave at 50%', 'Fire from the sky in lines, 6 strikes at a time', 'Fire Ball and Meteorite'] },
+          { name: 'Enraged', hp: '40% to 15%', lines: ['A meteor on every fighter every 8 seconds', 'Each leaves a burning pool for 12 seconds', 'Hellfire when two or more crowd it'] },
+          { name: 'Last stand', hp: '15% to 0%', lines: ['The Golden Inferno: hide in the shadows it casts', 'Everything it has, faster'] }],
+        dragonfire: ['Every fire blow that lands lays a stack: up to 5, each +12% fire damage taken, gone 12 seconds after the last.', 'Fire resistance cuts both the fire and what the stacks add: at 10 points you take half. Bring fire-resistance rings and pendants.'],
+        hoard: [hoardItem('MagicBox08', 'Box of Kundun', '×5, +1 to +3, scattered round it'), hoardItem('Jewel22', 'Rune of Creation', '×2'), hoardItem(null, 'Jewels of Bless, Soul, Chaos or Life', '×3'),
+          hoardItem(null, 'An excellent item', '1, and a second one time in 3'), hoardItem('Quest04', 'Loch’s Feather', '1 in 4')],
+        towns: TOWNS.map(function (t) { return { label: t[0], on: t[0] === town[0] ? 'true' : 'false', pick: function () { self.setState({ gdTown: t[0] }); } }; }),
+        town: town[0], mapPng: './maps/' + town[1] + '.png',
+        fields: town[2].map(function (f) { return { label: f[2] + ' · ' + f[0] + ', ' + f[1], left: ((f[0] + 0.5) / 256 * 100).toFixed(2) + '%', top: ((f[1] + 0.5) / 256 * 100).toFixed(2) + '%' }; }),
+        dropCount: rev ? glist.length + ' items' : '',
+        drops: (s.gdAll ? glist : glist.slice(0, 20)).map(function (o) { var od = odds(o.x.chance); return { n: o.it.n, s: o.it.s, from: o.x.from, one: od.one, pct: od.pct, open: open(o.x.k) }; }),
+        more: !s.gdAll && glist.length > 20 ? 'Show all ' + glist.length : '', showAll: function () { self.setState({ gdAll: true }); } };
+    }
+    out.ev = {};
+    if (isEvent) {
+      var inf = eventInfo(evSel[1]);
+      var bc = evSel[0].charAt(0) === 'b';
+      var mlist = Object.keys(inf.monsters).map(function (m) { return inf.monsters[m]; }).sort(function (a, b) { return a.level - b.level; });
+      var ilist = Object.keys(inf.items).map(function (k) { return { x: inf.items[k], it: itemByKey(k) }; }).filter(function (o) { return o.it; })
+        .sort(function (a, b) { return b.x.chance - a.x.chance; });
+      var ecats = [];
+      ilist.forEach(function (o) { if (ecats.indexOf(o.it.c) < 0) ecats.push(o.it.c); });
+      var ecat = ecats.indexOf(s.evCat) >= 0 ? s.evCat : '';
+      var shownE = ilist.filter(function (o) { return !ecat || o.it.c === ecat; });
+      var win = [];
+      if (s.src) Object.keys(s.src).forEach(function (k) {
+        if (k.charAt(0) === '_') return;
+        (s.src[k].events || []).forEach(function (e) { if (e.event === evSel[1]) { var it = itemByKey(k); win.push({ name: it ? it.n : k, note: (e.count > 1 ? '×' + e.count + ' · ' : '') + (e.note || ''), open: it ? open(k) : function () {} }); } });
+      });
+      var lvs2 = mlist.map(function (m) { return m.level; });
+      out.ev = { name: evSel[1],
+        lede: (bc ? 'Enter with an Invisibility Cloak from the Messenger of Archangel' : 'Enter with a Devil’s Invitation from Charon') + ' · for heroes level ' + evSel[2] + (bc ? '' : ' (a Magic Gladiator’s level counts one and a half times)'),
+        facts: [{ k: 'Your level', v: evSel[2] }].concat(lvs2.length ? [{ k: 'Monsters', v: 'level ' + Math.min.apply(null, lvs2) + '–' + Math.max.apply(null, lvs2) }] : []).concat(rev ? [{ k: 'Drops', v: ilist.length + ' items' }] : []),
+        siblings: EVENTS.filter(function (e) { return e[0].charAt(0) === evSel[0].charAt(0); }).map(function (e) { return { label: e[1].replace(/^(Blood Castle|Devil Square) /, (bc ? 'Castle ' : 'Square ')), on: e[0] === evSel[0] ? 'true' : 'false', pick: openEvent(e[0]) }; }),
+        monsters: mlist.map(function (m) { return { name: m.name, level: m.level, n: m.n, open: openMon(m.name, evSel[1]) }; }),
+        hasWin: win.length > 0, win: win,
+        dropCount: rev ? shownE.length + ' items' : '',
+        cats: ecats.length > 1 ? [{ label: 'All · ' + ilist.length, on: !ecat ? 'true' : 'false', pick: function () { self.setState({ evCat: '' }); } }].concat(ecats.map(function (c) {
+          return { label: c + ' · ' + ilist.filter(function (o) { return o.it.c === c; }).length, on: ecat === c ? 'true' : 'false', pick: function () { self.setState({ evCat: c, evAll: true }); } };
+        })) : [],
+        drops: (s.evAll ? shownE : shownE.slice(0, 30)).map(function (o) {
+          var od = odds(o.x.chance);
+          var e = rev[o.x.from][o.x.k];
+          return { n: o.it.n, s: o.it.s, from: o.x.from, one: od.one, pct: od.pct, exc: e && !e.plain ? 'Excellent only' : '', open: open(o.x.k), openMon: openMon(o.x.from, evSel[1]) };
+        }),
+        more: !s.evAll && shownE.length > 30 ? 'Show all ' + shownE.length : '',
+        showAll: function () { self.setState({ evAll: true }); } };
+    }
+
+    // NPCs and quests: the lists, and one page of each.
+    var itemByK = {};
+    all.forEach(function (i) { itemByK[i.k] = i; });
+    var mapKeyOf = {};
+    s.npcs.forEach(function (n) { (n.where || []).forEach(function (w) { mapKeyOf[w.map] = w.map_key; }); });
+    var levelText = function (q) { var l = q.level || {}; return l.min ? String(l.min) + (l.max ? '–' + l.max : '+') : '—'; };
+    out.npcRows = s.npcs.slice().sort(function (a, b) { return a.name > b.name ? 1 : -1; }).map(function (n) {
+      var maps = [];
+      (n.where || []).forEach(function (w) { if (maps.indexOf(w.map) < 0) maps.push(w.map); });
+      return { name: n.name, role: n.role || '', where: maps.join(', '), sells: (n.sells || []).length || '—', quests: (n.quests || []).length || '—', open: openNpc(n.id) };
+    });
+    out.npcCount = s.npcs.length + ' NPCs';
+    out.questRows = s.quests.map(function (q) {
+      var g = npcById[q.giver];
+      var rw0 = q.rewards || {};
+      return { name: q.name, giver: g ? g.name : q.giver, map: q.map || '', level: levelText(q), repeat: q.repeat || '', open: openQuest(q.id), openGiver: openNpc(q.giver),
+        exp: rw0.exp ? rw0.exp.toLocaleString('en') : rw0.first_exp ? rw0.first_exp.toLocaleString('en') : '—',
+        firstExp: rw0.first_exp && rw0.exp ? 'first ' + rw0.first_exp.toLocaleString('en') : '',
+        zen: rw0.zen ? rw0.zen.toLocaleString('en') : '—' };
+    });
+    out.questCount = s.quests.length + ' quests';
+    out.np = {};
+    if (isNpc) {
+      var wh2 = npcSel.where || [];
+      var ix = Math.min(s.npcMapIx || 0, Math.max(0, wh2.length - 1));
+      var here = wh2[ix] || {};
+      out.np = { name: npcSel.name, short: npcSel.name.split(' ')[0] === 'the' ? npcSel.name : npcSel.name.replace(/ (the|The) .*$/, ''), role: npcSel.role || '', about: npcSel.about || '',
+        services: npcSel.services || [], hasModel: hasFigure(npcSel.figure),
+        facts: [{ k: 'In', v: wh2.map(function (w) { return w.map; }).filter(function (m, i, a) { return a.indexOf(m) === i; }).join(', ') || '—' }]
+          .concat((npcSel.sells || []).length ? [{ k: 'Sells', v: npcSel.sells.length + ' items' }] : [])
+          .concat((npcSel.quests || []).length ? [{ k: 'Quests', v: npcSel.quests.length }] : []),
+        maps: wh2.length > 1 ? wh2.map(function (w, i) { return { label: w.map + ' · ' + w.x + ', ' + w.y, on: i === ix ? 'true' : 'false', pick: function () { self.setState({ npcMapIx: i }); } }; }) : [],
+        at: here.map ? here.map + ' · ' + here.x + ', ' + here.y : '',
+        mapName: here.map || '', mapPng: './maps/' + (here.map_key || 'lorencia') + '.png',
+        left: ((here.x + 0.5) / 256 * 100).toFixed(2) + '%', top: ((here.y + 0.5) / 256 * 100).toFixed(2) + '%',
+        hasSells: (npcSel.sells || []).length > 0,
+        sells: (npcSel.sells || []).map(function (x) {
+          var it = itemByK[x.k] || { n: x.k, s: '' };
+          return { n: it.n, s: it.s, icon: itemByK[x.k] ? iconOf(it) : '', plus: x.plus ? '+' + x.plus : '—', price: x.price != null ? x.price.toLocaleString('en') + ' Zen' + (x.pieces > 1 ? ' for ' + x.pieces : '') : '—', open: itemByK[x.k] ? open(x.k) : function () {} };
+        }),
+        hasQuests: (npcSel.quests || []).length > 0,
+        quests: (npcSel.quests || []).map(function (id) {
+          var q = questById[id] || { name: id }, r = q.rewards || {};
+          var paid = [r.exp ? r.exp.toLocaleString('en') + ' exp' : '', r.zen ? r.zen.toLocaleString('en') + ' Zen' : ''].filter(Boolean).join(' · ');
+          return { name: q.name, meta: [q.level ? 'Level ' + levelText(q) : '', paid, q.repeat || ''].filter(Boolean).join(' · '), open: openQuest(id) };
+        }) };
+    }
+    out.qu = {};
+    if (isQuest) {
+      var q = questSel, giver = npcById[q.giver] || { name: q.giver };
+      var reqs = [{ k: 'Level', v: levelText(q) }];
+      if (q.level && q.level.monsters) reqs.push({ k: 'Its monsters', v: 'level ' + q.level.monsters[0] + '–' + q.level.monsters[1] });
+      reqs.push({ k: 'Who', v: q.classes === 'any' ? 'Any class' : (q.classes || 'Any class') });
+      if (q.rank) reqs.push({ k: 'Rank', v: q.rank });
+      if (q.natives && q.natives.length) reqs.push({ k: 'First-clear rewards for', v: q.natives.join(', ') });
+      reqs.push({ k: 'Repeats', v: q.repeat || 'once' });
+      var line = function (r) {
+        var it = r.k ? itemByK[r.k] : null;
+        var meta = [r.count > 1 ? '×' + r.count : '', r.plus ? '+' + r.plus : '', r['class'] ? 'for a ' + r['class'] : '', r.rank ? '(' + r.rank + ')' : '', r.note || ''].filter(Boolean).join(' ');
+        return { k: !!it, plainText: !it, name: it ? it.n : (r.name || ''), meta: meta, open: it ? open(r.k) : function () {} };
+      };
+      var rw = q.rewards || {};
+      var groups = [];
+      var firstLines = (rw.first || []).map(line);
+      if (firstLines.length) groups.push({ title: 'First clear', sub: 'Items paid once, to a hero of this town' + (q.natives_note ? ' · ' + q.natives_note : ''), lines: firstLines });
+      var everyLines = (rw.every || []).map(line);
+      if (everyLines.length) groups.push({ title: 'Every clear', sub: q.repeat && q.repeat !== 'once' ? 'Items, again ' + q.repeat : '', lines: everyLines });
+      var again = q.repeat && q.repeat !== 'once' ? 'each clear, ' + q.repeat : 'once';
+      var pay = [];
+      if (rw.exp || rw.first_exp) pay.push({ k: 'Experience', v: (rw.exp || rw.first_exp).toLocaleString('en'), color: '#B9A2F2',
+        sub: rw.first_exp && rw.exp ? rw.first_exp.toLocaleString('en') + ' the first time · then ' + again : again });
+      if (rw.zen) pay.push({ k: 'Zen', v: rw.zen.toLocaleString('en'), color: '#F2C14E', sub: again });
+      if (rw.firecrackers) pay.push({ k: 'Firecrackers', v: String(rw.firecrackers), color: '#F3E8D4', sub: 'each clear' });
+      var killsLeft = (q.kills || []).slice();
+      var objectives = (q.objectives || []).map(function (t) {
+        var k = killsLeft.filter(function (k) { return t.indexOf(k.monster) >= 0 || t.indexOf(String(k.count)) >= 0 && t.toLowerCase().indexOf('kill') === 0; })[0];
+        if (k && t.toLowerCase().indexOf('kill') === 0) {
+          killsLeft.splice(killsLeft.indexOf(k), 1);
+          return { isKill: true, isText: false, count: k.count, monster: k.monster, map: k.map, level: k.level, open: openMon(k.monster) };
+        }
+        return { isKill: false, isText: true, text: t };
+      });
+      out.qu = { name: q.name, giver: giver.name, map: q.map || '', openGiver: openNpc(q.giver), hasModel: hasFigure(giver.figure),
+        facts: [{ k: 'Level', v: levelText(q) }, { k: 'Repeats', v: q.repeat || 'once' }].concat(q.voice ? [{ k: 'Voiced', v: 'yes' }] : []),
+        reqs: reqs, text: q.text || '',
+        hasPrereq: (q.prereq || []).length > 0, prereqLabel: q.prereq_any ? 'After any one of' : 'After',
+        prereq: (q.prereq || []).map(function (id) { return { name: (questById[id] || { name: id }).name, open: openQuest(id) }; }),
+        hasNext: (q.next || []).length > 0,
+        next: (q.next || []).map(function (id) { return { name: (questById[id] || { name: id }).name, open: openQuest(id) }; }),
+        objectives: objectives, rewards: groups, pay: pay, hasPay: pay.length > 0 };
+    }
+
+    // Icons: one sprite sheet each for skills and talents, a cell 46 x 64.
+    var spr = function (kind, key, scale) {
+      var sh = s.icons && s.icons[kind], at = sh && sh.at[String(key)];
+      if (!at) return '';
+      scale = scale || 1;
+      return 'background-image: url(./icons/' + kind + '.png); background-repeat: no-repeat; background-size: ' + (sh.w * scale) + 'px ' + (sh.h * scale) + 'px; background-position: -' + (at[0] * scale) + 'px -' + (at[1] * scale) + 'px;';
+    };
+    var prettyOf = function (k) { k = String(k).replace(/_/g, ' '); return k.charAt(0).toUpperCase() + k.slice(1); };
+    var scalarOf = function (v) { return v == null ? '' : typeof v === 'object' ? '' : typeof v === 'number' ? v.toLocaleString('en') : String(v); };
+    var sheetSize = function (kind, scale) { var sh = s.icons && s.icons[kind]; return sh ? (sh.w * scale) + 'px ' + (sh.h * scale) + 'px' : 'auto'; };
+    var RCOL = { Common: '#F3E8D4', Rare: '#6FA8FF', Epic: '#C58CF5', Legendary: '#FF9A3C', Ancient: '#4FD6FF' };
+    var CLSN = { DK: 'Dark Knight', DW: 'Dark Wizard', FE: 'Fairy Elf', Elf: 'Fairy Elf', MG: 'Magic Gladiator', BK: 'Blade Knight', SM: 'Soul Master', ME: 'Muse Elf' };
+    var clsList = function (c) { return c === 'any' || !c ? 'Every class' : Array.isArray(c) ? (c.length >= 4 ? 'Every class' : c.map(function (x) { return CLSN[x] || x; }).join(', ')) : String(c); };
+
+    out.moreBrowse = [['runes', 'Runes', RUNES.length], ['skills', 'Skills', SKILLS.length], ['talents', 'Talents', ''], ['mixes', 'Chaos Machine', ((A.mixes && A.mixes.mixes) || []).length], ['elites', 'Elites', ((A.elites && A.elites.elites) || []).length]].map(function (b) {
+      return { label: b[1], n: b[2] || '', on: !detail && s.browse === b[0] ? 'true' : 'false', pick: goBrowse(b[0]) };
+    });
+
+    // Runes.
+    var rr = A.runes && A.runes._rules;
+    out.runeRules = rr ? Object.keys(rr).map(function (k) { return rr[k]; }).filter(function (v) { return typeof v === 'string'; }) : [];
+    var rarities = ['Common', 'Rare', 'Epic', 'Legendary', 'Ancient'];
+    out.runeChips = [{ label: 'All · ' + RUNES.length, on: !s.runeR ? 'true' : 'false', color: '#C9BFAE', pick: function () { self.setState({ runeR: '' }); } }].concat(rarities.map(function (r) {
+      return { label: r + ' · ' + RUNES.filter(function (x) { return x.rarity === r; }).length, on: s.runeR === r ? 'true' : 'false', color: RCOL[r], pick: function () { self.setState({ runeR: r }); } };
+    }));
+    var shownRunes = RUNES.filter(function (r) { return (!s.runeR || r.rarity === s.runeR) && (!q || r.name.toLowerCase().indexOf(q) >= 0 || (r.effect || '').toLowerCase().indexOf(q) >= 0); })
+      .sort(function (a, b) { return rarities.indexOf(a.rarity) - rarities.indexOf(b.rarity) || (a.name > b.name ? 1 : -1); });
+    out.runeRows = shownRunes.map(function (r) { return { name: r.power_name || r.name, color: RCOL[r.rarity] || '#F3E8D4', rarity: r.rarity, dormant: !!r.dormant, effect: r.effect || '', level: r.level || '—', classes: clsList(r.classes), slots: (r.slots || []).join(', '), open: openRune(r.id) }; });
+    out.runeCount = shownRunes.length + ' rune powers';
+    out.ru = {};
+    if (isRune) {
+      var rk = [{ k: 'Level needed', v: runeSel.level }, { k: 'Classes', v: clsList(runeSel.classes) + (runeSel.second_class_only ? ' (second class)' : '') }, { k: 'Fits', v: (runeSel.slots || []).join(', ') }];
+      if (runeSel.chance) rk.push({ k: 'Chance', v: runeSel.chance + '%' });
+      if (runeSel.element) rk.push({ k: 'Element', v: runeSel.element });
+      if (runeSel.fuses_into) rk.push({ k: 'Three fuse into', v: 'one ' + runeSel.fuses_into });
+      if (runeSel.sells_for) rk.push({ k: 'Sells for', v: runeSel.sells_for.toLocaleString('en') + ' Zen' });
+      var drop = (runeSel.sources || []).filter(function (x) { return x.type === 'drop'; })[0];
+      var dcols = drop && drop.odds && drop.odds.length ? Object.keys(drop.odds[0]).filter(function (k) { return k !== 'monster_level'; }) : [];
+      out.ru = { name: runeSel.power_name || runeSel.name, color: RCOL[runeSel.rarity] || '#F3E8D4', rarity: runeSel.rarity, effect: runeSel.effect || '', kv: rk, dormant: !!runeSel.dormant,
+        openRune: open('Jewel22'), hasDrop: dcols.length > 0, dropCols: dcols.map(function (c) { return CLSN[c] || c; }),
+        dropRows: drop ? drop.odds.map(function (o) { return { band: o.monster_level, cells: dcols.map(function (c) { return o[c] ? odds(o[c]).one : '—'; }) }; }) : [],
+        other: (runeSel.sources || []).filter(function (x) { return x.type !== 'drop'; }).map(function (x) {
+          var qq = x.quest ? questById[x.quest] : null;
+          return { type: prettyOf(x.type), link: !!qq, plainName: !qq, name: qq ? qq.name : (x.name || x.event || x.box || ''), open: qq ? openQuest(qq.id) : function () {},
+            note: [x.when, x['class'] ? 'for a ' + x['class'] : '', x.chance ? odds(x.chance).one : '', x.note || ''].filter(Boolean).join(' · ') };
+        }) };
+    }
+
+    // Skills.
+    var skillCls = ['Dark Knight', 'Dark Wizard', 'Fairy Elf', 'Magic Gladiator'];
+    out.skillChips = [{ label: 'Every class', on: !s.skillC ? 'true' : 'false', pick: function () { self.setState({ skillC: '' }); } }].concat(skillCls.map(function (c) {
+      return { label: c, on: s.skillC === c ? 'true' : 'false', pick: function () { self.setState({ skillC: c }); } };
+    }));
+    var shownSkills = SKILLS.filter(function (k) { return (!s.skillC || (k.classes || [k['class']]).indexOf(s.skillC) >= 0) && (!q || k.name.toLowerCase().indexOf(q) >= 0); })
+      .sort(function (a, b) { return (a.level || 0) - (b.level || 0); });
+    var useOf = function (k) { return /primary/i.test(k.slot || '') ? 'Right-click' : /QWER/.test(k.slot || '') ? 'Q W E R' : (k.slot || '').split(' (')[0]; };
+    out.skillRows = shownSkills.map(function (k) { return { name: k.name, cls: (k.classes || [k['class']]).join(', '), level: k.level || '—', mana: k.mana != null ? k.mana : '—', cd: k.cooldown_s ? k.cooldown_s + ' s' : '—', range: k.range_tiles != null ? k.range_tiles : '—', use: useOf(k), iconSm: spr('skills', k.id, 32 / 46), bgSize: sheetSize('skills', 32 / 46), open: openSkill(k.id) }; });
+    out.skillCount = shownSkills.length + ' skills';
+    out.sk = {};
+    if (isSkill) {
+      var k = skillSel, skv = [];
+      skv.push({ k: 'Class', v: (k.classes || [k['class']]).join(', ') + (k.second_class_only ? ' (second class)' : '') });
+      if (k.level) skv.push({ k: 'Level', v: k.level });
+      if (k.mana != null) skv.push({ k: 'Mana', v: k.mana + (k.mana_note ? ' · ' + k.mana_note : '') });
+      skv.push({ k: 'Cooldown', v: k.cooldown_s ? k.cooldown_s + ' s at 0 Agility' + (k.cooldown_rule ? ' · ' + k.cooldown_rule : '') : 'None' });
+      if (k.range_tiles != null) skv.push({ k: 'Range', v: k.range_tiles + ' tiles' });
+      if (k.area) skv.push({ k: 'Area', v: k.area });
+      if (k.damage && k.damage.formula) skv.push({ k: 'Damage', v: k.damage.formula });
+      if (k.element) skv.push({ k: 'Element', v: k.element });
+      if (k.effect) skv.push({ k: 'Effect', v: typeof k.effect === 'string' ? k.effect : JSON.stringify(k.effect) });
+      if (k.weapon) skv.push({ k: 'Weapon', v: k.weapon });
+      skv.push({ k: 'Used with', v: k.slot || '' });
+      var feeds = [];
+      var TC = (B.talents && B.talents.classes) || {};
+      Object.keys(TC).forEach(function (c) { (TC[c].columns || []).forEach(function (col) { if ((col.feeds_skills || []).indexOf(k.name) >= 0) feeds.push((CLSN[c] || c) + ': ' + col.name); }); });
+      out.sk = { name: k.name, cls: (k.classes || [k['class']]).join(', '), icon: spr('skills', k.id, 1), card: k.card || [], kv: skv,
+        hasFrom: (k.learned_from || []).length > 0,
+        from: (k.learned_from || []).map(function (f) { var it = f.item ? itemByKey(f.item) : null; return { link: !!it, plainName: !it, name: it ? it.n : (f.name || f.note || ''), open: it ? open(f.item) : function () {}, note: [f.level ? 'level ' + f.level : '', f.energy ? 'Energy ' + f.energy : '', f.strength ? 'Strength ' + f.strength : '', f.note || ''].filter(Boolean).join(' · ') }; }),
+        hasTalents: feeds.length > 0, talents: feeds };
+    }
+
+    // The talent calculator.
+    out.tal = {};
+    if (isTalents && B.talents) {
+      var TR = B.talents.rules, TCs = B.talents.classes, tc = TCs[s.tcls] ? s.tcls : 'DK';
+      var ppl = (TR.points_per_level || {})[tc] || 5;
+      var total = Math.floor(((s.tlv - 1) * ppl + s.treb * 400 * ppl) / (TR.stat_points_per_talent || 25));
+      var pts = s.tpts[tc] || {};
+      var cols = TCs[tc].columns || [];
+      var tiersOf = function (col) {
+        var by = {};
+        col.nodes.forEach(function (n) { (by[n.tier] = by[n.tier] || []).push(n); });
+        return Object.keys(by).sort().map(function (t) { return by[t]; });
+      };
+      var openUnder = function (p, col, ti) {
+        var tiers = tiersOf(col);
+        var smallOpen = function (i) { if (i === 0) return true; var mj = tiers[i - 1].filter(function (n) { return n.kind === 'major'; })[0]; return !!(mj && p[mj.id]); };
+        var majorOpen = function (i) { return smallOpen(i) && tiers[i].some(function (n) { return n.kind !== 'major' && (p[n.id] || 0) >= n.max; }); };
+        return { small: smallOpen(ti), major: majorOpen(ti) };
+      };
+      var valid = function (p) {
+        return cols.every(function (col) {
+          return tiersOf(col).every(function (tier, ti) {
+            var o = openUnder(p, col, ti);
+            return tier.every(function (n) { return !(p[n.id] > 0) || (n.kind === 'major' ? o.major : o.small); });
+          });
+        });
+      };
+      var spent = Object.keys(pts).reduce(function (a, k2) { return a + (pts[k2] || 0); }, 0);
+      var left = total - spent;
+      var setPts = function (np) { var all2 = Object.assign({}, self.state.tpts); all2[tc] = np; self.setState({ tpts: all2 }); };
+      var picks = [];
+      var nodeView = function (n, col, ti, big) {
+        var o = openUnder(pts, col, ti), isOpen = n.kind === 'major' ? o.major : o.small, have = pts[n.id] || 0;
+        var after = Object.assign({}, pts); after[n.id] = have - 1; if (!after[n.id]) delete after[n.id];
+        if (have) picks.push({ name: n.name + (n.kind === 'major' ? '' : ' ' + have + '/' + n.max), color: n.kind === 'major' ? '#F2D58A' : '#F3E8D4', text: n.kind === 'major' ? (n.per_point || n.at_max || '') : (n.per_point || '') + ' a point' });
+        return { name: n.name, pts: have, max: n.max, tip: n.name + ' — ' + (n.kind === 'major' ? (n.per_point || n.at_max || '') : (n.per_point || '') + ' a point, ' + (n.at_max || '') + ' at ' + n.max) + (isOpen ? '' : ' · Needs: ' + (n.needs || '')),
+          op: isOpen || have ? '1' : '0.45', filter: isOpen || have ? 'none' : 'grayscale(1) brightness(.6)', edge: have ? (n.kind === 'major' ? '#F2C14E' : '#C2362B') : isOpen ? '#6A5426' : '#2A211B',
+          color: have ? '#F2D58A' : isOpen ? '#C9BFAE' : '#6F665A',
+          icon: spr('talents', n.id, 1), iconL: spr('talents', n.id, 52 / 46), bgSizeL: sheetSize('talents', 52 / 46),
+          noAdd: !isOpen || have >= n.max || left <= 0, noSub: !have || !valid(after),
+          add: function () { var np = Object.assign({}, pts); np[n.id] = have + 1; setPts(np); },
+          sub: function () { setPts(after); } };
+      };
+      out.tal = { rule: (TR.in_words || {})[tc] || '', level: s.tlv, reb: s.treb, total: total, left: left,
+        classes: Object.keys(TCs).map(function (c) { return { label: CLSN[c] || c, on: c === tc ? 'true' : 'false', pick: function () { self.setState({ tcls: c }); } }; }),
+        lvLess: function () { self.setState({ tlv: Math.max(1, self.state.tlv - 10 === 0 ? 1 : self.state.tlv - 10) }); },
+        lvMore: function () { self.setState({ tlv: Math.min(400, self.state.tlv === 1 ? 10 : self.state.tlv + 10) }); },
+        rbLess: function () { self.setState({ treb: Math.max(0, self.state.treb - 1) }); },
+        rbMore: function () { self.setState({ treb: self.state.treb + 1 }); },
+        reset: function () { setPts({}); },
+        columns: cols.map(function (col) {
+          return { name: col.name, sub: col.sub || '', tiers: tiersOf(col).map(function (tier, ti) {
+            return { smalls: tier.filter(function (n) { return n.kind !== 'major'; }).map(function (n) { return nodeView(n, col, ti); }),
+              majors: tier.filter(function (n) { return n.kind === 'major'; }).map(function (n) { return nodeView(n, col, ti, true); }) };
+          }) };
+        }) };
+      out.tal.picks = picks; out.tal.noPicks = picks.length === 0;
+      if (left < 0) out.tal.left = left;
+    }
+
+    // The Chaos Machine and the Jeweler.
+    var MIXES = (A.mixes && A.mixes.mixes) || [];
+    out.mixCount = MIXES.length + ' recipes';
+    out.mixCards = MIXES.map(function (m) {
+      var npc = npcById[m.npc];
+      var rate = [];
+      if (m.rate && typeof m.rate === 'object') Object.keys(m.rate).forEach(function (k2) { var v = m.rate[k2]; if (scalarOf(v)) rate.push({ k: prettyOf(k2), v: scalarOf(v) + (typeof v === 'number' ? '%' : '') }); });
+      else if (m.rate != null) rate.push({ k: 'Rate', v: String(m.rate) });
+      var zen = [];
+      if (m.zen && typeof m.zen === 'object') Object.keys(m.zen).forEach(function (k2) { zen.push({ k: 'Zen ' + k2, v: Number(m.zen[k2]).toLocaleString('en') }); });
+      else if (m.zen) zen.push({ k: 'Zen', v: Number(m.zen).toLocaleString('en') });
+      return { name: m.name, npc: npc ? npc.name : (m.npc || ''), openNpc: npc ? openNpc(npc.id) : function () {},
+        needs: (m.needs || []).map(function (n) { var it = n.k ? itemByKey(n.k) : null; return { link: !!it, plainName: !it, name: it ? it.n : n.name, open: it ? open(n.k) : function () {}, meta: [n.count != null ? '×' + n.count : '', n.plus ? '+' + n.plus : '', n.note || ''].filter(Boolean).join(' · ') }; }),
+        rate: rate, zen: zen,
+        result: (m.result || []).map(function (r) { var it = r.k ? itemByKey(r.k) : null; return { link: !!it, name: it ? it.n : '', open: it ? open(r.k) : function () {}, note: r.note || '' }; }),
+        fail: m.on_fail ? 'On a failure: ' + m.on_fail : '', notes: m.notes || [] };
+    });
+
+    // Elites.
+    var ELS = (A.elites && A.elites.elites) || [];
+    out.eliteCount = ELS.length + ' maps';
+    out.eliteRows = ELS.map(function (e) { return { map: e.map, count: e.count, life: e.life_x, dmg: e.damage_x, def: e.defense_x, breeds: (e.breeds || []).map(function (b) { return { name: b.name, level: b.level, open: openMon('Elite ' + b.name, e.map) }; }) }; });
+    var e0 = ELS[0] || {};
+    out.eliteLoot = e0.loot || [];
+    out.eliteRules = [e0.alert ? 'Shown by a ' + e0.alert : '', e0.immune ? 'Shrugs off ' + e0.immune.join(', ') : '', e0.level_plus ? e0.level_plus + ' levels above its breed' : '', e0.attack_speed ? 'Attack speed ' + e0.attack_speed : '', e0.move_speed ? 'Moves ' + e0.move_speed : '', e0.experience_x ? '×' + e0.experience_x + ' experience' : '', e0.zen_x ? '×' + e0.zen_x + ' Zen' : '', e0.respawn ? 'Returns ' + e0.respawn : ''].filter(Boolean);
+
+    // Which model the viewer should hold: read back in componentDidUpdate.
+    if (isGold) { var gdm = monByName['Golden Dragon']; this._want = gdm ? 'm:' + gdm.k : ''; }
+    else if (isNpc) this._want = hasFigure(npcSel.figure) ? 'n:' + npcSel.figure : '';
+    else if (isQuest) { var gv = npcById[questSel.giver]; this._want = gv && hasFigure(gv.figure) ? 'n:' + gv.figure : ''; }
+    else if (isItem) this._want = 'i:' + sel.k;
+    else if (isMon) { var mm = monByName[s.mon] || monByName[baseOf(s.mon)]; this._want = mm ? 'm:' + mm.k + (baseOf(s.mon) ? '|elite' : '') : ''; }
+    else this._want = '';
+    if (!this._setCanvas) this._setCanvas = function (el) { self.setCanvasEl(el); };
+    return Object.assign(out, {
+      setCanvas: this._setCanvas, model3dLoading: !!s.model3dLoading && (isItem || isMon),
+      total: all.length || 401, q: s.q, loading: s.loading, srcLoading: (isItem || isMon || isEvent || isEventList) && s.srcLoading, isList: !detail, isItem: isItem, isMon: isMon, isNpc: isNpc, isQuest: isQuest, isEvent: isEvent, crumbs: crumbs,
+      isItemList: !detail && !isMonList && !isNpcList && !isQuestList && !isEventList && !isRuneList && !isSkillList && !isTalents && !isMixList && !isEliteList,
+      isMonList: isMonList, isNpcList: isNpcList, isQuestList: isQuestList, isEventList: isEventList,
+      isGold: isGold, isRune: isRune, isSkill: isSkill, isRuneList: isRuneList, isSkillList: isSkillList, isTalents: isTalents, isMixList: isMixList, isEliteList: isEliteList,
+      goRunes: goBrowse('runes'), goTalents: goBrowse('talents'),
+      browseEvents: isEventList ? 'true' : 'false', goEvents: toEvents,
+      monTotal: s.monsters.length || '', npcTotal: s.npcs.length || '', questTotal: s.quests.length || '',
+      browseItems: !detail && s.browse === 'items' ? 'true' : 'false', browseMons: isMonList ? 'true' : 'false',
+      browseNpcs: isNpcList ? 'true' : 'false', browseQuests: isQuestList ? 'true' : 'false',
+      goItems: toList('All', ''), goMons: toMons(''), goNpcs: toNpcs, goQuests: toQuests,
+      onQ: function (e) { self.setState({ q: e.target.value, page: 1, view: 'list' }); },
+      cats: cats, classes: ['DK', 'DW', 'FE', 'MG'].map(function (c) { return { label: c, title: CLS[c], on: s.cls === c ? 'true' : 'false', pick: function () { self.setState({ cls: s.cls === c ? '' : c, page: 1 }); } }; }),
+      srcChips: srcChips, cols: cols, rows: rows, noRows: !s.loading && list.length === 0,
+      clear: function () { self.setState({ q: '', cls: '', srcf: '', cat: 'All', sub: '', page: 1 }); },
+      title: s.sub || (s.cat === 'All' ? 'All items' : s.cat),
+      rangeText: list.length ? from + '–' + to + ' of ' + list.length + ' items' : '',
+      page: page, pages: pages, noPrev: page <= 1, noNext: page >= pages,
+      prev: function () { self.setState({ page: page - 1 }); },
+      next: function () { self.setState({ page: page + 1 }); },
+      less: function () { self.setState({ plus: Math.max(0, self.state.plus - 1) }); },
+      more: function () { self.setState({ plus: self.state.plus + 1 }); },
+      excOn: s.exc ? 'true' : 'false', excLabel: s.exc ? 'On' : 'Off', togExc: function () { self.setState({ exc: !self.state.exc }); },
+      luckOn: s.luck ? 'true' : 'false', luckLabel: s.luck ? 'On' : 'Off', togLuck: function () { self.setState({ luck: !self.state.luck }); },
+      optText: s.opt ? '+' + s.opt * 4 : 'None', noOptLess: s.opt <= 0, noOptMore: s.opt >= 4,
+      optLess: function () { self.setState({ opt: Math.max(0, self.state.opt - 1) }); },
+      optMore: function () { self.setState({ opt: Math.min(4, self.state.opt + 1) }); },
+      showAllDrops: function () { self.setState({ allDrops: true }); },
+      noComments: isItem && out.comments.length === 0, draft: s.draft,
+      onDraft: function (e) { self.setState({ draft: e.target.value }); },
+      noPost: !s.draft.trim(),
+      post: function () {
+        var t = self.state.draft.trim();
+        if (!t || !sel) return;
+        var n = Object.assign({}, self.state.notes);
+        n[sel.k] = [{ id: Date.now(), who: '[YOUR ACCOUNT NAME]', about: self.state.about, when: 'just now', text: t, votes: 0, mine: false }].concat(n[sel.k] || []);
+        self.setState({ notes: n, draft: '', cfilter: 'all' });
+      }
+    });
+  }
+}
+</script>
+</body>
+</html>

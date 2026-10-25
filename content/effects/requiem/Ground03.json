@@ -1,0 +1,27 @@
+{
+  "item": "Ground03",
+  "mu_name": "Requiem's burning ground, the same ring 2-2.7 m out, at the point",
+  "mu_name_from": "ZzzOpenData.cpp:4541-4558: MODEL_SUMMONER_SUMMON_NEIL_GROUND3, Data/Skill/nell_nifegrund03.bmd out of Data/Skill. MuMain (Season 6).",
+  "kind": "requiem",
+  "why_this_one": "Laid past Neil's key 10 (book +11 (subtype >= 2); MoveHandlers.cpp:1281-1297), with SOUND_SUMMON_REQUIEM. LifeTime 50, Alpha 0 (EffectRegistry.cpp:62-65); Alpha +0.3 a frame, -0.05 a frame over the last 20 (EffectBehaviors.cpp:106-111). Both meshes added at its Alpha, mesh 1's U scrolled by -WorldTime x 0.001 (ZzzObject.cpp:1806-1810). See Neil01.json and game/fx/requiem.",
+  "mesh": "Ground03.obj",
+  "mesh_from": "muextract export-obj on Data/Skill/nell_nifegrund03.bmd, from MuMain: one key, 176 triangles.",
+  "parts": [
+    {
+      "group": "test2",
+      "sheet": "test2.png",
+      "blend": "additive",
+      "note": "Data/Skill/test2.OZJ, 128 by 32: mesh 0, added."
+    },
+    {
+      "group": "bossrocklight_R",
+      "sheet": "bossrocklight_R.png",
+      "blend": "additive",
+      "note": "Data/Skill/bossrocklight_R.OZJ, 128 square: the flame walls, mesh 1, added, U streaming (the sampler wraps)."
+    }
+  ],
+  "scale": 1.0,
+  "scale_from": "`.scale = 1.0f`.",
+  "frames": 50,
+  "frames_from": "`.lifeTime = 50.f`."
+}

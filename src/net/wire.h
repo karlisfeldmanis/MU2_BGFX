@@ -169,11 +169,25 @@ namespace mu::net {
 // 48: each quest's life in a character's bytes (kKeptLayout 14, QuestProgress::life): a reborn
 //     hero's first hand-in pays the first clear's experience again (2026-10-22), so a client on
 //     47 is refused instead of reading the record one short.
-// 49: the Dark Lord, class 4 (docs/plans/dark-lord.md): his Command, the fifth stat, in Spend's
-//     a 4 and in a character's bytes (kKeptLayout 15), and each Seat's rebirths (a reborn one opens
-//     the Magic Gladiator and the Dark Lord to his account), so a client on 48 is refused instead of
-//     reading the record one short.
-constexpr uint32_t kVersion = 49;
+// 49: the vault eighteen across (sim/vault.h, kKeptLayout 15, 2026-10-24): 270 cells in a
+//     character's bytes and in every vault cell a command names, so a client on 48 is refused
+//     instead of reading the vault 150 cells short.
+// 50: the market's ecommerce redesign (2026-10-24): a Broker ask's query carries Luck, Socket and
+//     a piece's price from and to, so a client on 49 sends an ask the server reads short.
+// 51: Fire Slash and Power Slash, the Magic Gladiator's 41st and 42nd skills (sim::kSkills 42,
+//     kKeptLayout 16, 2026-10-24): two more cools in a character's bytes and rules a 50 client
+//     does not know.
+// 52: Swell Life, the knight's 43rd skill, off the Orb of Greater Fortitude (sim::kSkills 43,
+//     kKeptLayout 17, 2026-10-25): a cool more in a character's bytes and a rule a 51 client
+//     does not know.
+// 53: Kanturu's two quests, Kantur's Gate and The Ruins of Kantur (sim::kQuests 30, kKeptLayout 18,
+//     2026-10-25): two more quests in a character's bytes and rules a 52 client does not know.
+// 54: the Dark Lord, class 4 (docs/plans/dark-lord.md; branch darklord merged 2026-10-25): his
+//     Command, the fifth stat, in Spend's a 4 and in a character's bytes, his seven skills' cools
+//     (sim::kSkills 50, kKeptLayout 19), and each Seat's rebirths (a reborn one opens the Magic
+//     Gladiator and the Dark Lord to his account), so a client on 53 is refused instead of
+//     reading the record short.
+constexpr uint32_t kVersion = 54;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box,
 // by its name, so the game talks to mu-classic.com as the launcher does, not to a bare address.
 constexpr const char* kDefaultHost = "mu-classic.com";
@@ -187,9 +201,14 @@ constexpr const char* kDefaultHost = "mu-classic.com";
 // their Life (2026-10-21, sim::timedPet; the store's renumber makes each old one one); 12 28
 // quests, the Keeper's second, Kantur's Captain (2026-10-21), where 8-11 carry 27; 13 his rebirths
 // (sim/rebirth.h, 2026-10-22), where 3-12 carry none; 14 each quest's life, the rebirth of its last
-// hand-in (QuestProgress::life, 2026-10-22), where 3-13 carry none and read as the first life;
-// 15 the Dark Lord's Command, last (docs/plans/dark-lord.md), where 3-14 carry none and read as 0.
-constexpr int kKeptLayout = 15;
+// hand-in (QuestProgress::life, 2026-10-22), where 3-13 carry none and read as the first life; 15 the vault eighteen across, 270 cells
+// (2026-10-24), where 3-14 carry MU's 120 at eight across and read each into its own column and
+// row (sim::widenedCell); 16 a 41st and a 42nd skill's cools, Fire Slash and Power Slash
+// (2026-10-24), where 9-15 carry 40; 17 a 43rd, Swell Life's (2026-10-25), where 16 carries 42;
+// 18 30 quests, Kanturu's two (2026-10-25), where 12-17 carry 28; 19 the Dark Lord's seven
+// skills' cools (kSkills 50), where 17-18 carry 43, and his Command, last (docs/plans/dark-lord.md),
+// where 3-18 carry none and read as 0.
+constexpr int kKeptLayout = 19;
 // MU's GameServer listened on 55901; ours is its own.
 constexpr int kDefaultPort = 44406;
 // The longest frame a client accepts: a Welcome with its snapshot, about half a MB for a town of

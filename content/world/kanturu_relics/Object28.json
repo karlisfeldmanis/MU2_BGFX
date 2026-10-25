@@ -1,0 +1,525 @@
+{
+  "item": "Object28",
+  "mu_name": "Object28",
+  "mu_name_from": "kanturu_relics's object slot: type N is Object{N+1}.bmd, from Data/Object39.",
+  "world": "kanturu_relics",
+  "object_type": 27,
+  "placements": 17,
+  "profile": "world",
+  "sheets": {
+    "song_k22machine01": "kl_song_k22machine01.png",
+    "song_k22machine03": "kl_song_k22machine03.png",
+    "handd2_R": "kl_handd2_r.png",
+    "song_k22machine02": "kl_song_k22machine02.png",
+    "song_k21magma02": "kl_song_k21magma02.png"
+  },
+  "sheet_from": "Data/Object39/, decoded under the kl_ prefix by `mu new`.",
+  "sheet_materials": {
+    "song_k22machine01": "plate_steel",
+    "song_k22machine03": "plate_steel",
+    "handd2_R": "lamplight",
+    "song_k22machine02": "plate_steel",
+    "song_k21magma02": "lamplight"
+  },
+  "material_note": "song_k22machine01: grey steel panels with teal glass: plate_steel; song_k22machine03: grey steel panels with a teal strip: plate_steel; handd2_R: a green glow, MU's bright sheet: lamplight; song_k22machine02: grey steel panels with teal glass: plate_steel; song_k21magma02: molten rock, streaming: lamplight.",
+  "why_this_one": "A 9 m refinery machine: steel panels with teal glass, a green glow and a streaming magma channel. 17 placed. Batch 4 of the Relics (the user, 2026-10-23: \"first we eed to finish actual map then we go to monsters\", \"do next\"). docs/worlds/kanturu-port.md Part B 8.1.",
+  "additive": [
+    "handd2_R"
+  ],
+  "additive_from": "handd2_R is an _R sheet, drawn RENDER_BRIGHT, added (TextureScript.cpp:16-58); Render_Kanturu2nd_ObjectMesh type 27 hides mesh 2 and draws it RENDER_TEXTURE|RENDER_BRIGHT (GM_Kanturu_2nd.cpp:593-601).",
+  "glow": {
+    "song_k21magma02": {
+      "scrolls_per_second": 0.5,
+      "stream": true
+    }
+  },
+  "glow_from": "Render_Kanturu2nd_ObjectMesh type 27 (GM_Kanturu_2nd.cpp:593-601): mesh 4 (song_k21magma02) drawn as StreamMesh, its V at -(WorldTime % 2000) * 0.0005, a sheet every 2 s, so +0.5 here as Object15. Drawn lit, not added.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "lamplight",
+      "triangles": 12,
+      "area": 60299.1,
+      "along": [
+        -26.6,
+        12.6
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        0.998,
+        1.0
+      ],
+      "bake_uv": [
+        0.013,
+        0.013,
+        0.6,
+        0.601
+      ]
+    },
+    {
+      "island": 1,
+      "material": "lamplight",
+      "triangles": 12,
+      "area": 60299.1,
+      "along": [
+        -27.0,
+        12.2
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        0.998,
+        1.0
+      ],
+      "bake_uv": [
+        0.206,
+        0.013,
+        0.495,
+        0.406
+      ]
+    },
+    {
+      "island": 2,
+      "material": "lamplight",
+      "triangles": 4,
+      "area": 16662.7,
+      "along": [
+        55.1,
+        91.9
+      ],
+      "mu_uv": [
+        -0.0,
+        0.111,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.013,
+        0.365,
+        0.213,
+        0.543
+      ]
+    },
+    {
+      "island": 3,
+      "material": "lamplight",
+      "triangles": 36,
+      "area": 14211.2,
+      "along": [
+        55.5,
+        100.1
+      ],
+      "mu_uv": [
+        -0.673,
+        -0.635,
+        0.489,
+        1.673
+      ],
+      "bake_uv": [
+        0.212,
+        0.288,
+        0.979,
+        0.825
+      ]
+    },
+    {
+      "island": 4,
+      "material": "lamplight",
+      "triangles": 24,
+      "area": 14278.4,
+      "along": [
+        49.9,
+        72.1
+      ],
+      "mu_uv": [
+        -0.701,
+        -0.788,
+        0.352,
+        1.793
+      ],
+      "bake_uv": [
+        0.153,
+        0.111,
+        0.658,
+        0.787
+      ]
+    },
+    {
+      "island": 5,
+      "material": "plate_steel",
+      "triangles": 8,
+      "area": 45700.4,
+      "along": [
+        -29.3,
+        18.1
+      ],
+      "mu_uv": [
+        0.003,
+        0.096,
+        0.729,
+        0.819
+      ],
+      "bake_uv": [
+        0.518,
+        0.114,
+        0.982,
+        0.728
+      ]
+    },
+    {
+      "island": 6,
+      "material": "plate_steel",
+      "triangles": 15,
+      "area": 46208.7,
+      "along": [
+        -28.7,
+        18.7
+      ],
+      "mu_uv": [
+        0.003,
+        -0.001,
+        0.802,
+        0.995
+      ],
+      "bake_uv": [
+        0.118,
+        0.014,
+        0.986,
+        0.98
+      ]
+    },
+    {
+      "island": 7,
+      "material": "plate_steel",
+      "triangles": 30,
+      "area": 73772.9,
+      "along": [
+        -64.9,
+        51.5
+      ],
+      "mu_uv": [
+        0.004,
+        0.006,
+        1.0,
+        0.996
+      ],
+      "bake_uv": [
+        0.013,
+        0.013,
+        0.986,
+        0.987
+      ]
+    },
+    {
+      "island": 8,
+      "material": "plate_steel",
+      "triangles": 12,
+      "area": 31886.1,
+      "along": [
+        -37.5,
+        20.5
+      ],
+      "mu_uv": [
+        0.579,
+        0.019,
+        0.647,
+        0.415
+      ],
+      "bake_uv": [
+        0.077,
+        0.013,
+        0.909,
+        0.909
+      ]
+    },
+    {
+      "island": 9,
+      "material": "plate_steel",
+      "triangles": 12,
+      "area": 31886.1,
+      "along": [
+        -37.8,
+        20.2
+      ],
+      "mu_uv": [
+        0.579,
+        0.019,
+        0.647,
+        0.415
+      ],
+      "bake_uv": [
+        0.014,
+        0.18,
+        0.916,
+        0.944
+      ]
+    },
+    {
+      "island": 10,
+      "material": "plate_steel",
+      "triangles": 30,
+      "area": 73773.0,
+      "along": [
+        -65.2,
+        51.2
+      ],
+      "mu_uv": [
+        0.004,
+        0.006,
+        1.0,
+        0.996
+      ],
+      "bake_uv": [
+        0.013,
+        0.099,
+        0.982,
+        0.986
+      ]
+    },
+    {
+      "island": 11,
+      "material": "plate_steel",
+      "triangles": 8,
+      "area": 45700.6,
+      "along": [
+        -29.6,
+        17.8
+      ],
+      "mu_uv": [
+        0.003,
+        0.096,
+        0.729,
+        0.819
+      ],
+      "bake_uv": [
+        0.301,
+        0.167,
+        0.98,
+        0.756
+      ]
+    },
+    {
+      "island": 12,
+      "material": "plate_steel",
+      "triangles": 15,
+      "area": 46208.8,
+      "along": [
+        -29.0,
+        18.4
+      ],
+      "mu_uv": [
+        0.003,
+        -0.001,
+        0.802,
+        0.995
+      ],
+      "bake_uv": [
+        0.054,
+        0.177,
+        0.972,
+        0.94
+      ]
+    },
+    {
+      "island": 13,
+      "material": "plate_steel",
+      "triangles": 16,
+      "area": 19720.7,
+      "along": [
+        -51.0,
+        33.3
+      ],
+      "mu_uv": [
+        0.158,
+        0.01,
+        1.002,
+        0.358
+      ],
+      "bake_uv": [
+        0.516,
+        0.013,
+        0.874,
+        0.923
+      ]
+    },
+    {
+      "island": 14,
+      "material": "plate_steel",
+      "triangles": 16,
+      "area": 33871.1,
+      "along": [
+        -62.8,
+        45.2
+      ],
+      "mu_uv": [
+        0.311,
+        0.01,
+        1.002,
+        0.36
+      ],
+      "bake_uv": [
+        0.161,
+        0.013,
+        0.926,
+        0.825
+      ]
+    },
+    {
+      "island": 15,
+      "material": "plate_steel",
+      "triangles": 16,
+      "area": 19720.7,
+      "along": [
+        -50.6,
+        33.7
+      ],
+      "mu_uv": [
+        0.158,
+        0.01,
+        1.002,
+        0.358
+      ],
+      "bake_uv": [
+        0.126,
+        0.503,
+        0.906,
+        0.93
+      ]
+    },
+    {
+      "island": 16,
+      "material": "plate_steel",
+      "triangles": 16,
+      "area": 33871.1,
+      "along": [
+        -62.5,
+        45.5
+      ],
+      "mu_uv": [
+        0.311,
+        0.01,
+        1.002,
+        0.36
+      ],
+      "bake_uv": [
+        0.055,
+        0.139,
+        0.867,
+        0.937
+      ]
+    },
+    {
+      "island": 17,
+      "material": "plate_steel",
+      "triangles": 16,
+      "area": 104748.8,
+      "along": [
+        -31.7,
+        95.2
+      ],
+      "mu_uv": [
+        0.034,
+        0.019,
+        0.548,
+        0.995
+      ],
+      "bake_uv": [
+        0.013,
+        0.013,
+        0.979,
+        0.744
+      ]
+    },
+    {
+      "island": 18,
+      "material": "plate_steel",
+      "triangles": 22,
+      "area": 83683.6,
+      "along": [
+        -52.9,
+        -31.3
+      ],
+      "mu_uv": [
+        0.005,
+        0.071,
+        0.966,
+        0.996
+      ],
+      "bake_uv": [
+        0.013,
+        0.084,
+        0.98,
+        0.968
+      ]
+    },
+    {
+      "island": 19,
+      "material": "plate_steel",
+      "triangles": 22,
+      "area": 83683.6,
+      "along": [
+        22.1,
+        43.7
+      ],
+      "mu_uv": [
+        0.005,
+        0.071,
+        0.966,
+        0.996
+      ],
+      "bake_uv": [
+        0.053,
+        0.052,
+        0.984,
+        0.982
+      ]
+    },
+    {
+      "island": 20,
+      "material": "plate_steel",
+      "triangles": 16,
+      "area": 33209.8,
+      "along": [
+        -100.2,
+        85.4
+      ],
+      "mu_uv": [
+        0.416,
+        0.008,
+        0.741,
+        0.488
+      ],
+      "bake_uv": [
+        0.162,
+        0.013,
+        0.864,
+        0.698
+      ]
+    },
+    {
+      "island": 21,
+      "material": "plate_steel",
+      "triangles": 16,
+      "area": 33209.8,
+      "along": [
+        -100.5,
+        85.0
+      ],
+      "mu_uv": [
+        0.416,
+        0.008,
+        0.741,
+        0.488
+      ],
+      "bake_uv": [
+        0.014,
+        0.013,
+        0.818,
+        0.871
+      ]
+    }
+  ],
+  "play_speed": 0.16,
+  "play_speed_from": "No Move code for its type, so every object's flat Velocity 0.16 (as the Ruins' Object45 note). 10 of its 14 bones (the machine's arms and plates) move over 23 keys (Object28.rig.json, MuExtract export-rig --actions=all of MuMain's Object39; vertices as the .obj) (the user, 2026-10-23: \"does those boxes has to be static? no aniamtion there?\", \"blue cilynders\")."
+}

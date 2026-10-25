@@ -1,0 +1,933 @@
+{
+  "item": "Kentauros01",
+  "mu_name": "Kentauros",
+  "mu_name_from": "OpenMU VersionSeasonSix names number 355 'Kentauros' (openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/KanturuRuins.cs:434); MuMain's MONSTER_KENTAUROS (MuMain/src/source/World/GameMaps/GM_Kanturu_1st.cpp:498).",
+  "world": "kanturu",
+  "object_type": 355,
+  "monster": {
+    "model_index": 111,
+    "scale": 1.1
+  },
+  "monster_from": "MuMain/src/source/World/GameMaps/GM_Kanturu_1st.cpp:498:\n\ncase MONSTER_KENTAUROS:\n    {\n        OpenMonsterModel(MONSTER_MODEL_KENTAUROS);\n        pCharacter = CreateCharacter(Key, MODEL_KENTAUROS, PosX, PosY);\n        pCharacter->Object.Scale = 1.1f;\n        pCharacter->Weapon[0].Type = -1;\n        pCharacter->Weapon[1].Type = -1;\n        BoneManager::RegisterBone(pCharacter, L\"KENTAUROS_BIP_23\", 27);\n        BoneManager::RegisterBone(pCharacter, L\"KENTAUROS_BIP_24\", 28);\n        BoneManager::RegisterBone(pCharacter, L\"KENTAUROS_BIP_25\", 29);\n        BoneManager::RegisterBone(pCharacter, L\"KENTAUROS_BIP_26\", 30);\n        BoneManager::RegisterBone(pCharacter, L\"KENTAUROS_BIP_18\", 34);\n        BoneManager::RegisterBone(pCharacter, L\"KENTAUROS_BIP_19\", 35);\n        BoneManager::RegisterBone(pCharacter, L\"KENTAUROS_BIP_20\", 36);\n        BoneManager::RegisterBone(pCharacter, L\"KENTAUROS_BIP_21\", 37);\n        BoneManager::RegisterBone(pCharacter, L\"KENTAUROS_BIP_TAIL\", 81);\n        BoneManager::RegisterBone(pCharacter, L\"KENTAUROS_BIP_TAIL_1\", 82);\n        BoneManager::RegisterBone(pCharacter, L\"KENTAUROS_BIP_TAIL_2\", 83);\n        BoneManager::RegisterBone(pCharacter, L\"KENTAUROS_BIP_SPAIN_1\", 4);\n        BoneManager::RegisterBone(pCharacter, L\"KENTAUROS_BIP_SPAIN_2\", 5);\n        BoneManager::RegisterBone(pCharacter, L\"KENTAUROS_BIP_SPAIN_3\", 6);\n    }\n    break;",
+  "profile": "monster",
+  "sheets": {
+    "cantas_04": "kentauros_cantas_04.png",
+    "cantas": "kentauros_cantas.png",
+    "cantas_01": "kentauros_cantas_01.png",
+    "cantas_02": "kentauros_cantas_02.png"
+  },
+  "sheet_materials": {
+    "cantas_04": "blade_steel",
+    "cantas": "lamplight",
+    "cantas_01": "plate_steel",
+    "cantas_02": "painted_steel"
+  },
+  "combat": {
+    "level": 150,
+    "health": 123200,
+    "minimum_damage": 1450,
+    "maximum_damage": 1526,
+    "defense": 666,
+    "move_range": 3,
+    "attack_range": 5,
+    "view_range": 7,
+    "move_delay": 500,
+    "attack_delay": 1500,
+    "attack_rate": 2005,
+    "defense_rate": 675,
+    "attack_skill": null,
+    "note": "OpenMU VersionSeasonSix (KanturuRuins.cs:434): level 93, 38500 life, 470-505, 370, 645/220. Raised past Aida (decision 3): two above the Blade Hunter, its numbers the Splinter Wolf's times OpenMU's ratio between the two (life 2.41, damage 1.52/1.49, defense 1.61); ranges and speeds as MU but its reach: attack range 5, as the Iron Rider's and our archers', for the arrows MU looses (OpenMU 1; the user, 2026-10-23: \"if its a range monsters it has to be range monster\"). Ours (2026-10-23). Retuned 2026-10-25 for geared level-400 heroes (the user: a step harder than Aida, a steady climb from the camp): life 103,500 (Wolf) to 138,000 (Genocider), damage 1,250 to 1,680, defence 620 to 700, levels and rates kept -- about 1.3x Aida's typical time to kill on average, measured with the best pre-Kanturu kits (a scratch skill_sweep at each nest). The defence MU's scale gave (780 to 1,747) left melee and bows at the damage floor."
+  },
+  "why_this_one": "The Ruins' fifth breed: 13 OpenMU spots in the north (x 72-181, y 15-71), past the Blade Hunters; the second archer, its multishot ranged as the port's decision 9 asked (docs/worlds/kanturu-port.md 4.1, 4.4).",
+  "mu_checklist": [
+    {
+      "at": "MuMain/src/source/World/GameMaps/GM_Kanturu_1st.cpp:498",
+      "in": "M37Kanturu1st::CreateKanturu1stMonster",
+      "kind": "body",
+      "lines": 23,
+      "actions": [],
+      "calls": [
+        "CreateCharacter",
+        "RegisterBone"
+      ],
+      "state": "done",
+      "note": "the recipe's monster block (mu new monster)"
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GM_Kanturu_1st.cpp:1373",
+      "in": "M37Kanturu1st::RenderKanturu1stMonsterVisual",
+      "kind": "effect",
+      "lines": 50,
+      "actions": [
+        "MONSTER01_WALK",
+        "MONSTER01_ATTACK1",
+        "MONSTER01_ATTACK2",
+        "MONSTER01_DIE",
+        "MONSTER01_RUN"
+      ],
+      "calls": [
+        "PlayBuffer",
+        "SOUND_KANTURU_1ST_KENTA_MOVE1",
+        "SOUND_KANTURU_1ST_KENTA_ATTACK1",
+        "SOUND_KANTURU_1ST_KENTA_DIE",
+        "CreateParticle",
+        "BITMAP_SMOKE"
+      ],
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GM_Kanturu_1st.cpp:743",
+      "in": "M37Kanturu1st::AttackEffectKanturu1stMonster",
+      "kind": "effect",
+      "lines": 54,
+      "actions": [
+        "MONSTER01_ATTACK1",
+        "MONSTER01_ATTACK2"
+      ],
+      "calls": [
+        "CreateParticle",
+        "BITMAP_SMOKE",
+        "CreateEffect"
+      ],
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:399",
+      "in": "LoadWaveFile",
+      "kind": "sound",
+      "lines": 1,
+      "actions": [],
+      "calls": [
+        "SOUND_KANTURU_1ST_KENTA_MOVE1"
+      ],
+      "file": "Data/Sound/w37/kenta_idle-01.wav",
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:401",
+      "in": "LoadWaveFile",
+      "kind": "sound",
+      "lines": 1,
+      "actions": [],
+      "calls": [
+        "SOUND_KANTURU_1ST_KENTA_ATTACK1"
+      ],
+      "file": "Data/Sound/w37/kenta_attack-01.wav",
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:403",
+      "in": "LoadWaveFile",
+      "kind": "sound",
+      "lines": 1,
+      "actions": [],
+      "calls": [
+        "SOUND_KANTURU_1ST_KENTA_DIE"
+      ],
+      "file": "Data/Sound/w37/kenta_death.wav",
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GM_Kanturu_1st.cpp:1015",
+      "in": "M37Kanturu1st::RenderKanturu1stMonsterObjectMesh",
+      "kind": "look",
+      "lines": 10,
+      "actions": [],
+      "calls": [
+        "RenderBody",
+        "RENDER_TEXTURE",
+        "BlendMeshTexCoordU",
+        "BlendMeshTexCoordV",
+        "RenderMesh",
+        "RENDER_BRIGHT",
+        "RENDER_CHROME2"
+      ],
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/Engine/Object/ZzzOpenData.cpp:2744",
+      "in": "OpenMonsterModel",
+      "kind": "animation",
+      "lines": 8,
+      "actions": [
+        "MONSTER01_STOP1",
+        "MONSTER01_STOP2",
+        "MONSTER01_WALK",
+        "MONSTER01_ATTACK1",
+        "MONSTER01_ATTACK2",
+        "MONSTER01_DIE"
+      ],
+      "calls": [],
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GM_Kanturu_1st.cpp:604",
+      "in": "M37Kanturu1st::SetCurrentActionKanturu1stMonster",
+      "kind": "animation",
+      "lines": 11,
+      "actions": [
+        "MONSTER01_ATTACK2",
+        "MONSTER01_ATTACK1"
+      ],
+      "calls": [
+        "SetAction"
+      ],
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/Engine/Object/ZzzOpenData.cpp:2434",
+      "in": "GetMonsterModelName",
+      "kind": "other",
+      "lines": 1,
+      "actions": [],
+      "calls": [],
+      "state": "skip",
+      "note": "MU's name for the model, for its tools; nothing to carry"
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GM_Kanturu_1st.cpp:881",
+      "in": "M37Kanturu1st::MoveKanturu1stMonsterVisual",
+      "kind": "other",
+      "lines": 2,
+      "actions": [],
+      "calls": [],
+      "state": "todo",
+      "note": ""
+    }
+  ],
+  "rules": {
+    "drops": {
+      "money_rate": 30,
+      "max_plus": 3,
+      "regen": 10
+    },
+    "resist": {
+      "ice": 24,
+      "poison": 24
+    },
+    "note": "Resistance: OpenMU S6 Maps/KanturuRuins.cs:434-460 writes 24/255 to all four, read as WebZen raw values as Aida's are; fire and lightning are not carried. Drops: Aida's (30 and 3) until Kanturu's are settled (docs/worlds/kanturu-port.md decision 8); RegTime 10."
+  },
+  "glow": {
+    "cantas": {
+      "over": true,
+      "pulse": [
+        0.5,
+        0.5
+      ],
+      "pulse_rate": "half",
+      "note": "RenderKanturu1stMonsterObjectMesh MODEL_KENTAUROS (GM_Kanturu_1st.cpp:1015-1022): mesh 1 (cantas, its blue plates and eye) again RENDER_TEXTURE | RENDER_BRIGHT at fLumi = (sin(WorldTime * 0.002) + 1) * 0.5, 0 to 1."
+    }
+  },
+  "chrome": [
+    {
+      "slot": "cantas",
+      "image": "chrome02",
+      "uv": "chrome",
+      "tint": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "where": "over",
+      "note": "And mesh 1 a third time RENDER_CHROME2 | RENDER_BRIGHT (GM_Kanturu_1st.cpp:1021): BITMAP_CHROME2, Effect/Chrome02.jpg (ZzzOpenData.cpp:5299), at the chrome's view-made UVs."
+    }
+  ],
+  "show": {
+    "tags": [
+      "kentauros"
+    ],
+    "note": "fx/kentauros.h: the blue smoke off its bow's eight bones through either attack, its arrows at AttackTime 14 (one on Attack 1 from Bone25, three 15 degrees apart on Attack 2 from Bone23), its walking dust one frame in ten and the smoke it dies in off its tail and spine (GM_Kanturu_1st.cpp:743-796, 1373-1422)."
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "lamplight",
+      "triangles": 20,
+      "area": 1059.5,
+      "along": [
+        -114.1,
+        105.0
+      ],
+      "mu_uv": [
+        0.359,
+        0.923,
+        0.45,
+        0.957
+      ],
+      "bake_uv": [
+        0.15,
+        0.014,
+        0.969,
+        0.966
+      ]
+    },
+    {
+      "island": 1,
+      "material": "blade_steel",
+      "triangles": 524,
+      "area": 22110.0,
+      "along": [
+        -153.2,
+        143.7
+      ],
+      "mu_uv": [
+        0.119,
+        0.004,
+        1.002,
+        0.994
+      ],
+      "bake_uv": [
+        0.014,
+        0.013,
+        0.983,
+        0.987
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plate_steel",
+      "triangles": 1302,
+      "area": 101410.5,
+      "along": [
+        -256.3,
+        30.1
+      ],
+      "mu_uv": [
+        0.007,
+        -0.001,
+        0.996,
+        0.999
+      ],
+      "bake_uv": [
+        0.014,
+        0.014,
+        0.982,
+        0.956
+      ]
+    },
+    {
+      "island": 3,
+      "material": "lamplight",
+      "triangles": 4,
+      "area": 246.9,
+      "along": [
+        -256.3,
+        -223.4
+      ],
+      "mu_uv": [
+        0.077,
+        0.844,
+        0.423,
+        0.986
+      ],
+      "bake_uv": [
+        0.17,
+        0.778,
+        0.25,
+        0.811
+      ]
+    },
+    {
+      "island": 4,
+      "material": "lamplight",
+      "triangles": 4,
+      "area": 26.4,
+      "along": [
+        21.2,
+        25.3
+      ],
+      "mu_uv": [
+        0.538,
+        0.158,
+        0.577,
+        0.255
+      ],
+      "bake_uv": [
+        0.934,
+        0.464,
+        0.948,
+        0.671
+      ]
+    },
+    {
+      "island": 5,
+      "material": "lamplight",
+      "triangles": 6,
+      "area": 71.0,
+      "along": [
+        -24.6,
+        -19.4
+      ],
+      "mu_uv": [
+        0.457,
+        0.013,
+        0.525,
+        0.237
+      ],
+      "bake_uv": [
+        0.378,
+        0.014,
+        0.627,
+        0.591
+      ]
+    },
+    {
+      "island": 6,
+      "material": "plate_steel",
+      "triangles": 200,
+      "area": 2753.5,
+      "along": [
+        -11.8,
+        17.5
+      ],
+      "mu_uv": [
+        0.01,
+        0.004,
+        0.999,
+        0.964
+      ],
+      "bake_uv": [
+        0.017,
+        0.211,
+        0.938,
+        0.772
+      ]
+    },
+    {
+      "island": 7,
+      "material": "lamplight",
+      "triangles": 22,
+      "area": 216.5,
+      "along": [
+        -144.9,
+        -108.7
+      ],
+      "mu_uv": [
+        0.02,
+        0.85,
+        0.566,
+        0.988
+      ],
+      "bake_uv": [
+        0.479,
+        0.758,
+        0.604,
+        0.79
+      ]
+    },
+    {
+      "island": 8,
+      "material": "lamplight",
+      "triangles": 22,
+      "area": 219.4,
+      "along": [
+        -128.3,
+        -110.8
+      ],
+      "mu_uv": [
+        0.02,
+        0.85,
+        0.566,
+        0.988
+      ],
+      "bake_uv": [
+        0.013,
+        0.761,
+        0.139,
+        0.793
+      ]
+    },
+    {
+      "island": 9,
+      "material": "lamplight",
+      "triangles": 18,
+      "area": 176.6,
+      "along": [
+        -37.9,
+        -4.3
+      ],
+      "mu_uv": [
+        0.026,
+        0.848,
+        0.546,
+        0.981
+      ],
+      "bake_uv": [
+        0.311,
+        0.77,
+        0.431,
+        0.801
+      ]
+    },
+    {
+      "island": 10,
+      "material": "lamplight",
+      "triangles": 18,
+      "area": 180.3,
+      "along": [
+        -19.9,
+        2.9
+      ],
+      "mu_uv": [
+        0.026,
+        0.848,
+        0.546,
+        0.981
+      ],
+      "bake_uv": [
+        0.631,
+        0.795,
+        0.751,
+        0.826
+      ]
+    },
+    {
+      "island": 11,
+      "material": "plate_steel",
+      "triangles": 62,
+      "area": 3263.8,
+      "along": [
+        -14.0,
+        21.7
+      ],
+      "mu_uv": [
+        0.069,
+        0.111,
+        0.359,
+        0.868
+      ],
+      "bake_uv": [
+        0.105,
+        0.165,
+        0.976,
+        0.974
+      ]
+    },
+    {
+      "island": 12,
+      "material": "plate_steel",
+      "triangles": 86,
+      "area": 3912.7,
+      "along": [
+        -23.4,
+        21.4
+      ],
+      "mu_uv": [
+        0.185,
+        0.37,
+        0.633,
+        0.875
+      ],
+      "bake_uv": [
+        0.143,
+        0.13,
+        0.974,
+        0.943
+      ]
+    },
+    {
+      "island": 13,
+      "material": "plate_steel",
+      "triangles": 62,
+      "area": 3263.8,
+      "along": [
+        -25.5,
+        14.0
+      ],
+      "mu_uv": [
+        0.069,
+        0.111,
+        0.359,
+        0.868
+      ],
+      "bake_uv": [
+        0.301,
+        0.181,
+        0.982,
+        0.983
+      ]
+    },
+    {
+      "island": 14,
+      "material": "plate_steel",
+      "triangles": 86,
+      "area": 3912.7,
+      "along": [
+        -26.3,
+        14.0
+      ],
+      "mu_uv": [
+        0.185,
+        0.37,
+        0.633,
+        0.875
+      ],
+      "bake_uv": [
+        0.404,
+        0.357,
+        0.973,
+        0.9
+      ]
+    },
+    {
+      "island": 15,
+      "material": "plate_steel",
+      "triangles": 14,
+      "area": 1878.5,
+      "along": [
+        -159.4,
+        -117.7
+      ],
+      "mu_uv": [
+        0.158,
+        0.214,
+        0.38,
+        0.291
+      ],
+      "bake_uv": [
+        0.059,
+        0.31,
+        0.479,
+        0.946
+      ]
+    },
+    {
+      "island": 16,
+      "material": "plate_steel",
+      "triangles": 24,
+      "area": 2735.6,
+      "along": [
+        -151.9,
+        -112.4
+      ],
+      "mu_uv": [
+        0.144,
+        0.02,
+        0.383,
+        0.232
+      ],
+      "bake_uv": [
+        0.014,
+        0.819,
+        0.674,
+        0.933
+      ]
+    },
+    {
+      "island": 17,
+      "material": "plate_steel",
+      "triangles": 3,
+      "area": 209.1,
+      "along": [
+        -118.1,
+        -103.8
+      ],
+      "mu_uv": [
+        0.173,
+        0.156,
+        0.236,
+        0.208
+      ],
+      "bake_uv": [
+        0.67,
+        0.959,
+        0.685,
+        0.971
+      ]
+    },
+    {
+      "island": 18,
+      "material": "plate_steel",
+      "triangles": 3,
+      "area": 203.1,
+      "along": [
+        -120.8,
+        -106.8
+      ],
+      "mu_uv": [
+        0.173,
+        0.156,
+        0.236,
+        0.208
+      ],
+      "bake_uv": [
+        0.014,
+        0.956,
+        0.028,
+        0.968
+      ]
+    },
+    {
+      "island": 19,
+      "material": "plate_steel",
+      "triangles": 14,
+      "area": 1878.5,
+      "along": [
+        -114.0,
+        -76.0
+      ],
+      "mu_uv": [
+        0.158,
+        0.214,
+        0.38,
+        0.291
+      ],
+      "bake_uv": [
+        0.39,
+        0.015,
+        0.9,
+        0.841
+      ]
+    },
+    {
+      "island": 20,
+      "material": "plate_steel",
+      "triangles": 24,
+      "area": 2568.1,
+      "along": [
+        -112.0,
+        -72.8
+      ],
+      "mu_uv": [
+        0.144,
+        0.02,
+        0.383,
+        0.232
+      ],
+      "bake_uv": [
+        0.441,
+        0.817,
+        0.936,
+        0.853
+      ]
+    },
+    {
+      "island": 21,
+      "material": "plate_steel",
+      "triangles": 3,
+      "area": 209.1,
+      "along": [
+        -78.5,
+        -64.1
+      ],
+      "mu_uv": [
+        0.173,
+        0.156,
+        0.236,
+        0.208
+      ],
+      "bake_uv": [
+        0.443,
+        0.961,
+        0.458,
+        0.973
+      ]
+    },
+    {
+      "island": 22,
+      "material": "plate_steel",
+      "triangles": 3,
+      "area": 203.1,
+      "along": [
+        -82.2,
+        -68.2
+      ],
+      "mu_uv": [
+        0.173,
+        0.156,
+        0.236,
+        0.208
+      ],
+      "bake_uv": [
+        0.61,
+        0.962,
+        0.625,
+        0.974
+      ]
+    },
+    {
+      "island": 23,
+      "material": "plate_steel",
+      "triangles": 14,
+      "area": 1960.2,
+      "along": [
+        -11.4,
+        28.4
+      ],
+      "mu_uv": [
+        0.158,
+        0.214,
+        0.38,
+        0.291
+      ],
+      "bake_uv": [
+        0.269,
+        0.254,
+        0.943,
+        0.905
+      ]
+    },
+    {
+      "island": 24,
+      "material": "plate_steel",
+      "triangles": 24,
+      "area": 2737.3,
+      "along": [
+        -6.3,
+        34.7
+      ],
+      "mu_uv": [
+        0.144,
+        0.02,
+        0.383,
+        0.232
+      ],
+      "bake_uv": [
+        0.35,
+        0.647,
+        0.849,
+        0.938
+      ]
+    },
+    {
+      "island": 25,
+      "material": "plate_steel",
+      "triangles": 3,
+      "area": 209.1,
+      "along": [
+        28.5,
+        43.1
+      ],
+      "mu_uv": [
+        0.173,
+        0.156,
+        0.236,
+        0.208
+      ],
+      "bake_uv": [
+        0.958,
+        0.806,
+        0.973,
+        0.818
+      ]
+    },
+    {
+      "island": 26,
+      "material": "plate_steel",
+      "triangles": 3,
+      "area": 203.1,
+      "along": [
+        27.2,
+        41.6
+      ],
+      "mu_uv": [
+        0.173,
+        0.156,
+        0.236,
+        0.208
+      ],
+      "bake_uv": [
+        0.767,
+        0.962,
+        0.781,
+        0.974
+      ]
+    },
+    {
+      "island": 27,
+      "material": "plate_steel",
+      "triangles": 14,
+      "area": 1960.2,
+      "along": [
+        -50.7,
+        -7.6
+      ],
+      "mu_uv": [
+        0.158,
+        0.214,
+        0.38,
+        0.291
+      ],
+      "bake_uv": [
+        0.056,
+        0.098,
+        0.948,
+        0.92
+      ]
+    },
+    {
+      "island": 28,
+      "material": "plate_steel",
+      "triangles": 24,
+      "area": 2856.1,
+      "along": [
+        -39.2,
+        1.9
+      ],
+      "mu_uv": [
+        0.144,
+        0.02,
+        0.383,
+        0.232
+      ],
+      "bake_uv": [
+        0.48,
+        0.819,
+        0.589,
+        0.936
+      ]
+    },
+    {
+      "island": 29,
+      "material": "plate_steel",
+      "triangles": 3,
+      "area": 209.1,
+      "along": [
+        -4.2,
+        10.5
+      ],
+      "mu_uv": [
+        0.173,
+        0.156,
+        0.236,
+        0.208
+      ],
+      "bake_uv": [
+        0.954,
+        0.746,
+        0.969,
+        0.758
+      ]
+    },
+    {
+      "island": 30,
+      "material": "plate_steel",
+      "triangles": 3,
+      "area": 203.1,
+      "along": [
+        -6.1,
+        8.1
+      ],
+      "mu_uv": [
+        0.173,
+        0.156,
+        0.236,
+        0.208
+      ],
+      "bake_uv": [
+        0.201,
+        0.961,
+        0.215,
+        0.973
+      ]
+    }
+  ]
+}

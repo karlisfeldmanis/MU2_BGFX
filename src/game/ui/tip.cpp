@@ -607,14 +607,63 @@ float heavy(const Type& type, gfx::Canvas& canvas, float x, float baseline, floa
 }
 
 // A free row as one string: the keyword, the prose and the value, which wrap together.
+// A rune's pips hold their room as a word of 'n's, five for every four pips, which wraps whole
+// and is never printed: the pips are drawn over it.
+size_t pipRoom(const Row& row) {
+    const size_t slots = std::max(size_t(row.pips), row.worn.size());
+    return slots + (slots + 3) / 4;
+}
 std::string composed(const Row& row) {
     std::string s;
-    if (!row.keyword.empty()) s = row.keyword + " \xB7 ";
+    if (!row.keyword.empty() && row.pips > 0) {
+        s = row.keyword + " " + std::string(pipRoom(row), 'n') + " ";
+    } else if (!row.keyword.empty()) {
+        s = row.keyword + " \xB7 ";
+    }
     s += row.free;
     if (!row.tail.empty()) s += (s.empty() ? "" : " ") + row.tail;
     return s;
 }
 bool prosaic(const Row& row) { return !row.free.empty() || !row.tail.empty(); }
+
+// A round stone, the pips' and their legend's.
+void stoneAt(gfx::Canvas& canvas, float cx, float cy, float radius, uint32_t colour) {
+    constexpr int kSides = 16;
+    float xy[kSides * 2];
+    for (int k = 0; k < kSides; ++k) {
+        const float a = 6.2831853f * float(k) / float(kSides);
+        xy[k * 2] = cx + radius * std::cos(a);
+        xy[k * 2 + 1] = cy + radius * std::sin(a);
+    }
+    canvas.polygon(nullptr, xy, nullptr, kSides, colour);
+}
+
+// A rune's pips over the room `composed` left them, from `x`: o o o o, round stones apart (the
+// user, 2026-10-24: "lets use 0 0 0 0 not 0-0-0-0-", "show all possible circle as outlines",
+// "use color coding for type") -- those worn solid stones in their rarities' ink, room left
+// outlined rings, and any past the limit dim and struck through.
+void pipsAt(gfx::Canvas& canvas, const Row& row, float x, float cy, float size, uint32_t dim,
+            uint32_t hole) {
+    const int slots = std::max(row.pips, int(row.worn.size()));
+    if (slots <= 0) return;
+    const float r = size * 0.20f, pitch = r * 3.0f, line = std::max(1.0f, size * 0.07f);
+    const auto disc = [&](float cx, float radius, uint32_t colour) {
+        stoneAt(canvas, cx, cy, radius, colour);
+    };
+    for (int i = 0; i < slots; ++i) {
+        const float cx = x + r * 1.6f + pitch * float(i);
+        const bool worn = i < int(row.worn.size());
+        const uint32_t ink = worn ? fade(colourOf(row.worn[size_t(i)])) : dim;
+        if (i >= row.pips) {  // past the limit: dim, struck through in its ink
+            disc(cx, r, dim);
+            canvas.rect({cx - r * 1.4f, cy - line * 0.5f, r * 2.8f, line}, ink);
+            continue;
+        }
+        // A worn one a solid stone, room left an outlined ring.
+        disc(cx, r, ink);
+        if (!worn) disc(cx, r - line * 1.2f, hole);
+    }
+}
 
 // Where each wrapped line of `text` starts in it and how long it is, so a line can be coloured by
 // what part of the row it holds.
@@ -637,6 +686,57 @@ std::vector<Span> spansOf(const gfx::Face& face, float size, const std::string& 
     }
     if (end > start) out.push_back({start, end - start});
     return out;
+}
+
+// A labelled row's values, each broken to the room its label leaves it (`wide` is the row's whole
+// width). A value too long for it walked left over its own label: the Weapon row of a skill
+// thrown with four families, "2-hand swords, 2-hand axes, 2-hand maces, Spears" (the user,
+// 2026-10-23: "text outside the tooltip"). A list breaks after its commas, so each name stays
+// whole, and anything else at its spaces; a chip is never broken. One line a value is the old
+// layout, so a row that fits is drawn as it was.
+std::vector<std::vector<std::string>> valueLines(const gfx::Face& face, float size, float deltaSize,
+                                                 float gap, const Row& row, float wide) {
+    const float labelW = row.label.empty() ? 0.0f : face.measure(size, row.label) + gap;
+    std::vector<std::vector<std::string>> out;
+    for (const Value& value : row.values) {
+        float room = wide - labelW;
+        if (!value.delta.empty()) room -= face.measure(deltaSize, value.delta) + gap * 0.5f;
+        if (value.chip || face.measure(size, value.text) <= room) {
+            out.push_back({value.text});
+            continue;
+        }
+        const bool list = value.text.find(", ") != std::string::npos;
+        const std::string cut = list ? ", " : " ";
+        std::vector<std::string> words;
+        for (size_t at = 0;;) {
+            const size_t next = value.text.find(cut, at);
+            if (next == std::string::npos) {
+                words.push_back(value.text.substr(at));
+                break;
+            }
+            words.push_back(value.text.substr(at, next - at) + (list ? "," : ""));
+            at = next + cut.size();
+        }
+        std::vector<std::string> lines;
+        std::string line;
+        for (const std::string& word : words) {
+            const std::string tried = line.empty() ? word : line + " " + word;
+            if (!line.empty() && face.measure(size, tried) > room) {
+                lines.push_back(line);
+                line = word;
+            } else {
+                line = tried;
+            }
+        }
+        if (!line.empty()) lines.push_back(line);
+        out.push_back(lines);
+    }
+    return out;
+}
+size_t lineCount(const std::vector<std::vector<std::string>>& lines) {
+    size_t n = 0;
+    for (const auto& value : lines) n += value.size();
+    return std::max<size_t>(1, n);
 }
 
 }  // namespace
@@ -735,7 +835,9 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, const gfx::Box& over, float s
                                           (within ? inner : 0.0f));
                 tall += float(prose[s][r].size()) * rowTall;
             } else {
-                tall += std::max<size_t>(1, row.values.size()) * rowTall;
+                tall += float(lineCount(valueLines(face, rowSize, footSize, pad * 0.8f, row,
+                                                   textWide - (section.framed ? pad : 0.0f)))) *
+                        rowTall;
             }
         }
         if (section.framed) tall += railPad;
@@ -960,12 +1062,32 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, const gfx::Box& over, float s
                                   sheet.runeFrom, fade(0xFFFFFFFFu));
                 }
             }
+            if (row.legend && prosaic(row)) {
+                // The pips' legend (Row::legend): a stone, "worn", a ring, "room for more".
+                const float baseline = middle(face, rowPen, rowTall, rowSize);
+                const float cy = baseline - rowSize * 0.32f, rad = rowSize * 0.20f;
+                const float line = std::max(1.0f, rowSize * 0.07f);
+                const uint32_t ink = fade(colourOf(row.freeTone));
+                float px = left + rad;
+                stoneAt(canvas, px, cy, rad, ink);
+                px += rad * 2.0f;
+                px += say(type, canvas, px, baseline, rowSize, ink, " worn", drop) + rowSize;
+                stoneAt(canvas, px, cy, rad, ink);
+                stoneAt(canvas, px, cy, rad - line * 1.2f, fade(kBody));
+                px += rad * 2.0f;
+                say(type, canvas, px, baseline, rowSize, ink, " room for more", drop);
+                rowPen += rowTall * float(std::max<size_t>(1, prose[s][r].size()));
+                continue;
+            }
             if (prosaic(row)) {
                 // Coloured by what part of the row each piece is: the keyword white, the prose in
                 // its tone, the value brighter and heavier. A line break may fall in any of them.
                 const std::string full = composed(row);
                 const size_t keyEnd = row.keyword.size();
                 const size_t tailAt = full.size() - row.tail.size();
+                // The pips' room, a word of 'n's after the name and its space (composed).
+                const size_t pipAt = row.pips > 0 ? keyEnd + 1 : std::string::npos;
+                const size_t pipEnd = row.pips > 0 ? pipAt + pipRoom(row) : std::string::npos;
                 const uint32_t tone = colourOf(row.freeTone);
                 for (const Span& span : prose[s][r]) {
                     const float baseline = middle(face, rowPen, rowTall, rowSize);
@@ -973,11 +1095,23 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, const gfx::Box& over, float s
                     size_t at = span.at;
                     const size_t end = span.at + span.length;
                     while (at < end) {
+                        if (at == pipAt) {
+                            const size_t stop = std::min(end, pipEnd);
+                            const float wide = face.measure(rowSize, full.substr(at, stop - at));
+                            const uint32_t gray = fade(colourOf(Tone::Gray));
+                            pipsAt(canvas, row, px, baseline - rowSize * 0.32f, rowSize,
+                                   (gray & 0x00FFFFFFu) | (((gray >> 24) * 3 / 5) << 24),
+                                   fade(kBody));
+                            px += wide;
+                            at = stop;
+                            continue;
+                        }
                         const bool key = at < keyEnd;
                         const bool value = !key && at >= tailAt;
-                        const size_t stop = key ? std::min(end, keyEnd)
+                        const size_t stop = key     ? std::min(end, keyEnd)
                                             : value ? end
-                                                    : std::min(end, tailAt);
+                                            : at < pipAt ? std::min({end, tailAt, pipAt})
+                                                         : std::min(end, tailAt);
                         const std::string piece = full.substr(at, stop - at);
                         px += value ? heavy(type, canvas, px, baseline, rowSize, fade(brighter(tone)),
                                             piece, drop, u)
@@ -996,10 +1130,14 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, const gfx::Box& over, float s
                 say(type, canvas, left, middle(face, rowPen, rowTall, rowSize), rowSize,
                     fade(row.labelToned ? colourOf(row.labelTone) : kLabel), row.label, drop);
             }
+            const std::vector<std::vector<std::string>> lines =
+                valueLines(face, rowSize, footSize, pad * 0.8f, row, right - left);
             float chipPen = right;
             for (size_t v = row.values.size(); v-- > 0;) {
                 const Value& value = row.values[v];
-                const float baseline = middle(face, rowPen + rowTall * float(value.chip ? 0 : v),
+                size_t first = 0;
+                for (size_t k = 0; k < v; ++k) first += lines[k].size();
+                const float baseline = middle(face, rowPen + rowTall * float(value.chip ? 0 : first),
                                              rowTall, rowSize);
                 if (value.chip) {
                     // Chips sit side by side on one row, filled from the right.
@@ -1023,10 +1161,14 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, const gfx::Box& over, float s
                             value.delta, drop);
                     end -= dw + pad * 0.4f;
                 }
-                const float w = face.measure(rowSize, value.text);
-                say(type, canvas, end - w, baseline, rowSize, fade(colourOf(value.tone)), value.text, drop);
+                for (size_t l = 0; l < lines[v].size(); ++l) {
+                    const std::string& text = lines[v][l];
+                    const float w = face.measure(rowSize, text);
+                    say(type, canvas, end - w, baseline + rowTall * float(l), rowSize,
+                        fade(colourOf(value.tone)), text, drop);
+                }
             }
-            rowPen += rowTall * float(std::max<size_t>(1, row.values.size()));
+            rowPen += rowTall * float(lineCount(lines));
         }
         pen += sectionTall[s];
     }

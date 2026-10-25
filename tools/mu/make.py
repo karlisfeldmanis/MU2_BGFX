@@ -194,6 +194,9 @@ def cook_test(outputs, inputs, label):
         if missing:
             return True, f"{os.path.relpath(missing[0], ROOT)} is missing"
         ins = [i() if callable(i) else i for i in inputs]
+        # Nothing to make (a world whose manifest places no objects has no meshes): not needed.
+        if not outs:
+            return False, f"no {label} to make"
         if newest(ins) > min(mtime(o) for o in outs):
             return True, f"{label} is older than what it is cooked from"
         return False, f"{label} is newer than its inputs"
@@ -487,8 +490,10 @@ def plan_ground(world, folder, threads, reimport=False):
     def index_ground(changed):
         if changed & {"grids", "tiles", "land"}:
             return True, "the land changed; the index copies the grids into workshop/"
-        if newest(grids + [glb]) > mtime(os.path.join(WORKSHOP, "index.json")):
-            return True, "a grid or the ground is newer than the index"
+        # The world json too: it carries `void`, which the game reads off assets/ at load, and
+        # an edit to it alone (Kanturu's void.depth, 2026-10-24) was never copied there.
+        if newest(grids + [glb, placed]) > mtime(os.path.join(WORKSHOP, "index.json")):
+            return True, "a grid, the world json or the ground is newer than the index"
         return False, "the index is newer than the land"
 
     def sync_ground(changed):

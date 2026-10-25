@@ -537,6 +537,14 @@ bool PlayMode::open(Context& ctx) {
                                                  &world_.ground());
                 world_.played().drain().open(assets, ctx.textures,
                                              world_.played().showing().table());
+                world_.played().requiem().open(assets, ctx.textures,
+                                               world_.played().showing().table(),
+                                               &world_.ground());
+                world_.played().sleep().open(assets, ctx.textures,
+                                             world_.played().showing().table(),
+                                             &world_.ground());
+                world_.played().chains().open(assets, ctx.textures,
+                                              world_.played().showing().table());
                 world_.played().stains().open(assets, ctx.textures,
                                               world_.played().showing().table());
                 world_.played().trapShow().open(assets, args.world, ctx.textures,
@@ -566,6 +574,12 @@ bool PlayMode::open(Context& ctx) {
                 world_.played().fury().open(assets, ctx.textures,
                                             world_.played().showing().table(),
                                             &world_.ground());
+                world_.played().fireSlash().open(assets, ctx.textures,
+                                                 world_.played().showing().table(),
+                                                 &world_.ground());
+                world_.played().powerSlash().open(assets, ctx.textures,
+                                                  world_.played().showing().table(),
+                                                  &world_.ground());
                 world_.played().hellfire().open(assets, ctx.textures, &world_.ground());
                 world_.played().storm().open(assets, ctx.textures,
                                              world_.played().showing().table(), &world_.ground());
@@ -626,6 +640,7 @@ bool PlayMode::open(Context& ctx) {
                 game::HelperSettings helper;
                 game::loadHelper(savePath_, helper);
                 desk_.setHelperSettings(helper);
+                helper_.keepLog(savePath_, game::worldShow(args.world).name);
             }
             // And the pictures the windows will ask for, last of all: after restore(), so the
             // bag being warmed is the one he is carrying and not an empty one.
@@ -1367,7 +1382,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         }
         const bool windowed = desk_.ready() && desk_.takesPointer();
         world_.played().point(world_.camera(), view, proj, pointerX, pointerY,
-                              ctx.window.width(), ctx.window.height());
+                              ctx.window.width(), ctx.window.height(), ctx.window.alt());
         // A name plate over the drop outranks what the ray found behind it, a monster included.
         if (desk_.ready() && !windowed) {
             world_.played().pointAtLabel(desk_.labelUnder(pointerX, pointerY));
@@ -1393,7 +1408,13 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         }
         // **The Helper** (game/helper.h): started and stopped by H, the minimap's H and its
         // window, stopped by a click of his own on the world, as Auto-play is; the two never run
-        // together.
+        // together. In Blood Castle and Devil Square its Follow my quest is set aside: it hunts
+        // where he stands, as with the box unticked, and travels nowhere (the user, 2026-10-25:
+        // "dont teleport character away from instances if follow quest is enabled").
+        game::HelperSettings helping = desk_.helperSettings();
+        if (world_.played().isOpen() && world_.played().realm().event() != sim::EventKind::None) {
+            helping.quest = false;
+        }
         int helperAsked = desk_.takeHelperAsk();
         helperClock_ += deltaSeconds;
         if (ctx.args.helperAfter >= 0.0f && helperClock_ >= ctx.args.helperAfter) {
@@ -1416,7 +1437,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             if (asked == 0) {
                 if (helper_.on()) world_.played().notice("Helper stopped.", false);
                 helper_.stop();
-            } else if (!desk_.helperSettings().quest && played.realm().tables()->grid.safe(hero.column(), hero.row())) {
+            } else if (!helping.quest && played.realm().tables()->grid.safe(hero.column(), hero.row())) {
                 world_.played().notice("The Helper works outside safe zones.", true);
                 core::logf("helper: not started on a safe tile, %d,%d", hero.column(), hero.row());
             } else if (hero.alive()) {
@@ -1425,12 +1446,22 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                 world_.played().notice("Helper started.", false);
             }
         }
+        // A warp on the same map -- a floor's gate, a Tab trip to another floor, Go Back! -- stops
+        // it, as ReceiveTeleport's g_MuHelper.TriggerStop() does on every move (bug #51,
+        // 2026-10-21: "it remains active when switching maps"); its spot is on the floor left.
+        // Following a quest, the travel is its own.
+        if (world_.played().isOpen() && world_.played().takeLanding() && helper_.on() &&
+            !desk_.helperSettings().quest) {
+            helper_.stop("You left the map");
+            world_.played().notice("Helper stopped.", false);
+        }
         // A scripted press on the world (--ui-click) counts as his own click.
         if (helper_.on() && (ctx.autoQuest >= 0 || (!windowed && (mouseLeft || mouseRight || uiPress)))) {
             helper_.stop();
             world_.played().notice("Helper stopped.", false);
         }
         if (desk_.takeHelperChanged()) game::writeHelper(savePath_, desk_.helperSettings());
+        if (desk_.takeHelperClear()) helper_.clearLog();
         if ((mouseLeft && !windowed) || clickNow || (uiPress && !uiRight && !windowed)) {
             world_.played().leftClick();
         } else if (mouseLeft || !mouseLeftHeld) {
@@ -1449,20 +1480,15 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         }
         // Not in Blood Castle or Devil Square (a player, 2026-10-21: "deactivating the auto quest
         // function while you are in devil square or blood castle since it can take you out of it"):
-        // Auto-play and the Helper's Follow my quest travel by the Move list, and would walk him out
-        // of his run. The Helper's own hunt stays.
-        if (world_.played().isOpen() && world_.played().realm().event() != sim::EventKind::None) {
-            if (ctx.autoQuest >= 0) {
-                ctx.autoQuest = -1;
-                questAuto_.reset();
-                world_.played().notice("Auto-play is off in Blood Castle and Devil Square.", true);
-            }
-            if (helper_.on() && desk_.helperSettings().quest) {
-                helper_.stop();
-                world_.played().notice("The Helper follows no quest in Blood Castle and Devil Square.", true);
-            }
+        // Auto-play travels by the Move list, and would walk him out of his run. The Helper hunts
+        // on there, its quest set aside (`helping`, above).
+        if (world_.played().isOpen() && world_.played().realm().event() != sim::EventKind::None &&
+            ctx.autoQuest >= 0) {
+            ctx.autoQuest = -1;
+            questAuto_.reset();
+            world_.played().notice("Auto-play is off in Blood Castle and Devil Square.", true);
         }
-        if (ctx.autoQuest >= 0 || (helper_.on() && desk_.helperSettings().quest)) {
+        if (ctx.autoQuest >= 0 || (helper_.on() && helping.quest)) {
             game::quest_world::open(ctx.paths.assets);  // once, where it lives
         }
         int32_t bar[game::Hud::kSkillBoxes] = {};
@@ -1475,7 +1501,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             world_.played().notice(said, !done);
         }
         desk_.setAutoPlaying(ctx.autoQuest);
-        if (const std::string said = helper_.update(world_.played(), desk_.helperSettings(), deltaSeconds, bar,
+        for (const game::Play::Picked& one : world_.played().takePicked()) helper_.picked(world_.played(), one.what, one.zen);
+        if (const std::string said = helper_.update(world_.played(), helping, deltaSeconds, bar,
                                                     game::Hud::kSkillBoxes, desk_.shownQuest());
             !said.empty()) {
             const bool done = said.size() > 10 && said.compare(said.size() - 10, 10, " complete.") == 0;
@@ -1488,7 +1515,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             ctx.helperPicked = helper_.stats().picked;
             ctx.helperQuests = helper_.stats().quests;
         }
-        desk_.setHelping(helper_.on(), helper_.stats());
+        desk_.setHelping(helper_.on(), helper_.stats(), &helper_.log());
         world_.played().update(deltaSeconds);
         // --stride-log: the clocks a recording's cut carries, as this frame is drawn.
         if (strideLog_) {
@@ -1768,6 +1795,11 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                                                kGatheredLights - count);
         // And Earthshake's spikes, MU's warm light under them, as one.
         count += world_.played().earthshake().lights(falling + count, kGatheredLights - count);
+        // And Power Slash's waves, MU's blue under each (fx/power_slash.h).
+        count += world_.played().powerSlash().lights(falling + count,
+                                                     kGatheredLights - count);
+        // And Fire Slash's warm light under its ribbon -- ours (fx/fire_slash.h).
+        count += world_.played().fireSlash().lights(falling + count, kGatheredLights - count);
         // And Hellfire's wall, MU's orange four tiles round (fx/hellfire.h).
         count += world_.played().hellfire().lights(falling + count,
                                                    kGatheredLights - count);
@@ -2018,6 +2050,9 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().weakness().gather(ctx.renderer.effects());
         world_.played().pollution().gather(ctx.renderer.effects());
         world_.played().drain().gather(ctx.renderer.effects());
+        world_.played().requiem().gather(ctx.renderer.effects());
+        world_.played().sleep().gather(ctx.renderer.effects());
+        world_.played().chains().gather(ctx.renderer.effects(), eye.position);
         world_.played().trapShow().gatherEffects(ctx.renderer.effects());
         world_.played().poison().gather(ctx.renderer.effects());
         world_.played().flame().gather(ctx.renderer.effects());
@@ -2037,6 +2072,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().inferno().gatherEffects(ctx.renderer.effects());
         world_.played().aqua().gatherEffects(ctx.renderer.effects());
         world_.played().deathStab().gatherEffects(ctx.renderer.effects());
+        world_.played().fireSlash().gatherEffects(ctx.renderer.effects());
+        world_.played().powerSlash().gatherEffects(ctx.renderer.effects());
         world_.played().impale().gatherEffects(ctx.renderer.effects());
         world_.played().force().gatherEffects(ctx.renderer.effects());
         world_.played().fireBurst().gatherEffects(ctx.renderer.effects());
@@ -2362,7 +2399,7 @@ void PlayMode::rejoin(Context& ctx, double seconds) {
     if (wait > 0.0) {
         char note[64];
         std::snprintf(note, sizeof note, "Reconnecting in %d s...", int(std::ceil(wait)));
-        desk_.rejoining(true, note);
+        desk_.rejoining(true, note, int(std::ceil(wait)));
         return;
     }
     const size_t colon = args.server.rfind(':');
@@ -2492,6 +2529,11 @@ void PlayMode::shutdown(Context& ctx) {
     // comes along.
     keep(ctx);
     if (!savePath_.empty()) core::logf("save: kept in %s", savePath_.c_str());
+    // The Helper's log says how it ended; a followed quest's travel takes it on to the next map.
+    if (helper_.on() && !(ctx.helperFollows && !travelTo_.empty())) {
+        const bool cut = world_.played().isOpen() && world_.played().cut();
+        helper_.stop(cut ? "Disconnected" : !travelTo_.empty() ? "You left the map" : "You left the world");
+    }
     ctx.time.setScene("");
     ctx.time.setWet("");
     if (shadowLog_) std::fclose(shadowLog_);

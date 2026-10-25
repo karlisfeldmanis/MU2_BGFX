@@ -8,9 +8,11 @@
 #include <string>
 
 #include "sim/config.h"
+#include "sim/event.h"
 #include "sim/quests.h"
 #include "sim/rules.h"
 #include "sim/skills.h"
+#include "sim/square.h"
 #include "sim/wear.h"
 
 namespace mu::game {
@@ -123,7 +125,77 @@ Row stat(const char* name, const std::string& text, Tone tone) {
     return row;
 }
 
+// The runes worn that share a rune's limit, strongest first, as Realm::redress counts them: of a
+// limited rune its copies (sim::stackMostOf), of a Bulwark or a Volley its kin too (kinOf); of a
+// stat rune every rune adding to its stat -- Lesser and Greater, Might and Ascendance -- the best
+// kStatRuneMost of them counting, of the Ascendances only the best kAscendanceMost. An
+// Ascendance's stat is the one he wears most runes for.
+// Of the runes where only the strongest worn works (Excellence::bulwarkShare, volleySide), its
+// kin and its strength among them: Bulwark, Buckler and Brace one, the three Volleys another.
+std::pair<int, int> kinOf(sim::Power power) {
+    switch (power) {
+        case sim::Power::Bulwark: return {1, 3};
+        case sim::Power::Buckler: return {1, 2};
+        case sim::Power::Brace: return {1, 1};
+        case sim::Power::Volley: return {2, 3};
+        case sim::Power::ScatterVolley: return {2, 2};
+        case sim::Power::SplitArrow: return {2, 1};
+        default: return {0, 0};
+    }
+}
+RunePool poolOf(const sim::Satchel& bag, sim::Power power) {
+    RunePool pool;
+    const sim::HeroPoints mine = sim::statShareOf(power);
+    const int shares[4] = {mine.strength, mine.agility, mine.vitality, mine.energy};
+    const bool stat = shares[0] || shares[1] || shares[2] || shares[3];
+    pool.most = stat                               ? sim::kStatRuneMost
+                : !sim::stackingOf(power).stacks ? 1
+                                                   : sim::stackMostOf(power);
+    if (pool.most == 0) return pool;
+    std::vector<std::pair<int, sim::Rarity>> found[4], ascended;
+    for (int slot = sim::kWeaponRight; slot <= sim::kRingLeft; ++slot) {
+        const sim::Held& held = bag[slot];
+        if (held.empty()) continue;
+        for (int at = 0; at < std::min<int>(held.sockets, sim::kMostSockets); ++at) {
+            const sim::PowerRow* row = sim::powerOf(held.powers[at]);
+            if (!row) continue;
+            if (!stat) {
+                const auto [kin, strength] = kinOf(row->power);
+                if (row->power == power || (kin != 0 && kin == kinOf(power).first)) {
+                    found[0].push_back({strength, row->rarity});
+                }
+                continue;
+            }
+            if (sim::ascendance(row->power)) {
+                ascended.push_back({sim::statShareOf(row->power).strength, row->rarity});
+                continue;
+            }
+            const sim::HeroPoints its = sim::statShareOf(row->power);
+            const int each[4] = {its.strength, its.agility, its.vitality, its.energy};
+            for (int k = 0; k < 4; ++k) {
+                if (shares[k] && each[k]) found[k].push_back({each[k], row->rarity});
+            }
+        }
+    }
+    std::stable_sort(ascended.begin(), ascended.end(),
+                     [](const auto& a, const auto& b) { return a.first > b.first; });
+    if (ascended.size() > size_t(sim::kAscendanceMost)) ascended.resize(sim::kAscendanceMost);
+    for (int k = 0; k < 4; ++k) {
+        if (shares[k]) found[k].insert(found[k].end(), ascended.begin(), ascended.end());
+    }
+    size_t pick = 0;
+    for (size_t k = 1; k < 4; ++k) {
+        if (found[k].size() > found[pick].size()) pick = k;
+    }
+    std::stable_sort(found[pick].begin(), found[pick].end(),
+                     [](const auto& a, const auto& b) { return a.first > b.first; });
+    for (const auto& one : found[pick]) pool.worn.push_back(one.second);
+    return pool;
+}
+
 }  // namespace
+
+RunePool runePool(const sim::Satchel& bag, sim::Power power) { return poolOf(bag, power); }
 
 void spellLines(const sim::SkillRow& row, const sim::Wearer& who, bool dim,
                 std::vector<Row>& out) {
@@ -187,6 +259,22 @@ void spellLines(const sim::SkillRow& row, const sim::Wearer& who, bool dim,
         out.push_back(stat("Area", "a line of " + std::to_string(int(sim::kLineTiles)) + " tiles",
                            tone(Tone::White)));
         note("strikes everything it passes through");
+    } else if (row.walks > 0.0f && row.burns > 0) {
+        // Twister: Flame's fire rows walked out from his feet (`Realm::light`), so it is asked
+        // first -- under Flame's branch it said "the fire burns on the ground" (Discord #65,
+        // 2026-10-25: "Twister has the same tooltip as flame"). How far its last strike lands:
+        // walked from the let-go's tick, `kStormFirst` to the first and `kStormEvery` after.
+        const float far = row.walks * float(sim::kStormFirst + 1 +
+                                            sim::kStormEvery * (row.burns - 1));
+        char round[32], strikes[48], walked[64];
+        std::snprintf(round, sizeof(round), "%.1f tiles round the storm", double(row.burnTiles));
+        std::snprintf(strikes, sizeof(strikes), "%d, %.1f s apart", row.burns,
+                      double(sim::kStormEvery) * 0.05);
+        std::snprintf(walked, sizeof(walked), "the storm walks %.0f tiles ahead of him",
+                      double(far));
+        out.push_back(stat("Area", round, tone(Tone::White)));
+        out.push_back(stat("Strikes", strikes, tone(Tone::White)));
+        note(walked);
     } else if (row.burns > 0) {
         // Flame: a fire on the ground, `Realm::burn`.
         char round[32], strikes[48];
@@ -264,6 +352,15 @@ void selfLines(const sim::SkillRow& row, const content::Tables* tables, const si
         note(sum);
         out.push_back(
             stat("Lasts", sim::spoken(float(row.mightTicks) * 0.05f), tone(Tone::White)));
+    } else if (row.swellTicks > 0) {
+        // Swell Life: MU's sum under kSwellCap (sim::swellShare), as he stands alone.
+        out.push_back(stat("Most health", "+" + sim::absorbed(sim::swellShare(has, 0)),
+                           tone(Tone::Green)));
+        std::snprintf(sum, sizeof sum, "12%% + %d ene / 20 + %d vit / 100, +1%% a member (max %d%%)",
+                      has.energy, has.vitality, int(std::lround(sim::kSwellCap * 100.0f)));
+        note(sum);
+        out.push_back(
+            stat("Lasts", sim::spoken(float(row.swellTicks) * 0.05f), tone(Tone::White)));
     } else if (row.mends) {
         // Heal: `5 + energy / 5` at once (sim::healOf).
         out.push_back(stat("Heals", std::to_string(sim::healOf(has)), tone(Tone::Green)));
@@ -295,7 +392,7 @@ uint32_t moneyColour(long long) { return gfx::rgba(0.851f, 0.706f, 0.373f); }
 
 // A rune's rarity in WoW's colour for it (sim::Rarity): a legendary one orange, not the green
 // of every other legendary (the user, 2026-10-04: 'legendary runes has to use orange color').
-static Tone rarityTone(sim::Rarity rarity) {
+Tone rarityTone(sim::Rarity rarity) {
     return rarity == sim::Rarity::Ancient     ? Tone::RuneAncient
            : rarity == sim::Rarity::Legendary ? Tone::RuneLegendary
            : rarity == sim::Rarity::Epic    ? Tone::Epic
@@ -498,8 +595,10 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         }
     }
     if (row.defenseRate > 0) {
-        const int block =
-            row.defenseRate + (what.excellent != 0 ? sim::excellentBlock(row) : 0);
+        // Its refinement too, on the armour's table, as `Realm::rearm` adds it: a +9 shield's
+        // card read its +0 block (Discord #66, 2026-10-25).
+        const int block = row.defenseRate + sim::defenseBonus(false, plus) +
+                          (what.excellent != 0 ? sim::excellentBlock(row) : 0);
         does.rows.push_back(stat("Block rate", std::to_string(block),
                                  what.excellent != 0 ? Tone::Blue : Tone::White));
     }
@@ -749,6 +848,36 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         const sim::RealmConfig real;
         const sim::GateClock& gate = forCastle ? real.castle : real.square;
         const char* place = forCastle ? "Blood Castle" : "Devil Square";
+        // Which one its level makes, that one's band, and how hard it is for him (Crylos on
+        // Discord, 2026-10-25: "at least include the minimum level required"; the user:
+        // "hardeness levels like easy - normal - hard - challenging"). Any one at or below
+        // his band lets him in (Realm::castleRefusal, squareRefusal), so it is read off his own:
+        // his band Hard, one under Normal, further Easy (the user: "just say Hard,Easy, Normal").
+        if (const int tier = what.refinement; tier >= 1 && tier <= (forCastle ? sim::kCastles : sim::kSquares)) {
+            const int(&band)[2] = forCastle ? sim::kCastleBands[tier - 1] : sim::kSquareBands[tier - 1];
+            const int level = forCastle ? who.level
+                                        : sim::squareLevel(who.level, who.kin == sim::Kin::MagicGladiator);
+            const int own = forCastle ? sim::castleFor(level) : sim::squareFor(level);
+            std::string say;
+            Tone tone = Tone::White;
+            if (level < band[0]) {
+                tone = Tone::Red;  // its floor says it, in red
+            } else if (tier < own - 1) {
+                say = "Easy";
+                tone = Tone::Green;
+            } else if (tier < own) {
+                say = "Normal";
+            } else {
+                say = "Hard";
+                tone = Tone::Orange;
+            }
+            Row line;
+            line.mark = tip::Mark::Diamond;
+            line.free = std::string(place) + " " + std::to_string(tier) + ", from level " +
+                        std::to_string(band[0]) + (say.empty() ? "" : ": " + say);
+            line.freeTone = tone;
+            does.rows.push_back(line);
+        }
         const int64_t now = int64_t(std::time(nullptr));
         const int day = sim::daySecond(now);
         Row line;
@@ -838,11 +967,15 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     // and heavier, and a mark in the gutter that says which kind it is -- a blue diamond for
     // what a drop rolls, a green star for an excellent option. The text stays MU's blue. Luck's
     // two lines become "Luck" as a keyword on each, which is the only change to MU's wording.
-    // A scepter always carries Force Wave (docs/plans/dark-lord-spells/force-wave.md section 8).
+    // No "Skill" line: a weapon's skill comes from orbs here, never from the weapon (Discord,
+    // 2026-10-25: "my sword says Skill Cyclone but it doesnt appear in skill bar") -- but a
+    // scepter's Force Wave, which is the weapon's own (docs/plans/dark-lord-spells/force-wave.md
+    // section 8).
+    // A wing is past takesOptions' boots and carries its Life option all the same (Discord,
+    // 2026-10-24: "jewel of life on wings ... no stats appeared").
     const bool waves = row.skill == sim::skill::kForceWave;
-    const bool carriesSkill = (what.skill || waves) && row.skill > 0;
-    if ((sim::takesOptions(row) || sim::jewellery(row)) &&
-        (what.luck || what.option > 0 || what.excellent != 0 || carriesSkill ||
+    if ((sim::takesOptions(row) || sim::jewellery(row) || sim::anyWing(row)) &&
+        (what.luck || what.option > 0 || what.excellent != 0 || waves ||
          (sim::secondWing(row) && what.wing != 0))) {
         Section options;
         // MU's line split at its last word where that word is the value: "Max life +8%"
@@ -867,11 +1000,8 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         const auto rolled = [&](const std::string& keyword, const std::string& text) {
             option(keyword, text, tip::Mark::Diamond, Tone::Blue);
         };
-        // The weapon's own skill, first, as MU prints it above the options.
-        if (carriesSkill) {
-            const sim::SkillRow* skill = sim::skillNumbered(row.skill);
-            rolled("Skill", waves ? "Force Wave" : skill && skill->name[0] ? skill->name : "carried");
-        }
+        // A scepter's Force Wave, first, as MU prints a weapon's skill above the options.
+        if (waves) rolled("Skill", "Force Wave");
         // One line (the tooltip audit, 2026-10-05), where MU prints two.
         if (what.luck) rolled("Luck", "+5% critical, Jewel of Soul always succeeds");
         if (what.option > 0) {
@@ -936,6 +1066,16 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                 line.mark = tip::Mark::RingSet;
                 line.markTone = rarityTone(power->rarity);
                 socket.rows.push_back(line);
+                // Of a limited rune, how many of its limit he wears, after its name (the user,
+                // 2026-10-24: "we need to show on toolttip that he can use some amount of specific
+                // rune", then pips, then "use color coding for type"): a ring for each allowed,
+                // the runes of its kind worn set in them in their rarities (tip::Row::pips).
+                if (const RunePool pool = poolOf(bag, power->power); pool.most > 0) {
+                    socket.rows.back().pips = pool.most;
+                    for (const sim::Rarity rarity : pool.worn) {
+                        socket.rows.back().worn.push_back(rarityTone(rarity));
+                    }
+                }
                 // What the rune strikes for in his hands with THIS weapon (the user, 2026-10-01:
                 // "show damage for dps runes based on base dmg and scaling"): the swing's band as
                 // `sim::reckon` makes it off his strength and agility and this weapon, its share,
@@ -989,6 +1129,17 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                 line.mark = tip::Mark::Ring;
             }
             socket.rows.push_back(line);
+        }
+        // The pips' legend, once under them (tip::Row::legend).
+        bool pips = false;
+        for (const Row& one : socket.rows) pips = pips || one.pips > 0;
+        if (pips) {
+            Row legend;
+            legend.legend = true;
+            legend.free = "nn worn   nn room for more";
+            legend.freeTone = Tone::Gray;
+            legend.gap = true;
+            socket.rows.push_back(legend);
         }
         sheet.sections.push_back(socket);
     }
@@ -1136,6 +1287,49 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             carries.rows.push_back(stat("Fits", fits, Tone::White));
             // A rune set only once in a thing says so before it is refused (PowerRow::once).
             if (power->once) carries.rows.push_back(stat("Limit", "One per item", Tone::Yellow));
+            // And whether a second, in another socket or another thing, does more: "Yes", "No,
+            // max 1", or of a limited one "Up to 5", and how many of it he wears, "3/5".
+            const sim::Stacking stacking = sim::stackingOf(power->power);
+            Row stacks = stat("Stacks", stacking.stacks ? "Yes" : "No, max 1",
+                              stacking.stacks ? Tone::White : Tone::Yellow);
+            if (const int most = sim::stackMostOf(power->power); most > 0) {
+                const int worn = int(poolOf(bag, power->power).worn.size());
+                stacks = stat("Stacks", "Up to " + std::to_string(most), Tone::White);
+                stacks.values.push_back({std::to_string(worn) + "/" + std::to_string(most) + " worn",
+                                         worn >= most ? Tone::Yellow : Tone::Gray, false, "", 0});
+            }
+            // Ascendance's own limits (sim::kAscendanceMost): three worn, Lesser and Greater
+            // together, and how many go in each thing -- the two-handed rule said in words, since
+            // why a bow takes a third is not something a player would guess (the user,
+            // 2026-10-25: "we should explain that 2-hand rule").
+            if (sim::ascendance(power->power)) {
+                int worn = 0;
+                for (int slot = sim::kWeaponRight; slot <= sim::kRingLeft; ++slot) {
+                    const sim::Held& h = bag[slot];
+                    for (int at = 0; !h.empty() && at < std::min<int>(h.sockets, sim::kMostSockets);
+                         ++at) {
+                        const sim::PowerRow* one = sim::powerOf(h.powers[at]);
+                        if (one && sim::ascendance(one->power)) ++worn;
+                    }
+                }
+                const int most = sim::kAscendanceMost;
+                stacks = stat("Stacks", "Up to " + std::to_string(most), Tone::White);
+                stacks.values.push_back({std::to_string(worn) + "/" + std::to_string(most) + " worn",
+                                         worn >= most ? Tone::Yellow : Tone::Gray, false, "", 0});
+            }
+            carries.rows.push_back(stacks);
+            if (sim::ascendance(power->power)) {
+                carries.rows.push_back(stat(
+                    "Limit",
+                    std::to_string(sim::kAscendanceInWeapon) + " per weapon, " +
+                        std::to_string(sim::kAscendanceInShield) + " per shield",
+                    Tone::Yellow));
+                Row hands;
+                hands.free = std::to_string(sim::kAscendanceInTwoHanded) +
+                             " in a two-handed weapon or bow, which leaves no hand for a shield";
+                hands.freeTone = Tone::Gray;
+                carries.rows.push_back(hands);
+            }
             Row how;
             how.free = "Drop it on an item with an empty socket";
             how.freeTone = Tone::Gray;
@@ -1169,8 +1363,10 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         // need to also show for which weapon type its usable"): the row the skill's own card
         // prints (`Desk::skillSheet`), one family a line under the label, white when what he
         // holds will throw it and red when it will not. A spell asks nothing of the hand and has
-        // no such row, as on its card.
-        if (const sim::SkillRow* skill = sim::skillNumbered(row.teaches); skill && !skill->wizardry) {
+        // no such row, as on its card; nor one any weapon throws (`Desk::skillSheet`).
+        if (const sim::SkillRow* skill = sim::skillNumbered(row.teaches);
+            skill && !skill->wizardry &&
+            (skill->families & sim::arms::kEvery) != sim::arms::kEvery) {
             const std::string families = sim::familiesListed(skill->families);
             if (!families.empty()) {
                 const bool holds = skill->suits(skill->onSelf() ? who.offHand : who.hand);

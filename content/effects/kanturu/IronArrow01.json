@@ -1,0 +1,25 @@
+{
+  "item": "IronArrow01",
+  "mu_name": "The arrow a Kanturu Iron Rider looses",
+  "mu_name_from": "ZzzOpenData.cpp:4450-4451: AccessModel(MODEL_IRON_RIDER_ARROW, Data/Effect/, ironobj) - Data/Effect/ironobj.bmd.",
+  "kind": "iron_rider",
+  "why_this_one": "MODEL_IRON_RIDER_ARROW, which AttackEffectKanturu1stMonster creates at the rider's IRON_RIDER_BOW_6 at CheckAttackTime(10) (GM_Kanturu_1st.cpp:704-710). game/fx/iron_rider.h draws it.",
+  "mesh": "IronArrow01.obj",
+  "mesh_from": "muextract export-obj on Data/Effect/ironobj.bmd, from MuMain's clean Data: two meshes, 80 triangles; about 1.3 m long and half a metre across at MU's size, drawn at 0.5 and growing.",
+  "parts": [
+    {
+      "group": "whitemark_R",
+      "sheet": "whitemark_r.png",
+      "blend": "additive",
+      "note": "Data/Effect/whitemark_R.OZJ, 8 x 8: the bolt's white core. Drawn RENDER_TEXTURE | RENDER_BRIGHT at BodyLight (0.8, 1.0, 0.8) (ZzzObject.cpp:1664-1668)."
+    },
+    {
+      "group": "motion_blur",
+      "sheet": "motion_blur.png",
+      "blend": "additive",
+      "note": "Data/Effect/motion_blur.OZJ, 32 x 64: the streak behind it, added the same way."
+    }
+  ],
+  "scale": 0.5,
+  "scale_from": "Scale 0.5 at its birth, times 1.05 a frame; LifeTime 12 at 70 units a frame; its light down by 0.7 a frame over its last five (ZzzEffect.cpp:506-519, MoveHandlers.cpp:281-300)."
+}

@@ -537,8 +537,10 @@ int Application::run(int argc, char** argv) {
         // Minimised, at most kMinimisedCap: a present to an icon returns at once on Direct3D 11
         // (DXGI_STATUS_OCCLUDED), so a free run drew whole frames flat out for nobody, the card
         // as hot as in play -- Gordichan's GTX 1650 laptop lost its device every few minutes,
-        // 2026-10-17, uncapped at 150 fps. The line and the world still step each frame.
-        constexpr int kMinimisedCap = 30;
+        // 2026-10-17, uncapped at 150 fps. The line and the world still step each frame. Ten,
+        // not thirty, on Gordichan's next word (2026-10-24: "limit the rendering to 1-5 fps"): nobody
+        // sees an icon, and ten keeps the line read often enough.
+        constexpr int kMinimisedCap = 10;
         const int cap = window_.minimised() && (args_.cap == 0 || args_.cap > kMinimisedCap)
                             ? kMinimisedCap
                             : args_.cap;

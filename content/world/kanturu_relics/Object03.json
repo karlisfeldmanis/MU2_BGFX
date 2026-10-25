@@ -1,0 +1,101 @@
+{
+  "item": "Object03",
+  "mu_name": "Object03",
+  "mu_name_from": "kanturu_relics's object slot: type N is Object{N+1}.bmd, from Data/Object39.",
+  "world": "kanturu_relics",
+  "object_type": 2,
+  "placements": 175,
+  "profile": "world",
+  "sheets": {
+    "cho_scarp_03": "kl_cho_scarp_03.png",
+    "cho_scarp_01_r": "kl_cho_scarp_01_r.png"
+  },
+  "sheet_from": "Data/Object39/, decoded under the kl_ prefix by `mu new`.",
+  "sheet_materials": {
+    "cho_scarp_03": "flagstone",
+    "cho_scarp_01_r": "lamplight"
+  },
+  "material_note": "cho_scarp_03: grey cut-stone panels scored with tech lines: flagstone. cho_scarp_01_r: pale blue light strips: lamplight.",
+  "why_this_one": "A stone pylon hung into the void, 175 of them, its blue strips pulsing. Batch 1 of the Relics, the most-placed and biggest shapes first (the user, 2026-10-23: \"we need to finish first kanturu all objects before continue to make monsters\"; the light: \"Draft as is\"). docs/worlds/kanturu-port.md Part B 8.1.",
+  "additive": [
+    "cho_scarp_01_r"
+  ],
+  "additive_from": "MU's TextureScript does not brighten a lowercase _r (the _R test is case-sensitive, docs/worlds/kanturu-port.md B), but Render_Kanturu2nd_ObjectMesh type 2 draws mesh 1 alone as its own BlendMesh (RenderMesh(1, RENDER_TEXTURE, Alpha, 1, fLumi), GM_Kanturu_2nd.cpp:533-549), so the strips are added.",
+  "glow": {
+    "cho_scarp_01_r": {
+      "low": 0.0,
+      "high": 1.0,
+      "hz": 0.64,
+      "smooth_seconds": 1.57
+    }
+  },
+  "glow_from": "MU: fLumi = (sin(WorldTime * 0.002) + 1) * 0.5 (GM_Kanturu_2nd.cpp:535, 545), a pulse between 0 and 1 every 3.1 s. Ours, marked, as the Ruins' Object47: our glow wanders over MU's range, re-aimed every half period and eased over it.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "lamplight",
+      "triangles": 6,
+      "area": 926.5,
+      "along": [
+        -1.3,
+        34.8
+      ],
+      "mu_uv": [
+        0.148,
+        0.02,
+        0.195,
+        0.926
+      ],
+      "bake_uv": [
+        0.469,
+        0.367,
+        0.474,
+        0.462
+      ]
+    },
+    {
+      "island": 1,
+      "material": "lamplight",
+      "triangles": 4,
+      "area": 876.9,
+      "along": [
+        -34.5,
+        -34.5
+      ],
+      "mu_uv": [
+        0.148,
+        0.02,
+        0.195,
+        0.926
+      ],
+      "bake_uv": [
+        0.45,
+        0.37,
+        0.455,
+        0.464
+      ]
+    },
+    {
+      "island": 2,
+      "material": "flagstone",
+      "triangles": 120,
+      "area": 46685.0,
+      "along": [
+        -36.1,
+        36.1
+      ],
+      "mu_uv": [
+        0.018,
+        0.015,
+        0.644,
+        0.984
+      ],
+      "bake_uv": [
+        0.007,
+        0.006,
+        0.992,
+        0.994
+      ]
+    }
+  ]
+}

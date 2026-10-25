@@ -180,6 +180,7 @@ private:
         size_t nameFrom = 0, nameTo = 0;  // the "[Name]" a pointer answers, empty for none
         std::string who;                  // whose name that is
         size_t stampTo = 0;               // the stamp's end: drawn quiet
+        size_t saidFrom = 0;              // where what was said starts, after the tag and name
         std::vector<sim::ItemLink> links;
     };
     // One row of the log as it is set: a line wraps into several.

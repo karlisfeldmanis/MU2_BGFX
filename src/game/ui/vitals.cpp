@@ -75,6 +75,17 @@ constexpr float kTagGuild = 11.0f;
 // green").
 constexpr float kTagGreen[4] = {0.18f, 1.0f, 0.18f, 1.0f};
 constexpr float kTagDead[4] = {0.62f, 0.62f, 0.62f, 1.0f};
+// A reborn's mark over his name (the user, 2026-10-23: "rebirth tag has to be above char name";
+// then "its overdesigned, it has to be minimal, clean but cool"): REBIRTH and his numeral in small,
+// widely spaced capitals in the rite's gold (game/ui/reborn.cpp) on a soft shadow, with a gold
+// hairline either side fading out. No plate. The guild line's face, Alegreya Sans SC Bold, as the
+// rebirth message's caption: Cinzel's thin strokes went to nothing this small. In tip::unit() pixels.
+constexpr float kBannerType = 11.0f;
+constexpr float kBannerTracking = 0.22f;  // of the type's size
+constexpr float kBannerLine = 16.0f;      // each hairline's length
+constexpr float kBannerGap = 5.0f;        // the words to the hairlines
+constexpr float kBannerOver = 4.0f;       // the words' foot over the name's cap
+constexpr float kBannerInk[4] = {1.0f, 0.84f, 0.50f, 1.0f};
 // How far off another player is named, in tiles, and the last stretch of it faded out over.
 constexpr float kNameRange = 22.0f;
 constexpr float kNameFade = 4.0f;
@@ -220,6 +231,40 @@ uint32_t faded(uint32_t abgr, float alpha) {
     return (abgr & 0x00FFFFFFu) | (gfx::rgbaByte(a * alpha) << 24);
 }
 
+// A reborn's mark, centred on `x`, its words standing on `foot` (see kBannerType).
+void banner(gfx::Canvas& canvas, float x, float foot, float u, float alpha, int rebirths) {
+    const gfx::Face* face = controls::wordFace();
+    const bgfx::TextureHandle texture = controls::wordTexture();
+    if (face == nullptr || !bgfx::isValid(texture) || alpha <= 0.0f) return;
+    const std::string words = "REBIRTH " + net::romanNumeral(rebirths);
+    const float size = std::round(kBannerType * u), tracking = size * kBannerTracking;
+    // Centred on its ink, not its advances: a capital's side bearings left the hairlines uneven.
+    const float k = face->emScale(size);
+    const gfx::FaceGlyph* first = face->glyph(words.front());
+    const gfx::FaceGlyph* last = face->glyph(words.back());
+    if (first == nullptr || last == nullptr) return;
+    const float wide = face->measure(size, words) + tracking * float(words.size() - 1);
+    const float inkLeft = first->x0 * k, inkRight = wide - last->advance * k + last->x1 * k;
+    const float left = x - (inkLeft + inkRight) * 0.5f, baseline = std::round(foot);
+    // The words over a shadow down and to either side of them, so they hold on snow as on stone.
+    const float rule = std::max(1.0f, std::round(u));
+    const uint32_t halo = gfx::rgba(0, 0, 0, 0.7f * alpha);
+    for (const float dx : {-1.0f, 0.0f, 1.0f}) {
+        canvas.lettered(*face, texture, left + dx * rule, baseline + rule, size, tracking, halo, words);
+    }
+    canvas.lettered(*face, texture, left, baseline, size, tracking, colour(kBannerInk, alpha), words);
+    // The hairlines on the capitals' middle, gold at the words and clear at their ends.
+    const float line = std::round(kBannerLine * u), gap = std::round(kBannerGap * u);
+    const float ruleY = std::round(baseline - size * 0.36f);
+    const uint32_t gold = colour(kBannerInk, alpha), clear = colour(kBannerInk, 0.0f);
+    const uint32_t dark = gfx::rgba(0, 0, 0, 0.6f * alpha), none = gfx::rgba(0, 0, 0, 0.0f);
+    const float l = std::round(left + inkLeft - gap - line), r = std::round(left + inkRight + gap);
+    canvas.shade({l, ruleY + rule, line, rule}, none, dark, dark, none);
+    canvas.shade({r, ruleY + rule, line, rule}, dark, none, none, dark);
+    canvas.shade({l, ruleY, line, rule}, clear, gold, gold, clear);
+    canvas.shade({r, ruleY, line, rule}, gold, clear, clear, gold);
+}
+
 }  // namespace
 
 void Vitals::dismiss() {
@@ -357,9 +402,13 @@ void Vitals::update(float seconds, const Play& play, uint32_t pointed, int folk,
         kinds[2].bleed = true;
         kinds[3].chill = true;
         kinds[4].frozen = true;
+        kinds[5].cut = true;  // Fire Slash's
+        kinds[6].sleep = true;  // a Sleep rune's
         const int64_t until[kBanes] = {beast->poisonUntil, beast->burnUntil,
                                        beast->bleed > 0 ? beast->bleedUntil : 0,
-                                       beast->chilledUntil, beast->frozenUntil};
+                                       beast->chilledUntil, beast->frozenUntil,
+                                       beast->defenseCut > 0 ? beast->defenseCutUntil : 0,
+                                       beast->sleepUntil};
         for (int k = 0; k < kBanes; ++k) {
             const int64_t left = alive_ ? until[k] - tick : 0;
             if (left <= 0) {
@@ -426,6 +475,7 @@ void Vitals::update(float seconds, const Play& play, uint32_t pointed, int folk,
                 tag.guild = guild->name;
                 tag.mark = guild->mark;
             }
+            tag.rebirths = one.rebirths;
             near.push_back({d, std::move(tag)});
         }
         std::sort(near.begin(), near.end(), [](const Far& a, const Far& b) { return a.d > b.d; });
@@ -517,6 +567,10 @@ void Vitals::rebuild(const Play& play, const Readout& r) {
             if (name) {
                 outlined(name, nameTexture, t.x - name->measure(nameSize, t.name) * 0.5f,
                          nameBaseline, nameSize, ink, t.alpha, t.name);
+                if (t.rebirths > 0) {
+                    banner(canvas_, t.x, nameBaseline - name->ascent(nameSize) - std::round(kBannerOver * u), u,
+                           t.alpha * (t.dead ? 0.6f : 1.0f), t.rebirths);
+                }
             }
             // The guild's line: its mark and its name (the user's pick A, 2026-10-13); a bot in no
             // guild says `<Bot>`.

@@ -4,8 +4,11 @@
 #include <cmath>
 #include <cstring>
 
+#include "core/bidi.h"
 #include "core/files.h"
 #include "core/log.h"
+#include "core/utf8.h"
+#include "gfx/glyphs.h"
 
 namespace mu::gfx {
 namespace {
@@ -228,15 +231,20 @@ float Canvas::text(float x, float baseline, float fontSize, uint32_t abgr, const
     if (align == Align::Centre) pen = x + (width - wide) * 0.5f;
     if (align == Align::Right) pen = x + width - wide;
     const float k = f.emScale(fontSize);
-    begin(owner_->faceTexture());
-    for (char c : s) {
-        const FaceGlyph* g = f.glyph(c);
-        if (!g) continue;
-        if (g->x1 > g->x0 && g->y1 > g->y0) {
-            quad(pen + g->x0 * k, baseline + g->y0 * k, (g->x1 - g->x0) * k,
-                 (g->y1 - g->y0) * k, g->u0, g->v0, g->u1, g->v1, abgr);
+    const bgfx::TextureHandle atlas = owner_->faceTexture(), more = glyphs::texture();
+    begin(atlas);
+    FaceGlyph g;
+    bool cached = false;
+    // After the measure, which turns the line too and would refill the same buffer.
+    const std::string& shown = core::bidi::visual(s);
+    for (size_t at = 0; at < shown.size();) {
+        if (!f.look(core::utf8::next(shown, at), &g, &cached)) continue;
+        if (g.x1 > g.x0 && g.y1 > g.y0 && (!cached || bgfx::isValid(more))) {
+            begin(cached ? more : atlas);
+            quad(pen + g.x0 * k, baseline + g.y0 * k, (g.x1 - g.x0) * k, (g.y1 - g.y0) * k, g.u0,
+                 g.v0, g.u1, g.v1, abgr);
         }
-        pen += g->advance * k;
+        pen += g.advance * k;
     }
     return wide;
 }
@@ -246,17 +254,22 @@ float Canvas::lettered(const Face& f, bgfx::TextureHandle texture, float x, floa
     if (!f.ready() || s.empty() || !bgfx::isValid(texture)) return 0.0f;
     const float k = f.emScale(fontSize);
     const float grow = f.spread(), growUv = f.spreadUv();
+    const bgfx::TextureHandle more = glyphs::texture();
     begin(texture);
     float pen = x;
-    for (char c : s) {
-        const FaceGlyph* g = f.glyph(c);
-        if (!g) continue;
-        if (g->x1 > g->x0 && g->y1 > g->y0) {
-            quad(pen + (g->x0 - grow) * k, baseline + (g->y0 - grow) * k,
-                 (g->x1 - g->x0 + grow * 2.0f) * k, (g->y1 - g->y0 + grow * 2.0f) * k,
-                 g->u0 - growUv, g->v0 - growUv, g->u1 + growUv, g->v1 + growUv, abgr);
+    FaceGlyph g;
+    bool cached = false;
+    const std::string& shown = core::bidi::visual(s);
+    for (size_t at = 0; at < shown.size();) {
+        if (!f.look(core::utf8::next(shown, at), &g, &cached)) continue;
+        if (g.x1 > g.x0 && g.y1 > g.y0 && (!cached || bgfx::isValid(more))) {
+            // A cached letter has no halo (Face::look gives a blurred face none), so no growth.
+            const float gr = cached ? 0.0f : grow, gu = cached ? 0.0f : growUv;
+            begin(cached ? more : texture);
+            quad(pen + (g.x0 - gr) * k, baseline + (g.y0 - gr) * k, (g.x1 - g.x0 + gr * 2.0f) * k,
+                 (g.y1 - g.y0 + gr * 2.0f) * k, g.u0 - gu, g.v0 - gu, g.u1 + gu, g.v1 + gu, abgr);
         }
-        pen += g->advance * k + tracking;
+        pen += g.advance * k + tracking;
     }
     return pen - x;
 }
@@ -324,6 +337,7 @@ bool Interface::init(const std::string& shaderDir) {
                                              bgfx::copy(&white, 4));
     }
 
+    glyphs::make();
     sampler_ = bgfx::createUniform("s_albedo", bgfx::UniformType::Sampler);
     bgfx::ShaderHandle vs = loadShader(shaderDir, "vs_overlay");
     bgfx::ShaderHandle fs = loadShader(shaderDir, "fs_interface");
@@ -344,6 +358,7 @@ void Interface::shutdown() {
     if (bgfx::isValid(program_)) bgfx::destroy(program_);
     if (bgfx::isValid(faceTexture_)) bgfx::destroy(faceTexture_);
     if (bgfx::isValid(sampler_)) bgfx::destroy(sampler_);
+    glyphs::destroy();
     program_ = BGFX_INVALID_HANDLE;
     faceTexture_ = BGFX_INVALID_HANDLE;
     sampler_ = BGFX_INVALID_HANDLE;
@@ -362,6 +377,7 @@ void Interface::add(const Canvas& canvas) {
 void Interface::submit(bgfx::ViewId view) {
     draws_ = 0;
     vertexCount_ = 0;
+    glyphs::upload();  // the letters this frame's lines found first
     if (!ready() || queued_.empty()) return;
     uint32_t vertexCount = 0, indexCount = 0;
     for (const Canvas* c : queued_) {

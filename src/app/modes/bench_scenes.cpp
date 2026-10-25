@@ -8,6 +8,8 @@
 // bonfire, where the weapon sheets were approved.
 #include "app/modes/bench_mode.h"
 
+#include <cstdio>
+
 #include "content/showing.h"
 #include "content/tables.h"
 #include "core/log.h"
@@ -38,7 +40,15 @@ void BenchMode::setScene(Context& ctx, const std::string& scene) {
         return;
     }
 
+    // "kanturu 78,91": the world with the subject stood on that tile, so an agent can look where
+    // the user saw something (the control socket's `scene`, docs/content/cooker.md).
     std::string world = scene;
+    int tileColumn = -1, tileRow = -1;
+    const size_t space = scene.find(' ');
+    if (space != std::string::npos) {
+        world = scene.substr(0, space);
+        if (std::sscanf(scene.c_str() + space + 1, "%d,%d", &tileColumn, &tileRow) != 2) tileColumn = -1;
+    }
     bool spawn = false, pedestal = false;
     if (scene == "Home") {
         const game::FigureBody* body = bench_.subjectBody();
@@ -66,7 +76,11 @@ void BenchMode::setScene(Context& ctx, const std::string& scene) {
     ctx.time.setScene(game::mapSheet(ctx.paths.sheets, world));
 
     const float m = world_.ground().metresPerTile();
-    if (spawn) {
+    if (tileColumn >= 0) {
+        studioStand_[0] = (float(tileColumn) + 0.5f) * m;
+        studioStand_[2] = -(float(tileRow) + 0.5f) * m;
+        studioStand_[1] = world_.ground().heightAt(studioStand_[0], studioStand_[2]);
+    } else if (spawn) {
         // The middle of the breed's first spawn rectangle, in tiles: column is +x, row is -z.
         const game::FigureBody* body = bench_.subjectBody();
         for (const game::Breed& breed : bench_.figures().breeds()) {

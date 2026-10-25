@@ -1,0 +1,791 @@
+{
+  "item": "Berserker01",
+  "mu_name": "Berserker",
+  "mu_name_from": "OpenMU VersionSeasonSix names number 350 'Berserker' (openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/KanturuRuins.cs:274); MuMain's MONSTER_BERSERKER (MuMain/src/source/World/GameMaps/GM_Kanturu_1st.cpp:409).",
+  "world": "kanturu",
+  "object_type": 350,
+  "monster": {
+    "model_index": 106,
+    "scale": 0.95
+  },
+  "monster_from": "MuMain/src/source/World/GameMaps/GM_Kanturu_1st.cpp:409:\n\ncase MONSTER_BERSERKER:\n    {\n        OpenMonsterModel(MONSTER_MODEL_BERSERK);\n        pCharacter = CreateCharacter(Key, MODEL_BERSERK, PosX, PosY);\n        pCharacter->Object.Scale = 0.95f;\n        pCharacter->Weapon[0].Type = -1;\n        pCharacter->Weapon[1].Type = -1;\n\n        BoneManager::RegisterBone(pCharacter, L\"BERSERK_MOUTH\", 9);\n    }\n    break;",
+  "profile": "monster",
+  "sheets": {
+    "buserbody": "berserker_buserbody.png",
+    "busersword": "berserker_busersword.png"
+  },
+  "sheet_materials": {
+    "buserbody": "leather",
+    "busersword": "blade_steel"
+  },
+  "combat": {
+    "level": 154,
+    "health": 133100,
+    "minimum_damage": 1550,
+    "maximum_damage": 1629,
+    "defense": 689,
+    "move_range": 3,
+    "attack_range": 2,
+    "view_range": 7,
+    "move_delay": 500,
+    "attack_delay": 1550,
+    "attack_rate": 2263,
+    "defense_rate": 782,
+    "attack_skill": null,
+    "note": "OpenMU VersionSeasonSix (KanturuRuins.cs:274): level 100, 44370 life, 555-590, 443, 728/255, attack every 1550 ms. Raised past Aida (decision 3): two above the Gigantis, its numbers the Splinter Wolf's times OpenMU's ratio between the two (life 2.77, damage 1.79/1.74, defense 1.93); ranges and speeds as MU. Ours (2026-10-23). Retuned 2026-10-25 for geared level-400 heroes (the user: a step harder than Aida, a steady climb from the camp): life 103,500 (Wolf) to 138,000 (Genocider), damage 1,250 to 1,680, defence 620 to 700, levels and rates kept -- about 1.3x Aida's typical time to kill on average, measured with the best pre-Kanturu kits (a scratch skill_sweep at each nest). The defence MU's scale gave (780 to 1,747) left melee and bows at the damage floor."
+  },
+  "why_this_one": "The Ruins' seventh breed and its most common: 28 OpenMU spots in the north and west (x 31-188, y 11-104), past the Gigantis (docs/worlds/kanturu-port.md 4.1, 4.4).",
+  "mu_checklist": [
+    {
+      "at": "MuMain/src/source/World/GameMaps/GM_Kanturu_1st.cpp:408",
+      "in": "M37Kanturu1st::CreateKanturu1stMonster",
+      "kind": "body",
+      "lines": 12,
+      "actions": [],
+      "calls": [
+        "CreateCharacter",
+        "RegisterBone"
+      ],
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GM_Kanturu_1st.cpp:1090",
+      "in": "M37Kanturu1st::RenderKanturu1stMonsterVisual",
+      "kind": "effect",
+      "lines": 41,
+      "actions": [
+        "MONSTER01_WALK",
+        "MONSTER01_ATTACK1",
+        "MONSTER01_ATTACK2",
+        "MONSTER01_DIE",
+        "MONSTER01_STOP1",
+        "MONSTER01_STOP2"
+      ],
+      "calls": [
+        "PlayBuffer",
+        "SOUND_KANTURU_1ST_BER_MOVE1",
+        "SOUND_KANTURU_1ST_BER_ATTACK1",
+        "SOUND_KANTURU_1ST_BER_DIE",
+        "CreateParticle",
+        "BITMAP_SMOKE"
+      ],
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GM_Kanturu_1st.cpp:1643",
+      "in": "M37Kanturu1st::MoveKanturu1stBlurEffect",
+      "kind": "effect",
+      "lines": 36,
+      "actions": [
+        "MONSTER01_ATTACK1",
+        "MONSTER01_ATTACK2"
+      ],
+      "calls": [
+        "CreateBlur"
+      ],
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:385",
+      "in": "LoadWaveFile",
+      "kind": "sound",
+      "lines": 1,
+      "actions": [],
+      "calls": [
+        "SOUND_KANTURU_1ST_BER_MOVE1"
+      ],
+      "file": "Data/Sound/w37/ber_idle-01.wav",
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:387",
+      "in": "LoadWaveFile",
+      "kind": "sound",
+      "lines": 1,
+      "actions": [],
+      "calls": [
+        "SOUND_KANTURU_1ST_BER_ATTACK1"
+      ],
+      "file": "Data/Sound/w37/ber_attack-01.wav",
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:389",
+      "in": "LoadWaveFile",
+      "kind": "sound",
+      "lines": 1,
+      "actions": [],
+      "calls": [
+        "SOUND_KANTURU_1ST_BER_DIE"
+      ],
+      "file": "Data/Sound/w37/ber_death.wav",
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GM_Kanturu_1st.cpp:908",
+      "in": "M37Kanturu1st::RenderKanturu1stMonsterObjectMesh",
+      "kind": "look",
+      "lines": 20,
+      "actions": [
+        "MONSTER01_DIE"
+      ],
+      "calls": [
+        "RenderBody",
+        "RENDER_TEXTURE",
+        "BlendMeshTexCoordU",
+        "BlendMeshTexCoordV",
+        "RenderMesh",
+        "RENDER_BRIGHT",
+        "BITMAP_BERSERK_EFFECT",
+        "BITMAP_BERSERK_WP_EFFECT"
+      ],
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/Engine/Object/ZzzOpenData.cpp:2707",
+      "in": "OpenMonsterModel",
+      "kind": "animation",
+      "lines": 8,
+      "actions": [
+        "MONSTER01_STOP1",
+        "MONSTER01_STOP2",
+        "MONSTER01_WALK",
+        "MONSTER01_ATTACK1",
+        "MONSTER01_ATTACK2",
+        "MONSTER01_DIE"
+      ],
+      "calls": [],
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/Engine/Object/ZzzOpenData.cpp:2429",
+      "in": "GetMonsterModelName",
+      "kind": "other",
+      "lines": 1,
+      "actions": [],
+      "calls": [],
+      "state": "skip",
+      "note": "MU's name for the model, for its tools; nothing to carry"
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GM_Kanturu_1st.cpp:590",
+      "in": "M37Kanturu1st::SetCurrentActionKanturu1stMonster",
+      "kind": "other",
+      "lines": 1,
+      "actions": [],
+      "calls": [],
+      "state": "todo",
+      "note": "falls through into the next case: no break"
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GM_Kanturu_1st.cpp:670",
+      "in": "M37Kanturu1st::AttackEffectKanturu1stMonster",
+      "kind": "other",
+      "lines": 5,
+      "actions": [],
+      "calls": [],
+      "state": "todo",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GM_Kanturu_1st.cpp:875",
+      "in": "M37Kanturu1st::MoveKanturu1stMonsterVisual",
+      "kind": "other",
+      "lines": 2,
+      "actions": [],
+      "calls": [],
+      "state": "todo",
+      "note": ""
+    }
+  ],
+  "rules": {
+    "drops": {
+      "money_rate": 30,
+      "max_plus": 3,
+      "regen": 10
+    },
+    "resist": {
+      "ice": 25,
+      "poison": 25
+    },
+    "note": "Resistance: OpenMU S6 Maps/KanturuRuins.cs:274-300 writes 25/255 to all four, read as WebZen raw values as Aida's are; fire and lightning are not carried. Drops: Aida's (30 and 3) until Kanturu's are settled (docs/worlds/kanturu-port.md decision 8); RegTime 10."
+  },
+  "chrome": [
+    {
+      "slot": "buserbody",
+      "image": "buserbody_r",
+      "uv": "mesh",
+      "tint": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "where": "over",
+      "pulse": [
+        1.0,
+        1.0
+      ],
+      "pulse_rate": "half",
+      "note": "RenderKanturu1stMonsterObjectMesh MODEL_BERSERK (GM_Kanturu_1st.cpp:911-925): while it lives, after its body, mesh 0 again RENDER_TEXTURE | RENDER_BRIGHT with BITMAP_BERSERK_EFFECT, Monster/buserbody_r.jpg (ZzzOpenData.cpp:5421), at its own UVs and fLumi = sin(WorldTime * 0.002) + 1, 0 to 2: its green edges breathing. Dying, MU stops it: our corpses fade as every breed's do."
+    },
+    {
+      "slot": "busersword",
+      "image": "busersword_r",
+      "uv": "mesh",
+      "tint": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "where": "over",
+      "pulse": [
+        1.0,
+        1.0
+      ],
+      "pulse_rate": "half",
+      "note": "RenderKanturu1stMonsterObjectMesh MODEL_BERSERK (GM_Kanturu_1st.cpp:911-925): while it lives, after its body, mesh 1 again RENDER_TEXTURE | RENDER_BRIGHT with BITMAP_BERSERK_WP_EFFECT, Monster/busersword_r.jpg (ZzzOpenData.cpp:5422), at its own UVs and fLumi = sin(WorldTime * 0.002) + 1, 0 to 2: its green edges breathing. Dying, MU stops it: our corpses fade as every breed's do."
+    }
+  ],
+  "show": {
+    "tags": [
+      "berserker",
+      "plants_on_feet"
+    ],
+    "claws": {
+      "pairs": [
+        [
+          "Bone06",
+          "Bone07"
+        ]
+      ],
+      "from": 0.181,
+      "to": 2.117,
+      "light": [
+        0.3,
+        2.0,
+        0.5
+      ],
+      "after": 3.5,
+      "until": 6.7,
+      "axis": "through",
+      "note": "MoveKanturu1stBlurEffect MODEL_BERSERK (GM_Kanturu_1st.cpp:1645-1673): keys 3.5 to 6.7 of both attacks, ten CreateBlur type 1 a frame in (0.3, 2.0, 0.5) from 20 units back down bone 33's (Bone06's) x to 100 out along bone 34's (Bone07's): its sword's whole sweep. Ours along the line Bone06 -> Bone07, 0.181 m to 2.117 m at scale 1, where both those points lie within 0.1 m of it on keys 0 and 4 of Attack 1 (FK of the rig): an offset in a bone's own axes does not survive the Blender rebuild."
+    },
+    "note": "fx/berserker.h: the green breath off its mouth (Bone08) while it neither swings nor has fallen."
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "leather",
+      "triangles": 22,
+      "area": 990.8,
+      "along": [
+        -5.1,
+        19.2
+      ],
+      "mu_uv": [
+        0.073,
+        0.606,
+        0.174,
+        0.782
+      ],
+      "bake_uv": [
+        0.404,
+        0.011,
+        0.937,
+        0.935
+      ]
+    },
+    {
+      "island": 1,
+      "material": "leather",
+      "triangles": 8,
+      "area": 91.6,
+      "along": [
+        19.3,
+        25.9
+      ],
+      "mu_uv": [
+        0.486,
+        0.942,
+        0.702,
+        0.988
+      ],
+      "bake_uv": [
+        0.243,
+        0.931,
+        0.738,
+        0.967
+      ]
+    },
+    {
+      "island": 2,
+      "material": "leather",
+      "triangles": 72,
+      "area": 3317.8,
+      "along": [
+        -20.8,
+        23.8
+      ],
+      "mu_uv": [
+        0.009,
+        0.5,
+        0.212,
+        0.991
+      ],
+      "bake_uv": [
+        0.012,
+        0.015,
+        0.886,
+        0.882
+      ]
+    },
+    {
+      "island": 3,
+      "material": "leather",
+      "triangles": 196,
+      "area": 25611.3,
+      "along": [
+        -42.8,
+        25.7
+      ],
+      "mu_uv": [
+        0.019,
+        0.017,
+        0.984,
+        0.475
+      ],
+      "bake_uv": [
+        0.533,
+        0.083,
+        0.984,
+        0.984
+      ]
+    },
+    {
+      "island": 4,
+      "material": "leather",
+      "triangles": 4,
+      "area": 105.7,
+      "along": [
+        19.6,
+        27.2
+      ],
+      "mu_uv": [
+        0.3,
+        0.014,
+        0.338,
+        0.179
+      ],
+      "bake_uv": [
+        0.729,
+        0.012,
+        0.933,
+        0.362
+      ]
+    },
+    {
+      "island": 5,
+      "material": "leather",
+      "triangles": 4,
+      "area": 105.4,
+      "along": [
+        14.7,
+        22.0
+      ],
+      "mu_uv": [
+        0.3,
+        0.014,
+        0.338,
+        0.179
+      ],
+      "bake_uv": [
+        0.716,
+        0.669,
+        0.847,
+        0.779
+      ]
+    },
+    {
+      "island": 6,
+      "material": "leather",
+      "triangles": 48,
+      "area": 5388.5,
+      "along": [
+        -19.1,
+        25.8
+      ],
+      "mu_uv": [
+        0.017,
+        0.019,
+        0.567,
+        0.59
+      ],
+      "bake_uv": [
+        0.295,
+        0.456,
+        0.959,
+        0.805
+      ]
+    },
+    {
+      "island": 7,
+      "material": "leather",
+      "triangles": 32,
+      "area": 3572.3,
+      "along": [
+        -31.4,
+        20.6
+      ],
+      "mu_uv": [
+        0.099,
+        0.195,
+        0.295,
+        0.505
+      ],
+      "bake_uv": [
+        0.08,
+        0.129,
+        0.959,
+        0.877
+      ]
+    },
+    {
+      "island": 8,
+      "material": "leather",
+      "triangles": 68,
+      "area": 6515.7,
+      "along": [
+        -22.4,
+        16.3
+      ],
+      "mu_uv": [
+        0.629,
+        0.711,
+        0.989,
+        0.992
+      ],
+      "bake_uv": [
+        0.237,
+        0.012,
+        0.384,
+        0.126
+      ]
+    },
+    {
+      "island": 9,
+      "material": "leather",
+      "triangles": 100,
+      "area": 3411.7,
+      "along": [
+        -1.2,
+        31.0
+      ],
+      "mu_uv": [
+        0.201,
+        0.852,
+        0.495,
+        0.992
+      ],
+      "bake_uv": [
+        0.255,
+        0.368,
+        0.736,
+        0.869
+      ]
+    },
+    {
+      "island": 10,
+      "material": "leather",
+      "triangles": 62,
+      "area": 4885.5,
+      "along": [
+        -17.1,
+        30.8
+      ],
+      "mu_uv": [
+        0.311,
+        0.013,
+        0.549,
+        0.401
+      ],
+      "bake_uv": [
+        0.12,
+        0.153,
+        0.984,
+        0.822
+      ]
+    },
+    {
+      "island": 11,
+      "material": "leather",
+      "triangles": 358,
+      "area": 25908.3,
+      "along": [
+        -78.7,
+        43.1
+      ],
+      "mu_uv": [
+        0.014,
+        0.014,
+        0.868,
+        0.901
+      ],
+      "bake_uv": [
+        0.076,
+        0.012,
+        0.959,
+        0.933
+      ]
+    },
+    {
+      "island": 12,
+      "material": "leather",
+      "triangles": 8,
+      "area": 94.7,
+      "along": [
+        15.2,
+        22.6
+      ],
+      "mu_uv": [
+        0.486,
+        0.942,
+        0.702,
+        0.988
+      ],
+      "bake_uv": [
+        0.383,
+        0.94,
+        0.603,
+        0.967
+      ]
+    },
+    {
+      "island": 13,
+      "material": "leather",
+      "triangles": 4,
+      "area": 105.4,
+      "along": [
+        13.0,
+        19.7
+      ],
+      "mu_uv": [
+        0.3,
+        0.014,
+        0.338,
+        0.179
+      ],
+      "bake_uv": [
+        0.922,
+        0.085,
+        0.946,
+        0.456
+      ]
+    },
+    {
+      "island": 14,
+      "material": "leather",
+      "triangles": 48,
+      "area": 5395.3,
+      "along": [
+        -35.8,
+        2.4
+      ],
+      "mu_uv": [
+        0.017,
+        0.019,
+        0.567,
+        0.59
+      ],
+      "bake_uv": [
+        0.012,
+        0.011,
+        0.685,
+        0.98
+      ]
+    },
+    {
+      "island": 15,
+      "material": "leather",
+      "triangles": 40,
+      "area": 6786.5,
+      "along": [
+        -42.3,
+        18.5
+      ],
+      "mu_uv": [
+        0.721,
+        0.342,
+        0.987,
+        0.703
+      ],
+      "bake_uv": [
+        0.385,
+        0.123,
+        0.894,
+        0.89
+      ]
+    },
+    {
+      "island": 16,
+      "material": "leather",
+      "triangles": 32,
+      "area": 3572.3,
+      "along": [
+        -33.9,
+        18.4
+      ],
+      "mu_uv": [
+        0.099,
+        0.195,
+        0.295,
+        0.505
+      ],
+      "bake_uv": [
+        0.512,
+        0.011,
+        0.98,
+        0.377
+      ]
+    },
+    {
+      "island": 17,
+      "material": "leather",
+      "triangles": 68,
+      "area": 6825.7,
+      "along": [
+        -34.3,
+        9.2
+      ],
+      "mu_uv": [
+        0.629,
+        0.711,
+        0.989,
+        0.992
+      ],
+      "bake_uv": [
+        0.347,
+        0.58,
+        0.494,
+        0.694
+      ]
+    },
+    {
+      "island": 18,
+      "material": "leather",
+      "triangles": 100,
+      "area": 3255.2,
+      "along": [
+        -25.6,
+        4.4
+      ],
+      "mu_uv": [
+        0.201,
+        0.852,
+        0.495,
+        0.992
+      ],
+      "bake_uv": [
+        0.31,
+        0.586,
+        0.567,
+        0.865
+      ]
+    },
+    {
+      "island": 19,
+      "material": "leather",
+      "triangles": 8,
+      "area": 94.7,
+      "along": [
+        15.2,
+        22.6
+      ],
+      "mu_uv": [
+        0.486,
+        0.942,
+        0.702,
+        0.988
+      ],
+      "bake_uv": [
+        0.164,
+        0.94,
+        0.89,
+        0.989
+      ]
+    },
+    {
+      "island": 20,
+      "material": "leather",
+      "triangles": 40,
+      "area": 6789.8,
+      "along": [
+        -35.8,
+        25.7
+      ],
+      "mu_uv": [
+        0.721,
+        0.342,
+        0.987,
+        0.703
+      ],
+      "bake_uv": [
+        0.821,
+        0.309,
+        0.942,
+        0.584
+      ]
+    },
+    {
+      "island": 21,
+      "material": "blade_steel",
+      "triangles": 54,
+      "area": 7326.7,
+      "along": [
+        5.4,
+        94.3
+      ],
+      "mu_uv": [
+        0.029,
+        0.027,
+        0.807,
+        0.981
+      ],
+      "bake_uv": [
+        0.012,
+        0.011,
+        0.8,
+        0.557
+      ]
+    },
+    {
+      "island": 22,
+      "material": "blade_steel",
+      "triangles": 12,
+      "area": 3030.3,
+      "along": [
+        -36.1,
+        79.1
+      ],
+      "mu_uv": [
+        0.081,
+        0.044,
+        0.964,
+        0.975
+      ],
+      "bake_uv": [
+        0.011,
+        0.328,
+        0.959,
+        0.959
+      ]
+    }
+  ]
+}

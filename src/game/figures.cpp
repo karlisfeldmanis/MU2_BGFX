@@ -417,7 +417,12 @@ float measurePlant(const FigureBody& body, int clip) {
         // played at 0.64 where stride.py finds the feet stillest at 0.80.
         const bool player = body.library && body.library->name == "player";
         const bool dragon = body.library && body.library->name == "GoldenDragon01";
-        if ((player || dragon) && feet[0] >= 0 && feet[1] >= 0) {
+        // And a breed whose recipe asks (show tag "plants_on_feet"): the Blade Hunter, whose
+        // blades and cape swing low and fast, so the generic test put its plant at 10.76 m/s where
+        // its feet plant at about 1.6 (tools/stride.py), and its walk crawled at a sixth of its
+        // rate (the user, 2026-10-23: 'walking seems vierd for mosnter').
+        const bool onFeet = body.has("plants_on_feet");
+        if ((player || dragon || onFeet) && feet[0] >= 0 && feet[1] >= 0) {
             // Which way is back along the walk: -z on the man's rig; on the dragon's, the way its
             // feet go while they are down, as stride.py reads it off the clip.
             // Down: within 5 cm of its lowest on the man; on the dragon, in the lower half of its
@@ -1489,7 +1494,10 @@ void Figures::addMonster(const core::Json& entry) {
         made->idleSafeClip = made->idleClip;
         // Its own walk, measured the same way a man's is -- whatever it plants. A breed
         // that plants nothing measurably (a thing that hovers, a clip with no contact)
-        // comes back zero and is paced by the cook's travel instead.
+        // comes back zero and is paced by the cook's travel instead. Its tags first, which
+        // addShown lays on after: "plants_on_feet" changes how it is measured.
+        readShows();
+        if (auto shown = shows_.find(made->name); shown != shows_.end()) made->tags = shown->second.tags;
         made->plantSpeed = measurePlant(*made, made->walkClip);
         made->walkSafeClip = made->walkClip;
         made->plantSpeedSafe = made->plantSpeed;

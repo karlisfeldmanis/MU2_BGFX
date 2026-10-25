@@ -45,13 +45,24 @@ public:
     uint64_t rebuilds() const { return rebuilds_; }
 
 private:
+    struct Line;
+    void pipsAt(const Line& line, float x, float cy, float k);
     // One printed line: a name and its figure, `dim` for a nought shown so its row is known.
     struct Line {
         std::string label, value;
         bool dim = false;
+        // The value's ink on the Bonuses page (its element's, its stat's); 0 is the plain bone.
+        uint32_t ink = 0;
         // Under a plus the pointer is on: what the press would add, and the value lit in gold.
         std::string gain;
         bool lit = false;
+        // A rune's row on the Bonuses page: its name's ink (its rarity's), and of a limited one
+        // `pips` rings with the worn set in them, strongest first, in their rarities' inks.
+        uint32_t labelInk = 0;
+        int pips = 0;
+        std::vector<uint32_t> stones;
+        // What it does, quiet under its name: "+10% critical chance each".
+        std::string note;
         bool operator==(const Line&) const = default;
     };
     // A headed block of lines on the Combat and Bonuses pages.

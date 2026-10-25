@@ -1,0 +1,220 @@
+{
+  "item": "Object19",
+  "mu_name": "Object19",
+  "mu_name_from": "kanturu_relics's object slot: type N is Object{N+1}.bmd, from Data/Object39.",
+  "world": "kanturu_relics",
+  "object_type": 18,
+  "placements": 30,
+  "profile": "world",
+  "sheets": {
+    "Mcanwall001": "kl_mcanwall001.png",
+    "Mcanwall011": "kl_mcanwall011.png"
+  },
+  "sheet_from": "Data/Object39/, decoded under the kl_ prefix by `mu new`.",
+  "sheet_materials": {
+    "Mcanwall001": "flagstone",
+    "Mcanwall011": "flagstone"
+  },
+  "material_note": "Mcanwall001, Mcanwall011: carved grey stone walls with iron and bronze fittings: flagstone.",
+  "why_this_one": "A 5 x 7 m carved stone wall block, 30 of them, a hall's wall. Batch 1 of the Relics, the most-placed and biggest shapes first (the user, 2026-10-23: \"we need to finish first kanturu all objects before continue to make monsters\"; the light: \"Draft as is\"). docs/worlds/kanturu-port.md Part B 8.1.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "flagstone",
+      "triangles": 164,
+      "area": 220527.5,
+      "along": [
+        48.9,
+        207.9
+      ],
+      "mu_uv": [
+        0.136,
+        0.001,
+        1.0,
+        0.999
+      ],
+      "bake_uv": [
+        0.076,
+        0.012,
+        0.96,
+        0.986
+      ]
+    },
+    {
+      "island": 1,
+      "material": "flagstone",
+      "triangles": 44,
+      "area": 95439.7,
+      "along": [
+        -114.3,
+        114.3
+      ],
+      "mu_uv": [
+        -0.002,
+        0.001,
+        0.264,
+        0.997
+      ],
+      "bake_uv": [
+        0.122,
+        0.115,
+        0.905,
+        0.839
+      ]
+    },
+    {
+      "island": 2,
+      "material": "flagstone",
+      "triangles": 44,
+      "area": 95439.7,
+      "along": [
+        -114.3,
+        114.3
+      ],
+      "mu_uv": [
+        -0.002,
+        0.001,
+        0.264,
+        0.997
+      ],
+      "bake_uv": [
+        0.204,
+        0.115,
+        0.911,
+        0.839
+      ]
+    },
+    {
+      "island": 3,
+      "material": "flagstone",
+      "triangles": 22,
+      "area": 20953.9,
+      "along": [
+        42.4,
+        71.9
+      ],
+      "mu_uv": [
+        -0.002,
+        0.001,
+        0.264,
+        0.997
+      ],
+      "bake_uv": [
+        0.301,
+        0.679,
+        0.823,
+        0.908
+      ]
+    },
+    {
+      "island": 4,
+      "material": "flagstone",
+      "triangles": 164,
+      "area": 220527.5,
+      "along": [
+        -207.9,
+        -48.9
+      ],
+      "mu_uv": [
+        0.136,
+        0.001,
+        1.0,
+        0.999
+      ],
+      "bake_uv": [
+        0.012,
+        0.012,
+        0.988,
+        0.979
+      ]
+    },
+    {
+      "island": 5,
+      "material": "flagstone",
+      "triangles": 22,
+      "area": 20953.9,
+      "along": [
+        -71.9,
+        -42.4
+      ],
+      "mu_uv": [
+        -0.002,
+        0.001,
+        0.264,
+        0.997
+      ],
+      "bake_uv": [
+        0.719,
+        0.115,
+        0.871,
+        0.758
+      ]
+    },
+    {
+      "island": 6,
+      "material": "flagstone",
+      "triangles": 22,
+      "area": 20953.9,
+      "along": [
+        42.4,
+        71.9
+      ],
+      "mu_uv": [
+        -0.002,
+        0.001,
+        0.264,
+        0.997
+      ],
+      "bake_uv": [
+        0.012,
+        0.504,
+        0.859,
+        0.881
+      ]
+    },
+    {
+      "island": 7,
+      "material": "flagstone",
+      "triangles": 22,
+      "area": 20953.9,
+      "along": [
+        -71.9,
+        -42.4
+      ],
+      "mu_uv": [
+        -0.002,
+        0.001,
+        0.264,
+        0.997
+      ],
+      "bake_uv": [
+        0.713,
+        0.278,
+        0.914,
+        0.874
+      ]
+    },
+    {
+      "island": 8,
+      "material": "flagstone",
+      "triangles": 144,
+      "area": 316623.2,
+      "along": [
+        -51.5,
+        51.5
+      ],
+      "mu_uv": [
+        0.003,
+        0.004,
+        0.998,
+        0.998
+      ],
+      "bake_uv": [
+        0.012,
+        0.012,
+        0.96,
+        0.938
+      ]
+    }
+  ]
+}

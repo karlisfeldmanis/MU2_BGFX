@@ -171,6 +171,21 @@ constexpr int32_t kImpale = 47;
 // AT_SKILL_NOVA_BEGIN and AT_SKILL_NOVA). Taught by the Scroll of Nova (Book19); the user,
 // 2026-10-07: 'lets first make that nova for soul master, than use it for dragon'.
 constexpr int32_t kNova = 40;
+// `AT_SKILL_DEFENSEDOWN`, the Magic Gladiator's Fire Slash (WebZen's "Blood Attack", MuMain's
+// AT_SKILL_FIRE_SLASH): the Icarus era's, past 0.97 (WebZen public.h:229, OpenMU
+// VersionSeasonSix/SkillsInitializer.cs:173). A ribbon of fire round his front, and a body it
+// strikes may lose a tenth of its defence for ten seconds (docs/plans/mg-skills/fire-slash.md).
+constexpr int32_t kFireSlash = 55;
+// `AT_SKILL_SWORD6`, the Magic Gladiator's Power Slash (MuMain's AT_SKILL_POWER_SLASH): 0.99B's,
+// October 2003 (WebZen public.h:231, ADD_SKILL_20031022; OpenMU VersionSeasonSix/
+// SkillsInitializer.cs:175). Never an orb and never learned: his blade's, known while one whose
+// row carries it is in his right hand (Realm::knows). Five waves fan out ahead of him and strike
+// the bodies in a widening wedge as they reach them (docs/plans/mg-skills/power-slash.md).
+constexpr int32_t kPowerSlash = 56;
+// `AT_SKILL_SWELL_LIFE`, the knight's Swell Life, off the Orb of Greater Fortitude: Season 1's and
+// not 0.75's (OpenMU VersionSeasonSix/SkillsInitializer.cs:167, MuMain _enum.h:337). His party's
+// most health raised by a share for five minutes (Body::swell, sim::swellShare). MU's number.
+constexpr int32_t kSwellLife = 48;
 // `AT_SKILL_BLAST_FREEZE`, Ice Storm, the Soul Master's Season 3 spell: no row and never learned,
 // only the Ancient rune's (sim/items.h kIceStorm...), said as Loosed so the drawing lets its
 // blizzard fall (fx/blizzard.h). MU's number, free in this table.
@@ -185,6 +200,12 @@ constexpr int32_t kPollution = 225;
 // `AT_SKILL_ALICE_DRAINLIFE`: the Ancient rune Drain Life's (sim/items.h kDrain...), said as
 // Loosed on what it struck (fx/drain.h). MU's number.
 constexpr int32_t kDrainLife = 214;
+// `AT_SKILL_SUMMON_REQUIEM`, the Summoner's Book of Neil: the Ancient rune Requiem's (sim/items.h
+// kRequiem...), said as Loosed on the point it was thrown at (fx/requiem.h). MU's number.
+constexpr int32_t kRequiem = 224;
+// `AT_SKILL_SLEEP`, the Summoner's first curse: the Ancient rune Sleep's (sim/items.h kSleep...),
+// said as Loosed on each body it put to sleep (fx/sleep.h). MU's number.
+constexpr int32_t kSleep = 219;
 }  // namespace skill
 
 // What an iced body's walking is multiplied by: OpenMU's `IcedMovementSpeedFactor`, 0.5, which
@@ -285,7 +306,9 @@ std::string familiesListed(uint32_t families);
 // from her feet to the row's reach -- MU2's `Realm.Passes`, off MuMain's Triple Shot, whose
 // arrows fly on through what they strike (`Kind = 1`). MU2 left the first 0.6 tiles out, which
 // let a monster pressed against her take nothing.
-enum class Spread : uint8_t { One, Ring, Arc, Line, Fan, Beam };
+// Frustum is Power Slash's: WebZen's SkillFrustrum, a trapezoid along his aim, `kFrustumNear`
+// either side at his feet widening to `kFrustumFar` at `kFrustumDeep` tiles out.
+enum class Spread : uint8_t { One, Ring, Arc, Line, Fan, Beam, Frustum };
 // How many bodies one Lightning chain strikes at most: eleven, not the fourteen its window
 // would reach (the user, 2026-10-04). The window and the arm keep their time. Realm::channel.
 constexpr int kLightningBodies = 11;
@@ -312,6 +335,26 @@ constexpr float kBeamStep = 1.5f;
 constexpr int kBeamPoints = 4;
 constexpr float kBeamRadius = 1.5f;
 constexpr float kBeamTiles = kBeamStart + kBeamStep * float(kBeamPoints) + kBeamRadius;
+
+// **Power Slash's** `Spread::Frustum`: WebZen's SkillFrustrum, local corners (-1,0) (1,0) (6,6)
+// (-6,6) turned to his angle (user.cpp:32069-32105) -- a tile either side at his feet, six at six
+// tiles out, six deep; its near edge runs through his own tile, so a body half a tile behind
+// his middle still stands in it. Measured here in floats on his aim, edges inclusive (OpenMU's
+// FrustumBasedTargetFilter.cs, which drops WebZen's integer corners).
+constexpr float kFrustumNear = 1.0f;
+constexpr float kFrustumFar = 6.0f;
+constexpr float kFrustumDeep = 6.0f;
+constexpr float kFrustumBehind = 0.5f;
+// **WebZen's count** (ObjUseSkill.cpp:2937-2957): every body in it counts, the nearest five are
+// struck, the sixth to the eleventh each at even odds, and none past the eleventh. Ours: nearest
+// first, where MU's order is the viewport's.
+constexpr int kFrustumSure = 5;
+constexpr int kFrustumMost = 11;
+constexpr float kFrustumOdds = 0.5f;
+// **And each is struck as its wave reaches it** (the dossier's 5.4, the Fire Burst rule "the
+// number comes with the visual"): MuMain's carriers go 60 units a frame at 25 -- fifteen tiles a
+// second (ZzzEffect.cpp:1991-1998, Direction (0, -60, 0)) -- leaving as his swing begins.
+constexpr float kWaveTilesPerSecond = 15.0f;
 
 struct SkillRow {
     int32_t number = 0;
@@ -473,7 +516,43 @@ struct SkillRow {
     int32_t summonsAs = 0;
     // **A summon that flies**: raised over a map whose rules forbid summons (Icarus's).
     bool airborne = false;
-    // ---- Critical Damage's, appended after the Alquamos's ------------------------------------
+    // ---- Fire Slash's, appended after the Alquamos's ------------------------------------------
+    // **Half its Arc's spread**, in radians, where it is not kArcHalfAngle's 67.5 degrees: Fire
+    // Slash's ribbon sweeps 187 degrees round his front (MuMain's JOINT_FORCE, +75 to -112 of his
+    // facing), made a symmetric half-disc, +-90 (the dossier's section 5.2). 0 for the default.
+    float arcHalf = 0.0f;
+    // **A second pace from a key on**: MU plays WHEEL at 0.24 until Fire Slash's AnimationFrame
+    // reaches 3 and then sets its PlaySpeed to 0.54 (ZzzCharacter.cpp:2783-2818, 813-816), so the
+    // spin after the blow is twice as quick. `paceKey` is the key it changes on and `paceAfter`
+    // the authored pace after it, each with his attack speed's share on top (sim::castTicks).
+    // 0 for one pace through.
+    float paceAfter = 0.0f;
+    int32_t paceKey = 0;
+    // **A cut to the defence of what it strikes** (Fire Slash's, WebZen's MaGumSkillDefenseDown,
+    // ObjUseSkill.cpp:1327-1358): on each body, `cutChance` to lose `cutShare` percent of its
+    // defence for `cutTicks`, rolled before the blow so that blow profits, a re-hit starting the
+    // clock again and never stacking (Realm::strikeAt, Body::defenseCutUntil). 0 for none.
+    int32_t cutTicks = 0;
+    float cutChance = 0.0f;
+    int32_t cutShare = 0;
+    // ---- Power Slash's, appended after Fire Slash's ------------------------------------------
+    // **Never thrown riding**: MuMain's click does nothing on Uniria, Dinorant, Dark Horse or
+    // Fenrir (ClassAttack.cpp:660-697), and the bar greys it there. Learned off its orb as any
+    // other; only the mount is asked.
+    bool afoot = false;
+    // ---- Swell Life's, appended after Power Slash's -------------------------------------------
+    // **His party's most health raised** by sim::swellShare for this many ticks: on him and every
+    // member of his party within kPartyReach (Realm::throwSkill, Body::swellUntil). 0 for none.
+    int32_t swellTicks = 0;
+    // ---- Penetration's, appended after Swell Life's -------------------------------------------
+    // **Percent of the defence of what it strikes that the blow passes**, a hero's on a monster
+    // (Realm::strikeAt), after any Fire Slash cut. Penetration's 30 (the user, 2026-10-25: "lets
+    // boost some elf thingies"): defence comes off every hit, so her many arrows lost the most of
+    // it -- ~900 a hit on Aida where a knight lands ~2,400. 0 for none.
+    int32_t pierces = 0;
+    // The Arc's half-angle this row is gathered with (Realm::gather).
+    float arcHalfAngle() const;
+    // ---- Critical Damage's, appended after Penetration's --------------------------------------
     // **A party's critical damage**: `Command/25 + Energy/30` on every critical and excellent hit
     // for `60 + Energy/10` seconds, on him and every party member within ten tiles (sim::keenOf,
     // Realm::throwSkill).
@@ -498,7 +577,8 @@ struct SkillRow {
         // And Earthshake, round him but turned to the pointer: MU's 0x1E turns him to the point
         // and lays the crater ahead (earthshake.md decision 9).
         return spread == Spread::Beam || spread == Spread::Line || spread == Spread::Arc ||
-               walks > 0.0f || showers() || number == skill::kEarthshake;
+               spread == Spread::Frustum || walks > 0.0f || showers() ||
+               number == skill::kEarthshake;
     }
     // **A shower**: rocks out of the sky on random ground within `splash` of where it is called
     // -- Meteorite's since 2026-10-04 (the user: "click on any spot on ground and on that area
@@ -511,18 +591,29 @@ struct SkillRow {
     // his facing, the ring burns round him, empty or not -- mana and clip spent on air, which
     // 0.75's "no target, no skill" refused. Ours. **Twisting Slash too** (the user, 2026-10-10:
     // "twisting slash is aoe spell similar like ragefull blow ... casted also without monster
-    // click hover"): Rageful Blow's arc already goes off on the pointer's ground; the knight's
-    // whirl is a ring round him and has no direction to aim, so it spins where he stands.
+    // click hover"): the knight's whirl is a ring round him and has no direction to aim, so it
+    // spins where he stands. **Rageful Blow and Cyclone too** (the user, 2026-10-23: "rageful
+    // blow jakas pa brīdim pārstāj vispār strādāt"): the note here said Rageful Blow's arc went
+    // off on the pointer's ground, but an arc with nobody in it was refused in silence -- its one
+    // tile ahead toward the mouse empty, the key did nothing at all. Now it breaks the ground
+    // there, mana and cooldown spent, and Cyclone, an arc since the same day, spins there.
+    // Fire Slash with them (2026-10-24): an arc as Cyclone's, its ribbon thrown at empty air.
+    // And Power Slash, whose waves MU's client sends at its own angle, a body there or not.
     bool castsBare() const {
         return number == skill::kEvilSpirit || number == skill::kTwister ||
                number == skill::kHellfire || number == skill::kTwistingSlash ||
+               number == skill::kRagefulBlow || number == skill::kCyclone ||
+               number == skill::kFireSlash || number == skill::kPowerSlash ||
                number == skill::kEarthshake;  // MU's stomp needs no target (earthshake.md 9)
     }
     // Whether it is cast on the caster and takes no target.
-    bool onSelf() const { return boonTicks > 0 || mends || mightTicks > 0 || summons > 0 || sharpens || recalls; }
+    bool onSelf() const {
+        return boonTicks > 0 || mends || mightTicks > 0 || summons > 0 || swellTicks > 0 ||
+               sharpens || recalls;
+    }
     // Whether it is an aura: a self-cast that is not a summon. Blood Castle's court lets these
     // be raised on its safe tiles, to go into the fight with them (Realm::throwSkill).
-    bool aura() const { return boonTicks > 0 || mends || mightTicks > 0 || sharpens; }
+    bool aura() const { return boonTicks > 0 || mends || mightTicks > 0 || swellTicks > 0 || sharpens; }
     // **Whether it may be cast on another player**: the elf's Heal, Greater Defense and Greater
     // Damage, as MU casts them on a player -- on whoever she is pointing at or has picked, within
     // kAidReach (Realm::throwSkill; the user, 2026-10-19: "elf can buff, heal other players by
@@ -551,14 +642,16 @@ struct SkillRow {
 // Inferno and Aqua Beam, on the end past the elf's, Cometfall past the Dinorant's, and Impale
 // past Cometfall. The
 // learned mask is sixty-four bits since
-// Inferno, the thirty-third (`Body::learned`, and the save writes it whole), and Nova past
-// Impale; past sixty-four it needs widening
+// Inferno, the thirty-third (`Body::learned`, and the save writes it whole), Nova past
+// Impale, the Magic Gladiator's Fire Slash, the forty-first, past the Alquamos, and his blade's
+// Power Slash past it (kKeptLayout 16 keeps both cools), and the knight's Swell Life past that
+// (kKeptLayout 17); past sixty-four it needs widening
 // again, which the static_assert below says. Also the width of a body's cooldown array -- and
 // the learned mask is by INDEX, so a new row goes on the END of the table or an old save
-// gives a knight somebody else's skill. The Dark Lord's Force past the Alquamos (41), his Fire
-// Burst (42), Electric Spike (43), Critical Damage (44), Summon (45), Fire Scream (46) and
-// Earthshake (47); a kept layout before 15 carries 40 cools, net/wire.cpp.
-constexpr int kSkills = 47;
+// gives a knight somebody else's skill. The Dark Lord's rows past Swell Life (42): Force (43),
+// Fire Burst (44), Electric Spike (45), Critical Damage (46), Summon (47), Fire Scream (48) and
+// Earthshake (49); a kept layout before 19 carries fewer cools, net/wire.cpp.
+constexpr int kSkills = 50;
 
 // What each of Nova's stages adds to its blow: OpenMU's NovaDamageTable (NovaSkillStartPlugin.cs:30),
 // stage 0 to 12, with the strength's half beside it (SkillsInitializer.cs:610-611).
@@ -609,6 +702,7 @@ constexpr int32_t kBurstFirstTick = 10, kBurstLastTick = 15;
 // angle rather than as three tiles because a body stands at a fractional position and a tile
 // test would drop a monster straddling the line between two of them.
 constexpr float kArcHalfAngle = 1.17809725f;
+inline float SkillRow::arcHalfAngle() const { return arcHalf > 0.0f ? arcHalf : kArcHalfAngle; }
 
 int skillCount();
 const SkillRow& skillAt(int index);
@@ -708,8 +802,9 @@ inline bool elfBuff(const SkillRow& row) {
 // And the wizard's Magic Shield beside them since it is cast on others (2026-10-21): held at its
 // five minutes he could shield one player of his party in five minutes. Its own twelve seconds
 // are its wait, as her three seconds are hers.
+// Swell Life with them: it falls on his party too, and a recast only puts the clock back.
 inline bool lentBuff(const SkillRow& row) {
-    return elfBuff(row) || row.number == skill::kSoulBarrier;
+    return elfBuff(row) || row.number == skill::kSoulBarrier || row.number == skill::kSwellLife;
 }
 
 // How much of every blow Defense takes away, 0 to kGuardCap, off the shield he holds, his
@@ -746,6 +841,15 @@ float barrierShare(const HeroPoints& points, int shieldDefense);
 // points stands where theirs is -- a Buckler +1's, which is what the knight's own 16.3% is
 // measured behind -- and no shield is asked. A new elf's is 14.4%, beside theirs.
 constexpr float kWardShieldPoints = 15.0f;
+// **Swell Life's share of the most health**, MU's own sum: 12%, a percent each 20 energy and each
+// 100 vitality, and a percent a member of his party it falls on, him among them, none alone (OpenMU
+// LifeSwellEffectInitializer.cs: 0.12 + energy/2000 + vitality/10000 + NearbyPartyMemberCount/100).
+// Reckoned off the caster at the cast and held. Ours: kSwellCap, where OpenMU allows 200% -- a
+// level-400 knight of 1500 energy alone would be at 95%. Dirk, the sweep's knight (447 vitality,
+// 40 energy), is at 18.5% alone and 23.5% in a party of five.
+constexpr float kSwellBase = 0.12f;
+constexpr float kSwellCap = 0.40f;
+float swellShare(const HeroPoints& points, int members);
 float wardPoints(const HeroPoints& points);
 float wardShare(const HeroPoints& points);
 // **A summon scales with her energy** -- the user's, 2026-09-28: "if an elf player decided to go

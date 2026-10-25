@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "core/utf8.h"
 #include "game/play.h"
 #include "game/ui/controls.h"
 #include "game/ui/describe.h"
@@ -118,12 +119,14 @@ struct Bubble {
 };
 
 // The words broken to `wide`, a word at least a line; a '\n' in the words is a break of its own.
+// A letter of a script without spaces (Chinese, Japanese) is a word of its own, joined to the
+// next with nothing between.
 std::vector<std::string> wrapped(const std::string& text, float size, float wide) {
     std::vector<std::string> lines;
-    std::string line, word;
-    const auto put = [&](bool hard) {
+    std::string line, word, gap = " ";
+    const auto put = [&](bool hard, const char* after) {
         if (!word.empty()) {
-            const std::string tried = line.empty() ? word : line + " " + word;
+            const std::string tried = line.empty() ? word : line + gap + word;
             if (!line.empty() && controls::labelWidth(size, tried) > wide) {
                 lines.push_back(line);
                 line = word;
@@ -131,18 +134,31 @@ std::vector<std::string> wrapped(const std::string& text, float size, float wide
                 line = tried;
             }
             word.clear();
+            gap = after;
+        } else if (*after) {
+            gap = after;
         }
         if (hard && !line.empty()) {
             lines.push_back(line);
             line.clear();
         }
     };
-    for (char c : text) {
-        if (c == ' ') put(false);
-        else if (c == '\n') put(true);
-        else word += c;
+    for (size_t at = 0; at < text.size();) {
+        const size_t from = at;
+        const uint32_t cp = core::utf8::next(text, at);
+        if (cp == ' ') {
+            put(false, " ");
+        } else if (cp == '\n') {
+            put(true, " ");
+        } else if (core::utf8::unspaced(cp)) {
+            put(false, "");
+            word.append(text, from, at - from);
+            put(false, "");
+        } else {
+            word.append(text, from, at - from);
+        }
     }
-    put(true);
+    put(true, " ");
     return lines;
 }
 
@@ -229,8 +245,7 @@ std::vector<std::pair<size_t, size_t>> rows(const std::string& text, float size,
         if (start >= text.size()) break;
         size_t end = start, fit = start;
         while (end < text.size()) {
-            size_t next = text.find(' ', end + 1);
-            if (next == std::string::npos) next = text.size();
+            const size_t next = core::utf8::nextBreak(text, end);
             if (controls::labelWidth(size, text.substr(start, next - start)) > wide && fit > start) break;
             fit = next;
             end = next;

@@ -169,6 +169,8 @@ public:
     // And whether it is down now, pressed this frame or before: a key held to go on casting.
     bool down(Key key) const { return !typing_ && keyHeld_[size_t(key)]; }
     bool shift() const { return shift_; }
+    // Alt (Option on a Mac), held: the pointer passes through monsters (Play::point).
+    bool alt() const { return !typing_ && alt_; }
 
     // Held, rather than the edge `clicked` reports: a drag is a thing that continues.
     bool held(int button) const { return held_[button & 1]; }
@@ -258,6 +260,7 @@ private:
     bool keyPressed_[size_t(Key::Count)] = {};
     bool keyHeld_[size_t(Key::Count)] = {};
     bool shift_ = false;
+    bool alt_ = false;
     bool stepped_[size_t(Step::Count)] = {};
     bool stepHeld_[size_t(Step::Count)] = {};
     float lastX_ = 0.0f, lastY_ = 0.0f;

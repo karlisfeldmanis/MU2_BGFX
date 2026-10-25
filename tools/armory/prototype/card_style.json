@@ -1,0 +1,393 @@
+{
+ "reference": "pixels at 1080 screen lines (tip::unit() = screen height / 1080); scale everything by height/1080",
+ "opacity": {
+  "value": 0.94,
+  "note": "every ink the card draws (text, marks, ring, rules, foot) has its alpha x0.94; the body gradient is not faded"
+ },
+ "fonts": {
+  "title": {
+   "family": "Cinzel",
+   "weight": 500,
+   "file": "Cinzel-Medium.ttf",
+   "google": "Cinzel:wght@500"
+  },
+  "text": {
+   "family": "Alegreya Sans",
+   "weight": 500,
+   "file": "AlegreyaSans-Medium.ttf",
+   "google": "Alegreya+Sans:wght@500"
+  },
+  "heavy": "the same Alegreya Sans Medium printed twice, the second 0.5 px to the right (max(0.5, 0.45 x unit)): a faux bold. On the web: font-weight 700 of Alegreya Sans, or -webkit-text-stroke 0.45px",
+  "drop": "every line is printed over its own shadow: 1 px right and 1 px down (max(1, unit)), black at 0.75 alpha; text-shadow: 1px 1px 0 rgba(0,0,0,.75)"
+ },
+ "card": {
+  "width": 346,
+  "width_note": "Sheet::wide overrides (0 = 346)",
+  "pad": 12,
+  "radius": 4,
+  "body": {
+   "top": [
+    13,
+    10,
+    8,
+    0.92
+   ],
+   "foot": [
+    5,
+    3,
+    3,
+    0.9
+   ],
+   "note": "a vertical gradient over the whole card, rounded 4; tip::ink::kBodyTop / kBodyFoot"
+  },
+  "grain": {
+   "png": "card_grain.png",
+   "note": "controls::grain: the 128 px stone tile laid 1:1 over the body inset 1 px (a texel a pixel, point-sampled, repeated); its alpha darkens or lifts what is under it"
+  },
+  "edge": [
+   {
+    "what": "outer seam",
+    "width": 1,
+    "color": [
+     0,
+     0,
+     0,
+     1.0
+    ],
+    "radius": 6,
+    "note": "a band from 1 to 2 px outside the body"
+   },
+   {
+    "what": "iron ring",
+    "width": 1,
+    "top": [
+     107,
+     86,
+     69,
+     0.94
+    ],
+    "foot": [
+     42,
+     32,
+     25,
+     0.94
+    ],
+    "radius": 5,
+    "note": "a band from 0 to 1 px outside the body, graded top to foot"
+   }
+  ],
+  "css": "border-radius:4px; background:linear-gradient(rgba(13,10,8,.92),rgba(5,3,3,.90)); box-shadow: 0 0 0 1px (iron gradient: use a 1px border-image linear-gradient(#6b5645f0,#2a2019f0)), 0 0 0 2px #000, 0 1px 3px rgba(0,0,0,.7), 0 8px 14px rgba(0,0,0,.55), 0 30px 60px rgba(0,0,0,.55)",
+  "shadow": {
+   "falls": [
+    {
+     "drop": 1,
+     "sigma": 1.5,
+     "alpha": 0.7
+    },
+    {
+     "drop": 8,
+     "sigma": 7,
+     "alpha": 0.55
+    },
+    {
+     "drop": 30,
+     "sigma": 30,
+     "alpha": 0.55
+    }
+   ],
+   "note": "three Gaussian falloffs summed and clamped at 0.85, cut away under the card (the card is glass); CSS blur = 2 x sigma"
+  },
+  "head_tint": {
+   "note": "a band over the head (title+subtitle+bound+2 pads tall), the name's tone at 0.13 x 0.94 alpha at the top fading to clear at its foot; top corners rounded 4"
+  },
+  "head_line": {
+   "note": "a 2 px line along the top edge (from y = -1), from x = 4 to width - 4, the name's tone at 0.85 x 0.94 alpha in the middle fading to clear at both ends (two linear halves)"
+  },
+  "placement": "centred over the hovered item's cells, its bottom 10 px above their top; if no room it drops 10 px below, and with room for neither it stands beside (the side with more room); kept 4 px inside the screen",
+  "hover": "shown while the pointer rests on an item (never during a drag); the bag turns the hovered model; values get a delta against the worn piece (good #7fd48b, bad #e2685f, same #969a8e) at 13 px, right-aligned"
+ },
+ "picture": {
+  "size": 96,
+  "note": "item card: the item's own 3D picture, square 96 x artScale (0.2-1), at the head's right: right edge 6 px in from the card's right, top 6 px down; the name wraps at width - pad*2 - 0.6 x picture"
+ },
+ "kinds": {
+  "title": {
+   "font": "title",
+   "size": 17,
+   "line": 21,
+   "case": "uppercase",
+   "letterSpacing": "0.06em",
+   "color": "tone (the item's quality)",
+   "wrap": "at 346 - 24 - 0.6 x picture"
+  },
+  "subtitle": {
+   "font": "text",
+   "size": 14,
+   "line": 22,
+   "color": "tone (same as the title)"
+  },
+  "bound": {
+   "font": "text",
+   "size": 14,
+   "line": 21,
+   "color": "tone (RedPurple #cc80cc)"
+  },
+  "head": {
+   "note": "head height = title lines x 21 + subtitle 22 + bound 21 + 24 (pad above and below); the title starts 12 px down, at x 12"
+  },
+  "headline": {
+   "font": "text",
+   "heavy": true,
+   "size": 24,
+   "line": 31,
+   "color": "tone",
+   "word": {
+    "size": 15,
+    "color": "#c4c1b4",
+    "gap": 8.4
+   }
+  },
+  "breakdown": {
+   "font": "text",
+   "size": 13.5,
+   "line": 21,
+   "x": 25,
+   "figure": "heavy, figureTone or the label ink #c4c1b4",
+   "text_color": "#96998e",
+   "gap": 4.7,
+   "bar": {
+    "x": 15,
+    "width": 1,
+    "color": [
+     255,
+     255,
+     255,
+     0.169
+    ],
+    "note": "from 3 px below the first breakdown line's top to 3 px above the last one's foot (0.15 and 0.3 of a 21 px line)"
+   },
+   "after": "12 px under the last breakdown (railPad x 1.5)"
+  },
+  "body_top": "the sections start at max(head + headline block, 6 + picture + 4)",
+  "rule": {
+   "height": 1,
+   "color": [
+    255,
+    255,
+    255,
+    0.056
+   ],
+   "width": "the card's whole width",
+   "note": "each section opens with it, then 8 px of air; each section ends with 8 px of air"
+  },
+  "option": {
+   "font": "text",
+   "size": 14,
+   "line": 21,
+   "x": 37,
+   "compose": "keyword + ' · ' + text + ' ' + tail, wrapped together at 297 px (346 - 37 - 12)",
+   "keyword": "keywordTone or white",
+   "text": "tone (default white)",
+   "tail": "heavy, the tone a third of the way to white (35%)",
+   "mark": "in a 16 px gutter at x 12: centre x 20, centre y the line's middle; glyph 8 px (Ring/RingSet 18)"
+  },
+  "prose": {
+   "same_as": "option",
+   "note": "a free line with no mark"
+  },
+  "stat": {
+   "font": "text",
+   "size": 14,
+   "line": 21,
+   "x": 37,
+   "label": "label ink #c4c1b4 or labelTone",
+   "tail": "right-aligned at width - 12, tailTone (default white)",
+   "values": "several stack a line each, right-aligned; a chip is an outlined box, 11 px, tracking 0.08em"
+  },
+  "gap": {
+   "height": 9,
+   "note": "a row with gap gets 9 px of air above it (round(14 x 1.5 x 0.45))"
+  },
+  "framed": {
+   "note": "a framed section (a set's block): fill white 0.03, 1 px outline white 0.10, from x 31 to width - 6 (textX - 6, textWide + 12), 4 px inside the section's air; its rows indent 6 px more, a marked row's mark stands at the frame's left (x 37 + 6 = 43) and its text after 21 px"
+  },
+  "foot": {
+   "font": "text",
+   "size": 13,
+   "line": 20,
+   "pad": "8 px above and below",
+   "background": [
+    0,
+    0,
+    0,
+    0.376
+   ],
+   "rule": "1 px white 0.06 on its top",
+   "corners": "bottom corners rounded 4",
+   "left": "who lines from x 12: the class line first (Green when he may, Red when not), then each requirement (quiet: met, foot ink #7d8077; Red: unmet)",
+   "right": "right-aligned at width - 12: the wear (with its ring), the note, keep lines, the price"
+  },
+  "wear": {
+   "text_color": "#7d8077",
+   "ring": {
+    "radius": 8,
+    "thickness": 3,
+    "centre": "6 px + radius left of the words, y = baseline - 0.33 x 13",
+    "back": [
+     255,
+     255,
+     255,
+     0.113
+    ],
+    "arc": "what is left (worn 0-1), from 12 o'clock clockwise, in ringTone or the lettering ink #e6dbc2"
+   }
+  },
+  "sell": {
+   "height": 36,
+   "background": [
+    0,
+    0,
+    0,
+    0.517
+   ],
+   "rule": [
+    107,
+    86,
+    69,
+    0.846
+   ],
+   "label": {
+    "text": "SELLS FOR",
+    "size": 11.96,
+    "letterSpacing": "0.12em",
+    "color": "#7d8077",
+    "x": 12
+   },
+   "figure": {
+    "size": 14.56,
+    "heavy": true,
+    "color": "#ffcc1a",
+    "align": "right at width - 12"
+   },
+   "coin": {
+    "height": 18,
+    "gap": 5.4,
+    "note": "MU's Zen coin (bag_zen) to the figure's left"
+   }
+  }
+ },
+ "marks": {
+  "Diamond": {
+   "what": "an upright square (a rolled option)",
+   "size": 8,
+   "svg": "<rect x='-2.48' y='-2.48' width='4.96' height='4.96'/>"
+  },
+  "Star": {
+   "what": "four spikes (an excellent option)",
+   "size": 8,
+   "svg": "<polygon points='0,-4 1.28,-1.28 4,0 1.28,1.28 0,4 -1.28,1.28 -4,0 -1.28,-1.28'/>"
+  },
+  "Socket": {
+   "what": "the square, hollow",
+   "size": 8
+  },
+  "Ring": {
+   "what": "an empty socket: three lozenges (width 0.8 x height)",
+   "size": 18,
+   "svg": "<polygon points='0,-9 7.2,0 0,9 -7.2,0' fill='rgba(0,0,0,.7)'/><polygon points='0,-7.92 6.34,0 0,7.92 -6.34,0' fill='#9e733d'/><polygon points='0,-5.4 4.32,0 0,5.4 -4.32,0' fill='#0d0908'/>"
+  },
+  "RingSet": {
+   "what": "a set socket: the Ring with the Rune of Creation's two inks in it, and in game the rune's own 3D picture over it",
+   "size": 18,
+   "svg": "(Ring) + <polygon points='0,-5.58 4.46,0 0,5.58 -4.46,0' fill='#8c80ff'/><polygon points='0,-3.6 2.88,0 0,3.6 -2.88,0' fill='#ff63b3'/>"
+  },
+  "Blade": {
+   "what": "a blade on the diagonal with its guard (section marks on other cards)"
+  },
+  "Shield": {
+   "what": "square shoulders down to a point"
+  },
+  "Triangle": {},
+  "Note": {},
+  "colour": "markTone, x0.94 alpha; the Ring/RingSet keep their own colours"
+ },
+ "tones": {
+  "White": {
+   "hex": "#ffffff",
+   "tail": "#ffffff"
+  },
+  "Blue": {
+   "hex": "#80b2ff",
+   "tail": "#accdff"
+  },
+  "Red": {
+   "hex": "#ff331a",
+   "tail": "#ff7a6a"
+  },
+  "Yellow": {
+   "hex": "#ffcc1a",
+   "tail": "#ffde6a"
+  },
+  "Green": {
+   "hex": "#1aff80",
+   "tail": "#6affac"
+  },
+  "Gray": {
+   "hex": "#96998e",
+   "tail": "#bbbdb6"
+  },
+  "Violet": {
+   "hex": "#b266ff",
+   "tail": "#cd9cff"
+  },
+  "RedPurple": {
+   "hex": "#cc80cc",
+   "tail": "#deacde"
+  },
+  "Orange": {
+   "hex": "#e66b0a",
+   "tail": "#ef9f60"
+  },
+  "Uncommon": {
+   "hex": "#ffffff",
+   "tail": "#ffffff"
+  },
+  "Rare": {
+   "hex": "#0070dd",
+   "tail": "#59a2e9"
+  },
+  "Epic": {
+   "hex": "#a335ee",
+   "tail": "#c37cf4"
+  },
+  "Legendary": {
+   "hex": "#1eff00",
+   "tail": "#6dff59"
+  },
+  "Artifact": {
+   "hex": "#ffd100",
+   "tail": "#ffe159"
+  },
+  "Quest": {
+   "hex": "#d685ff",
+   "tail": "#e4b0ff"
+  },
+  "RuneLegendary": {
+   "hex": "#ff8000",
+   "tail": "#ffac59"
+  },
+  "RuneAncient": {
+   "hex": "#00ccff",
+   "tail": "#59deff"
+  }
+ },
+ "inks": {
+  "label": "#c4c1b4",
+  "quiet": "#96998e",
+  "foot": "#7d8077",
+  "lettering": "#e6dbc2",
+  "good": "#7fd48b",
+  "bad": "#e2685f"
+ },
+ "quality_ladder": "the name's tone (describe.cpp qualityOf): Rune of Creation RuneLegendary/RuneAncient, excellent Green (a legendary green), socketed Rare blue, +7 and jewels Artifact gold, luck/skill/option Uncommon (white), else White; quest items Quest violet"
+}
