@@ -642,6 +642,13 @@ void testDarkLord(void (*check)(bool, const char*), void (*checkEqual)(long long
                   quake->mana == 0 && quake->damage == 150 && quake->coolTicks == 200 && quake->clip == 87 &&
                   quake->castsBare() && !quake->primary(),
               "Earthshake: the Dark Horse's, no mana, 150 damage, ten seconds, on 87, cast on air");
+        // And WebZen's (200 + Ene/20)% on it, with Force, Fire Burst and Fire Scream (ObjAttack.cpp:1452-1463).
+        {
+            sim::HeroPoints thousand;
+            thousand.energy = 1000;
+            check(quake != nullptr && std::fabs(sim::force(*quake, thousand, sim::Kin::DarkLord) - 2.5f) < 1e-4f,
+                  "Earthshake's (200 + Ene/20)%: 1000 energy is 250%");
+        }
         const int32_t clip = sim::castTicks(lorencia, sim::Kin::DarkLord, 0, nullptr, nullptr, *quake, 0);
         check(clip >= 25 && clip <= 32, "PLAYER_ATTACK_DARKHORSE is in the tables, 11 keys at 0.3");
         const int horn = lorencia.itemAt(13, 4);
