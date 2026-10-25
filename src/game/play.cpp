@@ -1181,6 +1181,15 @@ void Play::update(double seconds) {
                     pushed != nullptr && pushed->placed && pushed->shockClip >= 0) {
                     shock(*pushed, pushed->shockClip);
                 }
+                // A Whirlwind's pull: one crash a cast, timed to the farthest body's landing --
+                // it is still sliding here, so its ticks left say when.
+                const sim::Body* body = realm_.find(happening.who);
+                if (body != nullptr && body->whirledBy != 0) {
+                    if (Drawn* knight = drawnOf(body->whirledBy)) {
+                        const double lands = double(realm_.tick() + body->pushTicks);
+                        knight->crashAt = std::max(knight->crashAt, lands - kWhirlCrashLead / kTickSeconds);
+                    }
+                }
             }
             // The hit, on the caster at the release, as MU plays it for a spell and an arrow alike
             // (ZzzCharacter.cpp:5251-5310): not when the thing arrives. Once a swing, and only for
@@ -2435,6 +2444,14 @@ void Play::update(double seconds) {
         one.lastClock = one.figure.clock();
     }
     steps();
+    // The Whirlwind crashes that have come due, on the drawing's clock: a body is drawn a tick
+    // behind the realm, so it is seen landing as through_ comes round on its landing tick.
+    const double drawnTick = double(realm_.tick()) - 1.0 + through_;
+    for (Drawn& one : drawn_) {
+        if (one.crashAt == 0.0 || drawnTick < one.crashAt) continue;
+        one.crashAt = 0.0;
+        if (one.placed && heard_.whirlPull >= 0) emit(heard_.whirlPull, one.crown[0], one.crown[2], one.id);
+    }
     hammer();
     chatter(float(seconds));
     orbs(float(seconds));

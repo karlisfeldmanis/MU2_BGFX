@@ -29,6 +29,9 @@ constexpr double kTickSeconds = 1.0 / 20.0;
 // The longest a hero's shot waits for her string (Play::nocking_): her clip cut short -- a
 // click away, a death -- still lets the arrow go.
 constexpr float kNockHold = 0.33f;
+// How far into whirl_pull.wav its crash is: started this far ahead of a Whirlwind pull's last
+// landing, the scrape runs under the slide and the crash is the landing (the user, 2026-10-25).
+constexpr double kWhirlCrashLead = 0.25;
 // The longest her blow waits for the arrow carrying it to land (Arrows::landed): the string's
 // hold and a long flight.
 constexpr float kArrowOwed = 0.8f;

@@ -3044,6 +3044,15 @@
       ],
       "from": "SOUND_BLOODATTACK (133), which ZzzOpenData loads from Data\\\\Sound\\\\eBloodAttack.wav (:4833). WSclient plays it on the body when Fire Slash cuts its defence (ReceiveMagic, 4364-4381) and when that debuff is registered from a state packet (InsertBuffPhysicalEffect, 15201-15208).",
       "note": "Fire Slash's cut landing on a body, at the body (game/fx/fire_slash)."
+    },
+    "whirl_pull": {
+      "files": [
+        "whirl_pull.wav"
+      ],
+      "from": "Not MU's file. yodguard 'a massive axe impact hitting metal 4' (Pixabay 450252, third_party/downloads/), given by the user 2026-10-25: 3.02 s of 48 kHz stereo MP3, a rising scrape into one crash at 0.39 s (peak 0 dBFS). Cut from 0.14 s (20 ms fade in) for 2.0 s with a 0.5 s fade out from 1.5 s, so the crash is 0.25 s in (game/play_tuning.h kWhirlCrashLead).",
+      "gain_db": -4.0,
+      "gain_note": "Four down as a first level: the file peaks at 0 dBFS and is a whole crowd's landing, not a blow. Worth a pass by ear.",
+      "note": "**An invention, marked.** The user (2026-10-25): 'use this sound when rune which pulls in monsters for dk is pulling perfectly synced with effect'. A Whirlwind, Eddy or Swirl pull (sim Realm::whirl): once a cast, at the knight, started kWhirlCrashLead before the farthest pulled body lands beside him, so the scrape runs under the slide and the crash is the landing (game/play.cpp)."
     }
   },
   "not_built_yet": "Built: a monster's Sounds[0]/[1] while it walks (SetPlayerWalk's rand_fps_check(16), every frame it moves, ZzzCharacter.cpp:788-804) and once as its walk ends (SetPlayerStop's, one in sixteen, :429-443) -- game/play_show.cpp. MuMain has no cry on an idle loop: PlayMonsterSound (:216-237) is map-specific and handles no 0.75 monster. Not built: SetPlayerStop's other callers (a refused path, a server stand), which the realm has no counterpart for."

@@ -1500,6 +1500,10 @@ private:
         // tick each is due to land by, 0 for none. Four, because the next bolt can be let go
         // before the last one lands; a miss lapses rather than paying for the next.
         int64_t owedHits[4] = {};
+        // A Whirlwind pull's crash, owed at the knight who pulled: when it starts, on the
+        // drawing's clock (tick - 1 + through_), kWhirlCrashLead ahead of the farthest body he
+        // pulled landing beside him. 0 for none.
+        double crashAt = 0.0;
     };
 
     Drawn* drawnOf(uint32_t id);
@@ -2113,6 +2117,7 @@ private:
         int pollution = -1;                    // Rargle, the Ancient rune Pollution's
         int drainLife = -1;                    // SE_Ch_summoner_skill07, the Ancient rune Drain Life's
         int bloodAttack = -1;                  // eBloodAttack, Fire Slash's cut landing on a body
+        int whirlPull = -1;                    // whirl_pull, a Whirlwind rune's pull landing
         // The knight's skills, one wave each -- and Cyclone and Slash share SWORD4, which is
         // MU's own reuse. Indexed by the skill table's own index, as the cooldowns are.
         int skill[sim::kSkills] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};

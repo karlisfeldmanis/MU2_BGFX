@@ -578,6 +578,7 @@ void Play::openSound(const std::string& assetDir, bool muted, bool offline) {
     heard_.rage2 = sound_.load("rage_blow_2", true);
     heard_.rage3 = sound_.load("rage_blow_3", true);
     heard_.bloodAttack = sound_.load("skill_blood_attack", true);
+    heard_.whirlPull = sound_.load("whirl_pull", true);
     heard_.hellfire = sound_.load("balrog_hellfire", true);
     novaBurstSound_ = sound_.load("nova_burst", true);
     heard_.iceCast = sound_.load("spell_ice", true);
