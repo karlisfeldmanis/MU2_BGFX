@@ -3011,6 +3011,31 @@
       ],
       "from": "SOUND_KANTURU_1ST_GENO_DIE once as it dies (GM_Kanturu_1st.cpp:1196-1203); w37/geno_death.wav (MapManager.cpp:398)."
     },
+    "twintale_move": {
+      "files": [
+        "twin_idle-01.wav",
+        "twin_idle-02.wav"
+      ],
+      "from": "SOUND_KANTURU_2ND_TWIN_MOVE1 + rand() % 2, with each hair mark, every 500 ms while it walks (GM_Kanturu_2nd.cpp:915-942); MapManager.cpp:448-449 loads w38/twin_idle-01.wav and -02.wav."
+    },
+    "twintale_attack": {
+      "files": [
+        "twin_attack-01.wav"
+      ],
+      "from": "SOUND_KANTURU_2ND_TWIN_ATTACK1 once on Attack 1 (GM_Kanturu_2nd.cpp:893-900); w38/twin_attack-01.wav (MapManager.cpp:450)."
+    },
+    "twintale_attack2": {
+      "files": [
+        "twin_attack-02.wav"
+      ],
+      "from": "SOUND_KANTURU_2ND_TWIN_ATTACK2 once on Attack 2, the Hair Attack (GM_Kanturu_2nd.cpp:901-908); w38/twin_attack-02.wav (MapManager.cpp:451)."
+    },
+    "twintale_die": {
+      "files": [
+        "twin_death.wav"
+      ],
+      "from": "SOUND_KANTURU_2ND_TWIN_DIE as it dies (GM_Kanturu_2nd.cpp:909-913); w38/twin_death.wav (MapManager.cpp:452)."
+    },
     "world_kanturu_relics": {
       "files": [
         "kan_relic_global.wav"

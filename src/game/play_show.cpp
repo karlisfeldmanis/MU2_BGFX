@@ -632,15 +632,16 @@ void Play::snort(float seconds) {
 void Play::shade(float seconds) {
     shadowStars_.update(seconds);
     for (Drawn& one : drawn_) {
-        // An Iron Rider, a Blade Hunter, a Kentauros, a Berserker and a Genocider have none of
-        // these and their shows all the same (play_breeds.cpp).
+        // An Iron Rider, a Blade Hunter, a Kentauros, a Berserker, a Genocider and a Twin Tale
+        // have none of these and their shows all the same (play_breeds.cpp).
         const bool shown = !one.shadeBones.empty() || one.auraBone >= 0 || one.embers ||
                            !one.starBones.empty() ||
                            (one.figure.body() && (one.figure.body()->has("iron_rider") ||
                                                   one.figure.body()->has("blade_hunter") ||
                                                   one.figure.body()->has("kentauros") ||
                                                   one.figure.body()->has("berserker") ||
-                                                  one.figure.body()->has("genocider")));
+                                                  one.figure.body()->has("genocider") ||
+                                                  one.figure.body()->has("twin_tale")));
         if (!shown || !one.visible || !one.placed) {
             continue;
         }

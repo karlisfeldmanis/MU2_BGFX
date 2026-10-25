@@ -1,0 +1,29 @@
+{
+  "about": "Where this world's monsters stand (sprint E3; mu.db's monster_spawns before it): each nest a box of tiles [x1, y1, x2, y2] holding `count` of `breed` (MU's monster number), raised in `id` order across every world. `./mu new monster --db` appends here.",
+  "nests": [
+    {"id": 2237, "breed": 359, "box": [159, 98, 159, 98], "count": 1},
+    {"id": 2238, "breed": 359, "box": [100, 97, 100, 97], "count": 1},
+    {"id": 2239, "breed": 359, "box": [99, 85, 99, 85], "count": 1},
+    {"id": 2240, "breed": 359, "box": [125, 74, 125, 74], "count": 1},
+    {"id": 2241, "breed": 359, "box": [113, 96, 113, 96], "count": 1},
+    {"id": 2242, "breed": 359, "box": [111, 79, 111, 79], "count": 1},
+    {"id": 2243, "breed": 359, "box": [123, 88, 123, 88], "count": 1},
+    {"id": 2244, "breed": 359, "box": [139, 99, 139, 99], "count": 1},
+    {"id": 2245, "breed": 359, "box": [178, 92, 178, 92], "count": 1},
+    {"id": 2246, "breed": 359, "box": [198, 121, 198, 121], "count": 1},
+    {"id": 2247, "breed": 359, "box": [197, 136, 197, 136], "count": 1},
+    {"id": 2248, "breed": 359, "box": [126, 98, 126, 98], "count": 1},
+    {"id": 2249, "breed": 359, "box": [135, 88, 135, 88], "count": 1},
+    {"id": 2250, "breed": 359, "box": [117, 135, 117, 135], "count": 1},
+    {"id": 2251, "breed": 359, "box": [101, 139, 101, 139], "count": 1},
+    {"id": 2252, "breed": 359, "box": [149, 85, 149, 85], "count": 1},
+    {"id": 2253, "breed": 359, "box": [153, 78, 153, 78], "count": 1},
+    {"id": 2254, "breed": 359, "box": [151, 160, 151, 160], "count": 1},
+    {"id": 2255, "breed": 359, "box": [179, 139, 179, 139], "count": 1},
+    {"id": 2256, "breed": 359, "box": [187, 145, 187, 145], "count": 1},
+    {"id": 2257, "breed": 359, "box": [168, 94, 168, 94], "count": 1},
+    {"id": 2258, "breed": 359, "box": [199, 131, 199, 131], "count": 1},
+    {"id": 2259, "breed": 359, "box": [195, 115, 195, 115], "count": 1},
+    {"id": 2260, "breed": 359, "box": [185, 97, 185, 97], "count": 1}
+  ]
+}

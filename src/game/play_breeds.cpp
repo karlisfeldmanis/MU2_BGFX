@@ -4,8 +4,8 @@
 // fire lay (fx/hell_maine.h), a Kanturu Iron Rider's bow sparks, arrow and death smoke
 // (fx/iron_rider.h), a Blade Hunter's swirl, blasts and walking dust (fx/blade_hunter.h) and a
 // Kentauros's bow smoke, arrows and death smoke (fx/kentauros.h), a Berserker's breath
-// (fx/berserker.h) and the dust and stones a Genocider's weapon drags, each by its recipe's show
-// tag.
+// (fx/berserker.h), the dust and stones a Genocider's weapon drags, and a Relics Twin Tale's hair
+// marks, beams and water (fx/twin_tale.h), each by its recipe's show tag.
 // Out of play_show.cpp, which is at its size.
 #include "game/play.h"
 
@@ -31,7 +31,7 @@ void Play::breedShows(Drawn& one, float fade, float seconds) {
     }
     if (!look->has("blue_golem") && !look->has("witch_queen") && !look->has("hell_maine") &&
         !look->has("iron_rider") && !look->has("blade_hunter") && !look->has("kentauros") &&
-        !look->has("berserker") && !look->has("genocider"))
+        !look->has("berserker") && !look->has("genocider") && !look->has("twin_tale"))
         return;
     // What it hunts: its quarry, or its blow's target; that one's feet, or null.
     const sim::Body* self = realm_.find(one.id);
@@ -104,6 +104,16 @@ void Play::breedShows(Drawn& one, float fade, float seconds) {
             breath_.walkSand(feet, along, 0.0f, kWalkSandAlpha);
             if (++kicked % 5 == 0) meteor_.stones(at[0], at[2], floor, 1, 0.33f);
         }
+        return;
+    }
+    // A Twin Tale's hair marks as it walks, its Hair Attack's beams and water, and its death.
+    if (look->has("twin_tale")) {
+        const float feet[3] = {one.crown[0], ground_ ? ground_->heightAt(one.crown[0], one.crown[2]) : 0.0f,
+                               one.crown[2]};
+        const float key = keyOf(one.figure);
+        shadowStars_.twinTale().watch(one.id, one.figure, slotOf(one.figure) == kMonsterWalkSlot,
+                                      one.figure.clip() == one.attackClip2, key, aim ? target : nullptr,
+                                      one.deadFor >= 0.0f, key, feet, fade, seconds);
         return;
     }
     // A Berserker's green breath, while it neither swings nor has fallen.

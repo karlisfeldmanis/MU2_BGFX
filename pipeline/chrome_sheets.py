@@ -51,7 +51,7 @@ IMAGES = {"chrome01": "refine/chrome01.png", "chrome02": "refine/chrome02.png",
           "chrome06": "refine/chrome06.png", "chrome07": "refine/chrome07.png",
           "energy01": "refine/energy01.png",
           "bladeeff2_r": "kanturu/bladeeff2_r.png", "buserbody_r": "kanturu/buserbody_r.png",
-          "busersword_r": "kanturu/busersword_r.png"}
+          "busersword_r": "kanturu/busersword_r.png", "illumi_r": "kanturu/illumi_r.png"}
 # And Kanturu's weapons' three (ZzzOpenData.cpp:5301-5303): BITMAP_CHROME6 (Effect/Chrome06.jpg,
 # the Sylph Wind Bow's), BITMAP_CHROME7 (Chrome07.jpg, the Bone Blade's) and BITMAP_CHROME_ENERGY
 # (energy01.jpg, the Grand Viper Staff's), each laid at the mesh's own UVs (ZzzObject.cpp:7644-7666).
