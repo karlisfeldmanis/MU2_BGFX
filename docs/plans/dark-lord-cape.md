@@ -240,3 +240,13 @@ History (web, lowest weight): the Dark Lord and his cape came with the 0.99 / 1.
 `DARKLORD_WORK` sits under `G_V_99B`); fan guides of the time list the Cape of Lord as Chaos
 Goblin-only, from a 1st wing, a Jewel of Chaos, the Crest and an optional +4 excellent item
 (https://ganjateam.forumgratuit.ro/t15-chaos-machine-guide).
+
+## Decided (the user, 2026-10-25)
+
+1. Absorb: **10 + 2L %** (OpenMU's).
+2. Level: **180 + 4L**.
+3. The Crest drops by **our Loch's Feather rule** (Tarkan, Icarus, Blood Castle 6).
+4. The mix costs **1,500,000 Zen**, our 2nd wings'.
+5. The **fly pose** outside towns stays, as MU.
+6. Drawn as a **rigged cape first**; cloth later if wanted.
+7. His shoulder tails and skirt as cloth: **later**.

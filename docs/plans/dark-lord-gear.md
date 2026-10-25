@@ -320,3 +320,10 @@ His gap is armour: one set (Light Plate, 42-62) against scepters to 140. Sets fi
    `colourOf` (shine.cpp:96-117 stops at 25) -- fix with this work or apart?
 6. The Glorious helm's dark350cape.OZJ sits unused in Player/: nothing to do unless the user
    wants it for the cape.
+
+## Decided (the user, 2026-10-25)
+
+1. Paewang and the Absolute Scepter ask **level 380** (MuMain's): Kanturu gear through `kanturuGear`.
+2. The Divine Scepter of Archangel is a **quest item like the others**: carried, worn by nobody.
+3. The Crest of Monarch is **its own item row** (its own number and DarkLordSleeve.bmd), never a feather.
+4. The missing refine colours of the built 380, Season 2-3 and socket sets are **fixed with this work**.
