@@ -132,6 +132,13 @@ reaches 24 rows and the Phoenix 25 with his).
 | Sevina | not his |
 | Seed Master, Aida | as everyone |
 
+**Built 2026-10-25** (the gear and the shared runes): every row above that pays a piece or a
+scepter, with the knight's sockets and plus; Seed Master's Soleil Scepter +8 and the Ruins'
+Sunlight armour + mask +7 beside them. Not paid: the Scroll of Fire Burst (born known), his own
+runes (Firebrand, Tremor, Earthbreaker... -- phase 7, they do not exist yet; the knight-only runes
+are not his), Crest of Monarch (another session). `kQuestPaid` 32. The shared gear MU lets him wear
+(Bronze/Leather/Scale, the shields, the Flail) carries his class since ef1da96c.
+
 Weapon ladder against the knight's: Flail 22 / Battle 54 / Master 72 / Great +7 82 / Lord 98 / Great Lord +7 140.
 Sets: A Light Plate (42-62), B Adamantine (66-78), C Dark Steel (86-96). `testQuestLadder` guards it.
 
