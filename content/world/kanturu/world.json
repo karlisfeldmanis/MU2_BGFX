@@ -51,6 +51,19 @@
         "level": 0,
         "target": 128,
         "note": "Kanturu's way back to Tarkan, in the gate's doorway (Gates.cs:538). MU asks 130, ours free, as every way out."
+      },
+      {
+        "number": 129,
+        "box": [
+          89,
+          89,
+          89,
+          92
+        ],
+        "level": 320,
+        "target": 130,
+        "quest": "road_to_relics",
+        "note": "The Ruins' door to the Relics, at the end of the walk, 598 steps from the camp (Gates.cs:539). MU asks 220 (S17 290). Ours: open once The Road to the Relics is handed in (the user, 2026-10-25: \"what about relics? how characters will get there?\", picked \"After the far road\"), at that quest's 320; Elpis's far road ends at this door. Shut 4c2a0165 to 2026-10-25."
       }
     ]
   },

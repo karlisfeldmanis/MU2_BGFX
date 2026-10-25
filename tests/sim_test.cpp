@@ -8982,12 +8982,21 @@ void testKanturuGates() {
 void testKanturuRelicsGates() {
     std::printf("kanturu relics gates\n");
     struct Seen { int gated = 0, barred = 0, column = 0, row = 0; };
+    // `farRoad`: with The Road to the Relics handed in, which the door asks.
     const auto walk = [](const content::Tables& tables, int fromC, int fromR, int toC, int toR,
-                         int level) {
+                         int level, bool farRoad = false) {
         Seen seen;
         sim::Realm realm;
         check(realm.raise(&tables, 7, fromC, fromR, sim::Kin::DarkKnight, level),
               "a realm raises by the gate");
+        if (farRoad) {
+            sim::HeroRecord done = realm.record();
+            done.quests[sim::kRoadToRelics].completions = 1;
+            done.quests[sim::kRoadToRelics].state = sim::QuestState::Resting;
+            done.quests[sim::kRoadToRelics].availableAt = int64_t(1) << 40;
+            realm.restore(done);
+            check((realm.record().found & sim::travelRowsOf(38)) != 0, "the far road handed in, the Relics' row is open");
+        }
         sim::Request go;
         go.kind = sim::Request::Kind::WalkTo;
         go.column = toC;
@@ -9016,12 +9025,18 @@ void testKanturuRelicsGates() {
               std::string(MU2_ASSET_DIR) + "/cooked/kanturu_relics/kanturu_relics.mur", relics,
               error),
           "the Relics' tables load");
-    // The Ruins' door to the Relics, gate 129 (OpenMU Season Six Gates.cs:539), is shut while the
-    // Relics have no monsters, so the Ruins end there once Tarkan's door opens (2026-10-25): a
-    // level 400 knight walks onto it and nothing takes him. Reopened, it asks 380 (the user,
-    // 2026-10-23; MU 220) and lets out on the Relics' 130, the hall's west end (d467229b).
+    // The Ruins' door to the Relics, gate 129 (OpenMU Season Six Gates.cs:539): open once The Road
+    // to the Relics is handed in (the user, 2026-10-25: "After the far road"), at its 320 (MU 220),
+    // letting out on the Relics' 130, the hall's west end (d467229b).
     Seen s = walk(ruins, 86, 90, 89, 90, 400);
-    checkEqual(s.gated, 0, "the Ruins' door to the Relics is shut: a level 400 knight is not gated");
+    checkEqual(s.gated, 0, "without the far road a level 400 knight is not let through");
+    checkEqual(s.barred, -3, "and is told the door asks Elpis's far road");
+    s = walk(ruins, 86, 90, 89, 90, 400, true);
+    checkEqual(s.gated, 129, "with it handed in he takes the Ruins' door to the Relics, gate 129");
+    check(s.column == 70 && s.row >= 104 && s.row <= 107, "out on the Relics' 130, the hall's west end");
+    s = walk(ruins, 86, 90, 89, 90, 319, true);
+    checkEqual(s.gated, 0, "below 320 not even then");
+    checkEqual(s.barred, 320, "told the level it asks");
     // And back, gate 131 (Gates.cs:540): MU asks 150, ours free, onto the Ruins' 132.
     s = walk(relics, 77, 105, 69, 105, 1);
     checkEqual(s.gated, 131, "a level 1 knight takes the Relics' way back, gate 131");

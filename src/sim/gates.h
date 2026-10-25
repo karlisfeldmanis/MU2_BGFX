@@ -43,6 +43,9 @@ struct EnterGate {
     int32_t target = 0;  // the exit gate's number; -1 sealed, a gate to a map not built
     const char* sealed = nullptr;  // a sealed gate's place, for the map and the refusal
     bool fly = false;  // it also asks that he can fly (sim::canFly): the Lost Tower's door to Icarus
+    // And a quest handed in, by its key (QuestRow::key): the Ruins' door to the Relics, The Road
+    // to the Relics.
+    const char* quest = nullptr;
 };
 
 // The enter gate on `map` whose box holds the tile, or nullptr.

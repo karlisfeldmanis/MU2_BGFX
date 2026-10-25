@@ -193,7 +193,8 @@ namespace mu::net {
 //     services (sim::Service 11-13), the Dark Raven's mode command (Command::Kind::RavenMode) and its
 //     two happenings, and a pet's level and exp in the bytes it left nought.
 // 57: Kanturu in two halves, The Road to the Relics (sim::kQuests 31, kKeptLayout 21, 2026-10-25):
-//     a quest more in a character's bytes, and the hard half's 380 roll a 56 client does not know.
+//     a quest more in a character's bytes, and the hard half's 380 roll a 56 client does not know;
+//     and the Relics' door, open with it, and their 19th travel row (sim::kTravels 19).
 // 58: the Jewel of Harmony and the Refining Stones dragged onto a thing (docs/plans/jewel-of-harmony.md
 //     step 5), and their happening, What::Harmonized.
 constexpr uint32_t kVersion = 58;

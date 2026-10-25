@@ -424,6 +424,8 @@ bool Realm::completeQuest(int index, int choice, QuestPath path) {
     one.life = uint8_t(std::clamp(hero.rebirths, 0, 255));
     one.availableAt = wall_ + row.repeatSeconds;
     if (row.promotes) hero.second = sim::promoted(me().quests, int(hero.kin));
+    // The far road handed in opens the Relics' row, as their door opens (the user, 2026-10-25).
+    if (index == kRoadToRelics) discover(38);
     return true;
 }
 

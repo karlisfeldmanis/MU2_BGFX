@@ -157,6 +157,14 @@ Hand-in:
 
 Resting: "The far road's vats are breeding again. Come back when they are done."
 
+**The Relics open with it** (the user, 2026-10-25: "what about relics? how characters will get
+there?", picked "After the far road"): the Ruins' door to the Relics, gate 129 at 89,89 where the
+far road ends, is back (shut 4c2a0165) and asks The Road to the Relics handed in and level 320
+(`"quest": "road_to_relics"` on the gate, `EnterGate::quest`; a hero without it is told "The door
+to the Relics opens to those who cleared Elpis's far road.", `Barred` -3). The hand-in also opens
+a 19th M-list row, Kanturu Relics, 10,000 Zen at 320, landing on the door's exit 130 (70,105).
+The Relics hold Persona (161), Twin Tale (160) and Dreadfear (162), 63 in all.
+
 ## Rewards
 
 The ladder's acts stop at Aida's IX (docs/game/quest-rewards.md); Kanturu at 320 is **act X**.

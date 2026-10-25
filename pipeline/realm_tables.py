@@ -14,7 +14,8 @@ fails when they disagree.
 
 A gate row:
     exits:  {"number", "box": [x1, y1, x2, y2], "faces": [dx, dy], "note"}
-    enters: {"number", "box", "level", "target", "sealed"?: "place", "fly"?: true, "note"}
+    enters: {"number", "box", "level", "target", "sealed"?: "place", "fly"?: true,
+             "quest"?: "a quest's key, handed in", "note"}
 The gates in MU's map order, each world's rows in its manifest's order.
 
 A world's rules: {"arrive": [column, row], "home": map, "event", "floors", "move_order",
@@ -70,9 +71,11 @@ def gates() -> str:
             exits.append(f"    {{{row['number']}, {number}, {box(row)}, {dx}, {dy}}},  // {world}")
         for row in table.get("enters", []):
             tail = ""
-            if row.get("sealed") or row.get("fly"):
+            if row.get("sealed") or row.get("fly") or row.get("quest"):
                 sealed = f'"{row["sealed"]}"' if row.get("sealed") else "nullptr"
                 tail = f", {sealed}, {'true' if row.get('fly') else 'false'}"
+                if row.get("quest"):
+                    tail += f', "{row["quest"]}"'
             enters.append(f"    {{{row['number']}, {number}, {box(row)}, {row['level']}, "
                           f"{row['target']}{tail}}},  // {world}")
     return (HEAD.format(block="gates", owner="gates.cpp")

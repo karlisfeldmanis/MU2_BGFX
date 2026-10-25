@@ -42,6 +42,7 @@ constexpr ExitGate kExits[] = {
     {113, 33, {76, 9, 78, 16}, 0, 0},  // aida
     {126, 37, {19, 217, 21, 219}, 0, 0},  // kanturu
     {132, 37, {85, 89, 86, 92}, -1, 0},  // kanturu
+    {130, 38, {70, 104, 70, 107}, 1, 0},  // kanturu_relics
 };
 
 constexpr EnterGate kEnters[] = {
@@ -80,5 +81,6 @@ constexpr EnterGate kEnters[] = {
     {64, 10, {14, 12, 16, 12}, 0, 65},  // icarus
     {121, 33, {74, 9, 74, 13}, 0, 122},  // aida
     {127, 37, {17, 220, 19, 222}, 0, 128},  // kanturu
+    {129, 37, {89, 89, 89, 92}, 320, 130, nullptr, false, "road_to_relics"},  // kanturu
     {131, 38, {69, 104, 69, 107}, 0, 132},  // kanturu_relics
 };

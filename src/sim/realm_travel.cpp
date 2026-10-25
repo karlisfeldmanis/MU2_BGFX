@@ -65,8 +65,13 @@ constexpr TravelRow kRows[kTravels] = {
     // on map usable with M"). Season Six's "KanturuRuins1" is 9,000 Zen at 160 on spawn gate 138
     // (Gates.cs:72); ours at 320 as the Tarkan door asks (gate 125), landing on that gate's middle,
     // the camp at 20,218, facing nowhere. It opens as Kantur's Gate is taken from the Keeper, or
-    // when he speaks to Elpis there. The Relics have no row while their door is shut.
+    // when he speaks to Elpis there.
     {"Kanturu", 37, 320, 9000, 20, 218, 0, 0, "kanturu"},
+    // The Relics, after it for the same reason (the user, 2026-10-25: "After the far road"): open
+    // once The Road to the Relics is handed in, as their door (gate 129) asks. Season Six's
+    // "KanturuRuins2" is 10,000 Zen at 160 (Gates.cs:73); ours at 320 as the quest, landing on
+    // the door's exit 130's middle, 70,105, facing east as it does.
+    {"Kanturu Relics", 38, 320, 10000, 70, 105, 1, 0, "kanturu_relics"},
 };
 
 // A chained map's floors, every floor a link and its row open once the link is taken: the
@@ -176,6 +181,8 @@ void Realm::settleFound(uint32_t saved) {
     // And Kanturu once Kantur's Gate is taken from the Keeper (Realm::acceptQuest opens it then).
     if (me().quests[kKantursGate].state != QuestState::Untaken || me().quests[kKantursGate].completions > 0)
         me().found |= travelRowsOf(37);
+    // And the Relics once The Road to the Relics is handed in (Realm::completeQuest opens it then).
+    if (me().quests[kRoadToRelics].completions > 0) me().found |= travelRowsOf(38);
     // And Icarus once The Sky Door is taken (Realm::acceptQuest opens it then).
     if (me().quests[kSkyDoor].state != QuestState::Untaken || me().quests[kSkyDoor].completions > 0)
         me().found |= travelRowsOf(int32_t(kIcarusMap));

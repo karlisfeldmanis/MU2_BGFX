@@ -18,6 +18,7 @@
 
 #include "core/log.h"
 #include "sim/event.h"
+#include "sim/quests.h"
 #include "sim/gates.h"
 #include "sim/items.h"
 #include "sim/realm_tuning.h"
@@ -278,6 +279,15 @@ bool Realm::throughGate(Body& hero) {
     if (gate->fly && !canFly(*tables_, me().bag)) {
         say(What::Barred, hero, gate->number, ridesUniria(*tables_, me().bag) ? -2 : -1);
         return false;
+    }
+    // And -3 a quest not yet handed in: the Relics' door asks The Road to the Relics (the user,
+    // 2026-10-25: "After the far road").
+    if (gate->quest) {
+        const int quest = questIndexOf(gate->quest);
+        if (quest >= 0 && me().quests[size_t(quest)].completions == 0) {
+            say(What::Barred, hero, gate->number, -3);
+            return false;
+        }
     }
     return passGate(hero, *gate);
 }

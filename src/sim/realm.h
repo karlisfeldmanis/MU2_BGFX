@@ -122,7 +122,8 @@ enum class What : uint8_t {
                // gate's number, b: the column he comes out on, c: the row. The realm stops him
                // there; changing the map is the game's.
     Barred,    // an enter gate he is too low for: a: its number, b: the level it asks (0 sealed,
-               // -1 he cannot fly: Icarus's door).
+               // -1 he cannot fly: Icarus's door, -2 a Uniria cannot fly, -3 a quest the door asks
+               // is not handed in: the Relics').
                // MuMain's "Only characters over level %d can enter".
     PetLost,   // his pet's or mount's life ran out and it is gone from its slot (Player.cs:1991-2001):
                // a: the item row

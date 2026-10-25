@@ -1171,6 +1171,8 @@ void Play::update(double seconds) {
                     happening.b == 0
                         ? std::string(sealed && sealed->sealed ? sealed->sealed : "The way")
                               + " is sealed. Its door will not open."
+                    : happening.b == -3
+                        ? std::string("The door to the Relics opens to those who cleared Elpis's far road.")
                     : happening.b == -2
                         ? std::string("A Uniria cannot fly. Take it off and wear wings, or ride a Dinorant.")
                     : happening.b < 0

@@ -22,6 +22,22 @@
         "target": 132,
         "note": "The Relics' way back to the Ruins (Gates.cs:540). MU asks 150, ours free, as every way out."
       }
+    ],
+    "exits": [
+      {
+        "number": 130,
+        "box": [
+          70,
+          104,
+          70,
+          107
+        ],
+        "faces": [
+          1,
+          0
+        ],
+        "note": "The Relics, from the Ruins (Gates.cs:285): the hall's west end, facing east, away from the way back (131) beside it."
+      }
     ]
   },
   "pipeline": {
