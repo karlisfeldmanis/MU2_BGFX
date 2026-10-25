@@ -151,6 +151,9 @@ TALENT_STATES = {
     # 2026-10-23: "show aura icon how much exp boost party gets by size of party"). A lookup, not
     # a borrowing: eBuff_PartyExpBonus is 112 in MuMain's eBuffState.
     "party": ("status", 112, "Party experience: eBuff_PartyExpBonus"),
+    # And the knight's Swell Life (skill 48, 2026-10-25), a lookup: eBuff_Life is 8 in MuMain's
+    # eBuffState, the cell MuMain registers for AT_SKILL_SWELL_LIFE (WSclient.cpp:4730).
+    "swell_life": ("status", 8, "Swell Life, skill 48: eBuff_Life"),
 }
 
 #: MuMain's own sheets in the repository's reference tree. MuDream's 4x copies of status 2, 3 and
