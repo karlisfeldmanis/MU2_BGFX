@@ -164,6 +164,22 @@ VOICES = {
     # the voice an octave lower at 0.32 under it, chest, a stone hall's tail at 120 to 700 ms; and
     # pauses held to 0.45 s, not SQUEEZE's 0.3, as the audition was heard. His pages are in
     # ref/pending_pages.json, not sim/quests.cpp: game/ui/desk.cpp plays them at his Rebirth window.
+    # Elpis, the last of Kantur's refiners in the Ruins camp (docs/game/kanturu-quest.md): "more
+    # mythical and little bit robotic" (the user, 2026-10-25), D2 of eight auditions, "is good
+    # enough". Kokoro-82M's bf_lily (Apache 2.0) reading a tired keeper's line at 0.85 speed,
+    # content/voice/ref/elpis_lily_tired.wav, cloned at an even 0.5 and 0.3, seed 11. The finish:
+    # two semitones down, the voice an octave lower at 0.25 under it, and a machine in her: the
+    # take robotised (its phases zeroed, afftfilt) mixed in at 0.7 above 200 Hz, a 7 ms metallic
+    # ring, then a temple's tail at 140 to 800 ms. One voice for all her rows, elpis and elpis_1.
+    "elpis": dict(ref="elpis_lily_tired.wav", exaggeration=0.5, cfg_weight=0.3, seed=11,
+                  polish="asetrate=24000*0.89,aresample=24000,atempo=1.1236,asplit=3[a][b][r];"
+                         "[b]asetrate=24000*0.5,aresample=24000,atempo=2.0,lowpass=f=700,volume=0.25[lo];"
+                         "[r]afftfilt=real='hypot(re,im)':imag='0':win_size=512:overlap=0.75,"
+                         "highpass=f=200,volume=0.7[ro];"
+                         "[a][lo][ro]amix=inputs=3:normalize=0,aecho=0.8:0.85:7:0.25,highpass=f=60,"
+                         "bass=g=3:f=150,aecho=0.8:0.6:140|300|520|800:0.26|0.18|0.11|0.06,"
+                         "acompressor=threshold=0.15:ratio=2.5:attack=10:release=200,"
+                         "apad=pad_dur=0.5,loudnorm=I=-16:TP=-1.5:LRA=11"),
     "lugard": dict(ref="lugard_lewis_knight.wav", exaggeration=0.6, cfg_weight=0.3, seed=11,
                    squeeze=SQUEEZE.replace("stop_duration=0.3", "stop_duration=0.45")
                                   .replace("stop_silence=0.3", "stop_silence=0.45"),
@@ -197,7 +213,9 @@ RETAKES = {("sevina_1", "handin"): 23, ("sevina_2", "handin"): 23,
 # one syllable, "moo" (the user, 2026-09-29: "Moo is correct").
 # A dash is read as a comma: the model held a long breath at one. Quotes round a name are the
 # window's, not said.
-SPOKEN = {r"\bMU\b": "Moo", r"\bMu\b": "Moo", r"\s*--\s*": ", ", r"(?<=\s)'|'(?=[\s.,])": ""}
+# Elpis was read "Help us" at a sentence's head (keeper_3's offer, 2026-10-25), and spelled
+# "Ell-piss" was heard "Hell piss"; "El-pis" reads her name whole.
+SPOKEN = {r"\bMU\b": "Moo", r"\bMu\b": "Moo", r"\bElpis\b": "El-pis", r"\s*--\s*": ", ", r"(?<=\s)'|'(?=[\s.,])": ""}
 
 
 def spoken(words):
