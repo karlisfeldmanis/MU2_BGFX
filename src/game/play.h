@@ -47,6 +47,7 @@
 #include "game/fx/weakness.h"
 #include "game/fx/pollution.h"
 #include "game/fx/drain.h"
+#include "game/fx/raven.h"
 #include "game/fx/requiem.h"
 #include "game/fx/sleep.h"
 #include "game/fx/chains.h"
@@ -335,6 +336,10 @@ public:
     // His auto-drink lines in percent, 0 for never (sim::AutoDrink): the realm drinks for him
     // under them. What the settings window will send; `--auto-drink` until then.
     uint32_t setAutoDrink(int health, int mana);
+    // His Dark Raven's mode, 0-3, and Target's pick (sim::RavenMode; Command::Kind::RavenMode).
+    uint32_t setRavenMode(int mode, uint32_t target);
+    // His Dark Raven's level, worn in his left hand with life, or 0 (sim/lord_pets.h).
+    int ravenLevel(const sim::Satchel& bag) const;
     // A jewel let go over a thing it goes on (sim::refinable). The realm rolls and spends it;
     // this is heard and re-dressed. See Realm::refine.
     uint32_t refine(int jewelSlot, int targetSlot, int pieces = 0);
@@ -1088,6 +1093,7 @@ public:
     Pollution& pollution() { return pollution_; }
     // And the Ancient rune Drain Life's motes, ghosts and strands. fx/drain.h.
     Drain& drain() { return drain_; }
+    RavenShow& ravenShow() { return ravenShow_; }
     // And the Ancient rune Requiem's Neil, thorns and burning ground. fx/requiem.h.
     Requiem& requiem() { return requiem_; }
     // And the Ancient rune Sleep's circle, rings and a sleeper's puffs. fx/sleep.h.
@@ -1745,7 +1751,7 @@ private:
     void fallWhenLanded();
     // SetPlayerShock on a blow that did damage: a monster flinches one time in two, and so does
     // the hero, who is halted and has a click to move refused until the clip has played.
-    void flinch(Drawn& struck, bool isHero);
+    void flinch(Drawn& struck, bool isHero, int damage);
     // Plays a body's shock clip and holds it for as long as the clip lasts.
     static void shock(Drawn& one, int clip);
     // Lets go of every held drop a beat after its dropper's killing blow lands, and rewrites
@@ -1934,6 +1940,14 @@ private:
     // Whether the body `id` rides the Dark Horse now (13/4 with life, off a safe tile): its rider
     // plays MU's horse clips, 78/79 and 82-86 (FigureBody::horseIdleClip, lordHorseClip).
     bool onDarkHorse(uint32_t id) const;
+    // Whether the body `id` wears one, for his stance in town (FigureBody::ravenIdleClip).
+    bool bearsRaven(uint32_t id) const;
+    // A What::Ravened: the strike handed to that player's raven.
+    void ravened(const sim::Happening& happening);
+    // A raven's frame after Pets::raven: its ball let go, its cry (fx/raven.h).
+    void ravenFrame(Pets& pets, float seconds);
+    // A What::PetLevelled: the flares at the raven, or round the rider for the horse (fx/raven.h).
+    void petLevelled(const sim::Happening& happening);
     // The Dark Horse's breath off `pets` this frame (Pets::breathe): MU's BITMAP_SMOKE, the
     // Bull Fighter's snort (fx/snort.h), and in Atlans a bubble instead (GOBoid.cpp:438-445),
     // which the world's bubbles take (takeBreathBubbles).
@@ -2009,6 +2023,7 @@ private:
     Weakness weakness_;
     Pollution pollution_;
     Drain drain_;
+    RavenShow ravenShow_;  // the Dark Raven's dash, ball and level flares (fx/raven.h)
     Requiem requiem_;
     Sleep sleep_;
     Chains chains_;
@@ -2145,6 +2160,8 @@ private:
     uint32_t wanderDice_ = 0x6d2b79f5u;
     // The flinch's coin, `rand_fps_check(2)` on a blow that lands: the drawing's too.
     uint32_t flinchDice_ = 0x9e3779b9u;
+    // The realm tick of the last blow that stopped the walking hero (Play::flinch).
+    int64_t heroStoppedTick_ = -1000000;
     // The events that are not a breed's, as Sound handles, found once at openSound.
     struct Heard {
         int swing = -1, swingLong = -1, bow = -1, crossbow = -1;  // the character's swing
@@ -2174,6 +2191,8 @@ private:
         int criticalDamage = -1;  // sDarkCritical: Critical Damage's flash (fx/critical_damage.h)
         int recall = -1;          // eSummon: Summon's circles (fx/recall.h)
         int fireScream = -1;      // Darklord_firescream: Fire Scream's let-go (fx/fire_scream.h)
+        // The Dark Raven's: its dash, its ball, its cry now and then (game/pets_raven.cpp).
+        int ravenRush = -1, ravenMissile = -1, ravenShout = -1;
         int earthshake = -1;      // sDarkEarthQuake: Earthshake's press (fx/earthshake.h)
         int warp = -1;                                  // sMagic: a Town Portal landing
         int rite = -1;                                  // the Rebirth rite, its whole 14 s

@@ -537,6 +537,8 @@ bool PlayMode::open(Context& ctx) {
                                                  &world_.ground());
                 world_.played().drain().open(assets, ctx.textures,
                                              world_.played().showing().table());
+                world_.played().ravenShow().open(assets, ctx.textures,
+                                                 world_.played().showing().table());
                 world_.played().requiem().open(assets, ctx.textures,
                                                world_.played().showing().table(),
                                                &world_.ground());
@@ -1280,7 +1282,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                 p.held = hand.held;
                 p.rightPressed = hand.rightPressed;
                 desk_.scriptHand(p);
-                if (hand.potion >= 0) desk_.scriptKey(hand.potion);
+                if (hand.potion >= 0) desk_.scriptKey(hand.potion, hand.shifted);
                 if (hand.skill >= 0) desk_.scriptSkill(hand.skill);
                 if (hand.holdSkill >= 0) desk_.scriptHold(hand.holdSkill);
                 if (!hand.typed.empty()) desk_.scriptType(hand.typed);
@@ -2050,6 +2052,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().weakness().gather(ctx.renderer.effects());
         world_.played().pollution().gather(ctx.renderer.effects());
         world_.played().drain().gather(ctx.renderer.effects());
+        world_.played().ravenShow().gather(ctx.renderer.effects());
         world_.played().requiem().gather(ctx.renderer.effects());
         world_.played().sleep().gather(ctx.renderer.effects());
         world_.played().chains().gather(ctx.renderer.effects(), eye.position);

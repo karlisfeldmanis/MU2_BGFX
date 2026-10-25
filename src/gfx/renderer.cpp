@@ -240,6 +240,7 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
         const bgfx::ProgramHandle batchProgram = skinned ? skinnedProgram : program;
         for (const content::Part& part : mesh.parts()) {
             if (int(part.material) == batch.hiddenMaterial) continue;
+            if (batch.onlyMaterial >= 0 && int(part.material) != batch.onlyMaterial) continue;
             const content::Material& material = mesh.materials()[part.material];
             // Drawn already, by the GPU's own cull (drawGpuCasters, drawGpuScenery).
             if (skipMerged_ && batch.merged && !skinned && GpuScenery::castsWhole(material)) continue;
@@ -813,12 +814,13 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                 // A user-space pointer leaves its top byte clear, and the hidden material
                 // (-1 to 254) rides there, so a bow with its arrow gone is a batch of its own.
                 const uint64_t key = uint64_t(reinterpret_cast<uintptr_t>(d.mesh)) ^
-                                     (uint64_t(uint8_t(d.hiddenMaterial + 1)) << 56);
+                                     (uint64_t(uint8_t(d.hiddenMaterial + 1)) << 56) ^
+                                     (uint64_t(uint8_t(d.onlyMaterial + 1)) << 48);
                 auto found = out.seen.find(key);
                 if (found == out.seen.end()) {
                     out.seen.emplace(key, out.used);
                     out.add().push_back(&d);
-                    batches.push_back(Batch{d.mesh, 0, 0, posed, d.hiddenMaterial});
+                    batches.push_back(Batch{d.mesh, 0, 0, posed, d.hiddenMaterial, d.onlyMaterial});
                 } else {
                     out.lists[found->second].push_back(&d);
                     if (posed) batches[found->second].posed = true;
@@ -891,7 +893,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                 for (const ResidentBatch& r : *resident) {
                     if (r.mesh == nullptr || r.count == 0 || !bgfx::isValid(r.buffer)) continue;
                     casterBatches_.push_back(
-                        Batch{r.mesh, r.first, r.count, r.posed, -1, r.buffer, r.merged});
+                        Batch{r.mesh, r.first, r.count, r.posed, -1, -1, r.buffer, r.merged});
                 }
             }
             // Without a list of its own, the sun draws what the camera draws.

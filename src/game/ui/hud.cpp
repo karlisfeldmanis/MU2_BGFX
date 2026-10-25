@@ -13,6 +13,7 @@
 #include "game/ui/controls.h"
 #include "game/ui/style.h"
 #include "game/ui/tip.h"
+#include "sim/lord_pets.h"
 #include "sim/recovery.h"
 #include "sim/rules.h"
 #include "sim/skills.h"
@@ -173,11 +174,15 @@ const char* summonArt(int32_t skill) {
 }
 
 // The pets' cells, ours: each rendered from the pet's own model by pipeline/model_icons.py.
-const char* petArt(int pet) {
+const char* petArt(int pet, int ravenMode) {
+    // The Dark Raven's is MU's own command cell for its mode (Interface/newui_command, 20 by 28).
+    static constexpr const char* kRaven[4] = {"buff_raven_normal", "buff_raven_random", "buff_raven_owner",
+                                             "buff_raven_target"};
     return pet == 0   ? "buff_angel"
            : pet == 1 ? "buff_imp"
            : pet == 2 ? "buff_uniria"
            : pet == 4 ? "buff_darkhorse"
+           : pet == 5 ? kRaven[std::clamp(ravenMode, 0, 3)]
                       : "buff_dinorant";
 }
 
@@ -387,7 +392,7 @@ const char* Hud::artOf(const Boon& one) {
     static constexpr const char* kTalentArt[] = {"buff_battle_fury", "buff_battle_mage", "buff_bloodrush",
                                                  "buff_riposte", "buff_iron_will", "buff_mercy", "buff_last_stand"};
     if (one.talent >= 0 && one.talent < int(std::size(kTalentArt))) return kTalentArt[one.talent];
-    return one.pet >= 0          ? petArt(one.pet)
+    return one.pet >= 0          ? petArt(one.pet, one.ravenMode)
            : one.summon           ? summonArt(one.skill)
            : one.party            ? "buff_party"
            : one.poison           ? "buff_poison"
@@ -845,6 +850,25 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
     sheet.wear = sim::spoken(one.seconds) + " left";
     sheet.worn = std::clamp(one.share, 0.0f, 1.0f);
     sheet.wearTone = tip::Tone::White;
+    if (one.pet == sim::kDarkRavenNumber) {
+        // The Dark Raven: its level, its mode and the keys that change it (MU's command tooltips,
+        // GIPetManager.cpp:342-376), its Life in the foot.
+        static constexpr const char* kModes[4] = {"Normal", "Random", "With owner", "Target"};
+        static constexpr const char* kDoes[4] = {"Follows you around", "Attacks any monster around you",
+                                                 "Attacks the monster you attack", "Attacks the monster you picked"};
+        const int mode = std::clamp(one.ravenMode, 0, 3);
+        sheet.name = "Dark Raven";
+        sheet.nameTone = tip::Tone::Blue;
+        sheet.base = "PET \xc2\xb7 LEVEL " + std::to_string(std::max(1, one.petLevel));
+        tip::Section what;
+        what.rows.push_back(said("Command", kModes[mode], tip::Tone::Yellow));
+        what.rows.push_back(prose(kDoes[mode]));
+        what.rows.push_back(prose("Shift+1 Normal, 2 Random, 3 With owner, 4 Target (the monster under the pointer)",
+                                  tip::Tone::Gray));
+        sheet.sections.push_back(what);
+        sheet.wear = "Life " + std::to_string(one.life) + " / " + std::to_string(one.lifeMost);
+        return sheet;
+    }
     if (one.pet >= 0) {
         // What the pet does while it has life, in MU's words (the item card's own lines,
         // sim::petPower), and its Life in the foot where a boon keeps its time.

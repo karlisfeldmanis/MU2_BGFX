@@ -166,6 +166,8 @@ public:
     // One material of the body's own parts left undrawn, or -1: the Hydra's breath beams,
     // which its red head lightning stands in for (play_open.cpp, Drawn::beamMaterial).
     void hideBodyMaterial(int material) { bodyHidden_ = material; }
+    // Draws one material of the body alone, -1 for all (gfx::Drawable::onlyMaterial).
+    void onlyBodyMaterial(int material) { bodyOnly_ = material; }
     // Whether the string in its hands has gone: the shot clip has reached the weapon's release
     // key (its `release` of the weapon's own keys, which poseHeld plays on the body's), or it
     // is not in a shot at all. True for anything without a string.
@@ -257,6 +259,7 @@ private:
     bool nockGone_ = false;   // the weapon's nocked missile left out; see nock
     bool nockHeld_ = false;   // and out while one of hers flies; see holdNock
     int bodyHidden_ = -1;     // see hideBodyMaterial
+    int bodyOnly_ = -1;       // see onlyBodyMaterial
     void placement(float transform[16]) const;  // where it stands, as gather draws it
     float mount_[16] = {};
 };

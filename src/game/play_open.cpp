@@ -293,6 +293,12 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     // and his strength does nothing for a spell.
     // `--spend-even` wins in an arena too, so a hero handed a weapon that asks agility -- a
     // scepter -- wears it as a player would (Force Wave, 2026-10-25).
+    // A Dark Lord's 300 of Command first, so a worn Dark Raven acts (185 + 15 a level asked,
+    // sim::ravenCommand; tools/record/raven.cue).
+    if ((!arena_.breed.empty() || arena_.spendEven) && realm_.hero().kin == sim::Kin::DarkLord &&
+        realm_.hero().pointsInHand > 0) {
+        local_.spend(0, 0, 0, 0, std::min(realm_.hero().pointsInHand, 300));
+    }
     if (!arena_.breed.empty() && !arena_.spendEven && realm_.hero().pointsInHand > 0) {
         const int points = realm_.hero().pointsInHand;
         const int intoForce = points / 2;
@@ -568,6 +574,9 @@ void Play::openSound(const std::string& assetDir, bool muted, bool offline) {
     heard_.criticalDamage = sound_.load("critical_damage", true);
     heard_.recall = sound_.load("recall", true);
     heard_.fireScream = sound_.load("fire_scream", true);
+    heard_.ravenRush = sound_.load("raven_rush", false);
+    heard_.ravenMissile = sound_.load("raven_missile", false);
+    heard_.ravenShout = sound_.load("raven_shout", true);
     heard_.earthshake = sound_.load("earthshake", true);
     heard_.click = sound_.load("window_click", false);
     heard_.refused = sound_.load("window_refused", false);

@@ -647,6 +647,8 @@ void Figures::posture(FigureBody& body, const std::string& namedIdle) {
     body.horseIdleClip = body.library->find(78);
     body.horseRunClip = body.library->find(79);
     body.horseSwingClip = body.library->find(84);
+    body.ravenIdleClip = body.library->find(76);
+    body.ravenWalkClip = body.library->find(77);
     body.flyIdleClip = body.library->find(11);
     body.flyIdleCrossbowClip = body.library->find(12);
     body.flyClip = body.library->find(34);

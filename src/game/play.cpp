@@ -606,6 +606,9 @@ void Play::update(double seconds) {
                 if (happening.what == sim::What::Refined || happening.what == sim::What::Set) lastRefined_ = &happening;
             }
             if (happening.what == sim::What::Answered) answered(happening);
+            // A Dark Raven's strike, his or another's in view (game/pets_raven.cpp).
+            if (happening.what == sim::What::Ravened) ravened(happening);
+            if (happening.what == sim::What::PetLevelled) petLevelled(happening);
             if (happening.what == sim::What::Deal && happening.who == heroId) dealNews_.push_back(happening);
             // A thing off the ground by him or anyone in view (a pickup is the street's): for the
             // chat's "You loot" and "Brann loots" (Chat::looted). Zen is not a thing.
@@ -2728,6 +2731,7 @@ void Play::update(double seconds) {
     };
     bolt_.update(float(seconds), standing, middle);
     drain_.update(float(seconds), middle);
+    ravenShow_.update(float(seconds));
     requiem_.update(float(seconds));
     // Sleep's rings follow their sleepers' feet (fx/sleep.h).
     sleep_.update(float(seconds), [&](uint32_t id, float* out) {
@@ -3517,7 +3521,7 @@ void Play::update(double seconds) {
             emit(heard_.missile, x, z);
         }
         if (!cue.miss && cue.damage > 0 && target->alive()) {
-            if (Drawn* struck = drawnOf(cue.target)) flinch(*struck, onHero);
+            if (Drawn* struck = drawnOf(cue.target)) flinch(*struck, onHero, cue.damage);
         }
     }
     // After the cues, so the fall comes in the same frame as the number and the blood of the
@@ -3703,6 +3707,11 @@ void Play::update(double seconds) {
         if (Drawn* hero = drawnOf(realm_.hero().id)) {
             const int pet = petNumber(realm_.satchel()[sim::kPet]);
             pets_.update(float(seconds), hero->figure, pet, realm_.hero().alive());
+            // And his Dark Raven, off his left hand (game/pets_raven.cpp).
+            pets_.raven(float(seconds), hero->figure, ravenLevel(realm_.satchel()),
+                        tables_.grid.safe(realm_.hero().column(), realm_.hero().row()), realm_.hero().alive(),
+                        petNumber(realm_.satchel()[sim::kMount]) == sim::kDarkHorseNumber);
+            ravenFrame(pets_, float(seconds));
             // His wing, while it has life left; beating fast while he flies (game/wings.h).
             const sim::Held& wing = realm_.satchel()[sim::kWings];
             const content::ItemRow* wingRow =
@@ -4154,7 +4163,15 @@ void Play::shock(Drawn& one, int clip) {
 // the click starts ends the clip. Not while he swings or casts -- MU's player branch cuts a
 // swing, but here the swing carries the landing cue of his own blow -- and not while he chases
 // a monster, which the halt would cancel: a stop that costs him his fight is not a flinch.
-void Play::flinch(Drawn& struck, bool isHero) {
+// How hard a blow has to land to touch the hero, as a share of his health -- ours, the user's
+// of 2026-10-25: "if char gets any damage even 1 it get stoped while it moves". A scratch
+// under kFlinchShare plays nothing; a walking hero is stopped only by a blow of kStopShare or
+// more, and not again for kStopApartTicks, so a pack trading blows cannot pin him in place.
+constexpr int kFlinchSharePct = 2;
+constexpr int kStopSharePct = 10;
+constexpr int64_t kStopApartTicks = 2 * 20;
+
+void Play::flinch(Drawn& struck, bool isHero, int damage) {
     if (!struck.placed || struck.swinging > 0.0f || struck.shocked > 0.0f) return;
     // Never a rider: MU's SetPlayerShock returns at once on Uniria, the Dinorant and the Dark
     // Horse (ZzzCharacter.cpp:1368-1369), so he rides on through the blow, silent.
@@ -4163,7 +4180,12 @@ void Play::flinch(Drawn& struck, bool isHero) {
     int clip = struck.shockClip;
     if (isHero) {
         if (struck.casting > 0.0f || realm_.casting()) return;
-        // A walking hero is stopped by it and flinches where he stands (the user, 2026-10-20:
+        const sim::Body& hero = realm_.hero();
+        const int64_t share = hero.maxHealth > 0 ? int64_t(damage) * 100 : 0;
+        if (share < int64_t(kFlinchSharePct) * hero.maxHealth) return;
+        if (hero.walking && (share < int64_t(kStopSharePct) * hero.maxHealth ||
+                             realm_.tick() - heroStoppedTick_ < kStopApartTicks)) return;
+        // A walking hero hit hard is stopped by it and flinches where he stands (the user, 2026-10-20:
         // "when char walks and get struct he has to stop and play struct aniamtion"), as MU's
         // PLAYER_SHOCK sets `c->Movement = false`. From 2026-09-30 he walked on through blows, a
         // Lich's fire at Lorencia's dungeon arch undoing every click ("monster keep hitting char
@@ -4176,7 +4198,10 @@ void Play::flinch(Drawn& struck, bool isHero) {
     flinchDice_ ^= flinchDice_ >> 17;
     flinchDice_ ^= flinchDice_ << 5;
     if ((flinchDice_ & 1u) == 0) return;
-    if (isHero && realm_.hero().walking) orderHero({.kind = sim::Request::Kind::Stop});
+    if (isHero && realm_.hero().walking) {
+        heroStoppedTick_ = realm_.tick();
+        orderHero({.kind = sim::Request::Kind::Stop});
+    }
     shock(struck, clip);
     const bool silent = look && look->has("silent_flinch");
     const int cry = !isHero ? (silent ? -1 : struck.cryAttack)

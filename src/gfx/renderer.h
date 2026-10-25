@@ -68,6 +68,9 @@ struct Drawable {
     // once it has left the string (game/crowd.cpp, Figure::nock). Instances that differ in it
     // are batched apart.
     int hiddenMaterial = -1;
+    // And the one material of it drawn alone, or -1 for all: one of the Dark Raven's three bodies by
+    // its level (game/pets.cpp). Batched apart as hiddenMaterial is.
+    int onlyMaterial = -1;
 };
 
 // A chrome colour in one float: each channel at hundredths, 0 to 100, as r * 10201 + g * 101 + b.
@@ -541,6 +544,7 @@ private:
         // him holds nothing but his armour's inside, which every piece of it would then reflect.
         bool posed = false;
         int hiddenMaterial = -1;  // Drawable::hiddenMaterial, the batch's own
+        int onlyMaterial = -1;    // and Drawable::onlyMaterial
         // A resident buffer's run (ResidentBatch) instead of the frame's instance buffer.
         bgfx::DynamicVertexBufferHandle resident = BGFX_INVALID_HANDLE;
         bool merged = false;  // ResidentBatch::merged

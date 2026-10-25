@@ -162,6 +162,9 @@ public:
         // bar is its Life, `life` of `lifeMost`. Ours, as the strip is: MuMain shows a worn pet
         // in no status cell, only in its own life bar (NewUIItemEnduranceInfo).
         int pet = -1;
+        // The Dark Horse's and Dark Raven's level (sim/lord_pets.h), and the raven's mode, its picture.
+        int petLevel = 0;
+        int ravenMode = 0;
         // Or her summon standing (the user, 2026-10-19: "we need to show summon aura icon on hud
         // if its active"): `skill` the summon's own (30-35), and like a pet no clock, its bar
         // its health, `life` of `lifeMost`.

@@ -73,6 +73,18 @@ void Pets::open(const Figures& figures) {
     dragonBody_ = figures.body("Rider02");
     // The Dark Horse, MODEL_DARK_HORSE (docs/game/mount.md), and its head bone for its breath.
     darkHorseBody_ = figures.body("DarkHorse");
+    // The Dark Raven's flying figure, and its sheets by name (game/pets_raven.cpp).
+    ravenBody_ = figures.body("DarkRavenFly");
+    for (int& m : ravenMaterials_) m = -1;
+    if (ravenBody_ && !ravenBody_->parts.empty()) {
+        static constexpr const char* kSheets[4] = {"dkonebody", "dkswing", "dkthreebody", "dksbody"};
+        const auto& materials = ravenBody_->parts[0]->materials();
+        for (size_t m = 0; m < materials.size(); ++m) {
+            for (int k = 0; k < 4; ++k) {
+                if (materials[m].name.find(kSheets[k]) != std::string::npos) ravenMaterials_[k] = int(m);
+            }
+        }
+    }
     breathBone_ = -1;
     if (darkHorseBody_ && darkHorseBody_->skeletonMesh) {
         const auto& bones = darkHorseBody_->skeletonMesh->bones();
@@ -346,6 +358,7 @@ void Pets::gather(gfx::Renderer& renderer, const Figure& hero, std::vector<float
         draw(angel_, std::clamp(angelIn_ / kAngelFadeIn, 0.0f, 1.0f));
     }
     if ((mounted_ == 2 || mounted_ == 3 || mounted_ == 4) && horseUp_ && horseIn_ > 0.0f) draw(horse_, horseIn_);
+    drawRaven(renderer, scratch, out, casters);
 }
 
 }  // namespace mu::game

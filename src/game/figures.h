@@ -340,6 +340,9 @@ struct FigureBody {
     // armed or not (ZzzCharacter.cpp:271-276, 559-562), and PLAYER_ATTACK_RIDE_HORSE_SWORD 84 for
     // every swing (:1108-1111). player.muc's numbers, one under actions.json's labels.
     int horseIdleClip = -1, horseRunClip = -1, horseSwingClip = -1;
+    // And the Dark Lord on a safe tile with the Dark Raven worn: PLAYER_DARKLORD_STAND 76 and
+    // PLAYER_DARKLORD_WALK 77, his arm up for the bird (ZzzCharacter.cpp:278-281, 563-566).
+    int ravenIdleClip = -1, ravenWalkClip = -1;
     // And on wings, off a safe zone (docs/game/wings.md): MU's PLAYER_STOP_FLY 11 where he stands
     // (PLAYER_STOP_FLY_CROSSBOW 12 with a crossbow) and PLAYER_FLY 34 where he goes
     // (PLAYER_FLY_CROSSBOW 35), ZzzCharacter.cpp:298-326, 615-621. Played at MU's 0.34, the

@@ -812,6 +812,21 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             say("Defense +" + std::to_string(sim::horseDefense(who.totals.agility, sim::petLevel(what)) / 2) +
                 ", rising with Agility");
         }
+        // The Dark Raven's, as MU's card: its band and speed off the reader's Command, without the
+        // scepter's rise, and the Command it asks, red with how far short (GIPetManager.cpp:595-769).
+        if (sim::darkRaven(row)) {
+            const int level = sim::petLevel(what), command = who.totals.command;
+            say("Damage " + std::to_string(sim::ravenLeast(level, command)) + " ~ " +
+                std::to_string(sim::ravenMost(level, command)));
+            say("Attack speed " + std::to_string(sim::ravenSpeed(level, command)));
+            const int asked = sim::ravenCommand(level);
+            Row line;
+            line.free = "Command " + std::to_string(asked) +
+                        (command < asked ? " (lacking " + std::to_string(asked - command) + ")" : "");
+            line.freeTone = command < asked ? Tone::Red : Tone::White;
+            line.mark = tip::Mark::Diamond;
+            does.rows.push_back(line);
+        }
         if (power.takenToll > 0) {
             Row line;
             line.free = "Life -" + std::to_string(power.takenToll) + " for each blow it absorbs";

@@ -20,6 +20,7 @@
 //   3.0  skill q | key 1 | type enter       a skill key (q w e r t), a potion key, typing
 //                                           (type bag, journal, guild: those windows' keys)
 //   3.0  hold-skill q 1.2                   a skill key held down for that long
+//   3.0  shift-key 2                        a potion key with Shift: the Dark Raven's mode
 //   0.2  run 1 -1                           run on along tile direction (1,-1): the pointer kept
 //                                           five tiles ahead of him, clicking as a player does
 //   9.0  stop                               ...until this
@@ -60,6 +61,7 @@ public:
         bool pressed = false, released = false, held = false;
         bool rightPressed = false, rightHeld = false;
         int potion = -1;     // 0..3
+        bool shifted = false;  // ...pressed with Shift (shift-key)
         int skill = -1;      // 0 is Q
         int holdSkill = -1;  // held this frame
         std::string typed;
@@ -91,6 +93,7 @@ private:
         float a = 0.0f, b = 0.0f;  // a screen fraction or a tile
         float seconds = 0.0f;      // a glide's length or a hold's
         int key = -1;
+        bool shifted = false;  // shift-key
         std::string text;
         std::vector<std::string> words;
         float pins[5] = {-1, -1, -1, -1, -1};

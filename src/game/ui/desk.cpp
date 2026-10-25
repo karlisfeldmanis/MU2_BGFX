@@ -1870,8 +1870,16 @@ void Desk::quickKeys(const gfx::Window& window, Play& play, const Pointer& point
     const gfx::Window::Key keys[Hud::kQuickKeys] = {
         gfx::Window::Key::Potion1, gfx::Window::Key::Potion2, gfx::Window::Key::Potion3,
         gfx::Window::Key::Potion4, gfx::Window::Key::Potion5};
+    // **Shift+1 to 4 command the Dark Raven** (MuMain NewUIMainFrameWindow.cpp:1759-1769, while a
+    // pet is out): Normal, Random, With owner, and Target on the monster under the pointer.
+    const bool raven = play.ravenLevel(bag) > 0;
     for (int key = 0; key < Hud::kQuickKeys; ++key) {
         if (!window.pressed(keys[key]) && scriptedKey_ != key) continue;
+        if (raven && (window.shift() || (scriptedKey_ == key && scriptedShift_)) && key < sim::kRavenModes) {
+            const uint32_t at = key == int(sim::RavenMode::Target) ? play.pointedMonster() : 0;
+            if (key != int(sim::RavenMode::Target) || at != 0) play.setRavenMode(key, at);
+            continue;
+        }
         // Hovering a thing in the open bag and pressing the key binds it, which is MU's own
         // gesture (CNewUIMyInventory::UpdateKeyEvent); otherwise the key uses what is bound.
         const int hovered = inventoryOpen_ ? bag_.hovered() : -1;
@@ -2127,12 +2135,14 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
     // His pet first and his mount after it, which stand as long as they have life: the Guardian
     // Angel or the Imp in slot 8, Uniria or Dinorant in the mount's, each its Life for the bar
     // under it.
-    for (int slot : {sim::kPet, sim::kMount}) {
+    for (int slot : {sim::kPet, sim::kMount, sim::kWeaponLeft}) {
         const sim::Held& pet = realm.satchel()[slot];
         if (pet.empty() || !realm.tables() || size_t(pet.item) >= realm.tables()->items.size()) {
             continue;
         }
         const content::ItemRow& row = realm.tables()->items[size_t(pet.item)];
+        // The left hand's only cell is the Dark Raven's: its mode in its picture, its level.
+        if (slot == sim::kWeaponLeft && !sim::darkRaven(row)) continue;
         const int most = sim::timedPet(row) ? 1 : sim::maximumDurability(row, pet);
         if (row.group == sim::kGroupPets && pet.durability > 0 && most > 0) {
             Hud::Boon& boon = boons[standing++];
@@ -2142,6 +2152,8 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
             boon.kinship = hero.excel.kinship;
             boon.idle = sim::petPower(row).mount && !sim::rideMap(realm.tables()->map);
             boon.share = float(pet.durability) / float(most);
+            if (sim::levelledPet(row)) boon.petLevel = sim::petLevel(pet);
+            if (sim::darkRaven(row)) boon.ravenMode = hero.ravenMode;
             // A timed pet's bar is its time (sim::timedPet): minutes left of its whole.
             if (sim::timedPet(row)) {
                 const int64_t until = sim::petUntil(pet);

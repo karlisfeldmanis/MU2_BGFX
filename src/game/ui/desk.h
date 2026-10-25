@@ -108,7 +108,10 @@ public:
                guildMake_.typing() || helperWindow_.typing();
     }
     // A scripted potion key for the next update, 0 to 3.
-    void scriptKey(int key) { scriptedKey_ = key; }
+    void scriptKey(int key, bool shift = false) {
+        scriptedKey_ = key;
+        scriptedShift_ = shift;
+    }
     // A skill key pressed by a script: 0 is Q. `--press q` in a headless run, so the cast path is
     // reachable without a window.
     void scriptSkill(int key) { scriptedSkill_ = key; }
@@ -606,6 +609,7 @@ private:
     // them (mu.db's character_hotkeys is where MU2 kept them).
     int32_t quick_[sim::kQuickKeys] = {-1, -1, -1, -1, -1};
     int scriptedKey_ = -1;
+    bool scriptedShift_ = false;  // that key with Shift (Desk::scriptKey)
     void quickKeys(const gfx::Window& window, Play& play, const Pointer& pointer);
     // What is on Q W E R, by MU's skill number. A newly learned skill takes the first free key
     // ONCE -- `autoBound_` is what stops it coming back the moment the player takes it off -- and

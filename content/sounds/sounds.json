@@ -2894,6 +2894,24 @@
       ],
       "from": "SOUND_PART_TELEPORT, Data\\Sound\\eSummon.wav (ZzzOpenData.cpp:4871), 5.0 s. Summon's circles, 5 ticks after the echo (ZzzCharacter.cpp:4385-4390); played whole, on the cast alone (docs/plans/dark-lord-spells/summon.md 8.13), cued by game/fx/recall.h at the let-go."
     },
+    "raven_rush": {
+      "files": [
+        "DSpirit_Rush.wav"
+      ],
+      "from": "SOUND_DSPIRIT_RUSH, Data\\Sound\\DSpirit_Rush.wav (ZzzOpenData.cpp:4876-4878): the Dark Raven's dash as it starts (CSPetSystem.cpp:245-286, SetAttack), PlayBuffer, not placed; cued by game/play_raid.cpp on the realm's Ravened (docs/plans/dark-lord-pets/client.md section 1)."
+    },
+    "raven_missile": {
+      "files": [
+        "DSpirit_Missile.wav"
+      ],
+      "from": "SOUND_DSPIRIT_MISSILE, Data\\Sound\\DSpirit_Missile.wav (ZzzOpenData.cpp:4876-4878): the Dark Raven's ball as its charge starts (SetAttack), not placed; cued on the realm's Ravened."
+    },
+    "raven_shout": {
+      "files": [
+        "DSpirit_Shout.wav"
+      ],
+      "from": "SOUND_DSPIRIT_SHOUT, Data\\Sound\\DSpirit_Shout.wav: the Dark Raven's cry now and then, about one frame in 6000 (rand_fps_check(100) && rand_fps_check(60), CSPetSystem.cpp:592), placed on the bird."
+    },
     "fire_scream": {
       "files": [
         "Darklord_firescream.wav"

@@ -1863,6 +1863,10 @@ void Play::follow(float seconds) {
         // PLAYER_RUN_RIDE_HORSE 79 (ZzzCharacter.cpp:271-276, 559-562).
         const bool darkHorse = riding && look->horseRunClip >= 0 && look->horseIdleClip >= 0 &&
                                onDarkHorse(body->id);
+        // In town with the Dark Raven on his arm: PLAYER_DARKLORD_STAND 76 and _WALK 77
+        // (ZzzCharacter.cpp:278-281, 563-566).
+        const bool ravenArm = safe && !riding && body->player && look->ravenIdleClip >= 0 &&
+                              look->ravenWalkClip >= 0 && bearsRaven(body->id);
         const int rideRun = darkHorse ? look->horseRunClip
                             : safe || look->rideRunArmedClip < 0 ? look->rideRunClip
                                                                  : look->rideRunArmedClip;
@@ -1891,6 +1895,7 @@ void Play::follow(float seconds) {
                              : flies                               ? flyMove
                              : swims                               ? swimMove
                              : (body->running && look->runClip >= 0) ? look->runClip
+                             : ravenArm                            ? look->ravenWalkClip
                              : (safe && look->walkSafeClip >= 0)   ? look->walkSafeClip
                              : (body->player && look->combatWalkClip >= 0)
                                  ? look->combatWalkClip
@@ -1906,7 +1911,7 @@ void Play::follow(float seconds) {
         };
         const auto isWalk = [&](int c) {
             return c >= 0 && (c == look->walkClip || c == look->walkSafeClip ||
-                              c == look->combatWalkClip ||
+                              c == look->combatWalkClip || c == look->ravenWalkClip ||
                               c == look->runClip || isRide(c) || isSwim(c));
         };
         // Walking is what the drawn body is doing, and nothing else sets a walk going: a body
@@ -1968,6 +1973,8 @@ void Play::follow(float seconds) {
             // 2026-10-09: "weapons has to be on back when there is no combat on idle outside
             // safezone".
             clip = look->combatIdleClip;
+        } else if (ravenArm) {
+            clip = look->ravenIdleClip;
         } else if (safe && look->idleSafeClip >= 0) {
             clip = look->idleSafeClip;
         }

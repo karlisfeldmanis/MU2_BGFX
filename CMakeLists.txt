@@ -663,6 +663,7 @@ add_library(mu_game STATIC
   src/game/figure_shows.cpp
   src/game/crowd.cpp
   src/game/pets.cpp
+  src/game/pets_raven.cpp
   src/game/wings.cpp
   src/game/headless.cpp
   src/game/play.cpp
@@ -735,6 +736,7 @@ add_library(mu_game STATIC
   src/game/fx/weakness.cpp
   src/game/fx/pollution.cpp
   src/game/fx/drain.cpp
+  src/game/fx/raven.cpp
   src/game/fx/requiem.cpp
   src/game/fx/sleep.cpp
   src/game/fx/chains.cpp

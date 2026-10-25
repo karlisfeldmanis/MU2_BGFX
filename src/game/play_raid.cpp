@@ -443,6 +443,72 @@ bool Play::onDarkHorse(uint32_t id) const {
     return bag != nullptr && petNumber((*bag)[sim::kMount]) == sim::kDarkHorseNumber;
 }
 
+int Play::ravenLevel(const sim::Satchel& bag) const {
+    const sim::Held& worn = bag[sim::kWeaponLeft];
+    if (worn.empty() || worn.durability <= 0 || size_t(worn.item) >= tables_.items.size()) return 0;
+    return sim::darkRaven(tables_.items[size_t(worn.item)]) ? sim::petLevel(worn) : 0;
+}
+
+bool Play::bearsRaven(uint32_t id) const {
+    const sim::Satchel* bag = id == realm_.hero().id ? &realm_.satchel() : realm_.satchelOf(id);
+    return bag != nullptr && ravenLevel(*bag) > 0;
+}
+
+void Play::ravened(const sim::Happening& happening) {
+    const Drawn* target = drawnOf(happening.whom);
+    if (target == nullptr) return;
+    Pets* pets = nullptr;
+    if (happening.who == realm_.hero().id) {
+        pets = &pets_;
+    } else {
+        for (size_t i = 0; i < otherPets_.size() && i < otherPetsOf_.size(); ++i) {
+            if (otherPetsOf_[i] == happening.who) pets = &otherPets_[i];
+        }
+    }
+    if (pets == nullptr) return;
+    // At its middle, a metre up, as MU aims at the target 50 over its feet.
+    const float at[3] = {target->figure.position()[0], target->figure.position()[1] + 0.5f,
+                         target->figure.position()[2]};
+    pets->ravenStrike(happening.a == 1, at);
+    // The dash's gold burst off the bird as it goes (fx/raven.h); the ball waits for its charge.
+    float bird[3];
+    if (happening.a == 0 && pets->ravenAt(bird)) ravenShow_.dash(bird);
+    // SetAttack's PlayBuffer, not placed: the dash's rush, the ball's missile (CSPetSystem.cpp:245-286).
+    const int sound = happening.a == 1 ? heard_.ravenMissile : heard_.ravenRush;
+    if (sound >= 0) sound_.play(sound);}
+
+void Play::petLevelled(const sim::Happening& happening) {
+    const bool up = happening.c == 1;
+    float at[3];
+    if (happening.a == sim::kWeaponLeft) {
+        Pets* pets = happening.who == realm_.hero().id ? &pets_ : nullptr;
+        for (size_t i = 0; !pets && i < otherPets_.size() && i < otherPetsOf_.size(); ++i) {
+            if (otherPetsOf_[i] == happening.who) pets = &otherPets_[i];
+        }
+        if (pets && pets->ravenAt(at)) ravenShow_.level(at, up);
+    } else if (const Drawn* rider = drawnOf(happening.who)) {
+        // The horse's twelve flares round it (CSPetSystem's level flares; client.md section 2): ours
+        // the raven's spiral, at the rider's middle.
+        for (int k = 0; k < 3; ++k) at[k] = rider->figure.position()[k];
+        at[1] += 0.6f;
+        ravenShow_.level(at, up);
+    }
+    if (happening.who == realm_.hero().id) {
+        Gain gain{Gain::Kind::Notice, 0};
+        gain.line = std::string(happening.a == sim::kWeaponLeft ? "Your Dark Raven" : "Your Dark Horse") +
+                    (up ? " reached level " : " fell to level ") + std::to_string(happening.b);
+        gain.calm = up;
+        gains_.push_back(gain);
+    }
+}
+
+void Play::ravenFrame(Pets& pets, float seconds) {
+    // The ball let go at its charge's end, and the bird's cry now and then (game/pets_raven.cpp).
+    float from[3], to[3];
+    if (pets.ravenLetGo(from, to)) ravenShow_.ball(from, to);
+    if (heard_.ravenShout >= 0 && pets.ravenCry(seconds) && pets.ravenAt(from)) emit(heard_.ravenShout, from[0], from[2]);
+}
+
 void Play::horseBreath(Pets& pets, float seconds) {
     float at[3];
     if (!pets.breathe(seconds, at)) return;
@@ -493,8 +559,9 @@ void Play::otherPets(float seconds) {
                                       ? realm_.satchelOf(body.id) : nullptr;
         const int pet = bag ? petNumber((*bag)[sim::kPet]) : -1;
         const int mount = bag ? petNumber((*bag)[sim::kMount]) : -1;
+        const int raven = bag ? ravenLevel(*bag) : 0;
         if (otherPetsOf_[i] != body.id) {
-            if (otherPetsOf_[i] == 0 && pet < 0 && mount < 0) continue;  // nothing to start
+            if (otherPetsOf_[i] == 0 && pet < 0 && mount < 0 && raven == 0) continue;  // nothing to start
             otherPets_[i] = Pets{};
             otherPets_[i].open(*figures_);
             otherPets_[i].setFlying(flying_);
@@ -502,6 +569,9 @@ void Play::otherPets(float seconds) {
         }
         Drawn& rider = drawn_[i];
         otherPets_[i].update(seconds, rider.figure, pet, body.alive());
+        otherPets_[i].raven(seconds, rider.figure, raven, tables_.grid.safe(body.column(), body.row()),
+                            body.alive(), mount == sim::kDarkHorseNumber);
+        ravenFrame(otherPets_[i], seconds);
         otherPets_[i].ride(seconds, rider.figure, mount, body.riding, horseAction(rider, mount));  // and as he dies (Play::update)
         horseBreath(otherPets_[i], seconds);
     }

@@ -88,7 +88,24 @@ public:
     void gather(gfx::Renderer& renderer, const Figure& hero, std::vector<float>& scratch,
                 std::vector<gfx::Drawable>& out, std::vector<gfx::Drawable>* casters);
 
+    // **The Dark Raven** (game/pets_raven.cpp; docs/plans/dark-lord-pets/client.md section 1),
+    // MuMain's CSPetSystem: `level` its level, 0 for none worn; `safe` his tile, where it perches on
+    // his left hand; `horse` the Dark Horse worn, which lifts its flight to 350. After `update`.
+    void raven(float seconds, const Figure& hero, int level, bool safe, bool alive, bool horse);
+    // Its strike as the realm said it (What::Ravened, MU's C1 A8): the dash on `target`, or the
+    // ball let go at it after its charge.
+    void ravenStrike(bool ball, const float target[3]);
+    // Where the ball goes out from, once, the frame its charge ends: true with its head in `from`.
+    bool ravenLetGo(float from[3], float to[3]);
+    // Where it is, for its sounds and a level's flares; false while none flies.
+    bool ravenAt(float out[3]) const;
+    // Its cry, one reference frame in 6000 (CSPetSystem.cpp:592): true the frame it calls.
+    bool ravenCry(float seconds);
+
 private:
+    void stepRaven(const float owner[3], const float hand[3], bool safe, bool horse);
+    void drawRaven(gfx::Renderer& renderer, std::vector<float>& scratch,
+                   std::vector<gfx::Drawable>& out, std::vector<gfx::Drawable>* casters);
     void spawnAngel(const float owner[3]);
     void stepAngel(const float owner[3]);
     float roll();  // 0..1
@@ -129,6 +146,26 @@ private:
     uint32_t seed_ = 0x9e3779b9u;
     const FigureBody* heroBody_ = nullptr;
     int clavicle_ = -1;
+
+    // The Dark Raven's: its figure and its three bodies' materials by level, and the feathers.
+    enum class Bird : uint8_t { Fly, Flying, Perching, Perched, Dash, Away, Charge };
+    const FigureBody* ravenBody_ = nullptr;
+    Figure raven_;
+    int ravenLevel_ = 0;
+    int ravenMaterials_[4] = {-1, -1, -1, -1};  // dkonebody, dkswing, dkthreebody, dksbody
+    int hand_ = -1;                              // his Bip01 L Hand
+    bool ravenUp_ = false;
+    float ravenIn_ = 0.0f;
+    Bird bird_ = Bird::Fly;
+    float bat_[3] = {}, batWas_[3] = {};  // in MU's space, as the Angel's at_
+    float batDir_[3] = {};
+    float batYaw_ = 0.0f, batPitch_ = 0.0f, batYawDrawn_ = 0.0f;
+    float batSpeed_ = 0.0f, batPull_ = 0.0f;  // the dash's Velocity and Gravity
+    float batPrey_[3] = {};                   // the strike's target
+    int batTicks_ = 0, batLost_ = 0;
+    float batFrames_ = 0.0f;
+    bool letGo_ = false;
+    int clipShown_ = -1;
 };
 
 }  // namespace mu::game

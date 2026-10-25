@@ -90,8 +90,9 @@ bool Director::open(const std::string& path) {
             cue.key = skillKey(key);
             cue.verb = verb == "skill" ? Verb::Skill : Verb::HoldSkill;
             fine = cue.key >= 0 && (cue.verb == Verb::Skill || bool(words >> cue.seconds));
-        } else if (verb == "key") {
+        } else if (verb == "key" || verb == "shift-key") {
             cue.verb = Verb::Potion;
+            cue.shifted = verb == "shift-key";
             fine = bool(words >> cue.key) && cue.key >= 1 && cue.key <= 4;
             cue.key -= 1;
         } else if (verb == "run") {
@@ -205,7 +206,7 @@ Director::Hand Director::step(double seconds, float width, float height, const E
                 heldSkill_ = cue.key;
                 skillUntil_ = seconds + cue.seconds;
                 break;
-            case Verb::Potion: hand.potion = cue.key; break;
+            case Verb::Potion: hand.potion = cue.key, hand.shifted = cue.shifted; break;
             case Verb::Type: hand.typed = cue.text; break;
             case Verb::Run:
                 glide(Aim::Ahead, cue.a, cue.b, 0);

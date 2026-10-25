@@ -59,3 +59,12 @@ with pets for DL"). The two research files beside this one are the sources, ever
    **Done 2026-10-25**: realm_raven.cpp; Command::Kind::RavenMode, What::Ravened / RavenSet; protocol
    56, snapshot shape 26. Monsters only: the PvP of With owner and Target waits for the duel rules.
 4. **The raven, look**: model, flight, perch, dash and ball, sounds, the pet window, HUD frame.
+   **Done 2026-10-25**: game/pets_raven.cpp (CSPetSystem's flight 250 up, 350 on the horse; the
+   perch on Bip01 L Hand in town with his 76/77; the dash and the hovering charge; its body by level
+   through gfx::Drawable::onlyMaterial), fx/raven (the dash's gold streaks, the ball's five spirit
+   bolts, a level's flares), its three sounds, a boon cell in MU's command icon for its mode with
+   **Shift+1-4** (MU's keys; Target the monster under the pointer), the card's damage, speed and
+   Command. Ours: a line in the lane when a pet's level moves (MU says nothing). No pet info window:
+   the boon's card and the item card carry its numbers. tools/record/raven.cue. The Spirits' quest
+   pay (Halls, Kantur's Captain) is written in sim/quests.cpp, uncommitted beside another session's
+   Kanturu work there.

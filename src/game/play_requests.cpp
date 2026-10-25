@@ -91,6 +91,11 @@ uint32_t Play::useItem(int slot) {
     return send({.kind = sim::Command::Kind::Use, .a = slot}, asked);
 }
 
+uint32_t Play::setRavenMode(int mode, uint32_t target) {
+    core::logf("raven: mode %d at #%u", mode, target);
+    return send({.kind = sim::Command::Kind::RavenMode, .a = mode, .target = target});
+}
+
 uint32_t Play::setAutoDrink(int health, int mana) {
     core::logf("auto-drink: under %d%% health, %d%% mana", health, mana);
     return send({.kind = sim::Command::Kind::AutoDrink, .a = health, .b = mana});
