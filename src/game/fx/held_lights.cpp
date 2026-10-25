@@ -155,6 +155,8 @@ const char* HeldLights::mesh(Item item) {
         case Item::MasterScepter: return "Mace10";
         case Item::GreatScepter: return "Mace11";
         case Item::LordScepter: return "Mace12";
+        case Item::GreatLordScepter: return "Mace13";
+        case Item::ShiningScepter: return "Mace16";
     }
     return "";
 }
@@ -603,6 +605,19 @@ int HeldLights::points(Item item, float out[kMostPoints][3]) {
                 for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
             }
             return 4;
+        }
+        case Item::GreatLordScepter: {
+            // Bone09 of Mace13.bmd at rest (bone 1), the head.
+            for (int k = 0; k < 3; ++k) out[0][k] = (k == 2 ? 115.3f : 0.0f) * kUnit;
+            return 1;
+        }
+        case Item::ShiningScepter: {
+            // zx01-zx03 of CW_Mace.bmd at rest (bones 1-3): the head, then down the shaft.
+            static const float kBones[3][3] = {{0.0f, 0.1f, 99.7f}, {0.0f, 0.1f, 40.5f}, {0.0f, 0.1f, -66.3f}};
+            for (int i = 0; i < 3; ++i) {
+                for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
+            }
+            return 3;
         }
     }
     return 0;
@@ -1146,6 +1161,28 @@ void HeldLights::gather(gfx::Effects& effects) const {
                     put(light_, one.at[i], halfOf(1.3f), 1.0f, 0.6f, 0.3f);
                     if (i > 0) put(shiny_, one.at[i], halfOf(0.4f), 1.0f, 0.6f, 0.3f);
                 }
+                break;
+            }
+            case Item::GreatLordScepter: {
+                const float l = std::sin(clock_ * 2.0f) * 0.3f + 0.7f;
+                put(light_, one.at[0], halfOf(2.0f), 0.0f, 0.5f * l, l);
+                put(shiny_, one.at[0], halfOf(1.0f), 0.5f, 0.5f, 0.5f);
+                put(shiny_, one.at[0], halfOf(1.0f), 0.5f, 0.5f, 0.5f);
+                break;
+            }
+            case Item::ShiningScepter: {
+                if (one.count < 3) break;
+                const float l = std::sin(clock_ * 2.0f) * 0.3f + 0.1f;
+                // MU's (rand() % 10) / 30 + 1.7, rolled per reference frame.
+                uint32_t h = crackleFrame_ * 2654435761u;
+                h ^= h >> 15;
+                h *= 2246822519u;
+                h ^= h >> 13;
+                put(shiny_, one.at[0], halfOf(float(h % 10u) / 30.0f + 1.7f), 0.8f + l, 0.5f + l,
+                    0.1f + l);
+                put(light_, one.at[0], halfOf(3.0f), 0.7f, 0.5f, 0.3f);
+                put(light_, one.at[1], halfOf(1.5f), 0.8f, 0.6f, 0.4f);
+                put(light_, one.at[2], halfOf(1.2f), 0.8f, 0.6f, 0.4f);
                 break;
             }
         }

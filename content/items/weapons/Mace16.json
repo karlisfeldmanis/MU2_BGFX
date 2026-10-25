@@ -1,0 +1,181 @@
+{
+  "item": "Mace16",
+  "mu_name": "Shining Scepter",
+  "mu_name_from": "MODEL_SHINING_SCEPTER (MODEL_MACE + 15), loaded from Item/CW_Mace.bmd (ZzzOpenData.cpp:1103). Ours is Mace16 by the index-plus-one rule. Group 2 number 15 in OpenMU S6 Weapons.cs:197.",
+  "profile": "weapon",
+  "stats": {
+    "call": "CreateWeapon(2, 15, 0, 66, 1, 4, true, \"Shining Scepter\", 110, 99, 111, 40, 78, 60, 0, 108, 22, 0, 0, 0, 0, 0, 0, 1, 0, 0)",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Weapons.cs:197",
+    "call_note": "CreateWeapon(group, number, slot, skillNumber, width, height, dropsFromMonsters, name, dropLevel, minimumDamage, maximumDamage, attackSpeed, durability, magicPower, levelRequirement, strengthRequirement, agilityRequirement, energyRequirement, vitalityRequirement, wizardClass, knightClass, elfClass, magicGladiatorClass, darkLordClass, summonerClass, ragefighterClass), openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Weapons.cs:304.",
+    "group": 2,
+    "number": 15,
+    "slot": 0,
+    "skill": 66,
+    "width": 1,
+    "height": 4,
+    "drops_from_monsters": true,
+    "drop_level": 110,
+    "minimum_damage": 99,
+    "maximum_damage": 111,
+    "attack_speed": 40,
+    "durability": 78,
+    "magic_power": 60,
+    "requires": {
+      "level": 0,
+      "strength": 108,
+      "agility": 22,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "lord"
+    ]
+  },
+  "sheets": {
+    "darkwapon_06": "darkwapon_06.png"
+  },
+  "why_this_one": "MU's Castle Siege scepter, the Dark Lord's (docs/plans/dark-lord.md section 7), with Force Wave as every scepter (the user, 2026-10-25: 'Great Lord + Shining').",
+  "stance": "sword",
+  "stance_from": "Width 1: a one-handed scepter stands PLAYER_STOP_SWORD, as every one-handed mace here and as MuMain has him (ZzzCharacter.cpp:345-350).",
+  "two_handed": false,
+  "sheet_from": "Data/Item/darkwapon_06 (64x128, the gold head chased in black and the gold shaft), from MuMain.",
+  "sheet_materials": {
+    "darkwapon_06": "painted_steel"
+  },
+  "rig_note": "Mace16.rig.json from export-rig --actions=all of CW_Mace.bmd: four bones, nothing moves; kept for bones 1-3, the head and two down the shaft, where MuMain hangs warm BITMAP_LIGHTs and a flickering gold BITMAP_SHINY+1 at the head while it is held (ZzzCharacter.cpp:7321-7344; fx/held_lights).",
+  "effects_note": "RenderPartObjectBody's MODEL_SHINING_SCEPTER arm (ZzzObject.cpp:7713-7716) is the body alone: no glow, no chrome pass. Shine colour 28 (:6648-6650).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 64,
+      "area": 1548.4,
+      "along": [
+        67.5,
+        117.3
+      ],
+      "mu_uv": [
+        0.163,
+        0.231,
+        0.989,
+        0.981
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.291,
+        0.676
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 64,
+      "area": 1549.5,
+      "along": [
+        67.5,
+        117.3
+      ],
+      "mu_uv": [
+        0.163,
+        0.231,
+        0.989,
+        0.981
+      ],
+      "bake_uv": [
+        0.166,
+        0.193,
+        0.797,
+        0.797
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 64,
+      "area": 1540.4,
+      "along": [
+        67.5,
+        117.3
+      ],
+      "mu_uv": [
+        0.163,
+        0.231,
+        0.989,
+        0.981
+      ],
+      "bake_uv": [
+        0.34,
+        0.181,
+        0.832,
+        0.624
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 64,
+      "area": 1556.0,
+      "along": [
+        67.5,
+        117.3
+      ],
+      "mu_uv": [
+        0.163,
+        0.231,
+        0.989,
+        0.981
+      ],
+      "bake_uv": [
+        0.18,
+        0.008,
+        0.659,
+        0.85
+      ]
+    },
+    {
+      "island": 4,
+      "material": "painted_steel",
+      "triangles": 112,
+      "area": 4573.2,
+      "along": [
+        12.2,
+        143.1
+      ],
+      "mu_uv": [
+        0.009,
+        0.032,
+        0.364,
+        0.972
+      ],
+      "bake_uv": [
+        0.05,
+        0.007,
+        0.974,
+        0.993
+      ]
+    },
+    {
+      "island": 5,
+      "material": "painted_steel",
+      "triangles": 36,
+      "area": 1946.4,
+      "along": [
+        -83.6,
+        19.6
+      ],
+      "mu_uv": [
+        0.807,
+        0.018,
+        0.99,
+        0.558
+      ],
+      "bake_uv": [
+        0.015,
+        0.008,
+        0.749,
+        0.62
+      ]
+    }
+  ]
+}

@@ -1,0 +1,635 @@
+{
+  "item": "Mace13",
+  "mu_name": "Great Lord Scepter",
+  "mu_name_from": "OpenMU VersionSeasonSix's CreateWeapon (openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Weapons.cs:194); the model is Item/Mace13.bmd, which MuMain's OpenItems loads for it (MuMain/src/source/Engine/Object/ZzzOpenData.cpp:646).",
+  "profile": "weapon",
+  "stats": {
+    "call": "CreateWeapon(2, 12, 0, 66, 1, 4, true, \"Great Lord Scepter\", 140, 108, 120, 40, 84, 67, 0, 90, 20, 0, 0, 0, 0, 0, 0, 1, 0, 0)",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Weapons.cs:194",
+    "call_note": "CreateWeapon(group, number, slot, skillNumber, width, height, dropsFromMonsters, name, dropLevel, minimumDamage, maximumDamage, attackSpeed, durability, magicPower, levelRequirement, strengthRequirement, agilityRequirement, energyRequirement, vitalityRequirement, wizardClass, knightClass, elfClass, magicGladiatorClass, darkLordClass, summonerClass, ragefighterClass), openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Weapons.cs:304.",
+    "group": 2,
+    "number": 12,
+    "slot": 0,
+    "skill": 66,
+    "width": 1,
+    "height": 4,
+    "drops_from_monsters": true,
+    "drop_level": 140,
+    "minimum_damage": 108,
+    "maximum_damage": 120,
+    "attack_speed": 40,
+    "durability": 84,
+    "magic_power": 67,
+    "requires": {
+      "level": 0,
+      "strength": 90,
+      "agility": 20,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "lord"
+    ]
+  },
+  "sheets": {
+    "sep063": "sep063.png",
+    "sep064": "sep064.png",
+    "sep062": "sep062.png",
+    "sep065": "sep065.png"
+  },
+  "why_this_one": "MU's top dropped scepter, the Dark Lord's (docs/plans/dark-lord.md section 7), with Force Wave as every scepter (the user, 2026-10-25: 'Great Lord + Shining').",
+  "stance": "sword",
+  "stance_from": "Width 1: a one-handed scepter stands PLAYER_STOP_SWORD, as every one-handed mace here and as MuMain has him (ZzzCharacter.cpp:345-350).",
+  "two_handed": false,
+  "sheet_from": "Data/Item/sep063 (128x128, the violet-steel head, crown and grip), sep064 (32x32, a pale blade), sep062 (64x256, the long dark blades) and sep065 (4x4, flat white), from MuMain.",
+  "sheet_materials": {
+    "sep063": "steel",
+    "sep064": "steel",
+    "sep062": "steel",
+    "sep065": "steel"
+  },
+  "rig_note": "Mace13.rig.json from export-rig --actions=all: six bones, nothing moves; kept for bone 1 at the head, where MuMain hangs a pulsing blue BITMAP_LIGHT and two turning grey BITMAP_SHINY+1 while it is held (ZzzCharacter.cpp:7476-7488; fx/held_lights).",
+  "glow": {
+    "sep064": {
+      "over": true
+    },
+    "sep065": {
+      "over": true
+    }
+  },
+  "glow_note": "RenderPartObjectBody's MODEL_GREAT_LORD_SCEPTER arm (ZzzObject.cpp:8009-8014): the body, then mesh 1 (sep064) and mesh 3 (sep065) again RENDER_TEXTURE | RENDER_BRIGHT, each its own BlendMesh at 1, steady: drawn added over themselves (over).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 49,
+      "area": 557.1,
+      "along": [
+        59.4,
+        91.1
+      ],
+      "mu_uv": [
+        0.02,
+        0.058,
+        0.953,
+        0.976
+      ],
+      "bake_uv": [
+        0.012,
+        0.012,
+        0.707,
+        0.35
+      ]
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 49,
+      "area": 990.5,
+      "along": [
+        88.8,
+        140.9
+      ],
+      "mu_uv": [
+        0.02,
+        0.058,
+        0.953,
+        0.885
+      ],
+      "bake_uv": [
+        0.012,
+        0.013,
+        0.485,
+        0.569
+      ]
+    },
+    {
+      "island": 2,
+      "material": "steel",
+      "triangles": 49,
+      "area": 557.1,
+      "along": [
+        59.4,
+        91.1
+      ],
+      "mu_uv": [
+        0.02,
+        0.058,
+        0.953,
+        0.976
+      ],
+      "bake_uv": [
+        0.012,
+        0.012,
+        0.621,
+        0.622
+      ]
+    },
+    {
+      "island": 3,
+      "material": "steel",
+      "triangles": 49,
+      "area": 990.5,
+      "along": [
+        88.8,
+        140.9
+      ],
+      "mu_uv": [
+        0.02,
+        0.058,
+        0.953,
+        0.885
+      ],
+      "bake_uv": [
+        0.013,
+        0.012,
+        0.74,
+        0.707
+      ]
+    },
+    {
+      "island": 4,
+      "material": "steel",
+      "triangles": 33,
+      "area": 549.5,
+      "along": [
+        51.3,
+        89.8
+      ],
+      "mu_uv": [
+        0.02,
+        0.058,
+        0.953,
+        0.976
+      ],
+      "bake_uv": [
+        0.137,
+        0.012,
+        0.757,
+        0.843
+      ]
+    },
+    {
+      "island": 5,
+      "material": "steel",
+      "triangles": 33,
+      "area": 1144.0,
+      "along": [
+        89.7,
+        151.3
+      ],
+      "mu_uv": [
+        0.02,
+        0.058,
+        0.953,
+        0.976
+      ],
+      "bake_uv": [
+        0.225,
+        0.012,
+        0.887,
+        0.896
+      ]
+    },
+    {
+      "island": 6,
+      "material": "steel",
+      "triangles": 33,
+      "area": 549.5,
+      "along": [
+        51.3,
+        89.8
+      ],
+      "mu_uv": [
+        0.02,
+        0.058,
+        0.953,
+        0.976
+      ],
+      "bake_uv": [
+        0.012,
+        0.087,
+        0.945,
+        0.925
+      ]
+    },
+    {
+      "island": 7,
+      "material": "steel",
+      "triangles": 33,
+      "area": 1145.0,
+      "along": [
+        89.7,
+        151.3
+      ],
+      "mu_uv": [
+        0.02,
+        0.058,
+        0.953,
+        0.976
+      ],
+      "bake_uv": [
+        0.159,
+        0.116,
+        0.988,
+        0.978
+      ]
+    },
+    {
+      "island": 8,
+      "material": "steel",
+      "triangles": 4,
+      "area": 175.2,
+      "along": [
+        81.8,
+        98.9
+      ],
+      "mu_uv": [
+        0.705,
+        0.764,
+        0.851,
+        0.977
+      ],
+      "bake_uv": [
+        0.257,
+        0.717,
+        0.648,
+        0.79
+      ]
+    },
+    {
+      "island": 9,
+      "material": "steel",
+      "triangles": 4,
+      "area": 175.2,
+      "along": [
+        81.8,
+        98.9
+      ],
+      "mu_uv": [
+        0.705,
+        0.764,
+        0.851,
+        0.977
+      ],
+      "bake_uv": [
+        0.361,
+        0.013,
+        0.879,
+        0.873
+      ]
+    },
+    {
+      "island": 10,
+      "material": "steel",
+      "triangles": 4,
+      "area": 175.2,
+      "along": [
+        81.8,
+        98.9
+      ],
+      "mu_uv": [
+        0.705,
+        0.764,
+        0.851,
+        0.977
+      ],
+      "bake_uv": [
+        0.3,
+        0.832,
+        0.871,
+        0.902
+      ]
+    },
+    {
+      "island": 11,
+      "material": "steel",
+      "triangles": 4,
+      "area": 175.2,
+      "along": [
+        81.8,
+        98.9
+      ],
+      "mu_uv": [
+        0.705,
+        0.764,
+        0.851,
+        0.977
+      ],
+      "bake_uv": [
+        0.195,
+        0.856,
+        0.81,
+        0.912
+      ]
+    },
+    {
+      "island": 12,
+      "material": "steel",
+      "triangles": 4,
+      "area": 178.0,
+      "along": [
+        83.8,
+        97.2
+      ],
+      "mu_uv": [
+        0.706,
+        0.763,
+        0.851,
+        0.978
+      ],
+      "bake_uv": [
+        0.044,
+        0.293,
+        0.378,
+        0.519
+      ]
+    },
+    {
+      "island": 13,
+      "material": "steel",
+      "triangles": 4,
+      "area": 178.0,
+      "along": [
+        83.8,
+        97.2
+      ],
+      "mu_uv": [
+        0.706,
+        0.763,
+        0.851,
+        0.978
+      ],
+      "bake_uv": [
+        0.057,
+        0.604,
+        0.516,
+        0.701
+      ]
+    },
+    {
+      "island": 14,
+      "material": "steel",
+      "triangles": 32,
+      "area": 1000.1,
+      "along": [
+        55.3,
+        100.0
+      ],
+      "mu_uv": [
+        0.112,
+        0.44,
+        0.55,
+        0.993
+      ],
+      "bake_uv": [
+        0.139,
+        0.013,
+        0.935,
+        0.945
+      ]
+    },
+    {
+      "island": 15,
+      "material": "steel",
+      "triangles": 12,
+      "area": 159.0,
+      "along": [
+        99.6,
+        109.3
+      ],
+      "mu_uv": [
+        0.16,
+        0.03,
+        0.458,
+        0.126
+      ],
+      "bake_uv": [
+        0.189,
+        0.012,
+        0.413,
+        0.373
+      ]
+    },
+    {
+      "island": 16,
+      "material": "steel",
+      "triangles": 50,
+      "area": 1000.4,
+      "along": [
+        -73.2,
+        -49.0
+      ],
+      "mu_uv": [
+        0.617,
+        0.449,
+        0.997,
+        0.938
+      ],
+      "bake_uv": [
+        0.023,
+        0.037,
+        0.334,
+        0.668
+      ]
+    },
+    {
+      "island": 17,
+      "material": "steel",
+      "triangles": 10,
+      "area": 292.5,
+      "along": [
+        35.5,
+        42.8
+      ],
+      "mu_uv": [
+        0.443,
+        0.071,
+        0.975,
+        0.633
+      ],
+      "bake_uv": [
+        0.013,
+        0.012,
+        0.866,
+        0.72
+      ]
+    },
+    {
+      "island": 18,
+      "material": "steel",
+      "triangles": 8,
+      "area": 87.2,
+      "along": [
+        -73.0,
+        -66.4
+      ],
+      "mu_uv": [
+        0.958,
+        0.442,
+        0.996,
+        0.753
+      ],
+      "bake_uv": [
+        0.362,
+        0.013,
+        0.968,
+        0.975
+      ]
+    },
+    {
+      "island": 19,
+      "material": "steel",
+      "triangles": 5,
+      "area": 63.0,
+      "along": [
+        -80.0,
+        -68.3
+      ],
+      "mu_uv": [
+        0.905,
+        0.312,
+        0.982,
+        0.559
+      ],
+      "bake_uv": [
+        0.256,
+        0.871,
+        0.744,
+        0.949
+      ]
+    },
+    {
+      "island": 20,
+      "material": "steel",
+      "triangles": 5,
+      "area": 63.0,
+      "along": [
+        -80.0,
+        -68.3
+      ],
+      "mu_uv": [
+        0.905,
+        0.312,
+        0.982,
+        0.559
+      ],
+      "bake_uv": [
+        0.927,
+        0.21,
+        0.952,
+        0.392
+      ]
+    },
+    {
+      "island": 21,
+      "material": "steel",
+      "triangles": 16,
+      "area": 1275.0,
+      "along": [
+        -53.3,
+        57.2
+      ],
+      "mu_uv": [
+        0.422,
+        0.443,
+        0.545,
+        0.999
+      ],
+      "bake_uv": [
+        0.898,
+        0.611,
+        0.945,
+        0.929
+      ]
+    },
+    {
+      "island": 22,
+      "material": "steel",
+      "triangles": 20,
+      "area": 333.9,
+      "along": [
+        71.1,
+        108.9
+      ],
+      "mu_uv": [
+        0.216,
+        0.026,
+        0.775,
+        0.887
+      ],
+      "bake_uv": [
+        0.013,
+        0.125,
+        0.714,
+        0.575
+      ]
+    },
+    {
+      "island": 23,
+      "material": "steel",
+      "triangles": 20,
+      "area": 333.8,
+      "along": [
+        71.1,
+        108.9
+      ],
+      "mu_uv": [
+        0.216,
+        0.026,
+        0.775,
+        0.887
+      ],
+      "bake_uv": [
+        0.153,
+        0.013,
+        0.516,
+        0.72
+      ]
+    },
+    {
+      "island": 24,
+      "material": "steel",
+      "triangles": 20,
+      "area": 333.9,
+      "along": [
+        71.1,
+        108.9
+      ],
+      "mu_uv": [
+        0.216,
+        0.026,
+        0.775,
+        0.887
+      ],
+      "bake_uv": [
+        0.097,
+        0.23,
+        0.651,
+        0.668
+      ]
+    },
+    {
+      "island": 25,
+      "material": "steel",
+      "triangles": 20,
+      "area": 333.8,
+      "along": [
+        71.1,
+        108.9
+      ],
+      "mu_uv": [
+        0.216,
+        0.026,
+        0.775,
+        0.887
+      ],
+      "bake_uv": [
+        0.013,
+        0.139,
+        0.539,
+        0.714
+      ]
+    }
+  ]
+}

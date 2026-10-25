@@ -50,6 +50,23 @@ constexpr Rgb kColours[] = {
     {0.2f, 0.3f, 0.6f},     // 15
     {0.8f, 0.46f, 0.25f},   // 16
     {0.65f, 0.45f, 0.3f},   // 17
+    {0.5f, 0.4f, 0.3f},     // 18
+    {0.37f, 0.37f, 1.0f},   // 19
+    {0.3f, 0.7f, 0.3f},     // 20
+    {0.5f, 0.4f, 1.0f},     // 21
+    {0.45f, 0.45f, 0.23f},  // 22
+    {0.3f, 0.3f, 0.45f},    // 23
+    {0.6f, 0.5f, 0.2f},     // 24
+    {0.6f, 0.6f, 0.6f},     // 25
+    {0.3f, 0.7f, 0.3f},     // 26
+    {0.5f, 0.6f, 0.7f},     // 27
+    {0.45f, 0.45f, 0.23f},  // 28
+    {0.2f, 0.7f, 0.3f},     // 29
+    {0.7f, 0.3f, 0.3f},     // 30
+    {0.7f, 0.5f, 0.3f},     // 31
+    {0.5f, 0.2f, 0.7f},     // 32
+    {0.8f, 0.4f, 0.6f},     // 33
+    {0.6f, 0.4f, 0.8f},     // 34
 };
 
 // Which colour: the named models first, then the armour by its set, as PartObjectColor asks.
@@ -71,6 +88,8 @@ int colourOf(int group, int number) {
     if (group == 2 && number == 8) return 9;                     // BATTLE_SCEPTER (ZzzObject.cpp:6584)
     if (group == 2 && number == 9) return 10;                    // MASTER_SCEPTER (:6588)
     if (group == 2 && number == 10) return 12;                   // GREAT_SCEPTER (:6592); LORD's 0
+    if (group == 2 && number == 12) return 16;                   // GREAT_LORD_SCEPTER (:6612)
+    if (group == 2 && number == 15) return 28;                   // SHINING_SCEPTER (:6648)
     if (group >= 7 && group <= 11) {
         switch (number) {
             case 1: return 1;    // Dragon

@@ -174,6 +174,13 @@
 //     MODEL_LORD_SCEPTER (:7633-7647): in (1, 0.6, 0.3), BITMAP_LIGHT at 1.3 on bone 1, the
 //         pommel, and at (-10, 0, 0), (5, 0, 0) and (20, 0, 0) on bone 2 a BITMAP_LIGHT at 1.3
 //         and a BITMAP_SHINY + 1 at 0.4.
+//     MODEL_GREAT_LORD_SCEPTER (:7476-7488): on bone 1, the head, BITMAP_LIGHT at 2 in
+//         S*(0, 0.5, 1), S = sin(WorldTime*0.002)*0.3 + 0.7, and two BITMAP_SHINY + 1 at 1 in 0.5
+//         grey.
+//     MODEL_SHINING_SCEPTER (:7321-7344): on bone 1, the head, BITMAP_SHINY + 1 at
+//         (rand() % 10)/30 + 1.7 in (0.8 + l, 0.5 + l, 0.1 + l), l = sin(WorldTime*0.002)*0.3 +
+//         0.1, and BITMAP_LIGHT at 3 in (0.7, 0.5, 0.3); BITMAP_LIGHT at 1.5 on bone 2 and 1.2 on
+//         bone 3, both in (0.8, 0.6, 0.4).
 
 namespace mu::game {
 
@@ -232,10 +239,12 @@ public:
         MasterScepter,
         GreatScepter,
         LordScepter,
+        GreatLordScepter,
+        ShiningScepter,
     };
     // The Stinger Bow's 44 bones, each with its light (ZzzCharacter.cpp:7972-7999).
     static constexpr int kMostPoints = 44;
-    static constexpr Item kItems[52] = {Item::SaintCrossbow,   Item::GrandSoulShield,
+    static constexpr Item kItems[54] = {Item::SaintCrossbow,   Item::GrandSoulShield,
                                         Item::DragonSpear,     Item::DragonSoulStaff,
                                         Item::ElementalMace,   Item::GreatReignCrossbow,
                                         Item::ThunderBlade,    Item::LegendaryShield,
@@ -260,7 +269,8 @@ public:
                                         Item::GrandViperStaff, Item::ChromaticStaff,
                                         Item::Beuroba,         Item::AirLynBow,
                                         Item::BattleScepter,   Item::MasterScepter,
-                                        Item::GreatScepter,    Item::LordScepter};
+                                        Item::GreatScepter,    Item::LordScepter,
+                                        Item::GreatLordScepter, Item::ShiningScepter};
 
     bool open(const std::string& assetDir, content::Textures& textures,
               const content::Showing& table);
