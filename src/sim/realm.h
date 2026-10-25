@@ -163,6 +163,9 @@ enum class What : uint8_t {
                // rite is seen and the server tells Global.
     Recall,    // a Dark Lord's Summon (Realm::recall): a: a RecallEvent, b and c as it says. `who`
                // is the one it is said to, `whom` the lord; for him alone but Landed, said to all.
+    PetLevelled,  // his Dark Horse's or Dark Raven's level changed (sim/lord_pets.h): a: its slot,
+               // b: the level it is now, c: 1 up, 0 down (MU's flares round it; A9's 254 and 255).
+               // Said to everyone, as the flares are seen.
 };
 
 // What a Summon did (What::Recall). MU's notices 1243-1254 (WebZen user.cpp:25460-25510).
@@ -2065,6 +2068,9 @@ private:
     // look toward the nearest of its kind still standing.
     void pointOn(Body& guard, const Body& dead);
     void gain(Body& hero, int32_t award);
+    // His Dark Horse's and Dark Raven's share of `award` (sim::feedPet), each put back and its
+    // level said when it changes.
+    void feedPets(Body& hero, int32_t award);
     // **A kill paid to a party** (realm_party.cpp, docs/game/party.md): `earner` is whom the kill is
     // paid to by Realm::kill's rules; with no party, or none of it in view, it is his alone, as
     // it was. In view: the members alive on this map within kPartyReach of the dead.

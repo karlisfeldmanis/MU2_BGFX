@@ -17361,6 +17361,8 @@ void testElites(void (*check)(bool, const char*),
                 void (*checkEqual)(long long, long long, const char*));  // tests/sim_test_elite.cpp
 void testDarkLord(void (*check)(bool, const char*),
                   void (*checkEqual)(long long, long long, const char*));  // tests/sim_test_lord.cpp
+void testLordPets(void (*check)(bool, const char*),
+                  void (*checkEqual)(long long, long long, const char*));  // tests/sim_test_lord_pets.cpp
 
 int main() {
     const std::string path =
@@ -17498,6 +17500,7 @@ int main() {
     testJeweler(check, checkEqual);         // tests/sim_test_jeweler.cpp
     testRebirth(check, checkEqual);         // tests/sim_test_rebirth.cpp
     testDarkLord(check, checkEqual);        // tests/sim_test_lord.cpp
+    testLordPets(check, checkEqual);        // tests/sim_test_lord_pets.cpp
     testElites(check, checkEqual);          // tests/sim_test_elite.cpp
     testThreat(tables);
     testElfAid(tables);

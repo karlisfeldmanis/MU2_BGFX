@@ -50,6 +50,7 @@ struct PetPower {
     // point of the pet's life, where 0 is `wear` a point of damage as it falls (the Dark Horse's).
     int wearTally = 0;
     bool keeps = false;  // at nought it is kept, dead, not destroyed (the Dark Horse)
+    int horseLevel = 0;  // the Dark Horse's level while it has life, Earthshake's (sim::petLevel)
 };
 
 struct Excellence {

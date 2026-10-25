@@ -89,7 +89,7 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
         const int flat = row->number == skill::kElectricSpike
                              ? p.command / 10 + 50 * partyNear(attacker)
                          : row->number == skill::kEarthshake
-                             ? p.strength / 10 + p.command / 5 + kQuakePerHorseLevel * kHorseLevel
+                             ? p.strength / 10 + p.command / 5 + kQuakePerHorseLevel * attacker.pet.horseLevel
                              : p.strength / 25 + p.energy / 50;
         // Force from a scepter is Force Wave's fifty, rolled to 75 (WebZen ObjAttack.cpp:3144-3148).
         const int32_t skillDamage =
@@ -3007,6 +3007,7 @@ void Realm::kill(Body& dead, Body& killer) {
 
 void Realm::gain(Body& hero, int32_t award) {
     if (award <= 0) return;
+    feedPets(hero, award);
     // PlayerExperience.cs:197-240: a while loop, because one kill can carry more than one
     // level, and the experience is spent up to each threshold rather than poured past it.
     // Experience past the cap is discarded rather than banked.

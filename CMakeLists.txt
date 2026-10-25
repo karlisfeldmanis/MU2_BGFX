@@ -323,6 +323,7 @@ add_library(mu_sim STATIC
   src/sim/swings.cpp
   src/sim/route.cpp
   src/sim/items.cpp
+  src/sim/lord_pets.cpp
   src/sim/market.cpp
   src/sim/wear.cpp
   src/sim/vault.cpp
@@ -1052,6 +1053,7 @@ add_executable(sim_test EXCLUDE_FROM_ALL
   tests/sim_test_jeweler.cpp
   tests/sim_test_rebirth.cpp
   tests/sim_test_lord.cpp
+  tests/sim_test_lord_pets.cpp
   tests/sim_test_elite.cpp
 )
 target_link_libraries(sim_test PRIVATE mu_net mu_sim)

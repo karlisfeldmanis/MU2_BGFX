@@ -1877,6 +1877,11 @@ std::string describe(const Happening& happening, const Realm& realm) {
             std::snprintf(line, sizeof(line), "%6u %s lost his pet, row %d", happening.tick, who,
                           happening.a);
             break;
+        case What::PetLevelled:
+            std::snprintf(line, sizeof(line), "%6u %s's pet in slot %d went %s to level %d",
+                          happening.tick, who, happening.a, happening.c ? "up" : "down",
+                          happening.b);
+            break;
         case What::Worn:
             std::snprintf(line, sizeof(line), "%6u %s wore slot %d to %d/%d", happening.tick, who,
                           happening.a, happening.b, happening.c);

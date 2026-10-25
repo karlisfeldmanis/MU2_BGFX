@@ -16,6 +16,7 @@
 
 #include "core/log.h"
 #include "sim/broker.h"
+#include "sim/lord_pets.h"
 #include "sim/realm_tuning.h"
 #include "sim/wear.h"
 
@@ -652,7 +653,7 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
     for (int slot : {kPet, kMount}) {
         const content::ItemRow* row = rowAt(slot);
         if (!row || kit[slot].durability <= 0) continue;
-        const PetPower one = petPower(*row);
+        const PetPower one = petPower(*row, kit[slot]);
         hero.pet.taken *= one.taken;
         hero.pet.dealt *= one.dealt;
         hero.pet.health += one.health;
@@ -661,7 +662,10 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
         hero.pet.mount = hero.pet.mount || one.mount;
         // The Dark Horse's defence, beside the armour's and never worn down with it
         // (ObjCalCharacter.cpp:1082-1090; sim::horseDefense).
-        if (darkHorse(*row)) hero.wornDefense += horseDefense(hero.totalPoints().agility);
+        if (darkHorse(*row)) {
+            hero.pet.horseLevel = petLevel(kit[slot]);
+            hero.wornDefense += horseDefense(hero.totalPoints().agility, hero.pet.horseLevel);
+        }
     }
     // Kinship lifts the price and keeps the gift (sim/items.h).
     if (hero.excel.kinship) {
@@ -921,6 +925,9 @@ bool Realm::useItem(int slot) {
         // forty is forty, so a new wizard with thirty keeps the scroll in his bag until he has
         // spent ten points. OpenMU asks it at the read (`CompliesRequirements`).
         if (hero.points.energy < read.teachesEnergy) return false;
+        // And the Command a Dark Lord's scroll asks, whole as its energy is: the Scroll of
+        // Summon's 400 (OpenMU VersionSeasonSix/Items/Orbs.cs:58).
+        if (hero.points.command < read.teachesCommand) return false;
         // And an orb's strength, run through the requirements' formula as a wearable's is: the
         // Orb of Fire Slash's raw 320 at drop level 60 is WebZen's 596 (zzzitem.cpp:457), asked
         // of Strength+AddStrength at the read (protocol.cpp:17795). Every other orb asks none.
@@ -1882,7 +1889,12 @@ void Realm::wearOnTaken(int took) {
                                            : uncut * power.wear);
         if (me().bag[slot].durability > 0) continue;
         // Dead, and kept: its powers go (rearm skips a pet at nought) and it stays in its slot.
+        // A levelled one bleeds a tenth of its level's span as it dies (sim::bleedPet).
         if (power.keeps) {
+            Held dead = me().bag[slot];
+            const int down = bleedPet(dead);
+            me().bag.put(slot, dead);
+            if (down > 0) say(What::PetLevelled, mine(), slot, down, 0);
             lostOne = true;
             continue;
         }
@@ -1892,6 +1904,35 @@ void Realm::wearOnTaken(int took) {
         lostOne = true;
     }
     if (lostOne) rearm(mine());
+}
+
+void Realm::feedPets(Body& hero, int32_t award) {
+    const int at = playerOfId(hero.id);
+    if (at < 0 || !tables_) return;
+    For him(*this, size_t(at));
+    const auto levelled = [&](int slot) {
+        const Held& h = me().bag[slot];
+        return !h.empty() && levelledPet(tables_->items[size_t(h.item)]) && h.durability > 0;
+    };
+    const bool horse = levelled(kMount), raven = levelled(kWeaponLeft);
+    if (!horse && !raven) return;
+    const uint64_t share =
+        uint64_t(award) * uint64_t(horse && raven ? kPetsSharePercent : kPetSharePercent) / 100;
+    const HeroPoints points = hero.totalPoints();
+    for (int slot : {kMount, kWeaponLeft}) {
+        if (!levelled(slot)) continue;
+        Held pet = me().bag[slot];
+        const content::ItemRow& row = tables_->items[size_t(pet.item)];
+        const int up = feedPet(pet, share, [&](int level) {
+            return darkHorse(row) ? hero.level >= row.needLevel + 2 * level
+                                  : points.command >= ravenCommand(level);
+        });
+        me().bag.put(slot, pet);
+        if (up > 0) {
+            say(What::PetLevelled, hero, slot, up, 1);
+            rearm(hero);
+        }
+    }
 }
 
 void Realm::petClock() {

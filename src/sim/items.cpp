@@ -1,5 +1,6 @@
 #include "sim/items.h"
 
+#include "sim/lord_pets.h"
 #include "sim/skills.h"
 
 #include <algorithm>
@@ -1338,7 +1339,7 @@ bool fits(const content::Tables& tables, const Wearer& who, const Held& what) {
     // level 2 (docs/game/second-class-gear.md).
     if (secondClassFor(*row, who.kin) && !who.second) return false;
     // Its runes' level over its own (sim::kRuneHeroLevel).
-    Needs asked = asks(*row, what.refinement, what.excellent != 0);
+    Needs asked = asks(*row, what);
     asked.level = std::max(asked.level, runeLevelFor(tables, who, what));
     return shortOf(asked, who.level, who.points).none();
 }

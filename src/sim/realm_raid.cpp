@@ -17,6 +17,7 @@
 // is not moved by one.
 #include "sim/realm.h"
 #include "sim/fmath.h"
+#include "sim/lord_pets.h"
 
 #include <algorithm>
 #include <cmath>
@@ -74,7 +75,7 @@ std::string kitInto(const content::Tables& tables, const RaiderKit& kit, Satchel
             // Why, as the item card would say it: what it asks that he has not.
             const content::ItemRow& row = tables.items[size_t(item)];
             const Needs short_ =
-                shortOf(asks(row, held.refinement, held.excellent != 0), who.level, who.points);
+                shortOf(asks(row, held), who.level, who.points);
             char why[160];
             std::snprintf(why, sizeof(why),
                           " (short: level %d, strength %d, agility %d, vitality %d, energy %d%s%s)",
