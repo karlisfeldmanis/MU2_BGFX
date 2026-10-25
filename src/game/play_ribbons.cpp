@@ -122,7 +122,8 @@ void Play::debuffShows(float frames) {
         const sim::Body* body = realm_.find(one.id);
         const FigureBody* look = one.figure.body();
         if (!body || !body->alive() || body->bleed <= 0 || body->bleedUntil <= realm_.tick() ||
-            !one.visible || !one.placed || look == nullptr || look->boneCount() < 2 || !ground_) {
+            body->bleedRequiem || !one.visible || !one.placed || look == nullptr ||
+            look->boneCount() < 2 || !ground_) {
             one.bleedOwed = 0.0f;
             continue;
         }
@@ -141,6 +142,32 @@ void Play::debuffShows(float frames) {
             if (one.figure.pointOn(b, origin, at)) {
                 showing_.drip(at, ground_->heightAt(at[0], at[2]), scale);
             }
+        }
+    }
+    // A body a Requiem bleeds (the Ancient rune, sim/items.h kRequiem...): MU's eDeBuff_NeilDOT,
+    // one magenta puff a frame off a bone drawn at random, in place of the drips above
+    // (fx/requiem.h).
+    for (Drawn& one : drawn_) {
+        const sim::Body* body = realm_.find(one.id);
+        const FigureBody* look = one.figure.body();
+        if (!body || !body->alive() || !body->bleedRequiem || body->bleed <= 0 ||
+            body->bleedUntil <= realm_.tick() || !one.visible || !one.placed || look == nullptr ||
+            look->boneCount() < 2) {
+            one.requiemOwed = 0.0f;
+            continue;
+        }
+        if (one.burningDice == 0) one.burningDice = 0x9e3779b9u ^ (one.id * 2654435761u);
+        const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
+        const float origin[3] = {0.0f, 0.0f, 0.0f};
+        one.requiemOwed += frames;
+        while (one.requiemOwed >= 1.0f) {
+            one.requiemOwed -= 1.0f;
+            one.burningDice ^= one.burningDice << 13;
+            one.burningDice ^= one.burningDice >> 17;
+            one.burningDice ^= one.burningDice << 5;
+            const int b = int(one.burningDice % uint32_t(bones.size()));
+            float at[3];
+            if (one.figure.pointOn(b, origin, at)) requiem_.mist(at);
         }
     }
 }

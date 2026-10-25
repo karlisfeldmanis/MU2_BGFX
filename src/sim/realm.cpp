@@ -169,6 +169,9 @@ bool Realm::depart(uint32_t id) {
     for (SpiritBlow& one : spiritBlows_) {
         if (one.owner == id) one = SpiritBlow{};
     }
+    for (RequiemBlow& one : requiemBlows_) {
+        if (one.owner == id) one = RequiemBlow{};
+    }
     for (Fire& one : fires_) {
         if (one.owner == id) one = Fire{};
     }
@@ -1513,6 +1516,13 @@ void Realm::heroAfter() {
             const SpiritBlow blow = one;
             one = SpiritBlow{};
             spiritStrike(hero, blow);
+        }
+        // Requiem's held blows, each 20 ticks after its roll (sim/items.h kRequiem...).
+        for (RequiemBlow& one : requiemBlows_) {
+            if (one.at == 0 || tick_ < one.at || !hero.alive() || !lands(one.owner)) continue;
+            const RequiemBlow blow = one;
+            one = RequiemBlow{};
+            requiemStrike(striker(blow.owner, hero), blow);
         }
         // An Arcane Echo's second throw, let go as the first was, paying nothing.
         if (me().echo.at != 0 && tick_ >= me().echo.at) {

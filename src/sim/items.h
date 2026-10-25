@@ -838,7 +838,9 @@ enum class Power : uint8_t {
     Pollution = 76,
     // 77 was Chain Lightning for a day (2026-10-22), retired before release: the wizard's
     // Lightning plays its look and sound. The numbers run unbroken (drawRunePower walks them).
-    DrainLife = 77
+    DrainLife = 77,
+    // The Summoner's Book of Neil (kRequiem...).
+    Requiem = 78
 };
 // **A rune's group** (the user, 2026-10-02: "we need to start group runes which is only for
 // specific classes, for specific weapon slots"): which classes may set it, a bit a class, and
@@ -1318,6 +1320,26 @@ constexpr int kPollutionMost = 4;
 constexpr double kDrainChance = 0.10;  // a cast in ten; the user may tune it
 constexpr float kDrainForce = 0.525f;
 inline int drainLife(int energy, int level) { return energy / 15 + int(float(level) / 2.5f); }
+// **Requiem**, the sixth Ancient and the Summoner's Book of Neil: MU's AT_SKILL_SUMMON_REQUIEM
+// (224; S17 skill_template 224: 65 damage, wind; docs/plans/ancient-runes/requiem.md). A spell he
+// casts, or a swing that lands, has kRequiemChance to call Neil up against what he struck -- on a
+// cast with no monster struck, the nearest within kStormcallReach (Realm::runeAim) -- and up to
+// kRequiemMost bodies within kRequiemTiles of it, that one first and the rest in body order, all
+// chosen at the roll, as S17's SkillAttackRequiem counts them (WebZen's 5x5 square, OpenMU's
+// effect range 2). Each is struck kRequiemHoldTicks later, if it still stands -- WebZen's and
+// S17's 1000 ms hold, so the numbers land with the thorns -- by his rune's blow (runeStrike) at
+// kRequiemForce, wind: MU's 65 against Pollution's 80 at 1.2. And as WebZen's BUFFTYPE_BLOODDOT,
+// each body the blow lands on bleeds for kBleedTicks, a pulse every kBleedEvery -- MU's five
+// pulses, one a second -- each pulse kRequiemBleedShare of the landed blow: ours, a fifth of
+// MU's 60% (the user, 2026-10-25), so the rune stays in line with the other Ancients. A Requiem
+// on a body it already bleeds restarts it; on a body bleeding from something else (a knight's
+// Rend) it takes the bleed only when its pulse is the larger. A Soul Master's weapon only.
+constexpr double kRequiemChance = 0.10;  // a cast in ten; the user may tune it
+constexpr float kRequiemForce = 0.975f;
+constexpr float kRequiemTiles = 2.0f;
+constexpr int kRequiemMost = 4;
+constexpr int64_t kRequiemHoldTicks = 20;  // WebZen's and S17's 1000 ms
+constexpr float kRequiemBleedShare = 0.2f;
 // **The Common runes** (Rarity::Common), each a Legendary at a fraction, every one first-class:
 // **Cinder** Ring of Fire's ring and **Gust** Twister's storm, a knight's; **Chill** Frost Arrow's
 // freeze for half as long with half its wound, the elf's; **Faint Echo** Arcane Echo's second

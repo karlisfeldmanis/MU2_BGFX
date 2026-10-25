@@ -164,6 +164,9 @@ constexpr int32_t kPollution = 225;
 // `AT_SKILL_ALICE_DRAINLIFE`: the Ancient rune Drain Life's (sim/items.h kDrain...), said as
 // Loosed on what it struck (fx/drain.h). MU's number.
 constexpr int32_t kDrainLife = 214;
+// `AT_SKILL_SUMMON_REQUIEM`, the Summoner's Book of Neil: the Ancient rune Requiem's (sim/items.h
+// kRequiem...), said as Loosed on the point it was thrown at (fx/requiem.h). MU's number.
+constexpr int32_t kRequiem = 224;
 }  // namespace skill
 
 // What an iced body's walking is multiplied by: OpenMU's `IcedMovementSpeedFactor`, 0.5, which

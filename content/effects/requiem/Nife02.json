@@ -1,0 +1,32 @@
+{
+  "item": "Nife02",
+  "mu_name": "Requiem's thorns, 8 blades in a ring 1.5-2 m out, leaning outward, rising at key 2",
+  "mu_name_from": "ZzzOpenData.cpp:4541-4558: MODEL_SUMMONER_SUMMON_NEIL_NIFE2, Data/Skill/nelleff_nife02.bmd on maskreta01 and gra out of Data/Skill. MuMain (Season 6).",
+  "kind": "requiem",
+  "why_this_one": "Laid at the target past Neil's key 8 (book +7 (subtype >= 1); Move_MODEL_SUMMONER_SUMMON_NEIL, MoveHandlers.cpp:1270-1279), facing her way. LifeTime 50, Scale 1, Alpha 1, the default Velocity 0.3 a key a frame (EffectRegistry.cpp:58-61, ZzzEffect.cpp:371); Alpha -0.05 a frame over the last 20 (EffectBehaviors.cpp:98-103). Drawn mesh 0 textured and mesh 1 added in pure red (ZzzObject.cpp:1799-1805). The footage's +11 book draws all three. See Neil01.json and game/fx/requiem.",
+  "mesh": "Nife02_02.obj",
+  "mesh_from": "muextract export-obj --action=0 --key=N on Data/Skill/nelleff_nife02.bmd, from MuMain: one action of 6 keys, 656 triangles.",
+  "poses": [
+    "Nife02_01.obj",
+    "Nife02_02.obj"
+  ],
+  "poses_from": "The keys where its shape changes, 1, 2, named by key: the other keys of its six are the same geometry as the one before or after (compared by muextract's output). Blended between them at 0.3 a key a frame and held at the last, as MU plays a 6-key action once.",
+  "parts": [
+    {
+      "group": "maskreta01",
+      "sheet": "maskreta01.png",
+      "blend": "alpha",
+      "note": "The blades' metal, mesh 0, RENDER_TEXTURE at the thorns' Alpha."
+    },
+    {
+      "group": "gra",
+      "sheet": "gra.png",
+      "blend": "additive",
+      "note": "Their edges, mesh 1, added in BodyLight (1, 0, 0)."
+    }
+  ],
+  "scale": 1.0,
+  "scale_from": "`.scale = 1.0f` (EffectRegistry.cpp:60).",
+  "frames": 50,
+  "frames_from": "`.lifeTime = 50.f`."
+}

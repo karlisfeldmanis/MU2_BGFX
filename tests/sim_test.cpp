@@ -12247,6 +12247,98 @@ void testDrainLifeRune(const content::Tables& tables, int rune, int staff, int s
     }
 }
 
+// Requiem, the Summoner's Book of Neil on a Soul Master's staff (sim/items.h kRequiem...): about
+// one cast in ten, what he struck and up to three more within two tiles of it, chosen at the roll
+// and struck 20 ticks later, each landed blow leaving a bleed of a fifth of it a second for 5 s.
+void testRequiemRune(const content::Tables& tables, int rune, int staff, int sword) {
+    std::printf("requiem rune\n");
+    ancientRow(tables, sim::Power::Requiem, "Requiem", rune, staff, sword);
+    struct Pending {
+        int64_t at = 0;
+        float x = 0.0f, y = 0.0f;
+        int count = 0;
+        std::vector<std::pair<uint32_t, std::pair<float, float>>> placed;
+    };
+    std::vector<Pending> pending;
+    int casts = 0, calls = 0, most = 0, landed = 0, far = 0, overCount = 0, wrongShare = 0,
+        early = 0, pulses = 0, mostPulses = 0;
+    std::map<uint32_t, int> pulsed;  // a bleed's pulses so far, by the body
+    ancientHunt(tables, staff, sim::Power::Requiem, true, [&](const sim::Realm& realm) {
+        const int64_t now = int64_t(realm.tick());
+        const uint32_t heroId = realm.hero().id;
+        for (const sim::Happening& h : realm.happenings()) {
+            if (h.who != heroId) continue;
+            if (h.what == sim::What::Cast && h.a == sim::skill::kLightning) ++casts;
+            if (h.what == sim::What::Loosed && h.a == sim::skill::kRequiem) {
+                ++calls;
+                most = std::max(most, h.c);
+                overCount += h.c < 1 || h.c > sim::kRequiemMost;
+                Pending one;
+                one.at = now + sim::kRequiemHoldTicks;
+                one.x = h.x;
+                one.y = h.y;
+                one.count = h.c;
+                for (const sim::Body& b : realm.bodies()) {
+                    if (b.monster() && b.alive()) one.placed.push_back({b.id, {b.x, b.y}});
+                }
+                pending.push_back(one);
+            }
+            if (h.what == sim::What::Hit && h.bled) {
+                const sim::Body* on = realm.find(h.whom);
+                if (on != nullptr && on->bleedRequiem) {
+                    ++pulses;
+                    mostPulses = std::max(mostPulses, ++pulsed[h.whom]);
+                }
+            }
+        }
+        // A Requiem bleed laid this tick: only on a held blow's tick, on one chosen at the roll,
+        // within its two tiles then, at a fifth of the blow that landed.
+        for (const sim::Body& b : realm.bodies()) {
+            if (!b.monster() || !b.bleedRequiem || b.bleedUntil != now + sim::kBleedTicks) continue;
+            const Pending* from = nullptr;
+            for (const Pending& one : pending) {
+                if (one.at == now) from = &one;
+            }
+            if (from == nullptr) {
+                ++early;
+                continue;
+            }
+            ++landed;
+            pulsed[b.id] = 0;
+            for (const auto& [id, at] : from->placed) {
+                if (id != b.id) continue;
+                const float dx = at.first - from->x, dy = at.second - from->y;
+                far += dx * dx + dy * dy > sim::kRequiemTiles * sim::kRequiemTiles + 0.01f;
+            }
+            bool any = false, matched = false;
+            for (const sim::Happening& h : realm.happenings()) {
+                if (h.what != sim::What::Hit || h.whom != b.id || h.bled || !h.thrown ||
+                    h.who != heroId) {
+                    continue;
+                }
+                any = true;
+                matched |= b.bleedDamage == std::max(1, int(float(h.a) * sim::kRequiemBleedShare));
+            }
+            wrongShare += any && !matched;
+        }
+    });
+    std::printf("  Requiem: %d casts, %d called, at most %d chosen, %d bleeds laid, %d pulses "
+                "(at most %d a bleed), %d far, %d early, %d off-share\n",
+                casts, calls, most, landed, pulses, mostPulses, far, early, wrongShare);
+    check(calls > 0 && landed > 0, "Requiem strikes and bleeds what it chose");
+    checkEqual(overCount, 0, "never more than four");
+    checkEqual(far, 0, "never past two tiles of the point");
+    checkEqual(early, 0, "its blows land 20 ticks after the roll, not before");
+    checkEqual(wrongShare, 0, "a pulse is a fifth of the blow that landed");
+    // Lightning kills most of Lorencia's monsters inside the bleed's 5 s, so few pulse five times.
+    check(pulses > 0, "and the bleed pulses after");
+    check(mostPulses <= 5, "no more than five pulses a bleed");
+    if (casts > 0) {
+        const double rate = double(calls) / casts;
+        check(rate > 0.05 && rate < 0.16, "about one cast in ten");
+    }
+}
+
 void testAncientRunes(const content::Tables& tables) {
     std::printf("ancient runes\n");
     using sim::Kin;
@@ -12370,6 +12462,7 @@ void testAncientRunes(const content::Tables& tables) {
     testWeaknessRune(tables, rune, staff, sword);
     testPollutionRune(tables, rune, staff, sword);
     testDrainLifeRune(tables, rune, staff, sword);
+    testRequiemRune(tables, rune, staff, sword);
 }
 
 void testGroupRunes(const content::Tables& tables) {

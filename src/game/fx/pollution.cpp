@@ -24,21 +24,21 @@ constexpr float kBoneBlue[3] = {0.2f, 0.3f, 1.0f};
 constexpr float kShinyPixels = 64.0f;
 // zx01-zx06 (bones 54-59) as the lagulbody corners nearest each at key 0, within seven units.
 constexpr int kBoneCorners[6] = {3311, 1740, 1511, 1752, 1529, 1750};
-// The casting circle's rings: model, light, turn a frame (MoveHandlers.cpp:1140-1161).
+// The casting circle's rings: model, turn a frame (MoveHandlers.cpp:1140-1161); their lights
+// are the book's (Pollution::Palette).
 struct RingRow {
     const char* path;   // under effects/
     const char* sheet;
-    float light[3];
     float turn;
 };
 constexpr RingRow kRings[7] = {
-    {"pollution/Suhwanzin1.obj", "pollution/testmsop.png", {0.6f, 0.3f, 0.9f}, -3.0f},
-    {"pollution/Suhwanzin11.obj", "pollution/testmsop.png", {0.6f, 0.3f, 0.9f}, 3.0f},
-    {"pollution/Suhwanzin111.obj", "pollution/testmsop.png", {0.6f, 0.3f, 0.9f}, -3.0f},
-    {"weakness/Suhwanzin2.obj", "weakness/monolines.png", {0.8f, 0.1f, 0.6f}, 3.0f},
-    {"weakness/Suhwanzin22.obj", "weakness/monolines.png", {0.8f, 0.1f, 0.6f}, -3.0f},
-    {"weakness/Suhwanzin222.obj", "weakness/monolines.png", {0.8f, 0.1f, 0.6f}, 3.0f},
-    {"pollution/Suhwanzin4.obj", "pollution/monolines.png", {0.9f, 0.1f, 1.0f}, 0.0f},
+    {"pollution/Suhwanzin1.obj", "pollution/testmsop.png", -3.0f},
+    {"pollution/Suhwanzin11.obj", "pollution/testmsop.png", 3.0f},
+    {"pollution/Suhwanzin111.obj", "pollution/testmsop.png", -3.0f},
+    {"weakness/Suhwanzin2.obj", "weakness/monolines.png", 3.0f},
+    {"weakness/Suhwanzin22.obj", "weakness/monolines.png", -3.0f},
+    {"weakness/Suhwanzin222.obj", "weakness/monolines.png", 3.0f},
+    {"pollution/Suhwanzin4.obj", "pollution/monolines.png", 0.0f},
 };
 
 float clampOne(float v) { return std::clamp(v, 0.0f, 1.0f); }
@@ -107,12 +107,15 @@ bool Pollution::open(const std::string& assetDir, content::Textures& textures,
     return whole;
 }
 
-void Pollution::cast(const float caster[3], const float target[3]) {
+void Pollution::circle(const float caster[3], const Palette& palette) {
     for (Circle& one : circles_) {
         if (one.alive) continue;
         one = Circle{};
         one.alive = true;
-        for (int k = 0; k < 3; ++k) one.at[k] = caster[k];
+        for (int k = 0; k < 3; ++k) {
+            one.at[k] = caster[k];
+            one.impact[k] = palette.impact[k];
+        }
         one.left = 44.0f;
         break;
     }
@@ -123,11 +126,21 @@ void Pollution::cast(const float caster[3], const float target[3]) {
         one = Ring{};
         one.alive = true;
         one.model = made++;
-        for (int k = 0; k < 3; ++k) one.at[k] = caster[k];
+        const float* light = one.model < 3 ? palette.rings1 : one.model < 6 ? palette.rings2
+                                                                            : palette.ring4;
+        for (int k = 0; k < 3; ++k) {
+            one.at[k] = caster[k];
+            one.light[k] = light[k];
+        }
         const bool four = one.model == 6;
         one.scale = four ? 1.0f : 0.9f;
         one.left = four ? 25.0f : 40.0f;
     }
+}
+
+void Pollution::cast(const float caster[3], const float target[3]) {
+    circle(caster, kPollutionPalette);
+    int made = 0;
     // **Ours**: one Pollution's ghosts at a time. Four Laguls are 5,020 triangles in the
     // transparent pass, and a second cast inside the first's 6.4 s ran it past its 8,192: the
     // new one takes the old one's place.
@@ -450,8 +463,7 @@ void Pollution::gather(gfx::Effects& effects) const {
         // Subtype 9: the two impact circles, turning against each other.
         if (one.left > 4.0f) {  // its 40 frames, the last of the darkness's 44
             float ring[3];
-            const float pollution[3] = {0.6f, 0.6f, 0.9f};
-            for (int k = 0; k < 3; ++k) ring[k] = clampOne(pollution[k] * one.ringAlpha);
+            for (int k = 0; k < 3; ++k) ring[k] = clampOne(one.impact[k] * one.ringAlpha);
             gatherGround(effects, impact_, gfx::Blend::Additive, one.at, 2.4f, one.ringTurn[0], ring);
             gatherGround(effects, impact_, gfx::Blend::Additive, one.at, 2.88f, one.ringTurn[1], ring);
         }
@@ -462,7 +474,7 @@ void Pollution::gather(gfx::Effects& effects) const {
         const float c = std::cos(yaw), s = std::sin(yaw);
         const float x[3] = {c, 0.0f, -s}, y[3] = {0.0f, 1.0f, 0.0f}, z[3] = {s, 0.0f, c};
         float lit[3];
-        for (int k = 0; k < 3; ++k) lit[k] = clampOne(kRings[one.model].light[k] * one.glow);
+        for (int k = 0; k < 3; ++k) lit[k] = clampOne(one.light[k] * one.glow);
         submitEffectAlong(effects, rings_[one.model], ringSheet_[one.model], gfx::Blend::Additive,
                           one.at, x, y, z, one.scale, lit, 1.0f);
     }

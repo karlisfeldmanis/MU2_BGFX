@@ -421,6 +421,10 @@ EFFECTS = {
     "drain_mote": "effects/drain/cra_04.png",
     "drain_ghost": "effects/drain/gostmark01.png",
 
+    # The Ancient rune Requiem's (game/fx/requiem.h): BITMAP_ADV_SMOKE, Effect/fi01.jpg, the
+    # magenta mist MU's eDeBuff_NeilDOT throws off a body it bleeds (ZzzOpenData.cpp:5183).
+    "requiem_mist": "effects/requiem/fi01.png",
+
     # A Whirlwind rune's pull (game/fx/chains.h): not MU 0.75's -- Season 17's Object132/so_chain,
     # a 128x64 strip of links that tiles end to end, the chain he hauls them in with.
     "whirl_chain": "effects/chain/so_chain.png",
@@ -2127,6 +2131,7 @@ def missiles(root: Path, build: Path) -> dict:
         **_models(root, build, "kanturu"),
         **_models(root, build, "weakness"),
         **_models(root, build, "pollution"),
+        **_models(root, build, "requiem"),
     }
 
 

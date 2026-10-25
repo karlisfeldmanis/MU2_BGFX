@@ -1390,6 +1390,17 @@ void Play::update(double seconds) {
                         if (heard_.drainLife >= 0) {
                             emit(heard_.drainLife, caster->crown[0], caster->crown[2], caster->id);
                         }
+                    } else if (happening.a == sim::skill::kRequiem) {
+                        // The Ancient rune Requiem: MU's casting circle round him in Requiem's
+                        // colours, and Neil called up before him against the point the realm
+                        // chose, with SOUND_SUMMON_NEIL (fx/requiem.h). One at a time: a roll
+                        // while one plays strikes unseen. The thorns' sound is takeThorns's.
+                        const float self[3] = {caster->crown[0], feet, caster->crown[2]};
+                        const float there[3] = {to[0], ground_->heightAt(to[0], to[2]), to[2]};
+                        if (requiem_.cast(self, there, caster->id)) {
+                            pollution_.circle(self, Pollution::kRequiemPalette);
+                            if (heard_.requiem >= 0) emit(heard_.requiem, self[0], self[2], caster->id);
+                        }
                     } else if (happening.a == sim::skill::kIce) {
                         // The block where the body is drawn, turned to his yaw, as MU turns it.
                         const float floor = ground_->heightAt(to[0], to[2]);
@@ -2537,6 +2548,15 @@ void Play::update(double seconds) {
     };
     bolt_.update(float(seconds), standing, middle);
     drain_.update(float(seconds), middle);
+    requiem_.update(float(seconds));
+    // Requiem's thorns out of the ground: SOUND_SUMMON_REQUIEM there (fx/requiem.h).
+    {
+        float at[3];
+        uint32_t by = 0;
+        if (requiem_.takeThorns(at, by) && heard_.requiemThorns >= 0) {
+            emit(heard_.requiemThorns, at[0], at[2]);
+        }
+    }
     chains_.update(float(seconds), middle);
     for (Volley& volley : volleys_) {
         volley.wait -= float(seconds);

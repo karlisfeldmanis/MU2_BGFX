@@ -869,6 +869,42 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
         if (hero.health > was) say(What::Leeched, hero, hero.health - was);
         return;
     }
+    // His Requiem (sim/items.h kRequiem...): Neil called up against what he struck -- on a cast
+    // that struck no monster, the nearest in his sight within kStormcallReach -- and up to
+    // kRequiemMost bodies round it, as SkillAttackRequiem counts them, each blow held
+    // kRequiemHoldTicks so it lands with the thorns.
+    if (power.power == Power::Requiem) {
+        if (!runeDice_.nextBool(kRequiemChance)) return;
+        const Body* centre = runeAim(hero, struck);
+        if (centre == nullptr) return;
+        const float cx = centre->x, cy = centre->y;
+        // What it struck first, then the rest round it in body order, so the log is fixed; all
+        // chosen at the roll, as MU's server chooses them before it holds the blows.
+        uint32_t victims[kRequiemMost];
+        int found = 0;
+        victims[found++] = centre->id;
+        for (const Body& b : bodies_) {
+            if (found >= kRequiemMost) break;
+            if (!b.monster() || !b.alive() || b.id == centre->id) continue;
+            const float dx = b.x - cx, dy = b.y - cy;
+            if (dx * dx + dy * dy <= kRequiemTiles * kRequiemTiles) victims[found++] = b.id;
+        }
+        say(What::Loosed, hero, skill::kRequiem, 0, found, centre->id);
+        happenings_.back().rune = true;
+        happenings_.back().x = cx;
+        happenings_.back().y = cy;
+        core::logf("requiem rune: tick %lld, on #%u, %d to strike", (long long)tick_, centre->id,
+                   found);
+        const float force = kRequiemForce * runeForce(hero, Element::Wind);
+        for (int i = 0; i < found; ++i) {
+            for (RequiemBlow& one : requiemBlows_) {
+                if (one.at != 0) continue;
+                one = RequiemBlow{tick_ + kRequiemHoldTicks, victims[i], force, hero.id};
+                break;
+            }
+        }
+        return;
+    }
     // His Immolate rune: the monster he struck set burning, while it stands; a second restarts it.
     if (power.power == Power::Burn) {
         ignite(hero, struck, wound);
@@ -1111,6 +1147,29 @@ void Realm::runeStrike(Body& hero, Body& target, float force) {
     strikeAt(hero, target, force, nullptr, true, false);
     hero.stats.minimumDamage = swing.minimumDamage;
     hero.stats.maximumDamage = swing.maximumDamage;
+}
+
+// One of Requiem's held blows landing (sim/items.h kRequiem...): his rune's blow on a monster
+// that still stands, and, as WebZen's BUFFTYPE_BLOODDOT, the bleed off what it landed for --
+// restarted by a Requiem, taken from another's bleed only when its pulse is the larger.
+void Realm::requiemStrike(Body& hero, const RequiemBlow& blow) {
+    Body* target = body(blow.target);
+    if (target == nullptr || !target->alive() || !target->monster()) return;
+    const int before = target->health;
+    runeStrike(hero, *target, blow.force);
+    const int wound = before - target->health;
+    if (wound <= 0 || !target->alive()) return;
+    const int pulse = std::max(1, int(float(wound) * kRequiemBleedShare));
+    const bool bleeding = target->bleedUntil > tick_ && target->bleed > 0;
+    if (bleeding && !target->bleedRequiem && target->bleedDamage * target->bleed >= pulse) return;
+    target->bleed = 1;
+    target->bleedDamage = pulse;
+    target->bleedUntil = tick_ + kBleedTicks;
+    target->bleedNext = tick_ + kBleedEvery;
+    target->bleedBy = hero.id;
+    target->bleedRequiem = true;
+    core::logf("requiem: tick %lld, #%u struck for %d, bleeds %d a pulse", (long long)tick_,
+               target->id, wound, pulse);
 }
 
 bool Realm::spiritsGoing(uint32_t owner) const {
@@ -2281,6 +2340,7 @@ void Realm::kill(Body& dead, Body& killer) {
         dead.bleed = 0;
         dead.bleedUntil = 0;
         dead.bleedNext = 0;
+        dead.bleedRequiem = false;
         dead.chilledUntil = 0;
         dead.frozenUntil = 0;
         // And his Weakness field, which MU takes up as he dies.
@@ -2321,6 +2381,9 @@ void Realm::kill(Body& dead, Body& killer) {
         me().echo = Echo{};
         for (SpiritBlow& one : spiritBlows_) {
             if (lands(one.owner)) one = SpiritBlow{};
+        }
+        for (RequiemBlow& one : requiemBlows_) {
+            if (lands(one.owner)) one = RequiemBlow{};
         }
         dead.channelEcho = false;
         // And what he did to them is forgotten: kept, his threat turned a monster from the
@@ -2627,6 +2690,7 @@ void Realm::raiseBeast(Body& beast) {
     beast.poisonUntil = 0;
     beast.bleed = 0;
     beast.bleedUntil = 0;
+    beast.bleedRequiem = false;
     beast.weakUntil = 0;
     beast.weakCut = 0;
     beast.defenseCutUntil = 0;

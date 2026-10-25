@@ -723,6 +723,10 @@ const PowerRow* powerOf(uint8_t power) {
         {Power::DrainLife, "Drain Life",
          "10% on a cast or a hit: drains life from the monster and heals you",
          kWizardOnly, kInWeapon, Rarity::Ancient, true, true},
+        {Power::Requiem, "Requiem",
+         "10% on a cast or a hit: thorns strike up to 4 monsters within 2 tiles, "
+         "which bleed 20% of the hit per second for 5 s",
+         kWizardOnly, kInWeapon, Rarity::Ancient, true, true},
     };
     for (const PowerRow& row : kPowers) {
         if (uint8_t(row.power) == power) return &row;
@@ -746,7 +750,8 @@ Stacking stackingOf(Power power) {
         case Power::IceStorm:
         case Power::Weakness:
         case Power::Pollution:
-        case Power::DrainLife: return {false, "Doesn't stack"};
+        case Power::DrainLife:
+        case Power::Requiem: return {false, "Doesn't stack"};
         // Half of each: whirlDamage summed and whirlPull the best; every Pyroblaster rolls its
         // burst but Fire Ball's +50% is asked `pyroblasts() > 0`.
         case Power::Whirlwind:

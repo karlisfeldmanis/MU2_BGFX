@@ -1,0 +1,50 @@
+{
+  "item": "Neil01",
+  "mu_name": "Neil, the knight the Summoner's Book of Neil calls up for Requiem",
+  "mu_name_from": "ZzzOpenData.cpp:4541-4558: `AccessModel(MODEL_SUMMONER_SUMMON_NEIL, L\"Data\\\\Skill\\\\\", L\"summon_neil\")` and its OpenTexture out of Data/Skill, so Data/Skill/summon_neil.bmd on maskreta01, gra and maskreta03. MuMain (Season 6).",
+  "kind": "requiem",
+  "why_this_one": "It is the Summoner's Requiem, AT_SKILL_SUMMON_REQUIEM (224), in CSummonSystem::CreateSummonObject (GameLogic/Skills/SummonSystem.cpp:150-165): MODEL_SUMMONER_SUMMON_NEIL 100 units before the caster, facing his way, the target's ground point carried in HeadTargetAngle and the book's tier as its subtype. LifeTime 80, Alpha 0, Velocity 0.35 a key a frame, lifted 10 units (ZzzEffect.cpp:797-806). Move_MODEL_SUMMONER_SUMMON_NEIL (MoveHandlers.cpp:1264-1302) lays the thorns past key 8 and the burning ground past key 10; RenderObject (ZzzObject.cpp:1747-1798) draws meshes 0 and 2 added while she fades and alpha-blended at 0.7 once she stands, the blade (mesh 1) added in pure red, nine red BITMAP_LIGHTs on bones 51-59 and the red motion_blur_r ribbon off bones 51 and 59 for keys 0-10. Here the Ancient rune Requiem's (sim/items.h kRequiem...), drawn by game/fx/requiem.",
+  "mesh": "Neil01_00.obj",
+  "mesh_from": "muextract export-obj --action=0 --key=N on Data/Skill/summon_neil.bmd, from MuMain: 94 bones, one action of 13 keys, three meshes of 1980 triangles (maskreta01 1566, gra 88, maskreta03 326), about 2 m tall with a long curved blade.",
+  "poses": [
+    "Neil01_00.obj",
+    "Neil01_01.obj",
+    "Neil01_02.obj",
+    "Neil01_03.obj",
+    "Neil01_04.obj",
+    "Neil01_05.obj",
+    "Neil01_06.obj",
+    "Neil01_07.obj",
+    "Neil01_08.obj",
+    "Neil01_09.obj",
+    "Neil01_10.obj",
+    "Neil01_11.obj",
+    "Neil01_12.obj"
+  ],
+  "poses_from": "Every key, 0-12, blended between in order and held at 12: MU plays its one action once at `o->Velocity = 0.35f` (ZzzEffect.cpp:801; actions never loop, ZzzBMD.cpp:3276), so key 12 is reached at frame 34 and held. Every key and not every other, as the Lagul's are, because her swing is fast: keys 3, 6 and 9 are the blade low behind her, over her head 4.4 m up and driven into the ground.",
+  "parts": [
+    {
+      "group": "maskreta01",
+      "sheet": "maskreta01.png",
+      "blend": "alpha",
+      "note": "Data/Skill/maskreta01.OZJ, 256 square: her body and armour. Added at her Alpha while it is under 0.7 (RENDER_BRIGHT, a glowing ghost), alpha-blended at 0.7 once there (ZzzObject.cpp:1749-1758)."
+    },
+    {
+      "group": "gra",
+      "sheet": "gra.png",
+      "blend": "additive",
+      "note": "Data/Skill/gra.OZJ, 256 by 64, a gradient: the blade's edge, always added in BodyLight (1, 0, 0), pure red (ZzzObject.cpp:1759-1760)."
+    },
+    {
+      "group": "maskreta03",
+      "sheet": "maskreta03.png",
+      "blend": "alpha",
+      "note": "Data/Skill/maskreta03.OZT, 128 square with alpha: cape and skirt, drawn as mesh 0."
+    }
+  ],
+  "bones_note": "Bones 51-59 (Bone30-Bone38, children of Bone25 off the right hand) run along her blade; their places at each key are baked into game/fx/requiem.cpp (kBlade) from muextract export-rig, for the nine flares and the ribbon from 51 to 59.",
+  "scale": 1.0,
+  "scale_from": "`o->Scale = 1.0f` (ZzzEffect.cpp:799).",
+  "frames": 80,
+  "frames_from": "`o->LifeTime = 80`; Alpha +0.04 a frame to 0.7, -0.05 a frame over the last 20 (MoveHandlers.cpp:1268-1269)."
+}

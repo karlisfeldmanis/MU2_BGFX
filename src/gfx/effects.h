@@ -33,7 +33,12 @@ namespace mu::gfx {
 // `Minus` darkens: what is behind is multiplied by one less the sprite, MU's
 // EnableAlphaBlendMinus, (ZERO, ONE_MINUS_SRC_COLOR) (ZzzOpenglUtil.cpp:423-431) -- the Shadow's
 // stars, a sprite of subtype 1.
-enum class Blend : uint8_t { Alpha, Additive, Flame, Smoke, Dust, Breath, Minus, Mist };
+// `Glow` is added like `Additive`, but the sheet gives its brightness and not its colour: the
+// tint times that brightness, and a white core where the sheet is brightest -- what MU's added
+// art turns into on its 8-bit screen, where a bright orange sheet clips toward white (ours,
+// for Requiem's burning ground and blades, fx/requiem.h: added linearly, the same sheets stayed
+// a saturated orange).
+enum class Blend : uint8_t { Alpha, Additive, Flame, Smoke, Dust, Breath, Minus, Mist, Glow };
 
 // One quad for one frame. Filled by the caller, read once, and not remembered: the pass has
 // no notion of an effect that persists between frames, which is what keeps the lifetime

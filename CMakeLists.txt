@@ -730,6 +730,7 @@ add_library(mu_game STATIC
   src/game/fx/weakness.cpp
   src/game/fx/pollution.cpp
   src/game/fx/drain.cpp
+  src/game/fx/requiem.cpp
   src/game/fx/chains.cpp
   src/game/fx/stains.cpp
   src/game/fx/poison.cpp
