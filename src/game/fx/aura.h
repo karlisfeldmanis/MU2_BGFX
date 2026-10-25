@@ -125,34 +125,38 @@ inline constexpr Recipe kRising{};
 // Lower and fainter than the +11's own (the user, 2026-10-21: "going little bit to height over
 // the char heads", "also make it more subtle"): 1.6 a tick, 160 units, stops at his crown rather
 // than a head over it, and both guards' light is a little over half of what it was.
-inline constexpr Recipe kGuarding{3,    50.0f, 12.0f, 100.0f, 1.6f, 1.6f, 19.0f, 0.0f,
+// Since 2026-10-25 every guard's ribbon is one strip turned to the eye (Recipe::faces), 8 units
+// wide and 30 ticks of tail -- MU's MaxTails for SPEARSKILL sub 4 -- where it was the +11's
+// crossed pair at 12 and 19, which went to slivers edge-on (the user: "ribbon has to be more
+// elegant and more smoth").
+inline constexpr Recipe kGuarding{3,    50.0f, 8.0f,  100.0f, 1.6f, 1.6f, 30.0f, 0.0f,
                                   true, true,  true,  {0.1f, 0.55f, 0.19f},
-                                  {0.4f, 0.6f, 1.0f}, 0.15f, 10.0f, 0.0f, 0.0f, true, false, true};
+                                  {0.4f, 0.6f, 1.0f}, 0.15f, 10.0f, 0.0f, 0.0f, true, false, true, true};
 // The wizard's Magic Shield (MU's Soul Barrier): the same ribbons in MU's own look for it --
 // `CreateJoint(MODEL_SPEARSKILL, ..., 0, to, 20.0f)` (ZzzCharacter.cpp:4984), subtype 0 being
 // BITMAP_FLARE_BLUE in white light (ZzzEffectJoint.cpp:1542-1546), where the guard's subtype 4
 // tints the same sheet green. The blue circles a tester missed (2026-10-21, "when i put magic
 // shield i dont see the blue circles effect"), shown the user in MuMain.
-inline constexpr Recipe kBarrier{3,    50.0f, 12.0f, 100.0f, 1.6f, 1.6f, 19.0f, 0.0f,
+inline constexpr Recipe kBarrier{3,    50.0f, 8.0f,  100.0f, 1.6f, 1.6f, 30.0f, 0.0f,
                                  true, true,  true,  {0.55f, 0.55f, 0.55f},
-                                 {0.4f, 0.6f, 1.0f}, 0.15f, 10.0f, 0.0f, 0.0f, true, true, true};
+                                 {0.4f, 0.6f, 1.0f}, 0.15f, 10.0f, 0.0f, 0.0f, true, true, true, true};
 // The elf's Greater Damage standing on a player: the guard's ribbons in red (bug report #69; the
 // user, 2026-10-25: "it has to be red"). MU throws its green SPEARSKILL sub 4 for eBuff_Attack as
 // for eBuff_Defense; ours tells the two apart.
-inline constexpr Recipe kFury{3,    50.0f, 12.0f, 100.0f, 1.6f, 1.6f, 19.0f, 0.0f,
+inline constexpr Recipe kFury{3,    50.0f, 8.0f,  100.0f, 1.6f, 1.6f, 30.0f, 0.0f,
                               true, true,  true,  {0.75f, 0.06f, 0.05f},
-                              {0.4f, 0.6f, 1.0f}, 0.15f, 10.0f, 0.0f, 0.0f, true, false, true};
+                              {0.4f, 0.6f, 1.0f}, 0.15f, 10.0f, 0.0f, 0.0f, true, false, true, true};
 // Swell Life's and Critical Damage's colours in a shared swirl (Play::auraKinds): neither raises
 // ribbons alone -- the embers and the coils are their looks -- but beside another aura each
 // lends the swirl its ribbons, Swell Life's in its embers' orange and Critical Damage's in its
 // coils' violet (the user, 2026-10-25: "this has to work on all classes if there is mixed auras
 // together we need to mix colors on ribbons").
-inline constexpr Recipe kSwellRibbons{3,    50.0f, 12.0f, 100.0f, 1.6f, 1.6f, 19.0f, 0.0f,
+inline constexpr Recipe kSwellRibbons{3,    50.0f, 8.0f,  100.0f, 1.6f, 1.6f, 30.0f, 0.0f,
                                       true, true,  true,  {0.75f, 0.36f, 0.05f},
-                                      {0.4f, 0.6f, 1.0f}, 0.15f, 10.0f, 0.0f, 0.0f, true, false, true};
-inline constexpr Recipe kKeenRibbons{3,    50.0f, 12.0f, 100.0f, 1.6f, 1.6f, 19.0f, 0.0f,
+                                      {0.4f, 0.6f, 1.0f}, 0.15f, 10.0f, 0.0f, 0.0f, true, false, true, true};
+inline constexpr Recipe kKeenRibbons{3,    50.0f, 8.0f,  100.0f, 1.6f, 1.6f, 30.0f, 0.0f,
                                      true, true,  true,  {0.50f, 0.22f, 0.75f},
-                                     {0.4f, 0.6f, 1.0f}, 0.15f, 10.0f, 0.0f, 0.0f, true, false, true};
+                                     {0.4f, 0.6f, 1.0f}, 0.15f, 10.0f, 0.0f, 0.0f, true, false, true, true};
 // The elf's Heal and Greater Damage (sprint 15), ours: MuMain draws neither -- ReceiveMagic plays
 // the elf's cast and SOUND_SKILL_DEFENSE and registers the buff, and nothing renders
 // eBuff_Attack. Eight ribbons spread evenly round a ring wider than she is, thrown once at the
