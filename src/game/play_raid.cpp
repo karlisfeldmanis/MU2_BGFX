@@ -525,6 +525,11 @@ void Play::ravenFrame(Pets& pets, float seconds) {
             case Pets::RavenCue::Flash:
                 if (pets.ravenAt(from)) ravenShow_.flash(from);
                 break;
+            case Pets::RavenCue::Puff: {
+                const float head[3] = {0.5f, 0.0f, 0.0f};
+                if (pets.ravenBoneAt(6, head, from)) ravenShow_.puff(from, pets.ravenYaw(), pets.ravenPitch());
+                break;
+            }
             case Pets::RavenCue::Glow:
                 for (int bone = pets.ravenRoll(2); bone < bones; bone += 2) {
                     if (pets.ravenBone(bone, from)) ravenShow_.glow(from);

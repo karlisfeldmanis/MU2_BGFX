@@ -56,7 +56,10 @@ IMAGES = {"chrome01": "refine/chrome01.png", "chrome02": "refine/chrome02.png",
           "energy01": "refine/energy01.png",
           "bladeeff2_r": "kanturu/bladeeff2_r.png", "buserbody_r": "kanturu/buserbody_r.png",
           "busersword_r": "kanturu/busersword_r.png", "illumi_r": "kanturu/illumi_r.png",
-          "prsona_r": "kanturu/prsona_r.png", "prsonass_r": "kanturu/prsonass_r.png"}
+          "prsona_r": "kanturu/prsona_r.png", "prsonass_r": "kanturu/prsonass_r.png",
+          # The Dark Raven's BITMAP_MONSTER_SKIN + 2, Skill/dkthreebody_r (ZzzOpenData.cpp:4227),
+          # its level-40 feathers' glow: a figure's own sheet, under content/textures.
+          "dkthreebody_r": "../textures/raven_dkthreebody_r.png"}
 # And Kanturu's weapons' three (ZzzOpenData.cpp:5301-5303): BITMAP_CHROME6 (Effect/Chrome06.jpg,
 # the Sylph Wind Bow's), BITMAP_CHROME7 (Chrome07.jpg, the Bone Blade's) and BITMAP_CHROME_ENERGY
 # (energy01.jpg, the Grand Viper Staff's), each laid at the mesh's own UVs (ZzzObject.cpp:7644-7666).

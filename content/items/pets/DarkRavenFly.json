@@ -15,7 +15,7 @@
     "dksbody": "raven_dksbody.png",
     "foot": "raven_foot.png"
   },
-  "sheet_from": "Data/Skill: dkthreebody, dkswing, dkonebody (its three bodies by level), dksbody.OZT (the feathers, alpha) and foot, from MuMain's own bin/Data, under a raven_ prefix. dkthreebody_R, the level-40 glow, is drawn by the game (game/pets.cpp), not baked.",
+  "sheet_from": "Data/Skill: dkthreebody, dkswing, dkonebody (its three bodies by level), dksbody.OZT (the feathers, alpha) and foot, from MuMain's own bin/Data, under a raven_ prefix. dkthreebody_R, the level-40 glow, is its second chrome pass (chrome), drawn from level 40 only.",
   "sheet_materials": {
     "dkthreebody": "painted_steel",
     "dkswing": "painted_steel",
@@ -1132,5 +1132,31 @@
         0.895
       ]
     }
-  ]
+  ],
+  "chrome": [
+    {
+      "slot": "dkthreebody",
+      "image": "own",
+      "uv": "chrome",
+      "where": "over",
+      "light": 0.4,
+      "tint": [
+        0.3,
+        0.6,
+        1.0
+      ]
+    },
+    {
+      "slot": "dksbody",
+      "image": "dkthreebody_r",
+      "uv": "mesh",
+      "where": "over",
+      "pulse": [
+        0.3,
+        0.3
+      ],
+      "pulse_rate": "slow"
+    }
+  ],
+  "chrome_from": "RenderObject's MODEL_DARK_SPIRIT arm at WeaponLevel 40 (ZzzObject.cpp:981-992): mesh 0, dkthreebody, again RENDER_CHROME | RENDER_BRIGHT under BodyLight (0.3, 0.6, 1) with no image bound (own); then mesh 3, the feathers, again RENDER_BRIGHT with BITMAP_MONSTER_SKIN + 2 (dkthreebody_r) at its own UVs, BlendMeshLight sin(WorldTime*0.001). Both passes drawn by game/pets_raven.cpp only at level 40 or more. Ours: the chrome at 0.4 where MU draws 1 (the Dark Horse's, for our bloom), the feathers' glow at 0.3 +- 0.3 on the slow pulse where MU's sine runs -1..1 and is seen over its upper half. pipeline/chrome_sheets.py."
 }

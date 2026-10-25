@@ -183,6 +183,9 @@ void Pets::stepRaven(const float owner[3], const float hand[3], const float perc
             ++dashTime_;
             if (dashTime_ <= 2) cue(RavenCue::Streaks);
             if (dashTime_ == 1) cue(RavenCue::Flash);
+            // And past its third step, each odd one while it is over 100 above him, a puff of air
+            // at its head (:747-756).
+            if (dashTime_ > 3 && dashTime_ % 2 == 1 && bat_[2] > owner[2] + 100.0f) cue(RavenCue::Puff);
             // At the target 50 up, turning by its speed, its speed up by its pull and the pull by
             // 0.2 a frame; off again within 20 or after 20 frames (:506-531).
             const float aim[3] = {batPrey_[0], batPrey_[1], batPrey_[2] + 50.0f};
@@ -303,9 +306,13 @@ int Pets::ravenBones() const {
 }
 
 bool Pets::ravenBone(int bone, float out[3]) const {
-    if (bone < 0 || bone >= ravenBones()) return false;
     const float none[3] = {0.0f, 0.0f, 0.0f};
-    raven_.pointOn(bone, none, out);
+    return ravenBoneAt(bone, none, out);
+}
+
+bool Pets::ravenBoneAt(int bone, const float local[3], float out[3]) const {
+    if (bone < 0 || bone >= ravenBones()) return false;
+    raven_.pointOn(bone, local, out);
     return true;
 }
 
@@ -322,9 +329,12 @@ void Pets::drawRaven(gfx::Renderer& renderer, std::vector<float>& scratch,
     const int palette = bones > 0 ? renderer.addPalette(scratch.data(), bones) : -1;
     const float fade = std::clamp(ravenIn_ / kRavenFadeIn, 0.0f, 1.0f);
     // Its feathers always, and one body by its level: under 20 dkonebody, to 39 dkswing, then
-    // dkthreebody (ZzzObject.cpp:981-1023). Mesh 4, foot, is never drawn.
+    // dkthreebody (ZzzObject.cpp:981-1023). Mesh 4, foot, is never drawn. From 40 the body's blue
+    // chrome and the feathers' pulsing dkthreebody_r too (:985-992; DarkRavenFly.json `chrome`).
     const int body = ravenLevel_ < 20 ? 0 : ravenLevel_ < 40 ? 1 : 2;
-    for (int material : {ravenMaterials_[3], ravenMaterials_[body]}) {
+    const bool top = ravenLevel_ >= 40;
+    for (int material : {ravenMaterials_[3], ravenMaterials_[body], top ? ravenChrome_[0] : -1,
+                         top ? ravenChrome_[1] : -1}) {
         if (material < 0) continue;
         raven_.onlyBodyMaterial(material);
         const size_t from = out.size();

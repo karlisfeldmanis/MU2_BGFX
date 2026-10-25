@@ -130,10 +130,16 @@ bool RavenShow::open(const std::string& assetDir, content::Textures& textures, c
     flashSheet_ = textures.load(burst + "KingS_R.png", content::TextureRole::Decal);
     flashMesh_.clear();
     const bool flash = loadEffectObj(burst + "DarkLordSkill.obj", 1.0f, "", flashMesh_) && bgfx::isValid(flashSheet_);
+    // MODEL_AIR_FORCE, the dash's puff: content/effects/raven.
+    const std::string air = assetDir + "/effects/raven/";
+    puffSheet_ = textures.load(air + "SpiE_R.png", content::TextureRole::Decal);
+    puffMesh_.clear();
+    const bool puff = loadEffectObj(air + "AirForce.obj", 1.0f, "", puffMesh_) && bgfx::isValid(puffSheet_);
     const bool whole = bgfx::isValid(light_) && bgfx::isValid(spirit_) && bgfx::isValid(flare_);
-    core::logf("raven show: light %s, spirit %s, flare %s, spark %s, flash %s", bgfx::isValid(light_) ? "yes" : "NO",
-               bgfx::isValid(spirit_) ? "yes" : "NO", bgfx::isValid(flare_) ? "yes" : "NO",
-               bgfx::isValid(spark_) ? "yes" : "NO", flash ? "yes" : "NO");
+    core::logf("raven show: light %s, spirit %s, flare %s, spark %s, flash %s, puff %s",
+               bgfx::isValid(light_) ? "yes" : "NO", bgfx::isValid(spirit_) ? "yes" : "NO",
+               bgfx::isValid(flare_) ? "yes" : "NO", bgfx::isValid(spark_) ? "yes" : "NO", flash ? "yes" : "NO",
+               puff ? "yes" : "NO");
     return whole;
 }
 
@@ -185,6 +191,18 @@ void RavenShow::flash(const float at[3]) {
         one.alive = true;
         for (int k = 0; k < 3; ++k) one.at[k] = at[k];
         one.roll = float(int(unit() * 180.0f)) - 90.0f;
+        return;
+    }
+}
+
+void RavenShow::puff(const float at[3], float yaw, float pitch) {
+    for (Puff& one : puffs_) {
+        if (one.alive) continue;
+        one = Puff{};
+        one.alive = true;
+        for (int k = 0; k < 3; ++k) one.at[k] = at[k];
+        one.yaw = yaw;
+        one.pitch = pitch;
         return;
     }
 }
@@ -285,6 +303,13 @@ void RavenShow::update(float seconds) {
             one.tailCount = kept + 1;
         }
         owed_ -= 1.0f;
+    }
+    for (Puff& one : puffs_) {
+        if (!one.alive) continue;
+        one.scale += 0.2f * frames;
+        one.light *= std::pow(1.0f / 1.5f, frames);
+        one.left -= frames;
+        if (one.left <= 0.0f) one.alive = false;
     }
     for (Flash& one : flashes_) {
         if (!one.alive) continue;
@@ -389,6 +414,21 @@ void RavenShow::gather(gfx::Effects& effects) const {
             const float half = (2.0f * left / 10.0f + 2.0f) * 0.08f * kHeadSize;
             dot(effects, light_, one.at, half, kSpiritLight, fade);
             if (bgfx::isValid(shiny_)) dot(effects, shiny_, one.at, half * 0.6f, kSpiritLight, fade);
+        }
+    }
+    // The dash's puffs, turned as the bird was, in MU's frame laid on ours.
+    if (!puffMesh_.empty() && bgfx::isValid(puffSheet_)) {
+        for (const Puff& one : puffs_) {
+            if (!one.alive) continue;
+            const float angles[3] = {-one.pitch, 0.0f, one.yaw};
+            float m[3][3];
+            angleMatrix(angles, m);
+            const float x[3] = {m[0][0], m[2][0], -m[1][0]};
+            const float y[3] = {m[0][2], m[2][2], -m[1][2]};
+            const float z[3] = {m[0][1], m[2][1], -m[1][1]};
+            const float colour[3] = {one.light, one.light, one.light};
+            submitEffectAlong(effects, puffMesh_, puffSheet_, gfx::Blend::Additive, one.at, x, y, z,
+                              one.scale * kUnit, colour, 1.0f);
         }
     }
     // The dash's flash: MU's (45, -90..89, 0), its yaw nought, in MU's frame laid on ours.

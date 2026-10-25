@@ -1,0 +1,16 @@
+{
+  "item": "AirForce",
+  "mu_name_from": "Data/Skill/AirForce.bmd, MODEL_AIR_FORCE (ZzzOpenData.cpp:4316, its sheet from Skill/ at :4386), made by the Dark Raven as it dives (CSPetSystem.cpp:747-756).",
+  "kind": "skill",
+  "why_this_one": "The dash's puffs: at its head (bone 6, 50 along) on every odd AttackTime past 3 while it is over 100 above its lord, at sub-type 0 -- fifteen frames, Scale 0.6 grown 0.2 a frame, BlendMeshLight 1 lost by / 1.5 a frame (ZzzEffect.cpp:3176-3181; MoveHandlers.cpp:5338-5342), turned as the bird is. game/fx/raven.h.",
+  "mesh": "AirForce.obj",
+  "mesh_from": "muextract export-obj on Data/Skill/airforce.bmd: one mesh, 37 vertices, 60 triangles on SpiE_R.",
+  "parts": [
+    {
+      "group": "SpiE_R",
+      "sheet": "SpiE_R.png",
+      "blend": "additive",
+      "note": "Data/Skill/SpiE_R.OZJ, 64 x 64, decoded by pipeline/decode_texture.py; the _R makes MU draw it bright and additive (TextureScript.cpp:16-45)."
+    }
+  ]
+}

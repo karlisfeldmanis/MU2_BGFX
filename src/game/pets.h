@@ -111,8 +111,10 @@ public:
     // What its steps this frame asked to be drawn about it (CSPetSystem's MovePet and
     // AttackEffect), for fx/raven: a spark off a bone each step it flies (:425-437), the dash's
     // streaks its first two steps and its flash the first (:729-745), the charge's light on every
-    // other bone each step of it (:759-775). Drained by Play::ravenFrame after `raven`.
-    enum class RavenCue : uint8_t { Spark, Streaks, Flash, Glow };
+    // other bone each step of it (:759-775), and MODEL_AIR_FORCE's puff at its head each odd step
+    // of a dash past its third while it is over 100 above him (:747-756). Drained by
+    // Play::ravenFrame after `raven`.
+    enum class RavenCue : uint8_t { Spark, Streaks, Flash, Glow, Puff };
     int ravenCues(const RavenCue** out) const {
         *out = cues_;
         return cueCount_;
@@ -121,7 +123,10 @@ public:
     // Angle[2]; and a roll of 0..n-1 off its own dice.
     int ravenBones() const;
     bool ravenBone(int bone, float out[3]) const;
+    // `local` in the bone's own frame, metres (MU's (50, 0, 0) at bone 6 for the puff).
+    bool ravenBoneAt(int bone, const float local[3], float out[3]) const;
     float ravenYaw() const { return batYaw_; }
+    float ravenPitch() const { return batPitch_; }  // ours: up positive, MU's Angle[0] negated
     int ravenRoll(int n) { return dice(n); }
 
 private:
@@ -175,6 +180,7 @@ private:
     Figure raven_;
     int ravenLevel_ = 0;
     int ravenMaterials_[4] = {-1, -1, -1, -1};  // dkonebody, dkswing, dkthreebody, dksbody
+    int ravenChrome_[2] = {-1, -1};               // its level-40 passes: the body's blue, the feathers' glow
     int hand_ = -1;                              // his Bip01 L Hand
     int perch_ = -1;                             // and hand_bofdgne01, what it flies in at
     bool ravenUp_ = false;

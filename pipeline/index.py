@@ -2146,6 +2146,7 @@ def missiles(root: Path, build: Path) -> dict:
         **_models(root, build, "impale"),
         **_models(root, build, "force"),
         **_models(root, build, "fire_burst"),
+        **_models(root, build, "raven"),
         **_models(root, build, "tarkan"),
         **_models(root, build, "aida"),
         **_models(root, build, "kanturu"),

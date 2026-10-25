@@ -9,7 +9,11 @@
 //     frame and quicker by half a unit each) -- gold streaks off it as it dives; and the first a
 //     MODEL_DARKLORD_SKILL flash, sub 3, at (45, -90..89, 0) in (1, 0.8, 0.6), ten frames, Scale 0.2
 //     grown by a velocity of 0.1 that grows 0.02 a frame, its light / 1.8 a frame under seven left
-//     -- 1.03.35's move, as fx/fire_burst's flash (:729-745; ZzzEffect.cpp:3449-3470);
+//     -- 1.03.35's move, as fx/fire_burst's flash (:729-745; ZzzEffect.cpp:3449-3470); and past
+//     its third step, each odd one while over 100 above him, MODEL_AIR_FORCE (Skill/AirForce.bmd on
+//     SpiE_R, added) at its head, bone 6 50 along, turned as it is: fifteen frames, Scale 0.6 grown
+//     0.2 a frame, its light / 1.5 a frame (:747-756; ZzzEffect.cpp:3176-3181, MoveHandlers.cpp:
+//     5338-5342);
 //   * **the charge**: a BITMAP_LIGHT sub 6 on every other bone (from 0 or 1) each step of its 15,
 //     Effect/flare01 at Scale 1.3 in (1, 0.6, 0.4), two frames each -- the bird lit up (:759-775,
 //     ZzzEffectParticle.cpp:3207-3210);
@@ -31,8 +35,7 @@
 // four frames once within 50 of its target, its turn tightening as it ages, where MU's looped about
 // it or sailed past; the sparks at half MU's size and the charge's light
 // and the spirits' heads at a third (the user's "too large"); the ball's 15 spread about the bird rather than
-// on mesh 1's vertices; MODEL_AIR_FORCE's puffs at its head as it dives (:747-756) wait for
-// Skill/AirForce.bmd to be cooked. Presentation only: the realm struck on its own tick
+// on mesh 1's vertices. Presentation only: the realm struck on its own tick
 // (What::Ravened, What::Hit). Pools sized once; a frame allocates nothing.
 #pragma once
 
@@ -56,6 +59,8 @@ public:
     void streaks(const float at[3]);
     void flash(const float at[3]);
     void glow(const float at[3]);
+    // MODEL_AIR_FORCE at its head, turned as the bird is: `yaw` MU's Angle[2], `pitch` ours.
+    void puff(const float at[3], float yaw, float pitch);
     // The ball from the bird to `target`'s feet.
     void ball(const float from[3], const float to[3], float yaw);
     // A level up (or down) at the bird.
@@ -90,10 +95,16 @@ private:
         float roll = 0.0f;
         float scale = 0.2f, velocity = 0.1f, light = 1.0f, left = 10.0f;
     };
+    struct Puff {
+        bool alive = false;
+        float at[3] = {};
+        float yaw = 0.0f, pitch = 0.0f;
+        float scale = 0.6f, light = 1.0f, left = 15.0f;
+    };
 
     static constexpr float kFps = 25.0f;
     static constexpr float kUnit = 0.01f;
-    static constexpr int kJoints = 512, kFlashes = 8;
+    static constexpr int kJoints = 512, kFlashes = 8, kPuffs = 16;
 
     float unit();
     Joint* free();
@@ -106,6 +117,9 @@ private:
     bgfx::TextureHandle spark_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle flashSheet_ = BGFX_INVALID_HANDLE;
     std::vector<EffectCorner> flashMesh_;
+    bgfx::TextureHandle puffSheet_ = BGFX_INVALID_HANDLE;
+    std::vector<EffectCorner> puffMesh_;
+    Puff puffs_[kPuffs] = {};
     Joint joints_[kJoints] = {};
     Flash flashes_[kFlashes] = {};
     float owed_ = 0.0f;  // reference frames toward the spirits' next whole step

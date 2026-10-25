@@ -76,12 +76,17 @@ void Pets::open(const Figures& figures) {
     // The Dark Raven's flying figure, and its sheets by name (game/pets_raven.cpp).
     ravenBody_ = figures.body("DarkRavenFly");
     for (int& m : ravenMaterials_) m = -1;
+    for (int& m : ravenChrome_) m = -1;
     if (ravenBody_ && !ravenBody_->parts.empty()) {
         static constexpr const char* kSheets[4] = {"dkonebody", "dkswing", "dkthreebody", "dksbody"};
+        static constexpr const char* kChrome[2] = {"chrome_0", "chrome_1"};
         const auto& materials = ravenBody_->parts[0]->materials();
         for (size_t m = 0; m < materials.size(); ++m) {
             for (int k = 0; k < 4; ++k) {
                 if (materials[m].name.find(kSheets[k]) != std::string::npos) ravenMaterials_[k] = int(m);
+            }
+            for (int k = 0; k < 2; ++k) {
+                if (materials[m].name == kChrome[k]) ravenChrome_[k] = int(m);
             }
         }
     }
