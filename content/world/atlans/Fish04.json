@@ -1,0 +1,44 @@
+{
+  "item": "Fish04",
+  "mu_name": "Fish04",
+  "mu_name_from": "atlans's object slot: type N is Object{N+1}.bmd, from Data/Object8.",
+  "world": "atlans",
+  "object_type": -1,
+  "placements": 0,
+  "profile": "world",
+  "sheets": {
+    "bfish01": "at_bfish01.png"
+  },
+  "sheet_from": "Data/Object8/, decoded under the at_ prefix by `mu new`.",
+  "sheet_materials": {
+    "bfish01": "skin"
+  },
+  "material_note": "bfish01 is the fish's painted scales: skin, as Fish02's bfish04.",
+  "play_speed": 0.16,
+  "play_speed_from": "Every object's flat Velocity 0.16 until the map's Move code says otherwise: 5 of its 5 bones move over 8 keys (Fish04.rig.json, MuExtract export-rig --actions=all; 34 vertices, as the .obj). To check: MuMain's Move<Map>Object case for this type.",
+  "why_this_one": "Atlans's floor fish, MoveFishs' WD_7ATLANSE arm (GOBoid.cpp:1750-1777): not placed, one of the ten Fishs slots, north of row 128, MODEL_FISH01 + 3..6 at Velocity 1 / Scale, Gravity 2 or 3, Scale 0.8-0.9, along the floor (its height is the terrain's, :1820). Run by game/world/scurry.cpp from atlans/world.json crawls.kinds.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 38,
+      "area": 1682.0,
+      "along": [
+        -23.3,
+        20.2
+      ],
+      "mu_uv": [
+        0.062,
+        0.051,
+        0.954,
+        0.942
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.998,
+        0.998
+      ]
+    }
+  ]
+}

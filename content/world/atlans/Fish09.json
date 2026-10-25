@@ -1,0 +1,56 @@
+{
+  "item": "Fish09",
+  "mu_name": "Fish09",
+  "mu_name_from": "atlans's object slot: type N is Object{N+1}.bmd, from Data/Object8.",
+  "world": "atlans",
+  "object_type": -1,
+  "placements": 0,
+  "profile": "world",
+  "sheets": {
+    "bfish06": "at_bfish06.png"
+  },
+  "sheet_from": "Data/Object8/, decoded under the at_ prefix by `mu new`.",
+  "sheet_materials": {
+    "bfish06": "lamplight"
+  },
+  "material_note": "bfish06 is a deep-water glow fish, drawn added and breathing (glow): lamplight, the material a glowing sheet takes.",
+  "play_speed": 0.16,
+  "play_speed_from": "Every object's flat Velocity 0.16 until the map's Move code says otherwise: 6 of its 8 bones move over 15 keys (Fish09.rig.json, MuExtract export-rig --actions=all; 105 vertices, as the .obj). To check: MuMain's Move<Map>Object case for this type.",
+  "why_this_one": "Atlans's floor fish, MoveFishs' WD_7ATLANSE arm (GOBoid.cpp:1750-1777): not placed, one of the ten Fishs slots, south of row 128, MODEL_FISH01 + 7 or 8 at Velocity 0.5 / Scale, Gravity 1 or 2, glowing, Scale 0.8-0.9, along the floor (its height is the terrain's, :1820). Run by game/world/scurry.cpp from atlans/world.json crawls.kinds.",
+  "glow": {
+    "bfish06": {
+      "pulse": [
+        0.4,
+        0.5
+      ]
+    }
+  },
+  "glow_from": "MoveFishs (GOBoid.cpp:1764-1769, 1801-1805): MODEL_FISH01 + 7 and + 8 are BlendMesh 0 at BlendMeshLight sin(Timer) * 0.4 + 0.5, Timer +0.1 a frame -- the whole fish drawn added and breathing. Here a glow at pulse [0.4, 0.5] on the default rate (4 a second to MU's 2.5).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 180,
+      "area": 9357.9,
+      "along": [
+        -21.2,
+        21.0
+      ],
+      "mu_uv": [
+        -0.0,
+        0.001,
+        1.0,
+        0.999
+      ],
+      "bake_uv": [
+        -0.0,
+        0.001,
+        1.0,
+        0.999
+      ]
+    }
+  ],
+  "additive": [
+    "bfish06"
+  ]
+}

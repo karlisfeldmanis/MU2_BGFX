@@ -126,6 +126,25 @@ void readShow(const core::Json& show, WorldShow& out) {
     crawl.readInto("trail", &row.trail);
     readFloat(crawl, "drawn", &row.drawn);
     crawl.readInto("keeps_out", &row.keepsOut);
+    // And its kinds, each born by the hero's row (CrawlKind; Atlans's floor fish).
+    const core::Json& kinds = crawl["kinds"];
+    if (kinds.type == core::Json::Type::Array) {
+        for (size_t i = 0; i < kinds.size(); ++i) {
+            const core::Json& one = kinds.at(i);
+            CrawlKind kind;
+            readString(one, "model", &kind.model);
+            readFloat(one, "speed", &kind.speed);
+            if (one["turns"].type == core::Json::Type::Array) {
+                for (int k = 0; k < 2; ++k) kind.turns[k] = float(one["turns"].at(size_t(k)).numberOr(kind.turns[k]));
+            }
+            one.readInto("scale_least", &kind.scaleLeast);
+            one.readInto("scale_spread", &kind.scaleSpread);
+            one.readInto("from_row", &kind.fromRow);
+            one.readInto("to_row", &kind.toRow);
+            one.readInto("always", &kind.always);
+            if (!kind.model.empty()) row.kinds.push_back(kind);
+        }
+    }
 
     out.bubbles = named(show, "bubbles");
     out.doors = named(show, "doors");

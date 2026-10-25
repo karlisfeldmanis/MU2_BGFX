@@ -37,22 +37,16 @@ float Scurry::random01() {
     return float(seed_ & 0xFFFFFFu) / float(0x1000000);
 }
 
-bool Scurry::open(const std::string& assetDir, const std::string& world, const std::string& model,
-                  content::Textures& textures, Sound* sound) {
-    shutdown();
-    sound_ = sound;
-    row_ = worldShow(world).crawls;
-    for (Rat& rat : rats_) rat = Rat{};
-    if (model.empty()) return true;
-
+bool Scurry::load(const std::string& assetDir, const std::string& world, const std::string& model,
+                  content::Textures& textures, Loaded& out) {
     const std::string dir = core::join(assetDir, "cooked/" + world);
     const std::string meshPath = core::join(dir, "meshes/" + model + ".mum");
     const std::string clipPath = core::join(dir, "clips/" + model + ".muc");
     std::vector<uint8_t> meshBytes = core::readFile(meshPath);
     if (meshBytes.empty()) {
-        core::logf("scurry: no cooked %s at %s -- nothing runs in %s", model.c_str(),
+        core::logf("scurry: no cooked %s at %s -- it does not run in %s", model.c_str(),
                    meshPath.c_str(), world.c_str());
-        return true;
+        return false;
     }
     content::CookedMesh cooked;
     std::string error;
@@ -90,10 +84,36 @@ bool Scurry::open(const std::string& assetDir, const std::string& world, const s
         body->max[axis] = box.max[axis];
     }
     body->radius = box.radius;
+    out.mesh = std::move(mesh);
+    out.library = std::move(library);
+    out.body = std::move(body);
+    return true;
+}
 
-    mesh_ = std::move(mesh);
-    library_ = std::move(library);
-    body_ = std::move(body);
+bool Scurry::open(const std::string& assetDir, const std::string& world, const std::string& model,
+                  content::Textures& textures, Sound* sound) {
+    shutdown();
+    sound_ = sound;
+    row_ = worldShow(world).crawls;
+    for (Rat& rat : rats_) rat = Rat{};
+    // Its kinds: the manifest's, or the one model on the row's own numbers.
+    std::vector<CrawlKind> wanted = row_.kinds;
+    if (wanted.empty() && !model.empty()) {
+        CrawlKind one;
+        one.model = model;
+        one.speed = row_.speed;
+        one.turns[0] = one.turns[1] = row_.turn;
+        one.scaleLeast = row_.scaleLeast;
+        wanted.push_back(one);
+    }
+    for (const CrawlKind& kind : wanted) {
+        Loaded loaded;
+        if (!load(assetDir, world, kind.model, textures, loaded)) continue;
+        kinds_.push_back(kind);
+        loaded_.push_back(std::move(loaded));
+    }
+    if (loaded_.empty()) return true;
+
     scratch_.assign(size_t(gfx::Renderer::kMaxBones) * 12, 0.0f);
     if (sound_ != nullptr && row_.squeaks) squeak_ = sound_->load("boid_rat", true, true);
     if (row_.trail) {
@@ -104,16 +124,17 @@ bool Scurry::open(const std::string& assetDir, const std::string& world, const s
                 trailSheet_ = textures.load(assetDir + "/" + sheet->path, content::TextureRole::Albedo);
         }
     }
-    core::logf("scurry: %s runs in %s, %d at most, %s", model.c_str(), world.c_str(), row_.most,
-               squeak_ >= 0 ? "squeaking" : "silent");
+    core::logf("scurry: %d kind(s) run in %s, the first %s, %d at most, %s", int(kinds_.size()),
+               world.c_str(), kinds_.front().model.c_str(), row_.most, squeak_ >= 0 ? "squeaking" : "silent");
     return true;
 }
 
 void Scurry::shutdown() {
-    body_.reset();
-    library_.reset();
-    if (mesh_) mesh_->shutdown();
-    mesh_.reset();
+    for (Loaded& one : loaded_) {
+        if (one.mesh) one.mesh->shutdown();
+    }
+    loaded_.clear();
+    kinds_.clear();
     scratch_.clear();
     for (int i = 0; i < kMaxRats; ++i) {
         rats_[i] = Rat{};
@@ -145,14 +166,29 @@ void Scurry::spawn(Rat& rat, const float hero[3], const content::Ground& ground)
     const float x = hero[0] + (random01() * 2.0f - 1.0f) * kSpawnBox;
     const float z = hero[2] + (random01() * 2.0f - 1.0f) * kSpawnBox;
     if (!bornOn(ground, x, z)) return;  // the client's draw missed the floor: next frame
+    // Its kind, among those born at his row (MU's `Hero->Object.Position[1] * 0.01f < 128`).
+    const float perTile = std::max(ground.metresPerTile(), 0.001f);
+    const int heroRow = int(std::floor(-hero[2] / perTile));
+    int choices[16];
+    int count = 0;
+    for (size_t k = 0; k < kinds_.size() && count < 16; ++k) {
+        if (heroRow >= kinds_[k].fromRow && heroRow < kinds_[k].toRow) choices[count++] = int(k);
+    }
+    if (count == 0) return;
+    const int kind = choices[int(random01() * float(count)) % count];
+    const CrawlKind& as = kinds_[size_t(kind)];
     rat = Rat{};
+    rat.kind = kind;
+    rat.speed = as.speed;
+    rat.turn = as.turns[random01() < 0.5f ? 0 : 1];
+    rat.always = as.always;
     rat.position[0] = x;
     rat.position[1] = ground.heightAt(x, z);
     rat.position[2] = z;
     // `Angle = 0`: MU's +x, which is the column, which is this world's +x. Facing is the birds'
     // (sin, cos) over (x, z), so a quarter turn.
     rat.facing = kPi * 0.5f;
-    rat.scale = float(int(random01() * 4.0f) + row_.scaleLeast) * 0.1f;
+    rat.scale = float(int(random01() * float(as.scaleSpread)) + as.scaleLeast) * 0.1f;
     rat.running = row_.life >= 0 ? float(row_.life) : float(int(random01() * 128.0f));
     rat.heading[0] = x;
     rat.heading[1] = z;
@@ -186,13 +222,13 @@ void Scurry::flock(Rat& rat, float factor) {
     if (neighbours == 0) return;
     if (target[0] * target[0] + target[1] * target[1] <= 0.0001f) return;
     const float desired = std::atan2(target[0], target[1]);
-    const float turn = row_.turn * kPi / 180.0f * factor;
+    const float turn = rat.turn * kPi / 180.0f * factor;
     rat.facing = wrapPi(rat.facing + std::clamp(wrapPi(desired - rat.facing), -turn, turn));
 }
 
 void Scurry::update(float seconds, const float hero[3], const content::Ground& ground,
                     gfx::Renderer& renderer) {
-    if (!body_) return;
+    if (loaded_.empty()) return;
     const float factor = seconds * kFrames;
     const float perTile = std::max(ground.metresPerTile(), 0.001f);
 
@@ -207,11 +243,11 @@ void Scurry::update(float seconds, const float hero[3], const content::Ground& g
             }
         }
 
-        const bool running = rat.running > 0.0f && !rat.leaving;
+        const bool running = (rat.always || rat.running > 0.0f) && !rat.leaving;
         if (running) {
             flock(rat, factor);
             // `Velocity * (rand() % 4 + 6)` units a frame, Velocity 0.6 / scale (a scarab's 2.5).
-            const float units = row_.speed / rat.scale * float(int(random01() * 4.0f) + 6);
+            const float units = rat.speed / rat.scale * float(int(random01() * 4.0f) + 6);
             const float step = units * 0.01f * factor;
             const float forward[2] = {std::sin(rat.facing), std::cos(rat.facing)};
             rat.position[0] += forward[0] * step;
@@ -265,8 +301,9 @@ void Scurry::update(float seconds, const float hero[3], const content::Ground& g
         Figure& figure = figures_[i];
         if (!standing_[i]) {
             standing_[i] = true;
-            figure.stand(body_.get(), rat.position, rat.facing, rat.scale * row_.drawn);
-            figure.play(body_->idleClip);
+            const FigureBody* body = loaded_[size_t(rat.kind)].body.get();
+            figure.stand(body, rat.position, rat.facing, rat.scale * row_.drawn);
+            figure.play(body->idleClip);
             figure.setClock(std::fmod(rat.position[0] * 0.37f + std::fabs(rat.position[2]) * 0.61f,
                                       std::max(figure.length(), 0.001f)));
         } else {
@@ -274,7 +311,7 @@ void Scurry::update(float seconds, const float hero[3], const content::Ground& g
         }
         // MU plays the run at `Velocity * 0.5` keys a frame, 12.5 * 0.6 / scale keys a second,
         // over the cook's four; held while it stands (ours: MU runs it on the spot).
-        figure.update(seconds, running ? 12.5f * row_.speed / rat.scale / 4.0f : 0.0f);
+        figure.update(seconds, running ? 12.5f * rat.speed / rat.scale / 4.0f : 0.0f);
         const int posed = figure.pose(scratch_.data());
         paletteRows_[i] = posed > 0 ? renderer.addPalette(scratch_.data(), posed) : -1;
         // `LightEnable`: the baked terrain light of the tile it is on.
@@ -283,7 +320,7 @@ void Scurry::update(float seconds, const float hero[3], const content::Ground& g
 }
 
 void Scurry::gather(std::vector<gfx::Drawable>& out) const {
-    if (!body_) return;
+    if (loaded_.empty()) return;
     for (int i = 0; i < kMaxRats; ++i) {
         if (!rats_[i].live || paletteRows_[i] < 0) continue;
         const size_t first = out.size();
@@ -300,7 +337,7 @@ void Scurry::gather(std::vector<gfx::Drawable>& out) const {
 namespace mu::game {
 
 void Scurry::gatherTrails(gfx::Effects& effects) const {
-    if (!body_ || !bgfx::isValid(trailSheet_)) return;
+    if (loaded_.empty() || !bgfx::isValid(trailSheet_)) return;
     // Scale 30: the ribbon 30 units across, flat on the sand a hair over it. Ours: flat rather
     // than turned to the eye, since it follows a beetle along the ground.
     const float kHalf = 0.15f * row_.drawn, kOver = 0.03f;

@@ -72,6 +72,19 @@ def shown_models(block: str) -> dict:
             if (model := doc.get("show", {}).get(block, {}).get("model"))}
 
 
+def crawl_kinds() -> dict:
+    """{world: [model, ...]}: the further species a world's `crawls.kinds` runs beside its
+    `model`, each by the hero's row as MU's MoveFishs picks them (Atlans's floor fish,
+    GOBoid.cpp:1751-1773; game/world/scurry.h CrawlRow::kinds)."""
+    out = {}
+    for world, doc in manifests().items():
+        kinds = doc.get("show", {}).get("crawls", {}).get("kinds") or []
+        models = [one["model"] for one in kinds if one.get("model")]
+        if models:
+            out[world] = models
+    return out
+
+
 def gate_boxes() -> dict:
     """{map: [(x1, y1, x2, y2)]}: every gate box on each map, enter and exit, from the
     manifests' `gates` (the ones off the map, the talk gates' -1s, left out). The index keeps

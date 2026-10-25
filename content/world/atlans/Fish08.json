@@ -1,0 +1,210 @@
+{
+  "item": "Fish08",
+  "mu_name": "Fish08",
+  "mu_name_from": "atlans's object slot: type N is Object{N+1}.bmd, from Data/Object8.",
+  "world": "atlans",
+  "object_type": -1,
+  "placements": 0,
+  "profile": "world",
+  "sheets": {
+    "bfish10": "at_bfish10.png"
+  },
+  "sheet_from": "Data/Object8/, decoded under the at_ prefix by `mu new`.",
+  "sheet_materials": {
+    "bfish10": "lamplight"
+  },
+  "material_note": "bfish10 is a deep-water glow fish, drawn added and breathing (glow): lamplight, the material a glowing sheet takes.",
+  "play_speed": 0.16,
+  "play_speed_from": "Every object's flat Velocity 0.16 until the map's Move code says otherwise: 23 of its 24 bones move over 15 keys (Fish08.rig.json, MuExtract export-rig --actions=all; 56 vertices, as the .obj). To check: MuMain's Move<Map>Object case for this type.",
+  "why_this_one": "Atlans's floor fish, MoveFishs' WD_7ATLANSE arm (GOBoid.cpp:1750-1777): not placed, one of the ten Fishs slots, south of row 128, MODEL_FISH01 + 7 or 8 at Velocity 0.5 / Scale, Gravity 1 or 2, glowing, Scale 0.8-0.9, along the floor (its height is the terrain's, :1820). Run by game/world/scurry.cpp from atlans/world.json crawls.kinds.",
+  "glow": {
+    "bfish10": {
+      "pulse": [
+        0.4,
+        0.5
+      ]
+    }
+  },
+  "glow_from": "MoveFishs (GOBoid.cpp:1764-1769, 1801-1805): MODEL_FISH01 + 7 and + 8 are BlendMesh 0 at BlendMeshLight sin(Timer) * 0.4 + 0.5, Timer +0.1 a frame -- the whole fish drawn added and breathing. Here a glow at pulse [0.4, 0.5] on the default rate (4 a second to MU's 2.5).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 71,
+      "area": 1458.9,
+      "along": [
+        -8.7,
+        34.6
+      ],
+      "mu_uv": [
+        0.009,
+        0.313,
+        0.566,
+        0.615
+      ],
+      "bake_uv": [
+        0.003,
+        0.026,
+        0.74,
+        0.903
+      ]
+    },
+    {
+      "island": 1,
+      "material": "skin",
+      "triangles": 1,
+      "area": 12.6,
+      "along": [
+        26.8,
+        33.9
+      ],
+      "mu_uv": [
+        0.018,
+        0.489,
+        0.108,
+        0.572
+      ],
+      "bake_uv": [
+        0.337,
+        0.81,
+        0.403,
+        0.872
+      ]
+    },
+    {
+      "island": 2,
+      "material": "skin",
+      "triangles": 3,
+      "area": 207.9,
+      "along": [
+        -30.1,
+        -8.7
+      ],
+      "mu_uv": [
+        0.542,
+        0.282,
+        0.899,
+        0.59
+      ],
+      "bake_uv": [
+        0.395,
+        0.003,
+        0.658,
+        0.23
+      ]
+    },
+    {
+      "island": 3,
+      "material": "skin",
+      "triangles": 4,
+      "area": 867.6,
+      "along": [
+        -43.3,
+        9.9
+      ],
+      "mu_uv": [
+        0.323,
+        0.492,
+        0.997,
+        1.0
+      ],
+      "bake_uv": [
+        0.235,
+        0.158,
+        0.729,
+        0.531
+      ]
+    },
+    {
+      "island": 4,
+      "material": "skin",
+      "triangles": 4,
+      "area": 546.1,
+      "along": [
+        -36.7,
+        7.0
+      ],
+      "mu_uv": [
+        0.359,
+        0.001,
+        0.916,
+        0.402
+      ],
+      "bake_uv": [
+        0.588,
+        0.451,
+        0.997,
+        0.746
+      ]
+    },
+    {
+      "island": 5,
+      "material": "skin",
+      "triangles": 4,
+      "area": 68.0,
+      "along": [
+        7.8,
+        28.3
+      ],
+      "mu_uv": [
+        0.089,
+        0.572,
+        0.35,
+        0.678
+      ],
+      "bake_uv": [
+        0.062,
+        0.217,
+        0.254,
+        0.295
+      ]
+    },
+    {
+      "island": 6,
+      "material": "skin",
+      "triangles": 2,
+      "area": 76.0,
+      "along": [
+        25.0,
+        35.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.489,
+        0.13,
+        0.741
+      ],
+      "bake_uv": [
+        0.003,
+        0.208,
+        0.098,
+        0.393
+      ]
+    },
+    {
+      "island": 7,
+      "material": "skin",
+      "triangles": 2,
+      "area": 75.7,
+      "along": [
+        25.0,
+        35.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.489,
+        0.131,
+        0.743
+      ],
+      "bake_uv": [
+        0.324,
+        0.81,
+        0.42,
+        0.997
+      ]
+    }
+  ],
+  "additive": [
+    "bfish10"
+  ]
+}

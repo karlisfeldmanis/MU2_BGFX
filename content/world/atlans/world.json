@@ -55,6 +55,91 @@
     },
     "bubbles": {
       "note": "game/world/bubbles.h."
+    },
+    "crawls": {
+      "most": 10,
+      "keeps_out": true,
+      "kinds": [
+        {
+          "model": "Fish04",
+          "speed": 1.0,
+          "turns": [
+            2,
+            3
+          ],
+          "scale_least": 8,
+          "scale_spread": 2,
+          "from_row": 0,
+          "to_row": 128,
+          "always": true
+        },
+        {
+          "model": "Fish05",
+          "speed": 1.0,
+          "turns": [
+            2,
+            3
+          ],
+          "scale_least": 8,
+          "scale_spread": 2,
+          "from_row": 0,
+          "to_row": 128,
+          "always": true
+        },
+        {
+          "model": "Fish06",
+          "speed": 1.0,
+          "turns": [
+            2,
+            3
+          ],
+          "scale_least": 8,
+          "scale_spread": 2,
+          "from_row": 0,
+          "to_row": 128,
+          "always": true
+        },
+        {
+          "model": "Fish07",
+          "speed": 1.0,
+          "turns": [
+            2,
+            3
+          ],
+          "scale_least": 8,
+          "scale_spread": 2,
+          "from_row": 0,
+          "to_row": 128,
+          "always": true
+        },
+        {
+          "model": "Fish08",
+          "speed": 0.5,
+          "turns": [
+            1,
+            2
+          ],
+          "scale_least": 8,
+          "scale_spread": 2,
+          "from_row": 128,
+          "to_row": 256,
+          "always": true
+        },
+        {
+          "model": "Fish09",
+          "speed": 0.5,
+          "turns": [
+            1,
+            2
+          ],
+          "scale_least": 8,
+          "scale_spread": 2,
+          "from_row": 128,
+          "to_row": 256,
+          "always": true
+        }
+      ],
+      "note": "MoveFishs WD_7ATLANSE arm (GOBoid.cpp:1666-1677, 1750-1777, 1820-1853): all ten slots; north of row 128 (his) MODEL_FISH01 + 3..6 at Velocity 1 / Scale, Gravity 2 or 3, south of it the glowing + 7 / + 8 at 0.5 / Scale, Gravity 1 or 2; Scale 0.8-0.9; born on a bare or TW_CHARACTER tile, turned at the safe zone or the void; always swimming; held to the floor, as MU's height test is always true (:1820). The 40 boid fish above them are Fish02 (boids)."
     }
   },
   "npcs": [

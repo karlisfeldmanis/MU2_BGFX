@@ -221,6 +221,8 @@ TRAP_MODELS = world_manifest.by_world("trap_models", tuple)
 AIRS_FROM = world_manifest.by_world("airs_from")
 # And where a crawler is built when it is not the world's own: Aida's scarab is Tarkan's Bug02.
 CRAWLS_FROM = world_manifest.by_world("crawls_from")
+# And the further species a world's crawls run by row: Atlans's ten floor fish (MoveFishs).
+CRAWL_KINDS = world_manifest.crawl_kinds()
 
 
 def boid_glb(world, model):
@@ -243,6 +245,13 @@ def crawling(world):
     return name
 
 
+def crawlers(world):
+    """Every floor boid this world runs whose glb is there: its one, and its kinds."""
+    names = [crawling(world)] + [name for name in CRAWL_KINDS.get(world, ())
+                                 if os.path.exists(boid_glb(world, name))]
+    return [name for name in names if name]
+
+
 def flying(world):
     """The boid model this world flies, if its glb is there, else nothing."""
     name = AIRS.get(world)
@@ -261,7 +270,7 @@ def collect(world, out_dir, raw_dir):
 
     # The boid's sheet comes with the town's, not with the effects': it is a MODEL's albedo,
     # cooked by the same rules and looked up through the same textures.json the .mum names.
-    models = sorted({one["model"] for one in map_data["objects"]} | set(filter(None, [flying(world), crawling(world)])) | set(TRAP_MODELS.get(world, ())))
+    models = sorted({one["model"] for one in map_data["objects"]} | set(filter(None, [flying(world)])) | set(crawlers(world)) | set(TRAP_MODELS.get(world, ())))
     jobs = []
     manifest = {}
     seen = {}
@@ -928,7 +937,7 @@ def cook_meshes(world, out_dir):
     # town's and the engine opens them by name. It is NOT in the .mut -- Sway walks the town's
     # placements and finds none of it, which is what leaves the pool to game/world/boids.cpp.
     for model in sorted({one["model"] for one in map_data["objects"]} |
-                        set(filter(None, [flying(world), crawling(world)])) | set(TRAP_MODELS.get(world, ()))):
+                        set(filter(None, [flying(world)])) | set(crawlers(world)) | set(TRAP_MODELS.get(world, ()))):
         path = boid_glb(world, model)
         if not os.path.exists(path):
             continue

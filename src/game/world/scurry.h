@@ -43,6 +43,20 @@ class Sound;
 // MoveFishs' other arms are Lorencia's fish (not built, see boids.h) and maps this game does not
 // have.
 
+// One species a world's crawls may be born as, by the hero's row: Atlans's floor fish, Fish04-07
+// north of row 128 and the glowing Fish08-09 south of it (MoveFishs, GOBoid.cpp:1751-1773).
+// The manifest's `crawls.kinds`; a world with none runs its one `model` on the row's numbers.
+struct CrawlKind {
+    std::string model;
+    float speed = 0.6f;              // Velocity = speed / Scale
+    float turns[2] = {13.0f, 13.0f};  // Gravity, one of the two at a coin's toss, degrees a frame
+    int scaleLeast = 4, scaleSpread = 4;  // Scale (rand() % spread + least) * 0.1
+    int fromRow = 0, toRow = 256;    // born while the hero's row is in [from, to)
+    // MU's fish are always on the move ((Type >= MODEL_FISH01 && <= +10) || LifeTime > 0); the
+    // rat and the scarab rest when their LifeTime runs out.
+    bool always = false;
+};
+
 // MoveFishs' numbers for one world's crawler (GOBoid.cpp:1700-1735), the manifest's `crawls`.
 struct CrawlRow {
     int most = 3;            // slots filled: 3, or all ten on Atlans and Tarkan (:1668-1675)
@@ -60,6 +74,7 @@ struct CrawlRow {
     // Tarkan's and Aida's: born only on a bare or TW_CHARACTER tile, and turned about at the safe
     // zone or the void (GOBoid.cpp:1689-1693, 1830-1841). False: the Dungeon rat's, any floor.
     bool keepsOut = false;
+    std::vector<CrawlKind> kinds;
 };
 
 class Scurry {
@@ -71,7 +86,7 @@ public:
     bool open(const std::string& assetDir, const std::string& world, const std::string& model,
               content::Textures& textures, Sound* sound);
     void shutdown();
-    bool isOpen() const { return body_ != nullptr; }
+    bool isOpen() const { return !loaded_.empty(); }
 
     void update(float seconds, const float hero[3], const content::Ground& ground,
                 gfx::Renderer& renderer);
@@ -96,7 +111,18 @@ private:
         float tails[kTails][3] = {};  // where it was, a reference frame apart, newest first
         int tailCount = 0;
         float tailClock = 0.0f;
+        int kind = 0;
+        float speed = 0.6f, turn = 13.0f;
+        bool always = false;
     };
+    // A kind's cooked body.
+    struct Loaded {
+        std::unique_ptr<content::Mesh> mesh;
+        std::unique_ptr<ClipLibrary> library;
+        std::unique_ptr<FigureBody> body;
+    };
+    bool load(const std::string& assetDir, const std::string& world, const std::string& model,
+              content::Textures& textures, Loaded& out);
 
     void spawn(Rat& rat, const float hero[3], const content::Ground& ground);
     void flock(Rat& rat, float factor);
@@ -106,9 +132,8 @@ private:
     float random01();
 
     Rat rats_[kMaxRats];
-    std::unique_ptr<content::Mesh> mesh_;
-    std::unique_ptr<ClipLibrary> library_;
-    std::unique_ptr<FigureBody> body_;
+    std::vector<CrawlKind> kinds_;
+    std::vector<Loaded> loaded_;  // beside kinds_
     Figure figures_[kMaxRats];
     int paletteRows_[kMaxRats] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
     CrawlRow row_;
