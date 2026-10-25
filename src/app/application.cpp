@@ -72,20 +72,30 @@ public:
     // Up to `elapsed` seconds of game time, from whatever is heard, or silence where nothing is
     // (a mode with no sound, or the gap while one hands the run to the next) so the tape stays
     // in step with the frames.
+    // The engine is read in whole blocks of kBlock, as a device reads it, and what a frame does
+    // not take waits for the next: read a frame's length at a time (1600 at 30 fps), the mix
+    // jumped to another wave at every read in four of ten frames -- a click 30 times a second,
+    // heard as the sound stuttering (the user, 2026-10-25: "when you recorded video audio was
+    // shuttering").
     void pull(game::Sound* from, double elapsed) {
         if (!file_) return;
         const uint64_t until = uint64_t(elapsed * kRate + 0.5);
         while (written_ < until) {
-            const uint64_t want = std::min<uint64_t>(until - written_, kChunk);
-            uint64_t got = from ? from->render(buffer_, want) : 0;
-            for (uint64_t i = got * 2; i < want * 2; ++i) buffer_[i] = 0.0f;
-            std::fwrite(buffer_, sizeof(float) * 2, size_t(want), file_);
+            if (held_ == 0) {
+                const uint64_t got = from ? from->render(block_, kBlock) : 0;
+                for (uint64_t i = got * 2; i < kBlock * 2; ++i) block_[i] = 0.0f;
+                held_ = kBlock;
+            }
+            const uint64_t want = std::min<uint64_t>(until - written_, held_);
+            std::fwrite(block_ + (kBlock - held_) * 2, sizeof(float) * 2, size_t(want), file_);
+            held_ -= want;
             written_ += want;
         }
     }
 
 private:
-    static constexpr uint64_t kChunk = 4096;
+    // Ten milliseconds: the engine's own period (game/sound.cpp kPeriodMs) at kRate.
+    static constexpr uint64_t kBlock = 480;
 
     void put32(uint32_t v) { std::fwrite(&v, 4, 1, file_); }
     void put16(uint16_t v) { std::fwrite(&v, 2, 1, file_); }
@@ -106,7 +116,8 @@ private:
 
     std::FILE* file_ = nullptr;
     uint64_t written_ = 0;
-    float buffer_[kChunk * 2];
+    uint64_t held_ = 0;  // frames of block_ not yet written
+    float block_[kBlock * 2];
 };
 
 #ifdef MU2_CRASH_UPLOAD
