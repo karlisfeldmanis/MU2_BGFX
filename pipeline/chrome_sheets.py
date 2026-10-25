@@ -13,7 +13,8 @@ Great Reign Crossbow's grooves (RenderPartObjectBody, ZzzObject.cpp:7065-7075, 7
      "where": "over"}
 
 `image` is MU's chrome01 (BITMAP_CHROME), chrome02 (BITMAP_CHROME2) or bab2 (BITMAP_CHROME + 1),
-out of content/effects/refine, or shiny01 (BITMAP_SHINY, RENDER_METAL's). `mask`, when it names one
+out of content/effects/refine, or shiny01 (BITMAP_SHINY, RENDER_METAL's). `own` is the slot's
+own sheet, for a pass MU draws with no image bound (the Dark Horse's). `mask`, when it names one
 of those, is that image as the mask -- MU's Chrome01 lightmap over a metal pass. `where` is "over" for the whole mesh, or "cut" for where its own
 sheet's alpha is cut away: MU draws those passes before the body, so they only show through the
 holes its alpha test leaves.
@@ -41,7 +42,10 @@ WEAPONS = os.path.join(CONTENT, "items", "weapons")
 # A monster's passes too (Hell Maine's red chrome over its armour and wings, GMAida.cpp:
 # 1389-1405), written beside its recipe, where export_gltf looks: content/monsters/chrome/.
 # And a shield's (the Crimson Glory's rim, ZzzObject.cpp:7229): content/items/shields/chrome/.
-FOLDERS = (WEAPONS, os.path.join(CONTENT, "monsters"), os.path.join(CONTENT, "items", "shields"))
+# And a mount's and its horn's (the Dark Horse's gold neck plate and the horn's orange sheen,
+# ZzzObject.cpp:783-790, 7130-7135): content/items/pets/chrome/.
+FOLDERS = (WEAPONS, os.path.join(CONTENT, "monsters"), os.path.join(CONTENT, "items", "shields"),
+           os.path.join(CONTENT, "items", "pets"))
 # And socketstaff, MU's BITMAP_SOCKETSTAFF (Item/soketmagic_stape02.jpg, ZzzOpenData.cpp:5451):
 # the Imperial Staff's gold lightning, laid three times over its body at its own UVs. And
 # dancerfire, the Sword Dancer's swordmagum_06e, its fire sliding over the lava MU lays first.
@@ -62,8 +66,16 @@ def write(item, recipe, out):
     passes = recipe.get("chrome") or []
     sheets = {k.lower(): v for k, v in (recipe.get("sheets") or {}).items()}
     for n, one in enumerate(passes):
-        image = Image.open(os.path.join(CONTENT, "effects",
-                                        IMAGES[one["image"]])).convert("RGB")
+        # `own`: no chrome image bound, so the slot's own sheet at the pass's coordinates -- MU's
+        # RenderMesh / RenderBody with RENDER_CHROME and no texture given (the Dark Horse's).
+        if one["image"] == "own":
+            own = sheets.get(one["slot"].lower())
+            if own is None:
+                raise SystemExit(f"{item}: chrome pass {n} names '{one['slot']}', no sheet of it")
+            image = Image.open(os.path.join(CONTENT, "textures", own)).convert("RGB")
+        else:
+            image = Image.open(os.path.join(CONTENT, "effects",
+                                            IMAGES[one["image"]])).convert("RGB")
         tint = one.get("tint", [1.0, 1.0, 1.0])
         top = max(tint) or 1.0
         bands = [band.point(lambda v, f=c / top: int(round(v * f)))

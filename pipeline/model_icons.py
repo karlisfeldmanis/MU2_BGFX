@@ -1,5 +1,5 @@
 """The buff strip's cells that are ours, rendered from the thing's own model: buff_angel,
-buff_imp, buff_ale, buff_uniria, buff_dinorant, buff_healing and buff_mana.
+buff_imp, buff_ale, buff_uniria, buff_dinorant, buff_darkhorse, buff_healing and buff_mana.
 
     python3 pipeline/model_icons.py            renders through Blender (kept), then composes
 
@@ -48,6 +48,10 @@ PETS = {
     # The Dinorant's is its dragon, Rider02: a cold steel blue under its blue hide and gold, no
     # other cell's hue, and a pale gold glow the horns and wings stand out of. Ours, as Uniria's.
     "dinorant": ("pets/Rider02", (40, 90, 160), (4, 12, 34), (255, 235, 170), 35.0),
+    # The Dark Horse's is its horse, DarkHorse, in its rest pose: a dark bronze no other cell
+    # uses, under the gold of its barding's trim and the neck plate MU lays gold over
+    # (ZzzObject.cpp:783-790). Ours, as Uniria's.
+    "darkhorse": ("pets/DarkHorse", (130, 115, 45), (24, 18, 4), (255, 230, 160), 35.0),
     # A potion pouring in (the HUD's potion cell, ours): the Healing Potion on a blood red and
     # the Mana Potion on a deep blue, each its own bottle as the bag shows it.
     "healing": ("misc/Potion02", (200, 40, 40), (40, 2, 4), (255, 200, 190), 20.0),

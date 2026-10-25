@@ -1,0 +1,205 @@
+{
+  "item": "DarkHorseHorn",
+  "mu_name": "Dark Horse",
+  "mu_name_from": "MODEL_DARK_HORSE_ITEM, MODEL_HELPER+4: AccessModel(MODEL_DARK_HORSE_ITEM, L\"Data\\\\Item\\\\\", L\"DarkHorseHorn\") (ZzzOpenData.cpp:719), its sheets from Skill\\ and then Item\\ (:1296-1297): the horse's own dkhead2 and dkheadwing. ITEM_DARK_HORSE_ITEM, group 13 number 4 (_enum.h:2705), named \"Dark Horse\" (OpenMU VersionSeasonSix/Items/Pets.cs:66). The bag icon; the ridden horse is DarkHorse.",
+  "profile": "weapon",
+  "profile_note": "A small held object seen in the bag: the weapon profile, as every misc item.",
+  "sheets": {
+    "dkhead2": "dkhead2.png",
+    "dkheadwing": "dkheadwing.png"
+  },
+  "sheet_from": "The horse's own two sheets (Data/Skill/dkhead2.OZJ and dkheadwing.OZJ, 32x32, opaque): its head plate, dark blue enamel edged in gold.",
+  "sheet_materials": {
+    "dkhead2": "painted_steel",
+    "dkheadwing": "painted_steel"
+  },
+  "sheet_materials_from": "The horse's head barding, enamelled plate. Judged from the sheets.",
+  "chrome": [
+    {
+      "slot": "dkhead2",
+      "image": "own",
+      "uv": "chrome",
+      "where": "over",
+      "light": 0.4,
+      "tint": [
+        0.8,
+        0.4,
+        0.1
+      ]
+    },
+    {
+      "slot": "dkheadwing",
+      "image": "own",
+      "uv": "chrome",
+      "where": "over",
+      "light": 0.4,
+      "tint": [
+        0.8,
+        0.4,
+        0.1
+      ]
+    }
+  ],
+  "chrome_from": "RenderPartObjectBody's MODEL_DARK_HORSE_ITEM arm (ZzzObject.cpp:7130-7135): the body, then the whole body again RENDER_BRIGHT | RENDER_CHROME under BodyLight (0.8, 0.4, 0.1), no image bound, so each mesh's own sheet at RENDER_CHROME's coordinates added in orange (`own`). At 0.4 where MU draws 1, as the horse's. pipeline/chrome_sheets.py.",
+  "stats": {
+    "note": "The item's own row, from OpenMU's Season 6 initialiser: the Dark Horse is the Dark Lord's (0.99+), not 0.75's. **After 0.75**, marked.",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Pets.cs:66-73 and CreatePet (:227-266).",
+    "call": "this.CreatePet(4, SkillNumber.Earthshake, 1, 1, \"Dark Horse\", 218, false, false, (Stats.IsHorseEquipped, 1, AddRaw), (Stats.MovementSpeed, HorseOrFenrirMovementSpeed, Maximum), (Stats.MovementSpeedUnderwater, ...)); QualifiedCharacters AllLords; MaximumItemLevel 50",
+    "group": 13,
+    "number": 4,
+    "drop_level": 218,
+    "drops_from_monsters": false,
+    "width": 1,
+    "height": 1,
+    "durability": 255,
+    "slot": 8,
+    "requires": {
+      "level": 218,
+      "strength": 0,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "requires_note": "218 is the row's; the realm asks 218 + 2 a horse level (WebZen zzzitem.cpp:580-583, MuMain GIPetManager.cpp:684-686), and a horse is born level 1 (zzzitem.cpp:95), so 220 (sim::asks).",
+    "classes": [
+      "lord"
+    ],
+    "classes_note": "The Dark Lord's alone (CreatePet's AllLords; MuMain's card, GIPetManager.cpp:731-732).",
+    "power_note": "Ridden in the mount's slot (sim::placeOf). While it has life: defence + 5 + Agility/20 + 2 a level (WebZen ObjCalCharacter.cpp:1082-1090), and every blow taken costs the rider 1 life and is cut to (100 - (30 + level)/2)% -- 85% at level 1, 60% at 50 (ObjAttack.cpp:1345-1361). It wears by damage x 2/10 / 10 + 1 a hit taken into a tally, a point of life each 1500 (user.cpp:10632-10650); dead at 0, not destroyed. It carries Earthshake, skill 62 (zzzitem.cpp:1026-1030), not built yet.",
+    "price_note": "2,000,000 a horse level, a third back (WebZen CItem::PetValue, zzzitem.cpp; sim::buyingPrice). Made at the Pet Trainer from a Spirit in MU (MixSystem.cpp:3051-3245); not made or sold here yet."
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 10,
+      "area": 1442.5,
+      "along": [
+        -22.0,
+        12.8
+      ],
+      "mu_uv": [
+        0.038,
+        0.079,
+        0.961,
+        0.977
+      ],
+      "bake_uv": [
+        0.007,
+        0.442,
+        0.735,
+        0.902
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 4,
+      "area": 903.4,
+      "along": [
+        -6.9,
+        21.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.115,
+        0.999,
+        0.885
+      ],
+      "bake_uv": [
+        0.627,
+        0.276,
+        0.994,
+        0.953
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 2,
+      "area": 569.0,
+      "along": [
+        -43.0,
+        -12.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.29,
+        0.006,
+        0.658,
+        0.374
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 2,
+      "area": 261.0,
+      "along": [
+        -35.4,
+        -11.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.371,
+        0.372,
+        0.739,
+        0.74
+      ]
+    },
+    {
+      "island": 4,
+      "material": "painted_steel",
+      "triangles": 2,
+      "area": 569.0,
+      "along": [
+        -2.3,
+        6.6
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.374,
+        0.374
+      ]
+    },
+    {
+      "island": 5,
+      "material": "painted_steel",
+      "triangles": 2,
+      "area": 261.0,
+      "along": [
+        0.0,
+        7.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.265,
+        0.374,
+        0.632
+      ]
+    }
+  ]
+}
