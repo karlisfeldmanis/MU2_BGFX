@@ -31,7 +31,10 @@
 <body>
 
 <header class="top">
-<img class="bg" src="/hero.jpg" alt="" aria-hidden="true">
+<picture>
+<source type="image/webp" srcset="/hero-960.webp 960w, /hero-1500.webp 1500w, /hero-2400.webp 2400w" sizes="(max-width: 640px) 148vw, min(1500px, 100vw)">
+<img class="bg" src="/hero.jpg" width="1500" height="844" fetchpriority="high" alt="" aria-hidden="true">
+</picture>
 <div class="shade" aria-hidden="true"></div>
 <div class="bar">
 <a href="/"><img src="/logo.svg" alt="MU Classic" width="435" height="261" translate="no"></a>

@@ -57,13 +57,20 @@ a:hover { color: var(--bone-hi); }
 
 /* Top */
 header.top { position: relative; overflow: hidden; }
-.top .bg { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: min(1280px, 100%); height: auto;
-  aspect-ratio: 16 / 9; object-fit: cover; object-position: 70% 20%;
-  -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 45%, #000 55%, transparent 100%);
-          mask-image: radial-gradient(ellipse 50% 50% at 50% 45%, #000 55%, transparent 100%); }
+/* The heroes in full, as bright as painted: up to 1500 pixels wide, falling to the ground at the
+   foot and at both sides; only the bar's strip is darkened. The front page's words sit up on the
+   heroes' feet and the art's dark rocks (.top .hero). */
+.top .bg { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: min(1500px, 100%); height: auto;
+  aspect-ratio: 16 / 9; object-fit: cover; object-position: 50% 30%;
+  -webkit-mask-image: linear-gradient(180deg, #000 66%, transparent 100%), linear-gradient(90deg, transparent 0, #000 16%, #000 84%, transparent 100%);
+  -webkit-mask-composite: source-in;
+          mask-image: linear-gradient(180deg, #000 66%, transparent 100%), linear-gradient(90deg, transparent 0, #000 16%, #000 84%, transparent 100%);
+          mask-composite: intersect; }
 .top .shade { position: absolute; inset: 0;
-  background: radial-gradient(ellipse 60% 70% at 50% 55%, rgba(13,11,10,.82) 0%, rgba(13,11,10,.55) 60%, rgba(13,11,10,.3) 100%),
-              linear-gradient(0deg, var(--ground) 0%, rgba(13,11,10,0) 35%); }
+  background: linear-gradient(180deg, rgba(13,11,10,.6) 0, rgba(13,11,10,0) 120px); }
+.top .hero { padding-top: clamp(110px, calc(min(100vw, 1500px) * .26), 390px); }
+.top .hero p, .top .get small { text-shadow: 0 1px 3px rgba(0,0,0,.9), 0 0 18px rgba(0,0,0,.8); }
+.top .hero h1 { text-shadow: 0 2px 4px rgba(0,0,0,.8), 0 0 30px rgba(0,0,0,.85); }
 .top .wrap { position: relative; }
 /* The top bar spans the whole width, the logo at the left edge and the link at the right. */
 .bar { position: relative; display: flex; justify-content: space-between; align-items: center; height: 84px;
@@ -135,6 +142,27 @@ header.top { position: relative; overflow: hidden; }
 .get { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; width: 100%; max-width: 640px; margin-top: 8px; }
 .get > div { display: flex; flex-direction: column; gap: 6px; }
 .get small { font-size: 14px; color: var(--quiet); text-align: center; }
+/* Phones: the heroes cropped tall and full width so they fill the first screen, the bar over them,
+   the words close under their feet on the rocks; the buttons a tight stack. */
+@media (max-width: 640px) {
+  .top .bg { width: 100%; aspect-ratio: 6 / 5; object-position: 50% 0;
+    -webkit-mask-image: linear-gradient(180deg, #000 72%, transparent 100%); mask-image: linear-gradient(180deg, #000 72%, transparent 100%); }
+  .top .shade { background: linear-gradient(180deg, rgba(13,11,10,.7) 0, rgba(13,11,10,0) 90px); }
+  .bar { height: 64px; }
+  .bar img { height: 38px; }
+  .top .hero { padding-top: calc(100vw * .56); padding-bottom: 28px; gap: 14px; }
+  /* The four regions a 2×2 grid of equal cells, hairlines between them. */
+  .servers { display: grid; grid-template-columns: 1fr 1fr; width: 100%; max-width: 360px; padding: 0; border-radius: 12px; }
+  .live { justify-content: center; padding: 11px 8px; font-size: 14px; }
+  .live:nth-child(2) { box-shadow: inset 1px 0 0 rgba(201,162,126,.18); }
+  .live:nth-child(3) { box-shadow: inset 0 1px 0 rgba(201,162,126,.18); }
+  .live:nth-child(4) { box-shadow: inset 1px 0 0 rgba(201,162,126,.18), inset 0 1px 0 rgba(201,162,126,.18); }
+  .hero h1 { font-size: clamp(30px, 9.4vw, 40px); }
+  .hero p { font-size: 16.5px; line-height: 1.5; }
+  .get { grid-template-columns: 1fr; gap: 10px; margin-top: 4px; }
+  .get > div { gap: 4px; }
+  .get small { font-size: 13px; }
+}
 .copied { max-width: 640px; display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; border-radius: 4px; background: rgba(5,3,3,.85);
   box-shadow: inset 0 0 0 1px #2B221B; font-size: 15px; }
 .copied code { color: var(--quiet); font: 13px/1.5 ui-monospace, Menlo, monospace; word-break: break-all; }
