@@ -57,6 +57,8 @@ by order:
   out at Valiant, Thunder Hawk, Red Spirit, Dark Soul and Faith.
 - **Sets a box lower** (the user: "still too good armors sets"): 25-44 / 45-64 / 65-89 / 90-109;
   +4's sets top out at Grand Soul, Divine, Dark Phoenix, Valiant, Thunder Hawk, Red Spirit.
+- **Sets another box lower** (the user: "still too good", picked "Sets still too high"): 15-29 /
+  30-44 / 45-64 / 65-89; +4's sets top out at Storm Crow, Ashcrow, Eclipse, Iris, Black Dragon.
 
 Sources, highest first: WebZen GameServer 1.00.93 (`WZ`, under `Source/Server Side/GameServer/`,
 0.97d base unless a flag is named), MuMain (`MM`, `src/source/`), OpenMU (`OM`). The repo's

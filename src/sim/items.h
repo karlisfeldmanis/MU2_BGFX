@@ -1701,11 +1701,11 @@ constexpr int kKundunExcellentIn100[kKundunTiers] = {40, 50, 60, 70};
 // gear (sim::kanturuGear).
 constexpr int kKundunFineLeast[kKundunTiers] = {40, 65, 90, 115};
 constexpr int kKundunFineMost[kKundunTiers] = {64, 89, 114, 135};
-// The armour and shields a box lower than the weapons (the user, "little bit too good sets", then
-// "still too good armors sets"): +1 Scale to Spirit, +2 Plate to Light Plate, +3 Storm Crow to
-// Black Dragon, +4 Grand Soul to Red Spirit; no Dark Soul, Faith, Great Dragon or Hurricane.
-constexpr int kKundunSetLeast[kKundunTiers] = {25, 45, 65, 90};
-constexpr int kKundunSetMost[kKundunTiers] = {44, 64, 89, 109};
+// The armour and shields well below the weapons (the user, "little bit too good sets", "still
+// too good armors sets", "still too good"): +1 Bronze to Scale, +2 Wind to Spirit, +3 Plate to
+// Light Plate, +4 Storm Crow to Black Dragon.
+constexpr int kKundunSetLeast[kKundunTiers] = {15, 30, 45, 65};
+constexpr int kKundunSetMost[kKundunTiers] = {29, 44, 64, 89};
 bool kundunFine(const content::ItemRow& row, int tier, Kin kin, bool second);
 // Half the excellents a weapon (the user: "we need also weapons"), kKundunWeaponIn100; the
 // rest any other slot. A class with no weapon in the tier's band draws from its weapons of the
