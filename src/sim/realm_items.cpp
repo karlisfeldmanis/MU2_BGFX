@@ -1561,7 +1561,8 @@ void Realm::leave(const Body& dead, const Body& killer) {
         if (item < 0) return;
         // A power the killer's class may set (drawRunePower).
         one.what = Held{item, 0, 1};
-        one.what.powers[0] = drawRunePower(dice_, killer.kin, killer.second, level);
+        one.what.powers[0] = drawRunePower(dice_, killer.kin, killer.second, level, true,
+                                           rulesOf(tables_->map).ancientRunes);
     } else if ((roll -= creationChance) < kJewelChance * jewels) {
         const int32_t item =
             draw([&](const content::ItemRow& r) { return refiningJewel(r) && jewelOf(r) != Jewel::Life && reaches(r); });
@@ -2631,9 +2632,10 @@ bool runeDrawable(const PowerRow& row, Kin kin, bool second) {
 }
 }  // namespace
 
-uint8_t drawRunePower(Random& dice, Kin kin, bool second, int level, bool commons) {
+uint8_t drawRunePower(Random& dice, Kin kin, bool second, int level, bool commons, bool ancients) {
     const auto drawable = [&](const PowerRow& row) {
         if (!commons && row.rarity == Rarity::Common) return false;
+        if (!ancients && row.rarity == Rarity::Ancient) return false;
         return runeDrawable(row, kin, second);
     };
     int count[kRarities] = {};

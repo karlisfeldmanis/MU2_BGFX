@@ -1099,7 +1099,11 @@ constexpr int kRuneRarityLevel[kRarities] = {kCreationLevel, 40, 60, 1, kAncient
 // reaches that hold one, then one of that rarity evenly. 0 when none can be drawn.
 class Random;
 // `commons` false leaves the Common runes out: a reward's rune (Blood Castle) is never one.
-uint8_t drawRunePower(Random& dice, Kin kin, bool second, int level, bool commons = true);
+// `ancients` false leaves the Ancients out whatever the level: a kill's drop passes its map's
+// rules (MapRow::ancientRunes), so they fall from the Relics and the boss on, never the Ruins
+// (the user, 2026-10-25: "starting with relics only and boss").
+uint8_t drawRunePower(Random& dice, Kin kin, bool second, int level, bool commons = true,
+                      bool ancients = true);
 // One of `rarity` evenly, as drawRunePower draws within the rarity it picks, whatever the level:
 // the raid's dragon's Legendary runes (Realm::dragonHoard). 0 when none is his class's.
 uint8_t drawRuneOf(Random& dice, Kin kin, bool second, Rarity rarity);
