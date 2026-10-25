@@ -47,6 +47,7 @@
 #include "game/fx/weakness.h"
 #include "game/fx/pollution.h"
 #include "game/fx/drain.h"
+#include "game/fx/pet_lights.h"
 #include "game/fx/raven.h"
 #include "game/fx/requiem.h"
 #include "game/fx/sleep.h"
@@ -1096,6 +1097,7 @@ public:
     // And the Ancient rune Drain Life's motes, ghosts and strands. fx/drain.h.
     Drain& drain() { return drain_; }
     RavenShow& ravenShow() { return ravenShow_; }
+    PetLights& petLights() { return petLights_; }
     // And the Ancient rune Requiem's Neil, thorns and burning ground. fx/requiem.h.
     Requiem& requiem() { return requiem_; }
     // And the Ancient rune Sleep's circle, rings and a sleeper's puffs. fx/sleep.h.
@@ -1944,6 +1946,8 @@ private:
     bool onDarkHorse(uint32_t id) const;
     // Whether the body `id` wears one, for his stance in town (FigureBody::ravenIdleClip).
     bool bearsRaven(uint32_t id) const;
+    // The Angel's and the Imp's lights off `pets`, its owner's `owner` (fx/pet_lights.h).
+    void petLight(const Pets& pets, const Figure& owner);
     // A What::Ravened: the strike handed to that player's raven.
     void ravened(const sim::Happening& happening);
     // A raven's frame after Pets::raven: its ball let go, its cry (fx/raven.h).
@@ -2026,6 +2030,7 @@ private:
     Pollution pollution_;
     Drain drain_;
     RavenShow ravenShow_;  // the Dark Raven's dash, ball and level flares (fx/raven.h)
+    PetLights petLights_;  // the Guardian Angel's twinkle and glow, the Imp's ember (fx/pet_lights.h)
     Requiem requiem_;
     Sleep sleep_;
     Chains chains_;

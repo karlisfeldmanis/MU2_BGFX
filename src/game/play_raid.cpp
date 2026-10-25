@@ -500,6 +500,12 @@ void Play::petLevelled(const sim::Happening& happening) {
     }
 }
 
+void Play::petLight(const Pets& pets, const Figure& owner) {
+    float at[3];
+    if (pets.angelAt(at)) petLights_.angel(at);
+    if (pets.impLight(owner, at)) petLights_.imp(at);
+}
+
 void Play::ravenFrame(Pets& pets, float seconds) {
     // What its steps asked for (fx/raven.h): a spark off a bone 0..65 as it flies, the dash's
     // streaks and flash at the bird, the charge's light on every other bone from 0 or 1, as MU's
@@ -591,6 +597,7 @@ void Play::otherPets(float seconds) {
         }
         Drawn& rider = drawn_[i];
         otherPets_[i].update(seconds, rider.figure, pet, body.alive());
+        petLight(otherPets_[i], rider.figure);
         otherPets_[i].raven(seconds, rider.figure, raven, tables_.grid.safe(body.column(), body.row()),
                             mount == sim::kDarkHorseNumber);
         ravenFrame(otherPets_[i], seconds);

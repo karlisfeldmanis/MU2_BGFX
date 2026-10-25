@@ -31,7 +31,8 @@
     "leaves": "leaf",
     "boids": {
       "model": "Bird01",
-      "note": "MODEL_BIRD01: the bird's defaults (game/world/boids.h Airs)."
+      "note": "MODEL_BIRD01: the bird's defaults (game/world/boids.h Airs). 4.0: the cook's 0.16 s keys over MU's key a frame (PlaySpeed 1, GOBoid.cpp:1390).",
+      "flap": 4.0
     }
   },
   "npcs": [

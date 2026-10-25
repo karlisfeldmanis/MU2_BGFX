@@ -88,6 +88,12 @@ public:
     void gather(gfx::Renderer& renderer, const Figure& hero, std::vector<float>& scratch,
                 std::vector<gfx::Drawable>& out, std::vector<gfx::Drawable>* casters);
 
+    // For fx/pet_lights: where the Angel flies, false while none does; and the Imp's ember, at
+    // (20, 0, 15) in his left clavicle's frame (ZzzCharacter.cpp:15446-15462), false while none
+    // rides.
+    bool angelAt(float out[3]) const;
+    bool impLight(const Figure& hero, float out[3]) const;
+
     // **The Dark Raven** (game/pets_raven.cpp; docs/plans/dark-lord-pets/client.md section 1),
     // MuMain's CSPetSystem: `level` its level, 0 for none worn; `safe` his tile, where it perches on
     // his left hand; `horse` the Dark Horse worn, which lifts its flight to 350. After `update`.

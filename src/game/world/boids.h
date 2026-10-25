@@ -87,8 +87,9 @@ struct Airs {
     bool calls = true;
     // A factor on the wing beat's clip clock. MuMain plays every boid at PlaySpeed 1, a key a
     // frame (GOBoid.cpp:1390), but the cook spaces the butterfly's keys 0.25 s apart, a beat of
-    // 0.75 s; the user saw it flap too slowly in Noria (2026-09-29). The bird keeps 1: its keys
-    // are 0.16 s apart, also slower than MU's 0.04, and nobody has asked for it.
+    // 0.75 s; the user saw it flap too slowly in Noria (2026-09-29). Lorencia's bird takes 4 (its
+    // keys 0.16 s apart over MU's 0.04) and the crow 6.25, in their world.json (2026-10-25: the
+    // audit against MU, docs/plans/dark-lord-pets/README.md batch 5).
     float flap = 1.0f;
     // The two calls' sound events, rolled independently; an empty one is never rolled for. The
     // bird's two, or the Dungeon bat's one (SOUND_BAT01).

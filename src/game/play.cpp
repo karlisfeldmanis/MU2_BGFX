@@ -2737,6 +2737,7 @@ void Play::update(double seconds) {
     bolt_.update(float(seconds), standing, middle);
     drain_.update(float(seconds), middle);
     ravenShow_.update(float(seconds));
+    petLights_.update(float(seconds));
     requiem_.update(float(seconds));
     // Sleep's rings follow their sleepers' feet (fx/sleep.h).
     sleep_.update(float(seconds), [&](uint32_t id, float* out) {
@@ -3712,6 +3713,7 @@ void Play::update(double seconds) {
         if (Drawn* hero = drawnOf(realm_.hero().id)) {
             const int pet = petNumber(realm_.satchel()[sim::kPet]);
             pets_.update(float(seconds), hero->figure, pet, realm_.hero().alive());
+            petLight(pets_, hero->figure);
             // And his Dark Raven, off his left hand (game/pets_raven.cpp).
             pets_.raven(float(seconds), hero->figure, ravenLevel(realm_.satchel()),
                         tables_.grid.safe(realm_.hero().column(), realm_.hero().row()),

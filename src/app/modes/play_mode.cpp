@@ -539,6 +539,8 @@ bool PlayMode::open(Context& ctx) {
                                              world_.played().showing().table());
                 world_.played().ravenShow().open(assets, ctx.textures,
                                                  world_.played().showing().table());
+                world_.played().petLights().open(assets, ctx.textures,
+                                                 world_.played().showing().table());
                 world_.played().requiem().open(assets, ctx.textures,
                                                world_.played().showing().table(),
                                                &world_.ground());
@@ -2053,6 +2055,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().pollution().gather(ctx.renderer.effects());
         world_.played().drain().gather(ctx.renderer.effects());
         world_.played().ravenShow().gather(ctx.renderer.effects());
+        world_.played().petLights().gather(ctx.renderer.effects());
         world_.played().requiem().gather(ctx.renderer.effects());
         world_.played().sleep().gather(ctx.renderer.effects());
         world_.played().chains().gather(ctx.renderer.effects(), eye.position);

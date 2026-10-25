@@ -135,7 +135,8 @@
       "call_every": 128.0,
       "call_rolls": 1,
       "calls_over_safe": true,
-      "note": "Blood Castle's crows (MODEL_CROW, GOBoid.cpp:1342-1345; SOUND_CROW a frame in 128, :1495-1501) over the Relics' void and its clouds. Ours: MU flies none here (the user, 2026-10-23: \"also maybe same birds which we had on BC\")."
+      "note": "Blood Castle's crows (MODEL_CROW, GOBoid.cpp:1342-1345; SOUND_CROW a frame in 128, :1495-1501) over the Relics' void and its clouds; 6.25 their wing beat, the cook's 0.25 s keys over MU's key a frame. Ours: MU flies none here (the user, 2026-10-23: \"also maybe same birds which we had on BC\").",
+      "flap": 6.25
     },
     "crystal_chrome": {
       "model": "Object77",

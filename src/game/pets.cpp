@@ -361,4 +361,16 @@ void Pets::gather(gfx::Renderer& renderer, const Figure& hero, std::vector<float
     drawRaven(renderer, scratch, out, casters);
 }
 
+bool Pets::angelAt(float out[3]) const {
+    if (shown_ != 0 || !angelUp_) return false;
+    for (int k = 0; k < 3; ++k) out[k] = angel_.position()[k];
+    return true;
+}
+
+bool Pets::impLight(const Figure& hero, float out[3]) const {
+    if (shown_ != 1 || !impBody_ || clavicle_ < 0) return false;
+    const float ember[3] = {kImpOffset[0], 0.0f, 15.0f / kUnits};
+    return hero.pointOn(clavicle_, ember, out);
+}
+
 }  // namespace mu::game

@@ -230,9 +230,10 @@ void Boids::update(float seconds, const float hero[3], bool walking, bool indoor
         // A fish's tail beats with its pace, and a small one's faster (ours, Flight::swim);
         // MU plays every boid at one rate.
         float flap = airs_.flap;
-        // A dragon plays its clip at its own Velocity, keys a frame (GOBoid.cpp:627), over the
-        // cook's 0.25 s a key: 6.25 times.
-        if (flight_.isDragon()) flap = 6.25f * bird.cruise;
+        // A dragon plays its clip at PlaySpeed 0.5, half a key a frame (RenderBoids, GOBoid.cpp:
+        // 1390-1394), over the cook's 0.25 s a key: 3.125 times. (GOBoid.cpp:627, its Velocity a
+        // frame, is MoveMount's, a mount's.)
+        if (flight_.isDragon()) flap = 3.125f;
         if (flight_.isFish() && bird.cruise > 0.0f) {
             flap *= std::clamp(0.6f + 0.55f * bird.speed / bird.cruise, 0.6f, 2.4f) *
                     (0.65f / std::max(bird.size, 0.2f)) * 0.8f;

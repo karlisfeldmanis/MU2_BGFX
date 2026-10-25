@@ -737,6 +737,7 @@ add_library(mu_game STATIC
   src/game/fx/pollution.cpp
   src/game/fx/drain.cpp
   src/game/fx/raven.cpp
+  src/game/fx/pet_lights.cpp
   src/game/fx/requiem.cpp
   src/game/fx/sleep.cpp
   src/game/fx/chains.cpp
