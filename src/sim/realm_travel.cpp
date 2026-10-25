@@ -167,6 +167,8 @@ void Realm::settleFound(uint32_t saved) {
     if (me().quests[kRoadOfKantur].completions > 0) me().found |= travelRowsOf(int32_t(kTarkanMap));
     // And Aida once he has met the Seed Master (The Sealed Wood).
     if (me().quests[kSealedWood].completions > 0) me().found |= travelRowsOf(33);
+    // And Kanturu once he has met Elpis (Kantur's Gate) -- nothing until its row is in the list.
+    if (me().quests[kKantursGate].completions > 0) me().found |= travelRowsOf(37);
     // And Icarus once The Sky Door is taken (Realm::acceptQuest opens it then).
     if (me().quests[kSkyDoor].state != QuestState::Untaken || me().quests[kSkyDoor].completions > 0)
         me().found |= travelRowsOf(int32_t(kIcarusMap));

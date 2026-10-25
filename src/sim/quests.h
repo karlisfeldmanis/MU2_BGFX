@@ -26,7 +26,7 @@
 namespace mu::sim {
 
 // How many quests the table holds. A save carries one progress a quest by this index.
-inline constexpr int kQuests = 28;
+inline constexpr int kQuests = 30;
 inline constexpr int kQuestSteps = 9;
 inline constexpr int kQuestChoices = 7;
 inline constexpr int kQuestPaid = 24;
@@ -262,6 +262,14 @@ inline constexpr int kSealedWood = 25;
 inline constexpr int32_t kSeedMasterNumber = 702;
 // The Seed Master's own: Aida's 2005 wood cleared, Hell Maine last.
 inline constexpr int kSeedMastersClearing = 26;
+// Kanturu's (docs/game/kanturu-quest.md, 2026-10-25): the Keeper's third, 'Kantur's Gate', the hook
+// handed in to Elpis in the Ruins camp, then her clear of the Ruins. The table's last, so no saved
+// quest moves.
+inline constexpr int kKantursGate = 28;
+inline constexpr int kRuinsOfKantur = 29;
+// Elpis, MU's own NPC 368, the Tower of Refinement's keeper, stood in the Ruins camp
+// (content/world/kanturu/world.json npcs): every Kanturu quest is hers (the user, 2026-10-25).
+inline constexpr int32_t kElpisNumber = 368;
 // Who gives quest `index`: its row's giver, or Peia for kDemoQuests when the realm's config has
 // the demo on (RealmConfig::questDemo, --quest-demo). The table itself never changes.
 int32_t questGiver(int index, bool demo);

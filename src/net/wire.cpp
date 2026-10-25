@@ -240,9 +240,11 @@ sim::Kept takeKept(In& in, int layout = kKeptLayout) {
     r.might = in.i32();
     r.mightTicksLeft = in.i64();
     for (sim::Held& h : r.slots) h = takeHeld(in);
-    // Layouts 3 and 4 carry 24 quests, 5 to 7 carry 25, 8 to 11 carry 27; the rest stand untaken.
-    const int quests = layout >= 12 ? sim::kQuests
-                                    : std::min(layout >= 8 ? 27 : layout >= 5 ? 25 : 24, sim::kQuests);
+    // Layouts 3 and 4 carry 24 quests, 5 to 7 carry 25, 8 to 11 carry 27, 12 to 17 carry 28; the
+    // rest stand untaken.
+    const int quests = layout >= 18 ? sim::kQuests
+                                    : std::min(layout >= 12 ? 28 : layout >= 8 ? 27 : layout >= 5 ? 25 : 24,
+                                               sim::kQuests);
     for (int i = 0; i < quests; ++i) {
         sim::QuestProgress& q = r.quests[size_t(i)];
         q.state = sim::QuestState(in.u8());
@@ -288,7 +290,7 @@ sim::Kept takeKept(In& in, int layout = kKeptLayout) {
     if (layout >= 13) r.rebirths = in.i32();
     // Layout 14 each quest's life (QuestProgress::life); before it, every one the first.
     if (layout >= 14) {
-        for (sim::QuestProgress& q : r.quests) q.life = in.u8();
+        for (int i = 0; i < quests; ++i) r.quests[size_t(i)].life = in.u8();
     }
     return k;
 }

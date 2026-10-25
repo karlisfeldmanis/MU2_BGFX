@@ -180,7 +180,9 @@ namespace mu::net {
 // 52: Swell Life, the knight's 43rd skill, off the Orb of Greater Fortitude (sim::kSkills 43,
 //     kKeptLayout 17, 2026-10-25): a cool more in a character's bytes and a rule a 51 client
 //     does not know.
-constexpr uint32_t kVersion = 52;
+// 53: Kanturu's two quests, Kantur's Gate and The Ruins of Kantur (sim::kQuests 30, kKeptLayout 18,
+//     2026-10-25): two more quests in a character's bytes and rules a 52 client does not know.
+constexpr uint32_t kVersion = 53;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box,
 // by its name, so the game talks to mu-classic.com as the launcher does, not to a bare address.
 constexpr const char* kDefaultHost = "mu-classic.com";
@@ -197,8 +199,9 @@ constexpr const char* kDefaultHost = "mu-classic.com";
 // hand-in (QuestProgress::life, 2026-10-22), where 3-13 carry none and read as the first life; 15 the vault eighteen across, 270 cells
 // (2026-10-24), where 3-14 carry MU's 120 at eight across and read each into its own column and
 // row (sim::widenedCell); 16 a 41st and a 42nd skill's cools, Fire Slash and Power Slash
-// (2026-10-24), where 9-15 carry 40; 17 a 43rd, Swell Life's (2026-10-25), where 16 carries 42.
-constexpr int kKeptLayout = 17;
+// (2026-10-24), where 9-15 carry 40; 17 a 43rd, Swell Life's (2026-10-25), where 16 carries 42;
+// 18 30 quests, Kanturu's two (2026-10-25), where 12-17 carry 28.
+constexpr int kKeptLayout = 18;
 // MU's GameServer listened on 55901; ours is its own.
 constexpr int kDefaultPort = 44406;
 // The longest frame a client accepts: a Welcome with its snapshot, about half a MB for a town of

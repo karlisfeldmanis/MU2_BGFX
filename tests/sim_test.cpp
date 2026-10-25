@@ -6289,6 +6289,41 @@ void testTalentCommands(const content::Tables& tables) {
         sim::Kept back;
         check(net::keptFrom(bytes, back), "the kept bytes read");
         check(back.hero.talents == saved.talents, "with his talents");
+        // A layout-17 row has no 29th or 30th quest, Kanturu's (kKeptLayout 18, 2026-10-25): their
+        // two records end where `found` begins, found by the first byte a flip of it moves, and
+        // their two lives are the row's last two bytes. Every older layout below is cut from a
+        // layout 17 (`seventeen`), so every offset is a layout 17's.
+        sim::Kept flipped = kept;
+        flipped.hero.found ^= 1u;
+        std::vector<uint8_t> flippedBytes;
+        net::putKept(flippedBytes, flipped);
+        size_t foundAt = 0;
+        while (foundAt < bytes.size() && bytes[foundAt] == flippedBytes[foundAt]) ++foundAt;
+        constexpr size_t kKanturuQuestBytes = 2 * (1 + 4 * sim::kQuestSteps + 8 + 4);
+        const auto seventeen = [&](std::vector<uint8_t> whole) {
+            whole.erase(whole.end() - 2, whole.end());
+            whole.erase(whole.begin() + std::ptrdiff_t(foundAt - kKanturuQuestBytes),
+                        whole.begin() + std::ptrdiff_t(foundAt));
+            return whole;
+        };
+        {
+            sim::Kept marked = kept;
+            marked.hero.quests[sim::kKantursGate].state = sim::QuestState::Active;
+            marked.hero.quests[sim::kRuinsOfKantur].completions = 3;
+            std::vector<uint8_t> markedBytes;
+            net::putKept(markedBytes, marked);
+            sim::Kept read;
+            check(net::keptFrom(markedBytes, read) && read.hero.quests[sim::kKantursGate].state == sim::QuestState::Active &&
+                      read.hero.quests[sim::kRuinsOfKantur].completions == 3,
+                  "Kanturu's two quests are kept");
+            check(net::keptFrom(seventeen(markedBytes), read, 17) &&
+                      read.hero.quests[sim::kKantursGate].state == sim::QuestState::Untaken &&
+                      read.hero.quests[sim::kRuinsOfKantur].completions == 0 && read.hero.talents == saved.talents &&
+                      read.hero.found == kept.hero.found,
+                  "a layout-17 row reads, Kanturu's quests untaken");
+            check(!net::keptFrom(seventeen(bytes), read, 18), "and is not a layout 18");
+        }
+        bytes = seventeen(bytes);
         // A layout-15 row has no 41st or 42nd cool, Fire Slash's and Power Slash's (kKeptLayout 16,
         // 2026-10-24), nor a 43rd, Swell Life's (17, 2026-10-25): found by the first byte the 41st
         // moves, twenty-four bytes. A layout 16 lacks the last eight. The older layouts below are
@@ -6300,6 +6335,7 @@ void testTalentCommands(const content::Tables& tables) {
         cooled.hero.coolsLeft[sim::kSkills - 1] = 35;
         std::vector<uint8_t> cooledBytes;
         net::putKept(cooledBytes, cooled);
+        cooledBytes = seventeen(cooledBytes);
         size_t coolAt = 0;
         while (coolAt < bytes.size() && bytes[coolAt] == cooledBytes[coolAt]) ++coolAt;  // its low byte
         const auto fifteen = [&](std::vector<uint8_t> whole) {
@@ -6312,7 +6348,7 @@ void testTalentCommands(const content::Tables& tables) {
         };
         {
             sim::Kept read;
-            check(net::keptFrom(cooledBytes, read) && read.hero.coolsLeft[sim::kSkills - 3] == 33 &&
+            check(net::keptFrom(cooledBytes, read, 17) && read.hero.coolsLeft[sim::kSkills - 3] == 33 &&
                       read.hero.coolsLeft[sim::kSkills - 2] == 34 && read.hero.coolsLeft[sim::kSkills - 1] == 35,
                   "Fire Slash's, Power Slash's and Swell Life's cools are kept");
             check(net::keptFrom(sixteen(cooledBytes), read, 16) && read.hero.coolsLeft[sim::kSkills - 3] == 33 &&
@@ -6332,6 +6368,7 @@ void testTalentCommands(const content::Tables& tables) {
         marked.hero.quests[sim::kKantursCaptain].state = sim::QuestState::Active;
         std::vector<uint8_t> markedBytes;
         net::putKept(markedBytes, marked);
+        markedBytes = seventeen(markedBytes);
         size_t at = 0;
         while (at < bytes.size() && bytes[at] == markedBytes[at]) ++at;
         constexpr size_t kQuestBytes = 1 + 4 * sim::kQuestSteps + 8 + 4;
@@ -6341,6 +6378,7 @@ void testTalentCommands(const content::Tables& tables) {
         const auto firstMoved = [&](const sim::Kept& other) {
             std::vector<uint8_t> them;
             net::putKept(them, other);
+            them = seventeen(them);
             size_t i = 0;
             while (i < bytes.size() && bytes[i] == them[i]) ++i;
             return i;
@@ -6365,11 +6403,13 @@ void testTalentCommands(const content::Tables& tables) {
         placed.vault.put(9, sim::Held{1, 0, 1});  // the second row's second cell, eight across
         std::vector<uint8_t> placedBytes;
         net::putKept(placedBytes, placed);
+        placedBytes = seventeen(placedBytes);
         check(net::keptFrom(fifteen(narrowed(placedBytes)), narrow, 14) && narrow.vault[9].empty() &&
                   narrow.vault[sim::widenedCell(9)].item == 1 && sim::widenedCell(9) == sim::kVaultColumns + 1,
               "and what it kept stands in its own column and row");
-        // A layout-13 row has no quests' lives (QuestProgress::life, layout 14): a byte a quest.
-        std::vector<uint8_t> thirteen(fourteen.begin(), fourteen.end() - sim::kQuests);
+        // A layout-13 row has no quests' lives (QuestProgress::life, layout 14): a byte a quest,
+        // 28 of them from layout 14 to 17.
+        std::vector<uint8_t> thirteen(fourteen.begin(), fourteen.end() - 28);
         sim::Kept unlived;
         check(net::keptFrom(thirteen, unlived, 13) && unlived.hero.quests[0].life == 0 &&
                   unlived.hero.talents == saved.talents,
@@ -14766,6 +14806,146 @@ void testSealedWood() {
     checkEqual(wellsprings(hall), 1, "a second clear pays no second rune");
 }
 
+// Kanturu's two (docs/game/kanturu-quest.md, 2026-10-25): the Keeper's hook past Kantur's Legion
+// at the arch's 320, handed in to Elpis in the Ruins camp, then her clear of the eight Ruins
+// breeds, whose first clear pays the class's 380 armour and helm (the Gladiator's armour and pants).
+void testKantursGate() {
+    std::printf("kantur's gate\n");
+    const auto load = [](const char* world, content::Tables& out) {
+        std::string error;
+        return content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/" + world + "/" + world +
+                                       ".mur",
+                                   out, error);
+    };
+    content::Tables tarkan, ruins;
+    check(load("tarkan", tarkan) && load("kanturu", ruins), "Tarkan's and the Ruins' tables load");
+    const auto folkOf = [](const content::Tables& tables, int32_t number) {
+        for (size_t i = 0; i < tables.folk.size(); ++i) {
+            if (tables.folk[i].number == number) return int(i);
+        }
+        return -1;
+    };
+    const int keeper = folkOf(tarkan, sim::kKeeperNumber), elpis = folkOf(ruins, sim::kElpisNumber);
+    check(keeper >= 0 && elpis >= 0, "the Keeper stands in Tarkan and Elpis in the Ruins");
+    if (keeper < 0 || elpis < 0) return;
+    const sim::QuestRow& gate = sim::questAt(sim::kKantursGate);
+    check(gate.giver == sim::kKeeperNumber && sim::questReceiver(gate) == sim::kElpisNumber,
+          "the Keeper gives the gate and Elpis takes it back");
+    check(sim::questOf(sim::kElpisNumber) == sim::kRuinsOfKantur, "Elpis gives her own");
+    checkEqual(sim::questFolkMap(sim::kElpisNumber), 37, "and she stands in the Ruins");
+    const auto talkTo = [](sim::Realm& realm, int folk) {
+        sim::Request talk;
+        talk.kind = sim::Request::Kind::Talk;
+        talk.target = uint32_t(folk);
+        realm.ask(talk);
+        bool offered = false;
+        for (int tick = 0; tick < 400 && !offered; ++tick) {
+            realm.step();
+            for (const sim::Happening& one : realm.happenings()) offered |= one.what == sim::What::Offered;
+        }
+        return offered;
+    };
+    const content::Townsperson& k = tarkan.folk[size_t(keeper)];
+    const auto legion = [](sim::HeroRecord record) {
+        record.quests[sim::kKantursLegion].completions = 1;
+        record.quests[sim::kKantursLegion].state = sim::QuestState::Resting;
+        record.quests[sim::kKantursLegion].availableAt = int64_t(1) << 40;
+        return record;
+    };
+    sim::Realm fresh;
+    check(fresh.raise(&tarkan, 11, k.x - 2, k.y, sim::Kin::DarkKnight, 320), "a knight of 320 by the Keeper");
+    check(fresh.questLocked(sim::kKantursGate), "the gate waits on Kantur's Legion");
+    sim::Realm low;
+    check(low.raise(&tarkan, 11, k.x - 2, k.y, sim::Kin::DarkKnight, 319), "and one of 319");
+    low.restore(legion(low.record()));
+    check(low.questUnderLevel(sim::kKantursGate), "below 320 it waits on the arch's level");
+    sim::Realm hall;
+    check(hall.raise(&tarkan, 11, k.x - 2, k.y, sim::Kin::DarkKnight, 320), "at 320");
+    hall.restore(legion(hall.record()));
+    check(hall.questOffered(sim::kKantursGate), "the legion broken, the Keeper offers the gate");
+    check(talkTo(hall, keeper), "his window opens");
+    check(hall.acceptQuest(sim::kKantursGate), "and it is taken");
+
+    const content::Townsperson& e = ruins.folk[size_t(elpis)];
+    sim::Realm camp;
+    check(camp.raise(&ruins, 11, e.x - 2, e.y, sim::Kin::DarkKnight, 320), "the knight in the Ruins camp");
+    camp.restore(hall.record());
+    check(talkTo(camp, elpis), "found, Elpis's window opens");
+    checkEqual(camp.questHere(sim::kElpisNumber), sim::kKantursGate, "the gate hers to take back");
+    const int64_t zen = camp.money();
+    check(camp.completeQuest(sim::kKantursGate, -1), "handed in to Elpis");
+    check(camp.money() == zen + gate.zen, "and paid");
+    camp.closeQuest();
+    check(camp.questOffered(sim::kRuinsOfKantur), "then she offers the Ruins");
+
+    const sim::QuestRow& clear = sim::questAt(sim::kRuinsOfKantur);
+    int breeds = 0, kills = 0;
+    for (int s = 0; s < clear.stepCount; ++s) {
+        if (clear.steps[s].kind != sim::QuestStepKind::Clear) continue;
+        ++breeds;
+        kills += camp.questGoal(sim::kRuinsOfKantur, s);
+        bool here = false;
+        for (const content::MonsterNest& nest : ruins.nests) {
+            here = here || (nest.kind < ruins.kinds.size() &&
+                            ruins.kinds[nest.kind].number == clear.steps[s].target);
+        }
+        check(here, "every breed it asks spawns in the Ruins");
+    }
+    checkEqual(breeds, 8, "all eight Ruins breeds");
+    checkEqual(kills, 200, "200 kills, camp to door");
+    for (int i = 0; i < clear.paidCount; ++i) {
+        check(ruins.itemNamed(clear.paid[i].item) >= 0, "everything it pays is an item here");
+    }
+
+    const auto finish = [&](sim::Realm& realm) {
+        sim::HeroRecord done = realm.record();
+        for (int s = 0; s < clear.stepCount; ++s) {
+            done.quests[sim::kRuinsOfKantur].counts[s] = uint16_t(clear.steps[s].count);
+        }
+        done.quests[sim::kRuinsOfKantur].state = sim::QuestState::Ready;
+        realm.restore(done);
+    };
+    const auto holds = [&](sim::Realm& realm, const char* name) {
+        const int32_t item = ruins.itemNamed(name);
+        int count = 0;
+        for (int slot = 0; slot < sim::kSlots; ++slot) {
+            const sim::Held& one = realm.satchel()[slot];
+            count += !one.empty() && one.item == item;
+        }
+        return count;
+    };
+    check(talkTo(camp, elpis) && camp.acceptQuest(sim::kRuinsOfKantur), "the Ruins taken");
+    finish(camp);
+    check(camp.completeQuest(sim::kRuinsOfKantur, -1), "cleared and handed in");
+    checkEqual(holds(camp, "ArmorMale30") + holds(camp, "HelmMale30"), 2,
+               "the first clear: the knight's Dragon Knight armour and helm");
+    checkEqual(holds(camp, "ArmorMale31") + holds(camp, "ArmorMale33"), 0, "and no other class's");
+    camp.closeQuest();
+    sim::HeroRecord again = camp.record();
+    again.quests[sim::kRuinsOfKantur].state = sim::QuestState::Untaken;
+    again.quests[sim::kRuinsOfKantur].availableAt = 0;
+    camp.restore(again);
+    check(talkTo(camp, elpis) && camp.acceptQuest(sim::kRuinsOfKantur), "taken again");
+    finish(camp);
+    check(camp.completeQuest(sim::kRuinsOfKantur, -1), "and handed in again");
+    checkEqual(holds(camp, "ArmorMale30"), 1, "a second clear pays no second armour");
+
+    // The Gladiator: his Volcano armour and pants, never the knight's Dragon Knight.
+    sim::Realm mg;
+    check(mg.raise(&ruins, 11, e.x - 2, e.y, sim::Kin::MagicGladiator, 320), "a Gladiator in the camp");
+    sim::HeroRecord ready = mg.record();
+    ready.quests[sim::kKantursLegion].completions = 1;
+    ready.quests[sim::kKantursGate].completions = 1;
+    ready.quests[sim::kKantursGate].state = sim::QuestState::Resting;
+    ready.quests[sim::kKantursGate].availableAt = int64_t(1) << 40;
+    mg.restore(ready);
+    check(talkTo(mg, elpis) && mg.acceptQuest(sim::kRuinsOfKantur), "the Gladiator takes the Ruins");
+    finish(mg);
+    check(mg.completeQuest(sim::kRuinsOfKantur, -1), "and hands them in");
+    checkEqual(holds(mg, "ArmorMale33") + holds(mg, "PantMale33"), 2, "his Volcano armour and pants");
+    checkEqual(holds(mg, "ArmorMale30") + holds(mg, "HelmMale30"), 0, "and none of the knight's");
+}
+
 void testRoadOfKantur() {
     std::printf("the road of kantur\n");
     const auto load = [](const char* world, content::Tables& out) {
@@ -16877,6 +17057,7 @@ int main() {
     testDrownedSong();
     testRoadOfKantur();
     testSealedWood();
+    testKantursGate();
 
     std::printf("%d checks, %d failed\n", g_checks, g_failures);
     return g_failures ? 1 : 0;
