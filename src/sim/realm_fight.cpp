@@ -177,6 +177,13 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
         }
         return;
     }
+    // Landed: a Sleep's sleeper wakes, whoever struck it with whatever (sim/items.h kSleep...;
+    // WebZen's ObjAttack.cpp:2570-2575). A miss above does not wake it, nor a poison, burn or
+    // bleed pulse, which never come through here.
+    if (target.sleepUntil > tick_) {
+        target.sleepUntil = 0;
+        core::logf("sleep: tick %lld, #%u woken by #%u", (long long)tick_, target.id, attacker.id);
+    }
     // A Pyroblaster's Fire Ball strikes harder, its burst's too (sim::kPyroblastForce).
     if (row != nullptr && row->number == skill::kFireBall && attacker.player &&
         pyroblasts(attacker) > 0) {
@@ -867,6 +874,58 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
         core::logf("drain life rune: tick %lld, on #%u, +%d life", (long long)tick_, target->id,
                    hero.health - was);
         if (hero.health > was) say(What::Leeched, hero, hero.health - was);
+        return;
+    }
+    // His Sleep (sim/items.h kSleep...): up to kSleepMost monsters he sees within kStormcallReach,
+    // never the one he struck -- his next blow would wake it -- those whose quarry is him first,
+    // then the nearest, put to sleep for MU's seconds, the longer kept. Each said as Loosed on the
+    // sleeper, `b` its place in the roll, so the drawing lays its circle once and its rings on each.
+    if (power.power == Power::Sleep) {
+        if (!runeDice_.nextBool(kSleepChance)) return;
+        const int energy = hero.totalPoints().energy;
+        struct Pick {
+            Body* body;
+            bool his;
+            float d;
+        };
+        Pick picks[kSleepMost];
+        int found = 0;
+        for (Body& b : bodies_) {
+            if (!b.monster() || !b.alive() || b.id == struck.id || sleepProof(b)) continue;
+            const float dx = b.x - hero.x, dy = b.y - hero.y, d = dx * dx + dy * dy;
+            if (d > kStormcallReach * kStormcallReach || !seen(hero, b)) continue;
+            if (sleepSeconds(energy, b.level) < 1) continue;
+            const Pick one{&b, b.quarry == hero.id, d};
+            // Kept in order, his first and then the nearest; ties to body order, so the log is fixed.
+            const auto before = [](const Pick& p, const Pick& q) {
+                return p.his != q.his ? p.his : p.d < q.d;
+            };
+            int at = found;
+            while (at > 0 && before(one, picks[at - 1])) --at;
+            if (at >= kSleepMost) continue;
+            for (int i = std::min(found, kSleepMost - 1); i > at; --i) picks[i] = picks[i - 1];
+            picks[at] = one;
+            found = std::min(found + 1, kSleepMost);
+        }
+        // The Golden Dragon near him shrugs, and says so, as it shrugs every hold.
+        for (const Body& b : bodies_) {
+            if (isBoss(b) && b.alive()) {
+                const float dx = b.x - hero.x, dy = b.y - hero.y;
+                if (dx * dx + dy * dy <= kStormcallReach * kStormcallReach) shrugs(b);
+            }
+        }
+        for (int i = 0; i < found; ++i) {
+            Body& b = *picks[i].body;
+            const int64_t until = tick_ + int64_t(sleepSeconds(energy, b.level)) * kTalentTicksPerSecond;
+            b.sleepUntil = std::max(b.sleepUntil, until);
+            halt(b);
+            say(What::Loosed, hero, skill::kSleep, i, found, b.id);
+            happenings_.back().rune = true;
+            happenings_.back().x = b.x;
+            happenings_.back().y = b.y;
+            core::logf("sleep rune: tick %lld, #%u asleep till %lld (%d of %d, not #%u)",
+                       (long long)tick_, b.id, (long long)b.sleepUntil, i + 1, found, struck.id);
+        }
         return;
     }
     // His Requiem (sim/items.h kRequiem...): Neil called up against what he struck -- on a cast
@@ -2343,6 +2402,7 @@ void Realm::kill(Body& dead, Body& killer) {
         dead.bleedRequiem = false;
         dead.chilledUntil = 0;
         dead.frozenUntil = 0;
+        dead.sleepUntil = 0;
         // And his Weakness field, which MU takes up as he dies.
         dead.curseUntil = dead.curseNext = 0;
         dead.boonSkill = skill::kNone;
@@ -2687,6 +2747,7 @@ void Realm::raiseBeast(Body& beast) {
     std::fill(std::begin(beast.hurtAt), std::end(beast.hurtAt), int64_t(0));
     beast.chilledUntil = 0;
     beast.frozenUntil = 0;
+    beast.sleepUntil = 0;
     beast.poisonUntil = 0;
     beast.bleed = 0;
     beast.bleedUntil = 0;

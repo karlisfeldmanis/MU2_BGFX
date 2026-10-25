@@ -47,6 +47,7 @@
 #include "game/fx/pollution.h"
 #include "game/fx/drain.h"
 #include "game/fx/requiem.h"
+#include "game/fx/sleep.h"
 #include "game/fx/chains.h"
 #include "game/fx/ice.h"
 #include "game/fx/stains.h"
@@ -1080,6 +1081,8 @@ public:
     Drain& drain() { return drain_; }
     // And the Ancient rune Requiem's Neil, thorns and burning ground. fx/requiem.h.
     Requiem& requiem() { return requiem_; }
+    // And the Ancient rune Sleep's circle, rings and a sleeper's puffs. fx/sleep.h.
+    Sleep& sleep() { return sleep_; }
     // And a Whirlwind rune's pull, the chains he hauls them in by. fx/chains.h.
     Chains& chains() { return chains_; }
     // What a death leaves by the head: MU's CreateBlood. fx/stains.h.
@@ -1439,6 +1442,7 @@ private:
         float sickOwed = 0.0f, bleedOwed = 0.0f;  // poison's smoke, a bleed's drips: owed
         float weakOwed = 0.0f;  // a Weakness curse's red, frames owed (fx/weakness.h)
         float requiemOwed = 0.0f;  // a Requiem bleed's mist, frames owed (fx/requiem.h)
+        float sleepOwed = 0.0f;    // a Sleep rune's puffs, frames owed (fx/sleep.h)
         uint32_t burningDice = 0;
         float snortOwed = 0.0f;
         // An Elite Yeti's breath: the same puff out of Box03, in every action, one in four
@@ -1959,6 +1963,7 @@ private:
     Pollution pollution_;
     Drain drain_;
     Requiem requiem_;
+    Sleep sleep_;
     Chains chains_;
     Stains stains_;
     TrapShow trapShow_;
@@ -2133,6 +2138,7 @@ private:
         int pollution = -1;                    // Rargle, the Ancient rune Pollution's
         int drainLife = -1;                    // SE_Ch_summoner_skill07, the Ancient rune Drain Life's
         int requiem = -1, requiemThorns = -1;  // SE_Ch_summoner_skill06_requiem01/02, Requiem's
+        int sleep = -1;                        // SE_Ch_summoner_skill03_sleep, the Ancient rune Sleep's
         int bloodAttack = -1;                  // eBloodAttack, Fire Slash's cut landing on a body
         int whirlPull = -1;                    // whirl_pull, a Whirlwind rune's pull landing
         // The knight's skills, one wave each -- and Cyclone and Slash share SWORD4, which is

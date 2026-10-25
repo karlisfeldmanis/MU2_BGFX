@@ -1390,6 +1390,21 @@ void Play::update(double seconds) {
                         if (heard_.drainLife >= 0) {
                             emit(heard_.drainLife, caster->crown[0], caster->crown[2], caster->id);
                         }
+                    } else if (happening.a == sim::skill::kSleep) {
+                        // The Ancient rune Sleep: MU's violet circle under him once a roll (`b`
+                        // its first sleeper), with SOUND_SUMMON_SKILL_SLEEP, and the two rings
+                        // on each body it put to sleep, at once (fx/sleep.h).
+                        if (happening.b == 0) {
+                            const float self[3] = {caster->crown[0], feet, caster->crown[2]};
+                            sleep_.cast(self);
+                            if (heard_.sleep >= 0) emit(heard_.sleep, self[0], self[2], caster->id);
+                        }
+                        if (target && target->placed) {
+                            const float at[3] = {target->crown[0],
+                                                 ground_->heightAt(target->crown[0], target->crown[2]),
+                                                 target->crown[2]};
+                            sleep_.rings(happening.whom, at);
+                        }
                     } else if (happening.a == sim::skill::kRequiem) {
                         // The Ancient rune Requiem: MU's casting circle round him in Requiem's
                         // colours, and Neil called up before him against the point the realm
@@ -2549,6 +2564,15 @@ void Play::update(double seconds) {
     bolt_.update(float(seconds), standing, middle);
     drain_.update(float(seconds), middle);
     requiem_.update(float(seconds));
+    // Sleep's rings follow their sleepers' feet (fx/sleep.h).
+    sleep_.update(float(seconds), [&](uint32_t id, float* out) {
+        const Drawn* drawn = drawnOf(id);
+        if (drawn == nullptr || !drawn->placed || !ground_) return false;
+        out[0] = drawn->crown[0];
+        out[1] = ground_->heightAt(drawn->crown[0], drawn->crown[2]);
+        out[2] = drawn->crown[2];
+        return true;
+    });
     // Requiem's thorns out of the ground: SOUND_SUMMON_REQUIEM there (fx/requiem.h).
     {
         float at[3];

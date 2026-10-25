@@ -148,6 +148,8 @@ public:
         bool burn = false, frozen = false;
         // Or Fire Slash's defence cut (sim::Body::defenseCutUntil), MU's eDeBuff_Defense.
         bool cut = false;
+        // Or a Sleep rune's sleep on a monster (sim::Body::sleepUntil), MU's eDeBuff_Sleep (72).
+        bool sleep = false;
         // Or a potion still pouring in: 0 health, 1 mana, -1 none. Its second of three
         // instalments (Realm::pouring), and `amount` what is still to come. Ours, as the Ale's
         // cell is (the user, 2026-10-05: 'when char uses potion add little aura icon while

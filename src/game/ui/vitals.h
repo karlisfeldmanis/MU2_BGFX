@@ -120,7 +120,7 @@ private:
             return art == o.art && share == o.share && stacks == o.stacks;
         }
     };
-    static constexpr int kBanes = 6;  // poison, burning, bleeding, iced, frozen, defence cut
+    static constexpr int kBanes = 7;  // poison, burning, bleeding, iced, frozen, defence cut, asleep
     // Everything the canvas draws, compared whole to decide a rebuild.
     struct Readout {
         uint32_t on = 0;

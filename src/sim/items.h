@@ -840,7 +840,9 @@ enum class Power : uint8_t {
     // Lightning plays its look and sound. The numbers run unbroken (drawRunePower walks them).
     DrainLife = 77,
     // The Summoner's Book of Neil (kRequiem...).
-    Requiem = 78
+    Requiem = 78,
+    // The Summoner's first curse (kSleep...).
+    Sleep = 79
 };
 // **A rune's group** (the user, 2026-10-02: "we need to start group runes which is only for
 // specific classes, for specific weapon slots"): which classes may set it, a bit a class, and
@@ -1340,6 +1342,26 @@ constexpr float kRequiemTiles = 2.0f;
 constexpr int kRequiemMost = 4;
 constexpr int64_t kRequiemHoldTicks = 20;  // WebZen's and S17's 1000 ms
 constexpr float kRequiemBleedShare = 0.2f;
+// **Sleep**, the seventh Ancient and the Summoner's first curse: MU's AT_SKILL_SLEEP (219; S17
+// skill_template 219: no damage, range 6; docs/plans/ancient-runes/sleep.md). A spell he casts, or
+// a swing that lands, has kSleepChance to put to sleep up to kSleepMost monsters -- never the one
+// he struck, which his next blow would wake -- the nearest he sees within kStormcallReach, those
+// whose quarry is him first; none near, nothing. The 10% alone decides (the user, 2026-10-25),
+// where MU rolls `20 + energy/30 + curse/6` % after its hit. How long is MU's monster formula,
+// sleepSeconds -- `5 + energy/100 - level/20` s, WebZen's and OpenMU's -- capped at kSleepMostSeconds
+// (ours: OpenMU caps it at 20), and under one second it does not take; a second Sleep on a sleeper
+// keeps the longer, as WebZen's gObjCheckPowerfulEffect refuses the shorter. Asleep it neither
+// walks, turns, thinks nor swings (Body::sleepUntil), until its time or the first blow that lands
+// on it, anyone's (WebZen's ObjAttack.cpp:2570-2575); a miss or a poison, burn or bleed pulse does
+// not wake it. Monsters only; the Golden Dragon, the Statue of Saint and the Elites never sleep
+// (Realm::sleepProof). A Soul Master's weapon only.
+constexpr double kSleepChance = 0.10;  // a cast in ten; the user may tune it
+constexpr int kSleepMost = 3;          // ours: MU's Sleep holds one (the user, 2026-10-25)
+constexpr int kSleepMostSeconds = 8;   // ours (the user, 2026-10-25)
+inline int sleepSeconds(int energy, int level) {
+    const int seconds = 5 + energy / 100 - level / 20;
+    return seconds < kSleepMostSeconds ? seconds : kSleepMostSeconds;
+}
 // **The Common runes** (Rarity::Common), each a Legendary at a fraction, every one first-class:
 // **Cinder** Ring of Fire's ring and **Gust** Twister's storm, a knight's; **Chill** Frost Arrow's
 // freeze for half as long with half its wound, the elf's; **Faint Echo** Arcane Echo's second

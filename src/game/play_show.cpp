@@ -1718,7 +1718,10 @@ void Play::follow(float seconds) {
         // freeze, but the drawing played on whatever it had -- a swing begun before the arrow
         // landed, an idle rolling round -- and the user saw it "still doing attack". The swing
         // is dropped rather than paused, so it does not finish its blow on the thaw.
-        if (!body->player && body->frozenUntil > realm_.tick()) {
+        // And asleep under a Sleep rune (sim/items.h kSleep...): MU stops its animation
+        // (ZzzCharacter.cpp:2553-2556), held the same way, not iced.
+        if (!body->player &&
+            (body->frozenUntil > realm_.tick() || body->sleepUntil > realm_.tick())) {
             one.swinging = 0.0f;
             one.casting = 0.0f;
             one.shocked = 0.0f;

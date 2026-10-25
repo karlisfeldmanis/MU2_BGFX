@@ -658,6 +658,10 @@ struct Body {
     int64_t chilledUntil = 0;
     // Frozen (a Frost Arrow rune, sim/items.h): neither walks nor swings until this tick.
     int64_t frozenUntil = 0;
+    // Asleep (the Ancient rune Sleep, sim/items.h kSleep...): held as frozen is until this tick, or
+    // until the first blow that lands on it. Not Temper::Asleep (nobody near) nor wakesAt (a
+    // risen beast's standing seconds). 0 for never.
+    int64_t sleepUntil = 0;
     // Poisoned (`SkillRow::poisonTicks`): until this tick, its next pulse, how much a pulse takes,
     // and who poisoned it. 0 for never.
     int64_t poisonUntil = 0, poisonNext = 0;
@@ -915,6 +919,9 @@ public:
     // A recording's (`--unseen`): no monster ever notices the hero, so he runs past their nests
     // and is never in a fight. One that is struck still turns on whoever struck it.
     void unseen(bool on) { unseen_ = on; }
+    // Whether a monster never sleeps (the Ancient rune Sleep, sim/items.h kSleep...): the raid's
+    // Golden Dragon, the Statue of Saint and an Elite, which shrug every hold.
+    bool sleepProof(const Body& one) const { return isBoss(one) || fixed(one) || one.elite; }
     // The demo's (`--wing-demo`): every kill in Icarus leaves the first wings. Never set in play.
     void wingDemo(bool on) { wingDemo_ = on; }
     // The crowd bench's fight (`--bench-fight`): a blow that would fell a monster or a player

@@ -403,10 +403,12 @@ void Vitals::update(float seconds, const Play& play, uint32_t pointed, int folk,
         kinds[3].chill = true;
         kinds[4].frozen = true;
         kinds[5].cut = true;  // Fire Slash's
+        kinds[6].sleep = true;  // a Sleep rune's
         const int64_t until[kBanes] = {beast->poisonUntil, beast->burnUntil,
                                        beast->bleed > 0 ? beast->bleedUntil : 0,
                                        beast->chilledUntil, beast->frozenUntil,
-                                       beast->defenseCut > 0 ? beast->defenseCutUntil : 0};
+                                       beast->defenseCut > 0 ? beast->defenseCutUntil : 0,
+                                       beast->sleepUntil};
         for (int k = 0; k < kBanes; ++k) {
             const int64_t left = alive_ ? until[k] - tick : 0;
             if (left <= 0) {

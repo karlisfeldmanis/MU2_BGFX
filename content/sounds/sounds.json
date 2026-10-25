@@ -3118,6 +3118,13 @@
       ],
       "from": "SOUND_KANTURU_2ND_PERSO_DIE as it dies (GM_Kanturu_2nd.cpp:788-792); w38/perso_death.wav (MapManager.cpp:447)."
     },
+    "spell_sleep": {
+      "files": [
+        "SE_Ch_summoner_skill03_sleep.wav"
+      ],
+      "from": "SOUND_SUMMON_SKILL_SLEEP, which ZzzOpenData loads from Data\\\\Sound\\\\SE_Ch_summoner_skill03_sleep.wav (:4915). ReceiveMagic plays it at the cast of AT_SKILL_SLEEP (219), with the pose (WSclient.cpp:4839).",
+      "note": "The Ancient rune Sleep (sim/items.h kSleep...), played once a roll where the violet circle opens under him (game/fx/sleep)."
+    },
     "dreadfear_move": {
       "files": [
         "dred_idle-01.wav",

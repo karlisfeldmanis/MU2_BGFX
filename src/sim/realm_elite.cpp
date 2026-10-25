@@ -131,6 +131,7 @@ void Realm::shrugControl(Body& elite) {
     elite.chilledUntil = 0;
     elite.chillSlow = 0.0f;
     elite.frozenUntil = 0;
+    elite.sleepUntil = 0;
     // Neither pushed nor pulled: it stays on its tile, and a Whirlwind's slash that would have
     // landed at the end of the pull lands now, if he is near enough to it.
     if (elite.pushTicks > 0) {

@@ -12347,6 +12347,202 @@ void testRequiemRune(const content::Tables& tables, int rune, int staff, int swo
     }
 }
 
+// Sleep, the Summoner's first curse on a Soul Master's staff (sim/items.h kSleep...): about one
+// cast in ten puts up to three monsters near him to sleep -- never the one he struck, never past
+// four tiles -- for MU's seconds, at most eight; asleep they neither step nor swing, a landed blow
+// wakes one and a bleed's pulse does not, and an Elite and the Golden Dragon never sleep.
+void testSleepRune(const content::Tables& tables, int rune, int staff, int sword) {
+    std::printf("sleep rune\n");
+    ancientRow(tables, sim::Power::Sleep, "Sleep", rune, staff, sword);
+    check(sim::sleepSeconds(5000, 1) == sim::kSleepMostSeconds && sim::sleepSeconds(200, 140) == 0,
+          "MU's seconds, capped at eight, none for a strong monster");
+    struct Sleeper {
+        float x = 0.0f, y = 0.0f;
+        int64_t since = 0;
+    };
+    std::map<uint32_t, Sleeper> asleep;  // as seen at the end of the last tick
+    uint32_t aimed = 0, elite = 0;
+    int casts = 0, rolls = 0, laid = 0, most = 0, overCount = 0, struckOne = 0, far = 0,
+        tooLong = 0, wrongTime = 0, stepped = 0, swung = 0, woken = 0, unwoken = 0, eliteSlept = 0;
+    ancientHunt(tables, staff, sim::Power::Sleep, true, [&](const sim::Realm& realm) {
+        const int64_t now = int64_t(realm.tick());
+        const sim::Body& hero = realm.hero();
+        // One monster made an Elite at the start, the nearest but his first target: it shrugs.
+        if (elite == 0) {
+            float best = 1e9f;
+            for (const sim::Body& b : realm.bodies()) {
+                if (!b.monster() || !b.alive() || b.id == aimed) continue;
+                const float dx = b.x - hero.x, dy = b.y - hero.y;
+                if (dx * dx + dy * dy < best) {
+                    best = dx * dx + dy * dy;
+                    elite = b.id;
+                }
+            }
+            if (elite != 0) const_cast<sim::Body*>(realm.find(elite))->elite = true;
+        }
+        std::set<uint32_t> landedOn;
+        // What his blow landing now struck: the first body it fell on this tick. A Lightning
+        // let go here was named some casts back, so his aim now is not it.
+        uint32_t struck = 0;
+        for (const sim::Happening& h : realm.happenings()) {
+            if (h.who == hero.id && (h.what == sim::What::Cast || h.what == sim::What::Swung) &&
+                h.whom != 0) {
+                aimed = h.whom;
+            }
+            if (h.who == hero.id && struck == 0 &&
+                (h.what == sim::What::Hit || h.what == sim::What::Missed) && h.whom != hero.id) {
+                struck = h.whom;
+            }
+            if (h.who == hero.id && h.what == sim::What::Cast && h.a == sim::skill::kLightning) {
+                ++casts;
+            }
+            if (h.what == sim::What::Hit && !h.bled && !h.poisoned && !h.burned) {
+                landedOn.insert(h.whom);
+            }
+            if (h.what != sim::What::Loosed || h.a != sim::skill::kSleep || h.who != hero.id) continue;
+            if (h.b == 0) ++rolls;
+            ++laid;
+            most = std::max(most, h.c);
+            overCount += h.c < 1 || h.c > sim::kSleepMost;
+            struckOne += h.whom == struck;
+            eliteSlept += h.whom == elite;
+            const sim::Body* b = realm.find(h.whom);
+            if (b == nullptr) continue;
+            const float dx = b->x - hero.x, dy = b->y - hero.y;
+            far += dx * dx + dy * dy > sim::kStormcallReach * sim::kStormcallReach + 0.01f;
+            const int64_t want =
+                int64_t(sim::sleepSeconds(hero.totalPoints().energy, b->level)) * 20;
+            tooLong += b->sleepUntil - now > int64_t(sim::kSleepMostSeconds) * 20;
+            wrongTime += b->sleepUntil < now + want;
+        }
+        // A sleeper's blow, unless it was struck awake this tick first.
+        for (const sim::Happening& h : realm.happenings()) {
+            if ((h.what == sim::What::Hit || h.what == sim::What::Missed) && !h.bled &&
+                !h.poisoned && !h.burned && asleep.count(h.who) != 0 && landedOn.count(h.who) == 0) {
+                ++swung;
+            }
+        }
+        // Lightning reaches far past his four tiles, so two awake monsters are kept beside him
+        // (not his aim, nor the Elite), set down there as a pack would come at him.
+        {
+            int beside = 0;
+            for (const sim::Body& b : realm.bodies()) {
+                if (!b.monster() || !b.alive() || b.sleepUntil > now || b.id == aimed ||
+                    b.id == elite) {
+                    continue;
+                }
+                const float dx = b.x - hero.x, dy = b.y - hero.y;
+                beside += dx * dx + dy * dy <= 3.0f * 3.0f;
+            }
+            for (const sim::Body& b : realm.bodies()) {
+                if (beside >= 2) break;
+                if (!b.monster() || !b.alive() || b.sleepUntil > now || b.id == aimed ||
+                    b.id == elite) {
+                    continue;
+                }
+                const float dx = b.x - hero.x, dy = b.y - hero.y;
+                const float d = dx * dx + dy * dy;
+                if (d <= 3.0f * 3.0f || d > 30.0f * 30.0f) continue;
+                auto& m = const_cast<sim::Body&>(b);
+                m.x = float(int(hero.x) + (beside == 0 ? 2 : -2));
+                m.y = float(int(hero.y) + 1);
+                m.walking = false;
+                // And hardy, so his chain does not fell them before the roll.
+                m.maxHealth = m.health = 1000000;
+                ++beside;
+            }
+        }
+        // Who slept through this tick: not a step. Who was struck: awake now.
+        std::map<uint32_t, Sleeper> next;
+        for (const sim::Body& b : realm.bodies()) {
+            if (!b.monster()) continue;
+            eliteSlept += b.id == elite && b.sleepUntil > now;
+            const auto was = asleep.find(b.id);
+            if (was != asleep.end() && landedOn.count(b.id) != 0) {
+                if (b.sleepUntil == 0) ++woken;
+                else ++unwoken;
+            }
+            if (!b.alive() || b.sleepUntil <= now) continue;
+            if (was != asleep.end() && (b.x != was->second.x || b.y != was->second.y)) ++stepped;
+            next[b.id] = Sleeper{b.x, b.y, was != asleep.end() ? was->second.since : now};
+        }
+        asleep.swap(next);
+    });
+    std::printf("  Sleep: %d casts, %d rolls, %d put to sleep (at most %d a roll), %d struck one, "
+                "%d far, %d long, %d short, %d stepped, %d swung, %d woken by a blow, %d not\n",
+                casts, rolls, laid, most, struckOne, far, tooLong, wrongTime, stepped, swung, woken,
+                unwoken);
+    check(rolls > 0 && laid >= rolls, "Sleep puts monsters to sleep");
+    checkEqual(overCount, 0, "never more than three");
+    checkEqual(struckOne, 0, "never the one he struck");
+    checkEqual(far, 0, "never past four tiles");
+    checkEqual(tooLong, 0, "never longer than eight seconds");
+    checkEqual(wrongTime, 0, "for MU's seconds");
+    checkEqual(stepped, 0, "a sleeper takes no step");
+    checkEqual(swung, 0, "nor a swing");
+    check(woken > 0, "a blow wakes a sleeper");
+    checkEqual(unwoken, 0, "every landed blow");
+    checkEqual(eliteSlept, 0, "an Elite never sleeps");
+    // Every cast has two awake beside him to sleep (the pull above).
+    if (casts > 0) {
+        const double rate = double(rolls) / casts;
+        check(rate > 0.05 && rate < 0.16, "about one cast in ten");
+    }
+
+    // A bleed's pulse does not wake it, and its time does.
+    {
+        sim::Realm realm;
+        realm.raise(&tables, 5, 200, 160, sim::Kin::DarkWizard, 150);
+        realm.unseen(true);
+        uint32_t id = 0;
+        for (const sim::Body& b : realm.bodies()) {
+            if (b.monster() && b.alive()) {
+                id = b.id;
+                break;
+            }
+        }
+        check(id != 0, "a monster to sleep");
+        if (id != 0) {
+            auto& b = const_cast<sim::Body&>(*realm.find(id));
+            const int64_t now = int64_t(realm.tick());
+            b.sleepUntil = now + 60;
+            b.bleed = 1;
+            b.bleedDamage = 1;
+            b.bleedUntil = now + 50;
+            b.bleedNext = now + 2;
+            b.bleedBy = realm.hero().id;
+            int pulses = 0;
+            bool slept = true;
+            for (int t = 0; t < 40; ++t) {
+                realm.step();
+                for (const sim::Happening& h : realm.happenings()) {
+                    pulses += h.what == sim::What::Hit && h.bled && h.whom == id;
+                }
+                slept &= b.sleepUntil > int64_t(realm.tick());
+            }
+            check(pulses > 0 && slept, "a bleed's pulse does not wake a sleeper");
+            for (int t = 0; t < 30; ++t) realm.step();
+            check(b.sleepUntil <= int64_t(realm.tick()), "and its time does");
+        }
+    }
+
+    // The Golden Dragon shrugs it.
+    {
+        std::vector<sim::RaiderKit> party;
+        sim::readParty(std::string(MU2_SOURCE_DIR) + "/content/raid/party.json", &party);
+        if (!party.empty()) {
+            sim::Realm raid;
+            raid.setRaid(10, party, true);
+            raid.setRaidLanding(0);
+            raid.raise(&tables, 9, 140, 65, party[0].kin, party[0].level);
+            raid.invade();
+            for (int i = 0; i < 40 * 20 && raid.raidStage() == sim::RaidStage::None; ++i) raid.step();
+            const sim::Body* dragon = raid.invader();
+            check(dragon != nullptr && raid.sleepProof(*dragon), "the Golden Dragon never sleeps");
+        }
+    }
+}
+
 void testAncientRunes(const content::Tables& tables) {
     std::printf("ancient runes\n");
     using sim::Kin;
@@ -12471,6 +12667,7 @@ void testAncientRunes(const content::Tables& tables) {
     testPollutionRune(tables, rune, staff, sword);
     testDrainLifeRune(tables, rune, staff, sword);
     testRequiemRune(tables, rune, staff, sword);
+    testSleepRune(tables, rune, staff, sword);
 }
 
 void testGroupRunes(const content::Tables& tables) {
@@ -15625,6 +15822,11 @@ void testCastleGrid(const content::Tables& lorencia) {
         run.step();
         for (int t = 0; t < 100 && standing(sim::kCastleStatue) < 1; ++t) run.step();
         checkEqual(standing(sim::kCastleStatue), 1, "and the Statue of Saint rises");
+        for (const sim::Body& one : run.bodies()) {
+            if (one.monster() && one.alive() && numberOf(one) == sim::kCastleStatue) {
+                check(run.sleepProof(one), "the Statue of Saint never sleeps (the Sleep rune)");
+            }
+        }
         for (int t = 0; t < 200; ++t) run.step();
         checkEqual(standing(sim::kCastleSorcerer), 0, "the sorcerers stay dead");
         const int32_t staff = castle.itemAt(sim::kDivineStaffGroup, sim::kDivineStaffNumber);
