@@ -266,8 +266,9 @@ def cook_item(kind, area, meshes, extra, texcook, world="lorencia"):
                 # And a chrome pass's slide, by its material's name (export_gltf.chrome_material).
                 glows.update({f"chrome_{n}": chrome
                               for n, chrome in enumerate(one.get("chrome") or [])})
+        # An item's `hidden` islands go by their part's name, as cook.py's wardrobe drops them.
         tris, _verts, _size, bones = cook_mesh(mesh_name, path, out_path, manifest,
-                                               hidden.get(mesh_name),
+                                               "hidden" if area == "wardrobe" else hidden.get(mesh_name),
                                                scroll_per_second=scroll,
                                                scrolls=extra.get("scrolls") if kind == "world"
                                                else glows if area == "wardrobe" else None,

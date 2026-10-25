@@ -1,0 +1,142 @@
+{
+  "item": "GloveMale27",
+  "mu_name": "Adamantine Gloves",
+  "mu_name_from": "OpenMU VersionSeasonSix's CreateGloves (openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:261); the model is Player/GloveMale27.bmd, which MuMain's OpenItems loads for it (MuMain/src/source/Engine/Object/ZzzOpenData.cpp:213).",
+  "profile": "armour",
+  "stats": {
+    "call": "CreateGloves(26, \"Adamantine Gloves\", 57, 18, 6, 56, 0, 77, 21, 0, 0, 0, 0, 1, 0)",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:261",
+    "call_note": "CreateGloves(number, name, dropLevel, defense, attackSpeed, durability, levelRequirement, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel, magicGladiatorClassLevel, darkLordClassLevel, summonerClassLevel), openmu/src/Persistence/Initialization/Items/ArmorInitializerBase.cs:234.",
+    "number": 26,
+    "drop_level": 57,
+    "defense": 18,
+    "attack_speed": 6,
+    "durability": 56,
+    "drops_from_monsters": true,
+    "group": 10,
+    "slot": 5,
+    "width": 2,
+    "height": 2,
+    "requires": {
+      "level": 0,
+      "strength": 77,
+      "agility": 21,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "lord"
+    ]
+  },
+  "sheets": {
+    "gloves_18": "adamantine_gloves_18.png"
+  },
+  "why_this_one": "The Dark Lord's second set, Adamantine (docs/plans/dark-lord-gear.md; OpenMU's rows, drop 57-78, lords only). The user, 2026-10-25: 'we need missing Dark lord items', 'do it'.",
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py under MU's own names with an adamantine_ prefix, MU's _18 names being generic: dark violet-black plate trimmed in gold.",
+  "sheet_materials": {
+    "gloves_18": "painted_steel"
+  },
+  "material_note": "painted_steel with the cast grain for the plate, the shading painted on, as Light Plate.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, shallow for the gloss, as the other sets.",
+  "effects_note": "MuMain has no render arm for MODEL_ADAMANTINE_* (no glow, no chrome pass, no sprite; grep of MODEL_HELM..BOOTS + 26, docs/plans/dark-lord-gear.md). Its refine colour is PartObjectColor 12, (0.47, 0.67, 0.6) (ZzzObject.cpp:6739-6765, 6788-6818; src/game/shine.cpp); its full set the generic aura (fx/set_shine).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 70,
+      "area": 1666.0,
+      "along": [
+        -6.9,
+        9.1
+      ],
+      "mu_uv": [
+        0.002,
+        0.007,
+        0.682,
+        0.987
+      ],
+      "bake_uv": [
+        0.199,
+        0.006,
+        0.982,
+        0.528
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 32,
+      "area": 1150.4,
+      "along": [
+        -7.0,
+        7.9
+      ],
+      "mu_uv": [
+        0.765,
+        0.001,
+        1.002,
+        0.999
+      ],
+      "bake_uv": [
+        0.393,
+        0.006,
+        0.974,
+        0.994
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 70,
+      "area": 1665.9,
+      "along": [
+        -6.9,
+        9.0
+      ],
+      "mu_uv": [
+        0.002,
+        0.007,
+        0.682,
+        0.987
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.982,
+        0.562
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 32,
+      "area": 1150.5,
+      "along": [
+        -7.0,
+        7.9
+      ],
+      "mu_uv": [
+        0.765,
+        0.001,
+        1.002,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.862,
+        0.985
+      ]
+    }
+  ]
+}

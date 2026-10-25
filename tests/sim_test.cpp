@@ -996,10 +996,11 @@ void testItems(const content::Tables& tables) {
     // the three gamble arms (Spear12, Bow25, Staff34). 402 since 2026-10-24: the Orb of Fire
     // Slash (1bd2f5da). 420 since 2026-10-25: the Jewel of Harmony's four, the Gemstone, the
     // jewel and the two Refining Stones (docs/plans/jewel-of-harmony.md step 1). 425 the same
-    // day: the Dark Lord's five scrolls (content/items/misc/Scroll*.json). A count
+    // day: the Dark Lord's five scrolls (content/items/misc/Scroll*.json). 433 the same day:
+    // his Adamantine set and the Cross Shield (docs/plans/dark-lord-gear.md batch 1). A count
     // rather than a list, because what it is guarding is the cook -- a
     // recipe that stops being picked up is a row the shelf silently cannot sell.
-    checkEqual(long(tables.items.size()), 427, "427 item rows cooked");
+    checkEqual(long(tables.items.size()), 433, "433 item rows cooked");
     // And Noria's three shops sell only what is cooked: Elf Lala, Eo the Craftsman and Potion
     // Girl Amy, every offer a row (the user, 2026-09-28: "fill Noria's vendors").
     // And Lumen's, whose Guardian Angel and Imp are ours (the user, 2026-09-30: "put imp and

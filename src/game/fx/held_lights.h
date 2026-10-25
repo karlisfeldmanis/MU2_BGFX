@@ -241,10 +241,11 @@ public:
         LordScepter,
         GreatLordScepter,
         ShiningScepter,
+        CrossShield,
     };
     // The Stinger Bow's 44 bones, each with its light (ZzzCharacter.cpp:7972-7999).
     static constexpr int kMostPoints = 44;
-    static constexpr Item kItems[54] = {Item::SaintCrossbow,   Item::GrandSoulShield,
+    static constexpr Item kItems[55] = {Item::SaintCrossbow,   Item::GrandSoulShield,
                                         Item::DragonSpear,     Item::DragonSoulStaff,
                                         Item::ElementalMace,   Item::GreatReignCrossbow,
                                         Item::ThunderBlade,    Item::LegendaryShield,
@@ -270,7 +271,8 @@ public:
                                         Item::Beuroba,         Item::AirLynBow,
                                         Item::BattleScepter,   Item::MasterScepter,
                                         Item::GreatScepter,    Item::LordScepter,
-                                        Item::GreatLordScepter, Item::ShiningScepter};
+                                        Item::GreatLordScepter, Item::ShiningScepter,
+                                        Item::CrossShield};
 
     bool open(const std::string& assetDir, content::Textures& textures,
               const content::Showing& table);

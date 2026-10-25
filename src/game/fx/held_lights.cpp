@@ -157,6 +157,7 @@ const char* HeldLights::mesh(Item item) {
         case Item::LordScepter: return "Mace12";
         case Item::GreatLordScepter: return "Mace13";
         case Item::ShiningScepter: return "Mace16";
+        case Item::CrossShield: return "Shield22";
     }
     return "";
 }
@@ -618,6 +619,15 @@ int HeldLights::points(Item item, float out[kMostPoints][3]) {
                 for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
             }
             return 3;
+        }
+        case Item::CrossShield: {
+            // crosssheild.bmd at rest: rx01-rx04 (bones 4-7), the blue, then zxr01-zxr06 (8-13),
+            // the teal, round the cross.
+            static const float kBones[10][3] = {{23.0f, 23.7f, -27.5f}, {14.4f, -33.1f, -5.9f}, {22.9f, 36.8f, -7.0f}, {14.1f, -6.8f, 35.3f}, {10.6f, -6.4f, -27.0f}, {17.8f, -37.3f, 25.8f}, {20.3f, -2.9f, 3.9f}, {23.2f, 0.9f, -13.0f}, {23.1f, 14.0f, 7.6f}, {10.3f, 23.5f, 20.0f}};
+            for (int i = 0; i < 10; ++i) {
+                for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
+            }
+            return 10;
         }
     }
     return 0;
@@ -1183,6 +1193,15 @@ void HeldLights::gather(gfx::Effects& effects) const {
                 put(light_, one.at[0], halfOf(3.0f), 0.7f, 0.5f, 0.3f);
                 put(light_, one.at[1], halfOf(1.5f), 0.8f, 0.6f, 0.4f);
                 put(light_, one.at[2], halfOf(1.2f), 0.8f, 0.6f, 0.4f);
+                break;
+            }
+            case Item::CrossShield: {
+                // MU's |sin(WorldTime*0.001)| + 0.1: four blue lights at 1.2, six teal at 1.4
+                // (ZzzCharacter.cpp:8193-8222).
+                if (one.count < 10) break;
+                const float lumi = std::fabs(std::sin(clock_)) + 0.1f;
+                for (int i = 0; i < 4; ++i) put(light_, one.at[i], halfOf(1.2f), 0.2f * lumi, 0.2f * lumi, 0.8f * lumi);
+                for (int i = 4; i < 10; ++i) put(light_, one.at[i], halfOf(1.4f), 0.2f * lumi, 0.6f * lumi, 0.6f * lumi);
                 break;
             }
         }

@@ -3537,7 +3537,9 @@ def cook_wardrobe(out_dir, texcook, threads):
         # And a chrome pass's slide, by the name export_gltf.chrome_material gives it.
         glows.update({f"chrome_{n}": one
                       for n, one in enumerate(rows[name][0].get("chrome") or [])})
-        tris, verts, _size, bones = cook_mesh(name, path, out_path, manifest,
+        # Islands the asset flags `hidden` ship as a part called "hidden" (export_gltf): a mesh
+        # MU never draws solid on the item (Staff06's a_2, the Cross Shield's chrome-only ramp).
+        tris, verts, _size, bones = cook_mesh(name, path, out_path, manifest, "hidden",
                                               scrolls=glows,
                                               soft=set(rows[name][0].get("soft_alpha", [])),
                                               no_chrome=set(rows[name][0].get("no_chrome", [])))

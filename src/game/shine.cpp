@@ -67,6 +67,14 @@ constexpr Rgb kColours[] = {
     {0.5f, 0.2f, 0.7f},     // 32
     {0.8f, 0.4f, 0.6f},     // 33
     {0.6f, 0.4f, 0.8f},     // 34
+    {0.7f, 0.4f, 0.4f},     // 35
+    {0.5f, 0.5f, 0.7f},     // 36
+    {0.7f, 0.5f, 0.7f},     // 37
+    {0.2f, 0.4f, 0.7f},     // 38
+    {0.3f, 0.6f, 0.4f},     // 39
+    {0.7f, 0.2f, 0.2f},     // 40
+    {0.7f, 0.2f, 0.7f},     // 41
+    {0.8f, 0.4f, 0.0f},     // 42
 };
 
 // Which colour: the named models first, then the armour by its set, as PartObjectColor asks.
@@ -90,6 +98,7 @@ int colourOf(int group, int number) {
     if (group == 2 && number == 10) return 12;                   // GREAT_SCEPTER (:6592); LORD's 0
     if (group == 2 && number == 12) return 16;                   // GREAT_LORD_SCEPTER (:6612)
     if (group == 2 && number == 15) return 28;                   // SHINING_SCEPTER (:6648)
+    if (group == 6 && number == 21) return 30;                   // CROSS_SHIELD (:6686)
     if (group >= 7 && group <= 11) {
         switch (number) {
             case 1: return 1;    // Dragon
@@ -111,6 +120,35 @@ int colourOf(int group, int number) {
             case 23: return 11;  // Hurricane
             case 24: return 16;  // Red Spirit
             case 25: return 11;  // Light Plate (ZzzObject.cpp:6739)
+            // The later sets (2026-10-25: past 25 they drew orange), MU's switch on (:6745-6766).
+            case 26: return 12;  // Adamantine
+            case 27: return 10;  // Dark Steel
+            case 28: return 15;  // Dark Master
+            case 29: return 18;  // Dragon Knight
+            case 30: return 19;  // Venom Mist
+            case 31: return 20;  // Sylphid Ray
+            case 32: return 21;  // Volcano
+            case 33: return 22;  // Sunlight
+            case 34: return 24;  // Ashcrow
+            case 35: return 25;  // Eclipse
+            case 36: return 26;  // Iris
+            case 37: return 27;  // Valiant
+            case 38: return 28;  // Glorious
+            case 39: return 29;
+            case 40: return 30;
+            case 41: return 31;
+            case 42: return 32;
+            case 43: return 33;
+            case 44: return 34;
+            case 45: return 36;  // Titan
+            case 46: return 42;  // Brave
+            case 47: return 37;  // Destroy
+            case 48: return 1;   // Phantom
+            case 49: return 35;  // Seraphim
+            case 50: return 39;  // Faith
+            case 51: return 40;  // Paewang
+            case 52: return 36;  // Hades
+            case 53: return 41;
             default: return 0;
         }
     }
