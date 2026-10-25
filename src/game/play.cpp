@@ -738,7 +738,8 @@ void Play::update(double seconds) {
                         if (item >= 0 && size_t(item) < tables_.items.size() &&
                             ((tables_.items[size_t(item)].jewel() &&
                               tables_.items[size_t(item)].group != sim::kGroupPets) ||
-                             sim::creation(tables_.items[size_t(item)])) &&
+                             sim::creation(tables_.items[size_t(item)]) ||
+                             sim::harmonyMaterial(tables_.items[size_t(item)])) &&
                             heard_.jewel >= 0) {
                             sound = -1;
                             const Drawn* hero = drawnOf(heroId);

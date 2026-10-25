@@ -445,7 +445,10 @@ tip::Tone qualityOf(const content::ItemRow& row, const sim::Held& what) {
     // A socket no longer lifts the name to blue (the user, 2026-10-06: '+socket is not so special
     // thing because its also pretty cheap to add sockets in chaos machine', 'its not super common,
     // but its not a super big thing'): the label's "+Socket" says it, as "+Luck" does.
-    if ((row.jewel() && row.group != sim::kGroupPets) || what.refinement >= kRefinedFrom) {
+    // The Jewel of Harmony's four too, which carry no jewel flag (it would put them in the jewel
+    // drop group) but are named as the jewels are (the user, 2026-10-25: "no label color?").
+    if ((row.jewel() && row.group != sim::kGroupPets) || sim::harmonyMaterial(row) ||
+        what.refinement >= kRefinedFrom) {
         return Tone::Artifact;
     }
     if (what.skill || what.luck || what.option > 0) return Tone::Uncommon;

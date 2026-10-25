@@ -2611,7 +2611,7 @@ static bool boldOf(const content::Tables& tables, const sim::Lying& one) {
     // The pets share the jewels' drop group, not their bold name.
     if (one.what.empty()) return false;
     const content::ItemRow& row = tables.items[size_t(one.what.item)];
-    return row.jewel() && row.group != sim::kGroupPets;
+    return (row.jewel() && row.group != sim::kGroupPets) || sim::harmonyMaterial(row);
 }
 
 // A ground label's colour: the item card's quality (describe's qualityOf, WoW's ladder since

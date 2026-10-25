@@ -395,7 +395,12 @@ void Play::landed(uint32_t drop) {
             // of Creation does not carry it -- the flag is also OpenMU's jewel drop group -- and
             // lands as a jewel all the same (the user, 2026-10-02: 'play jewel sound when jewel
             // of creation is droped').
-            if ((row.jewel() && row.group != sim::kGroupPets) || sim::creation(row)) sound = heard_.jewel;
+            // The Jewel of Harmony's four too, unflagged for the same reason (the user,
+            // 2026-10-25: 'will gemstones drop with jewel sound').
+            if ((row.jewel() && row.group != sim::kGroupPets) || sim::creation(row) ||
+                sim::harmonyMaterial(row)) {
+                sound = heard_.jewel;
+            }
         }
         const float metresPerTile = ground_->metresPerTile();
         emit(sound, (float(one.column) + 0.5f) * metresPerTile,

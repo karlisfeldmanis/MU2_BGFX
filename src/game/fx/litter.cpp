@@ -158,9 +158,15 @@ constexpr float kGlowLift = 0.15f;        // metres over the jewel's middle
 constexpr float kBreath = 1.6f;           // radians a second
 
 // Each jewel in a colour of its own, as its stone is painted: Bless warm white, Soul pale blue,
-// Chaos violet, Life red; anything else the flag holds, white.
+// Chaos violet, Life red; anything else the flag holds, white. The Jewel of Harmony's four as
+// their sheets are painted: the Gemstone steel blue (rs.png), the jewel a deep blue (jos.png), the
+// Refining Stones sandstone, the Higher one paler.
 void jewelColour(const content::ItemRow& row, float out[3]) {
     float c[3] = {0.9f, 0.92f, 1.0f};
+    if (sim::gemstone(row)) { c[0] = 0.6f; c[1] = 0.7f; c[2] = 0.9f; }
+    if (sim::jewelOfHarmony(row)) { c[0] = 0.25f; c[1] = 0.45f; c[2] = 1.0f; }
+    if (sim::refiningStone(row)) { c[0] = 0.95f; c[1] = 0.75f; c[2] = 0.55f; }
+    if (sim::higherRefiningStone(row)) { c[0] = 1.0f; c[1] = 0.88f; c[2] = 0.72f; }
     if (row.group == 14 && row.number == 13) { c[0] = 1.0f; c[1] = 0.9f; c[2] = 0.7f; }
     if (row.group == 14 && row.number == 14) { c[0] = 0.55f; c[1] = 0.75f; c[2] = 1.0f; }
     if (row.group == 12 && row.number == 15) { c[0] = 0.75f; c[1] = 0.45f; c[2] = 1.0f; }
@@ -222,7 +228,7 @@ void Litter::buildItem(const sim::Lying& one, Drop& drop) {
     } else if (sim::creation(row)) {
         drop.glow = 2;
         runeColour(one.what, drop.glowColour);
-    } else if (row.jewel() && row.group != sim::kGroupPets) {
+    } else if ((row.jewel() && row.group != sim::kGroupPets) || sim::harmonyMaterial(row)) {
         drop.glow = 1;
         jewelColour(row, drop.glowColour);
     }

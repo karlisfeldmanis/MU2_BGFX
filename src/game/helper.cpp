@@ -769,7 +769,8 @@ bool Helper::loot(Play& play, const HelperSettings& settings, bool attacked) {
             wanted |= (p & HelperSettings::kPickBoxes) && box;
             const int place = sim::placeOf(row);
             const bool pet = place == sim::kPet || place == sim::kMount;
-            wanted |= (p & HelperSettings::kPickJewels) && !pet && (row.jewel() || sim::refiningJewel(row));
+            wanted |= (p & HelperSettings::kPickJewels) && !pet &&
+                      (row.jewel() || sim::refiningJewel(row) || sim::harmonyMaterial(row));
             wanted |= (p & HelperSettings::kPickPets) && pet;
             wanted |= (p & HelperSettings::kPickRunes) && sim::creation(row);
             // An Ancient rune is picked with the Legendaries: it is rarer than any of them.

@@ -570,7 +570,10 @@ bool QuestAuto::loot(Play& play) {
         // Helper window's Boxes tick is on.
         const bool box = sim::firecracker(row) || sim::boxOfLuck(row) || sim::boxOfKundun(row);
         if (box && !boxes_) continue;
-        if (!row.jewel() && !sim::creation(row) && !sim::refiningJewel(row) && one.what.excellent == 0 && !box) continue;
+        if (!row.jewel() && !sim::creation(row) && !sim::refiningJewel(row) && !sim::harmonyMaterial(row) &&
+            one.what.excellent == 0 && !box) {
+            continue;
+        }
         if (!realm.mayTake(one)) continue;
         if (const auto tried = lootTried_.find(one.id); tried != lootTried_.end() && tried->second < clock_) continue;
         const float away = std::max(std::fabs(float(one.column) - hero.x), std::fabs(float(one.row) - hero.y));
