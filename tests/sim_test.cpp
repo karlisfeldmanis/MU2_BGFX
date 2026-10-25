@@ -14955,7 +14955,7 @@ void testBoxes(const content::Tables& tables) {
     // tier 0 the Box of Luck, 1 to 4 the Kundun box at that plus.
     for (int tier = 0; tier <= sim::kKundunTiers; ++tier) {
         const int tries = 6000;
-        int items = 0, excellent = 0, badPlus = 0, badZen = 0, kept = 0, badFine = 0, badJewel = 0;
+        int items = 0, excellent = 0, badPlus = 0, badZen = 0, kept = 0, badFine = 0, badJewel = 0, weapons = 0;
         auto fresh = std::make_unique<sim::Realm>();
         for (int i = 0; i < tries; ++i) {
             if (i % 200 == 0) {
@@ -14977,7 +14977,13 @@ void testBoxes(const content::Tables& tables) {
             excellent += lying.what.excellent != 0;
             if (tier > 0) {
                 if (lying.what.excellent) {
-                    badFine += !sim::kundunFine(row, tier, realm.hero().kin, realm.hero().second);
+                    // A weapon may come from a band below, when its own has none for the class.
+                    bool fits = false;
+                    for (int band = row.group < sim::kGroupShields ? 1 : tier; band <= tier; ++band) {
+                        fits = fits || sim::kundunFine(row, band, realm.hero().kin, realm.hero().second);
+                    }
+                    badFine += !fits;
+                    weapons += row.group < sim::kGroupShields;
                 } else {
                     badJewel += !jewel(row);
                 }
@@ -15001,6 +15007,8 @@ void testBoxes(const content::Tables& tables) {
               "an excellent one at its rate");
         checkEqual(badFine, 0, "the excellent one the opener's own, in the tier's band");
         checkEqual(badJewel, 0, "else a jewel");
+        std::printf("    %d of the excellents a weapon\n", weapons);
+        check(weapons > excellent / 4, "and weapons among them");
     }
 }
 

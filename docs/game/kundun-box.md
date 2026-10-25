@@ -47,6 +47,11 @@ by order:
   evenly (`kKundunJewels`). No plain items and no Zen; MU's bags (the two notes above) are gone.
   A set's pieces sit in different bands, as their drop levels differ (a Great Dragon helm falls in
   +2's band, its armour in +4's).
+- **Bands a step down** (the user, same day: "little bit to good tire for exc"): 40-64 / 65-89 /
+  90-114 / 115-135, so +4 tops out at the Great Dragon tier, short of Titan and Destroy.
+- **Half the excellents a weapon** (the user: "we need also weapons"): `kKundunWeaponIn100` 50,
+  from the class's weapons in the band (`sim::kundunPools`); a class with none there (the Dark
+  Wizard at +4) draws its weapons of the band below. Shields count with the armour.
 
 Sources, highest first: WebZen GameServer 1.00.93 (`WZ`, under `Source/Server Side/GameServer/`,
 0.97d base unless a flag is named), MuMain (`MM`, `src/source/`), OpenMU (`OM`). The repo's

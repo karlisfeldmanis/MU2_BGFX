@@ -788,24 +788,31 @@ J dumpBoxes(const Dump& d) {
     }
 #ifdef ARMORY_KUNDUN_BANDS
     // The Box of Kundun +1..+4: an excellent of the opener's own gear in its tier's band at
-    // kKundunExcellentIn100 (sim::kundunFine), else one of kKundunJewels. An item two classes
+    // kKundunExcellentIn100, half of them a weapon (sim::kundunPools), else one of kKundunJewels. An item two classes
     // share is listed at the first class's chance.
     if (const int32_t kundun = first(t, [](const ItemRow& r) { return sim::boxOfKundun(r); }); kundun >= 0) {
         for (int tier = 0; tier < sim::kKundunTiers; ++tier) {
             const double exc = sim::kKundunExcellentIn100[tier] / 100.0;
             J box = J::obj(), items = J::obj();
             for (sim::Kin kin : kKins) {
-                const auto fine = pool(t, [&](const ItemRow& r) { return sim::kundunFine(r, tier + 1, kin, true); });
-                for (const int32_t one : fine) {
-                    if (!items[t.items[size_t(one)].name].null()) continue;
-                    Roll r;
-                    r.how = "excellent";
-                    r.excellent = true;
-                    r.kin = int(kin);
-                    boxOptions(r, sim::kBoxLuckIn100 / 100.0, false);
-                    r.twoOptions = secondOption();
-                    entry(items, one, exc / double(fine.size()), r);
-                }
+                std::vector<sim::BagRow> weapons, rest;
+                sim::kundunPools(t, tier + 1, kin, true, &weapons, &rest);
+                const double w = weapons.empty() ? 0.0 : rest.empty() ? 1.0 : sim::kKundunWeaponIn100 / 100.0;
+                const auto add = [&](const std::vector<sim::BagRow>& rows, double share) {
+                    const auto fine = bagRows(t, rows.data(), rows.size(), true);
+                    for (const int32_t one : fine) {
+                        if (!items[t.items[size_t(one)].name].null()) continue;
+                        Roll r;
+                        r.how = "excellent";
+                        r.excellent = true;
+                        r.kin = int(kin);
+                        boxOptions(r, sim::kBoxLuckIn100 / 100.0, false);
+                        r.twoOptions = secondOption();
+                        entry(items, one, exc * share / double(fine.size()), r);
+                    }
+                };
+                add(weapons, w);
+                add(rest, 1.0 - w);
             }
             const auto jewels = bagRows(t, sim::kKundunJewels, std::size(sim::kKundunJewels), false);
             for (const int32_t one : jewels) {

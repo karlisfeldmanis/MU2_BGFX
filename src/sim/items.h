@@ -20,6 +20,7 @@
 #include <cstdint>
 #include <iterator>
 #include <string>
+#include <vector>
 
 #include "content/tables.h"
 #include "sim/maps.h"
@@ -1695,11 +1696,20 @@ constexpr int kKundunRaidTier = 3;
 // item at 30/25/20/15 in a hundred, 5/4/3/2 of those excellent, else Zen, off eventitembag8..12.
 constexpr int kKundunExcellentIn100[kKundunTiers] = {40, 50, 60, 70};
 // The excellent is the opener's own class's (as the raid's hoardFine), any slot, at drop levels
-// kKundunFineLeast..kKundunFineMost: +1 Dragon to Iris, +2 Black Dragon to Valiant, +3 Thunder
-// Hawk to Faith, +4 Great Dragon to Hades. Never Kanturu's gear (sim::kanturuGear).
-constexpr int kKundunFineLeast[kKundunTiers] = {50, 80, 105, 125};
-constexpr int kKundunFineMost[kKundunTiers] = {79, 104, 124, 147};
+// kKundunFineLeast..kKundunFineMost: +1 Plate to Guardian, +2 Light Plate to Iris, +3 Black
+// Dragon to Thunder Hawk, +4 Red Spirit to Great Dragon, short of Titan and Destroy (the user,
+// "little bit to good tire for exc": a step down from 50/80/105/125-147). Never Kanturu's gear
+// (sim::kanturuGear).
+constexpr int kKundunFineLeast[kKundunTiers] = {40, 65, 90, 115};
+constexpr int kKundunFineMost[kKundunTiers] = {64, 89, 114, 135};
 bool kundunFine(const content::ItemRow& row, int tier, Kin kin, bool second);
+// Half the excellents a weapon (the user: "we need also weapons"), kKundunWeaponIn100; the
+// rest any other slot. A class with no weapon in the tier's band draws from its weapons of the
+// band below instead, down to the first band. Both pools as kundunFine admits, into `weapons`
+// and `rest`.
+constexpr int kKundunWeaponIn100 = 50;
+void kundunPools(const content::Tables& tables, int tier, Kin kin, bool second, std::vector<BagRow>* weapons,
+                 std::vector<BagRow>* rest);
 // The Box of Luck as OpenMU's Version095d opens it (BoxOfLuck.cs): one in two an item at +6
 // off its list, else 10,000 Zen. WebZen's own eventitembag.txt is not in hand.
 constexpr int kLuckItemIn100 = 50;

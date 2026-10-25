@@ -2674,11 +2674,13 @@ Cracked Realm::openBox(Cracked cracked, bool luck, int tier) {
             item = pick(kLuckBag, std::size(kLuckBag));
         } else {
             // Ours: an excellent one of the opener's own gear in the tier's band, else a jewel.
+            // Half the excellents a weapon, when the class has one to draw (sim::kundunPools).
             std::vector<BagRow> fine;
             if (dice_.nextInt(0, 100) < kKundunExcellentIn100[t]) {
-                for (const content::ItemRow& r : tables_->items) {
-                    if (kundunFine(r, tier, hero.kin, hero.second)) fine.push_back({int8_t(r.group), int16_t(r.number)});
-                }
+                std::vector<BagRow> weapons;
+                kundunPools(*tables_, tier, hero.kin, hero.second, &weapons, &fine);
+                if (dice_.nextInt(0, 100) < kKundunWeaponIn100 && !weapons.empty()) fine.swap(weapons);
+                if (fine.empty()) fine.swap(weapons);
             }
             // An excellent one, at its feet as any (Realm::excellentOf).
             Lying one;

@@ -981,6 +981,23 @@ bool kundunFine(const content::ItemRow& row, int tier, Kin kin, bool second) {
     return !secondClassOnly(row) || second || kin == Kin::MagicGladiator;
 }
 
+void kundunPools(const content::Tables& tables, int tier, Kin kin, bool second, std::vector<BagRow>* weapons,
+                 std::vector<BagRow>* rest) {
+    weapons->clear();
+    rest->clear();
+    for (const content::ItemRow& r : tables.items) {
+        if (!kundunFine(r, tier, kin, second)) continue;
+        (r.group < kGroupShields ? weapons : rest)->push_back({int8_t(r.group), int16_t(r.number)});
+    }
+    for (int below = tier - 1; weapons->empty() && below >= 1; --below) {
+        for (const content::ItemRow& r : tables.items) {
+            if (r.group < kGroupShields && kundunFine(r, below, kin, second)) {
+                weapons->push_back({int8_t(r.group), int16_t(r.number)});
+            }
+        }
+    }
+}
+
 bool scrollOfArchangel(const content::ItemRow& row) {
     return row.group == kGroupPets && row.number == 16;
 }
