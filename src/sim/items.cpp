@@ -1,5 +1,6 @@
 #include "sim/items.h"
 
+#include "sim/lord_pets.h"
 #include "sim/skills.h"
 
 #include <algorithm>
@@ -332,8 +333,9 @@ bool expensive(const content::Tables& tables, const Held& what) {
     // items with +socker, its nothing special that it has sockets").
     // The pets share the jewels' drop group and not their worth: IsHighValueItem names no helper.
     const bool jewel = row.jewel() && row.group != kGroupPets;
+    // The Harmony's four too: MU lets none of them be dropped (CGItemDropRequest, JoH's items).
     return jewel || (what.refinement > 6 && row.group < kGroupWings) || what.excellent != 0 ||
-           creation(row);
+           creation(row) || harmonyMaterial(row);
 }
 
 int piecesSold(const content::Tables& tables, const Held& what) {
@@ -943,6 +945,20 @@ bool creation(const content::ItemRow& row) {
     return row.group == kGroupPotions && row.number == 22;
 }
 
+bool gemstone(const content::ItemRow& row) { return row.group == kGroupPotions && row.number == 41; }
+bool jewelOfHarmony(const content::ItemRow& row) {
+    return row.group == kGroupPotions && row.number == 42;
+}
+bool refiningStone(const content::ItemRow& row) {
+    return row.group == kGroupPotions && (row.number == 43 || row.number == 44);
+}
+bool higherRefiningStone(const content::ItemRow& row) {
+    return row.group == kGroupPotions && row.number == 44;
+}
+bool harmonyMaterial(const content::ItemRow& row) {
+    return gemstone(row) || jewelOfHarmony(row) || refiningStone(row);
+}
+
 bool firecracker(const content::ItemRow& row) {
     return row.group == kGroupPotions && row.number == 11;
 }
@@ -1153,6 +1169,8 @@ int stackMost(const content::ItemRow& row) {
     // 2026-10-20: "we need stacking jewels", bug report #41). MU counts its own stacked jewels in
     // the durability as well. A Rune of Creation carries a power of its own and never stacks.
     if (refiningJewel(row)) return kStackMost;
+    // And the Harmony's four, as the jewels (docs/plans/jewel-of-harmony.md).
+    if (harmonyMaterial(row)) return kStackMost;
     // The Angel, the Imp and Uniria (sim::timedPet), never worn.
     if (timedPet(row)) return kStackMost;
     // And what else he carries several of and spends one at a time (the user, 2026-10-20: "which
@@ -1321,7 +1339,7 @@ bool fits(const content::Tables& tables, const Wearer& who, const Held& what) {
     // level 2 (docs/game/second-class-gear.md).
     if (secondClassFor(*row, who.kin) && !who.second) return false;
     // Its runes' level over its own (sim::kRuneHeroLevel).
-    Needs asked = asks(*row, what.refinement, what.excellent != 0);
+    Needs asked = asks(*row, what);
     asked.level = std::max(asked.level, runeLevelFor(tables, who, what));
     return shortOf(asked, who.level, who.points).none();
 }

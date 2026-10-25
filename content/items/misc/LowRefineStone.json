@@ -1,0 +1,86 @@
+{
+  "item": "LowRefineStone",
+  "mu_name": "Lower Refining Stone",
+  "mu_name_from": "OpenMU VersionSeasonSix openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Jewels.cs CreateLowerRefineStone: group 14, number 43 (OpenMU spells it \"Lower refine stone\"; MuMain's item text \"Lower Refining Stone\"). The model is Data/Item/LowRefineStone.bmd, which MuMain loads for MODEL_POTION + 43 (ZzzOpenData.cpp:924; _enum.h:2109).",
+  "why_this_one": "docs/plans/jewel-of-harmony.md (the user, 2026-10-25: \"step 1\"): the four items of the Jewel of Harmony, Kanturu's own. Built dormant -- no drop, no recipe, no use yet: the Gemstone falls in the Ruins and Relics (step 4), the Chaos Machine refines and smelts (step 6), the jewel and stones go onto an item (step 5).",
+  "tells": "Smelted at the Chaos Machine out of a plain item (20%); dropped on a Harmony item, +1 option level at 20%, a fail back to the option's minimum.",
+  "profile": "weapon",
+  "stats": {
+    "note": "Group, number, drop level, footprint and value are OpenMU's Season 6 row; it drops from nothing on its own (a map rule drops the Gemstone).",
+    "group": 14,
+    "number": 43,
+    "drop_level": 150,
+    "drops_from_monsters": false,
+    "jewel": false,
+    "jewel_note": "Not flagged: the flag enters the generic jewel drop group, as Jewel22's note says.",
+    "width": 1,
+    "height": 1,
+    "durability": 1,
+    "value": 25,
+    "requires": {
+      "level": 0,
+      "strength": 0,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    }
+  },
+  "sheets": {
+    "LowRefineStone": "lowrefinestone.png"
+  },
+  "sheet_from": "Data/Item/LowRefineStone.OZJ, from MuMain's own bin/Data: LowRefineStone.bmd names LowRefineStone.jpg; 64 texels square, opaque.",
+  "cutout": false,
+  "cutout_from": "No alpha, and the mesh is a closed solid.",
+  "flat_shaded": true,
+  "flat_shaded_why": "A carved block: its faces read as cut.",
+  "material_note": "marble: pale veined stone with an arrow carved in it -- down on the Lower stone, up on the Higher.",
+  "default_material": "marble",
+  "upright": true,
+  "upright_from": "As the other jewels: shown as authored.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "marble",
+      "triangles": 42,
+      "area": 387.9,
+      "along": [
+        -1.9,
+        1.9
+      ],
+      "mu_uv": [
+        0.035,
+        0.031,
+        0.792,
+        0.977
+      ],
+      "bake_uv": [
+        0.005,
+        0.004,
+        0.954,
+        0.95
+      ]
+    },
+    {
+      "island": 1,
+      "material": "marble",
+      "triangles": 16,
+      "area": 35.9,
+      "along": [
+        -0.8,
+        0.8
+      ],
+      "mu_uv": [
+        0.77,
+        0.219,
+        0.97,
+        0.978
+      ],
+      "bake_uv": [
+        0.005,
+        0.328,
+        0.366,
+        0.996
+      ]
+    }
+  ]
+}

@@ -44,7 +44,7 @@ int64_t npcValue(const content::Tables& tables, const Held& what) {
 
 BrokerKind brokerKind(const content::ItemRow& row) {
     if (creation(row)) return BrokerKind::Runes;
-    if (refiningJewel(row)) return BrokerKind::Jewels;
+    if (refiningJewel(row) || harmonyMaterial(row)) return BrokerKind::Jewels;
     if (anyWing(row)) return BrokerKind::Wings;
     if (jewellery(row)) return BrokerKind::Jewellery;
     if (scrollOfArchangel(row) || bloodBone(row) || invisibilityCloak(row) || devilsEye(row) ||

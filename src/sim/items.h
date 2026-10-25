@@ -658,7 +658,8 @@ constexpr int kSoulResetFrom = 7;
 // this expensive item". Of its list the rows this tree has are the three jewels, anything
 // below the wings at +7 or more, and anything excellent; the wings, pets and ancient are not.
 // A client rule -- OpenMU's DropItemAction takes anything -- kept in the realm so the window
-// cannot disagree with it. Ours on top: the Rune of Creation (a socket alone is nothing dear).
+// cannot disagree with it. Ours on top: the Rune of Creation (a socket alone is nothing dear), and
+// the Harmony's four, which MU never lets fall (harmonyMaterial).
 bool expensive(const content::Tables& tables, const Held& what);
 
 // How many of it a click sells at a counter: one of a stack of jewels (the user, 2026-10-23:
@@ -1059,6 +1060,15 @@ inline bool ascendance(Power power) {
 uint8_t gladiatorRune(uint8_t power);
 // The Rune of Creation's row: 14, 22.
 bool creation(const content::ItemRow& row);
+// The Jewel of Harmony's four (docs/plans/jewel-of-harmony.md), MU's rows: the Gemstone 14, 41 that
+// Kanturu drops, the Jewel of Harmony 14, 42 the Chaos Machine refines it into, and the Lower and
+// Higher Refining Stones 14, 43 and 44 it smelts out of gear. Dormant until the plan's steps 4-6.
+bool gemstone(const content::ItemRow& row);
+bool jewelOfHarmony(const content::ItemRow& row);
+bool refiningStone(const content::ItemRow& row);  // either
+bool higherRefiningStone(const content::ItemRow& row);
+// Any of the four: they stack, are guarded as jewels are, and trade as jewels.
+bool harmonyMaterial(const content::ItemRow& row);
 // The name a thing is shown by: its row's, but a Rune of Creation that carries a power is the
 // rune of that power, "Rune of Stormcall" (the user, 2026-10-18: 'we need to show Rune of "rune
 // name" not jewel of creation'). No plus: each caller adds its own.

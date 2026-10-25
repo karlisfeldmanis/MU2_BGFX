@@ -1,0 +1,130 @@
+{
+  "item": "HighRefineStone",
+  "mu_name": "Higher Refining Stone",
+  "mu_name_from": "OpenMU VersionSeasonSix openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Jewels.cs CreateHigherRefineStone: group 14, number 44 (OpenMU spells it \"Higher refine stone\"; MuMain's item text \"Higher Refining Stone\"). The model is Data/Item/HighRefineStone.bmd, which MuMain loads for MODEL_POTION + 44 (ZzzOpenData.cpp:925; _enum.h:2110).",
+  "why_this_one": "docs/plans/jewel-of-harmony.md (the user, 2026-10-25: \"step 1\"): the four items of the Jewel of Harmony, Kanturu's own. Built dormant -- no drop, no recipe, no use yet: the Gemstone falls in the Ruins and Relics (step 4), the Chaos Machine refines and smelts (step 6), the jewel and stones go onto an item (step 5).",
+  "tells": "Smelted at the Chaos Machine out of an excellent item (50%); dropped on a Harmony item, +1 option level at 80%, a fail back to the option's minimum.",
+  "profile": "weapon",
+  "stats": {
+    "note": "Group, number, drop level, footprint and value are OpenMU's Season 6 row; it drops from nothing on its own (a map rule drops the Gemstone).",
+    "group": 14,
+    "number": 44,
+    "drop_level": 150,
+    "drops_from_monsters": false,
+    "jewel": false,
+    "jewel_note": "Not flagged: the flag enters the generic jewel drop group, as Jewel22's note says.",
+    "width": 1,
+    "height": 1,
+    "durability": 1,
+    "value": 25,
+    "requires": {
+      "level": 0,
+      "strength": 0,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    }
+  },
+  "sheets": {
+    "HighRefineStone": "highrefinestone.png"
+  },
+  "sheet_from": "Data/Item/HighRefineStone.OZJ, from MuMain's own bin/Data: HighRefineStone.bmd names HighRefineStone.jpg; 64 texels square, opaque.",
+  "cutout": false,
+  "cutout_from": "No alpha, and the mesh is a closed solid.",
+  "flat_shaded": true,
+  "flat_shaded_why": "A carved block: its faces read as cut.",
+  "material_note": "marble: pale veined stone with an arrow carved in it -- down on the Lower stone, up on the Higher.",
+  "default_material": "marble",
+  "upright": true,
+  "upright_from": "As the other jewels: shown as authored.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "marble",
+      "triangles": 16,
+      "area": 820.4,
+      "along": [
+        -5.6,
+        5.4
+      ],
+      "mu_uv": [
+        0.3,
+        0.024,
+        0.698,
+        0.978
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.424,
+        0.995
+      ]
+    },
+    {
+      "island": 1,
+      "material": "marble",
+      "triangles": 16,
+      "area": 139.6,
+      "along": [
+        -2.3,
+        1.3
+      ],
+      "mu_uv": [
+        0.3,
+        0.024,
+        0.698,
+        0.978
+      ],
+      "bake_uv": [
+        0.219,
+        0.005,
+        0.638,
+        0.995
+      ]
+    },
+    {
+      "island": 2,
+      "material": "marble",
+      "triangles": 16,
+      "area": 134.5,
+      "along": [
+        1.1,
+        6.9
+      ],
+      "mu_uv": [
+        0.3,
+        0.024,
+        0.698,
+        0.978
+      ],
+      "bake_uv": [
+        0.434,
+        0.005,
+        0.853,
+        0.495
+      ]
+    },
+    {
+      "island": 3,
+      "material": "marble",
+      "triangles": 16,
+      "area": 168.3,
+      "along": [
+        -5.7,
+        0.3
+      ],
+      "mu_uv": [
+        0.3,
+        0.024,
+        0.698,
+        0.978
+      ],
+      "bake_uv": [
+        0.005,
+        0.505,
+        0.853,
+        0.995
+      ]
+    }
+  ]
+}
