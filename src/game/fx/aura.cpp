@@ -42,8 +42,12 @@ constexpr float kStrength = 0.65f;
 // Swell Life's embers (Aura::swell): MU's ten frames; ours, how wide one is at birth in metres
 // and how bright, judged on fixed-step shots to read as a soft glow on him and not a fire.
 constexpr float kEmberFrames = 10.0f;
-constexpr float kEmberAcross = 0.14f;
-constexpr float kEmberStrength = 1.1f;
+// 0.07 m since the user's "smaller sparkles" (2026-10-25), half of the 0.14 before it.
+constexpr float kEmberAcross = 0.07f;
+constexpr float kEmberStrength = 2.4f;
+// Three a reference frame where MU throws two: the user, at 0.07 m, "good, but litle bit more
+// sparkles" (2026-10-25).
+constexpr float kEmberRate = 3.0f;
 
 // --- the circle, ZzzEffect.cpp BITMAP_MAGIC + 1 subtype 0 ----------------------------------
 constexpr float kRingTicks = 20.0f;      // LifeTime
@@ -284,9 +288,9 @@ bool Aura::guarding(uint32_t owner) const {
 void Aura::swell(const float (*points)[3], int count, float seconds, float metresPerTile) {
     if (count <= 0 || !bgfx::isValid(light_)) return;
     const float per = metresPerTile / kPerTile;
-    // Two a reference frame, MU's pair -- n and its mirror 6 - n across the body when all seven
-    // are given -- carried over frames shorter than one.
-    float owed = seconds * kReference * 2.0f;
+    // kEmberRate a reference frame, in pairs as MU's -- n and its mirror 6 - n across the body
+    // when all seven are given -- carried over frames shorter than one.
+    float owed = seconds * kReference * kEmberRate;
     int free = 0;
     while (owed >= 1.0f || (owed > 0.0f && unit() < owed)) {
         owed -= 1.0f;

@@ -254,9 +254,9 @@ public:
     static constexpr int kBursts = 24;
     // Room for two skills read inside a second of each other; a third's puffs are not drawn.
     static constexpr int kPuffs = 64;
-    // Swell Life's embers: two a reference frame, ten frames each, so twenty a body; room for a
-    // party of five and a few more in sight. One with none free is not drawn.
-    static constexpr int kEmbers = 192;
+    // Swell Life's embers: three a reference frame (kEmberRate), ten frames each, so thirty a
+    // body; room for a party of five and a few more in sight. One with none free is not drawn.
+    static constexpr int kEmbers = 256;
 
 private:
     struct Joint {
