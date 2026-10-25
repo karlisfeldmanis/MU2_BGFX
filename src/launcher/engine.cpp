@@ -344,7 +344,17 @@ Settings loadSettings() {
     Settings settings;
     const core::Json said = parse(readFile(userFolder() / "launcher.json"), "launcher.json");
     const std::string install = said["install"].stringOr("");
-    settings.install = install.empty() ? defaultInstall() : pathOf(install);
+#ifdef _WIN32
+    // A folder picked on a drive or under a folder since gone is no pick.
+    std::error_code error;
+    const bool reachable = !install.empty() && fs::is_directory(pathOf(install).parent_path(), error);
+    settings.install = reachable ? pathOf(install) : defaultInstall();
+#else
+    // The Mac and Linux have no picker, so a saved folder is only ever an old default -- one a
+    // migrated Mac carries under its old user's name (/Users/<old>/Applications), where nothing
+    // can be made.
+    settings.install = defaultInstall();
+#endif
     settings.email = said["email"].stringOr("");
     settings.region = regionNamed(said["region"].stringOr("")).id;
     // A pick of a region since taken away is no pick.
