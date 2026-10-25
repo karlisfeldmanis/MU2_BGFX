@@ -26,7 +26,10 @@
 //
 // MU's own: the counts, the colours, the speeds and lives; a particle a texel a unit
 // (ZzzEffectParticle.cpp:8922-8935). Ours: each joint drawn as a strip from its tail to its head
-// (as fx/drain's strands), its tails a fixed length; the sparks at half MU's size and the charge's light
+// (as fx/drain's strands), its tails a fixed length -- a spirit's a ribbon through its last ten
+// steps through a Catmull-Rom curve, its sheet stretched along it, fading to its end, and out over
+// four frames once within 50 of its target, its turn tightening as it ages, where MU's looped about
+// it or sailed past; the sparks at half MU's size and the charge's light
 // and the spirits' heads at a third (the user's "too large"); the ball's 15 spread about the bird rather than
 // on mesh 1's vertices; MODEL_AIR_FORCE's puffs at its head as it dives (:747-756) wait for
 // Skill/AirForce.bmd to be cooked. Presentation only: the realm struck on its own tick
@@ -63,6 +66,7 @@ public:
 
 private:
     enum Kind : uint8_t { kStreak, kSpirit, kFlare, kSpark, kGlow };
+    static constexpr int kTails = 10;
     struct Joint {
         bool alive = false;
         Kind kind = kStreak;
@@ -75,6 +79,10 @@ private:
         // A spirit's flight in MU's space and units, stepped a whole frame at a time and drawn
         // between its last two steps.
         float mu[3] = {}, muWas[3] = {}, angle[3] = {};
+        // And its tails, MaxTails 10 (ZzzEffectJoint.cpp:819): where it was at each of its last
+        // steps, newest first, in world metres.
+        float tails[kTails][3] = {};
+        int tailCount = 0;
     };
     struct Flash {
         bool alive = false;

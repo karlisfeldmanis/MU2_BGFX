@@ -30,6 +30,12 @@ constexpr float kSparkSize = 0.5f, kGlowSize = 1.0f / 3.0f, kHeadSize = 1.0f / 3
 constexpr float kTail = 4.0f;
 // The ball's spirits: every 22nd of mesh 1's 96 triangles, three vertices each.
 constexpr int kSpirits = 15;
+// A spirit's ribbon, pieces a step between its tails.
+constexpr int kBends = 3;
+// A spirit that has struck goes out over these frames, its light with it. Ours.
+constexpr float kStruck = 4.0f;
+// A spirit's turn grows by MU's own each this many frames of its life. Ours.
+constexpr float kTighten = 5.0f;
 
 void toMu(const float world[3], float mu[3]) {
     mu[0] = world[0] * 100.0f;
@@ -42,9 +48,10 @@ void fromMu(const float mu[3], float world[3]) {
     world[2] = -mu[1] * 0.01f;
 }
 
-// A strip from `tail` to `head`, `half` either side, as two crossed faces (fx/drain's).
+// A strip from `tail` to `head`, `half` either side, as two crossed faces (fx/drain's), the sheet's
+// U running from `uTail` to `uHead` along it.
 void strip(gfx::Effects& effects, bgfx::TextureHandle sheet, const float tail[3], const float head[3],
-           float half, const float light[3], float alpha) {
+           float half, const float light[3], float alpha, float uTail = 0.0f, float uHead = 1.0f) {
     float along[3] = {head[0] - tail[0], head[1] - tail[1], head[2] - tail[2]};
     const float len = std::max(1e-4f, std::sqrt(along[0] * along[0] + along[1] * along[1] + along[2] * along[2]));
     for (float& one : along) one /= len;
@@ -74,10 +81,10 @@ void strip(gfx::Effects& effects, bgfx::TextureHandle sheet, const float tail[3]
             quad.corner[3][k] = tail[k] + side[k] * half;
             quad.position[k] = (tail[k] + head[k]) * 0.5f;
         }
-        quad.cornerUv[0][0] = 0.0f; quad.cornerUv[0][1] = 1.0f;
-        quad.cornerUv[1][0] = 1.0f; quad.cornerUv[1][1] = 1.0f;
-        quad.cornerUv[2][0] = 1.0f; quad.cornerUv[2][1] = 0.0f;
-        quad.cornerUv[3][0] = 0.0f; quad.cornerUv[3][1] = 0.0f;
+        quad.cornerUv[0][0] = uTail; quad.cornerUv[0][1] = 1.0f;
+        quad.cornerUv[1][0] = uHead; quad.cornerUv[1][1] = 1.0f;
+        quad.cornerUv[2][0] = uHead; quad.cornerUv[2][1] = 0.0f;
+        quad.cornerUv[3][0] = uTail; quad.cornerUv[3][1] = 0.0f;
         effects.add(quad);
     }
 }
@@ -221,15 +228,22 @@ void RavenShow::flySpirit(Joint& one) {
     // its speed less 20 degrees (:3852-3856, ZzzAI.cpp:134-145).
     const float aim[3] = {one.aim[0] + float(int(unit() * 150.0f)) - 70.0f,
                           one.aim[1] + float(int(unit() * 150.0f)) - 70.0f, one.aim[2] + 50.0f};
-    const float turn = one.speed - 20.0f;
+    // Ours: and tighter as it ages, twice MU's turn by its fifth frame, three times by its tenth, so
+    // every one curls in -- at MU's own, one that passed its target sailed on out of the fight.
+    const float turn = (one.speed - 20.0f) * (1.0f + one.age / kTighten);
     one.angle[2] = turnAngle2(one.angle[2], createAngle(one.mu[0], one.mu[1], aim[0], aim[1]), turn);
     const float flat = std::hypot(one.mu[0] - aim[0], one.mu[1] - aim[1]);
     one.angle[0] = turnAngle2(one.angle[0], 360.0f - createAngle(one.mu[2], flat, aim[2], 0.0f), turn);
-    const float dz = one.mu[2] - aim[2];
-    const float distance = std::sqrt(flat * flat + dz * dz);
+    // How near it is, to the target 50 up itself, not the aim rolled about it (MoveHumming's is to
+    // the rolled one, which jumps up to 70 a frame; ours, for the strike below).
+    const float near[3] = {one.mu[0] - one.aim[0], one.mu[1] - one.aim[1], one.mu[2] - one.aim[2] - 50.0f};
+    const float distance = std::sqrt(near[0] * near[0] + near[1] * near[1] + near[2] * near[2]);
     one.speed = one.speed > 50.0f ? 50.0f : one.speed + 1.0f;
     // Its life down twice as fast within 50 of it, its light / 1.2 a frame under ten (:3864-3872).
-    if (distance < 50.0f) one.age += 1.0f;
+    // Ours: within 50 it has struck, and goes out over its next four frames -- at MU's rate it
+    // looped a metre about the target before it faded (the user, 2026-10-25: "looks little bit
+    // unfinsihes and buggy").
+    if (distance < 50.0f) one.life = std::min(one.life, one.age + kStruck);
     if (one.life - one.age < 10.0f) one.light /= 1.2f;
     // On down its heading, Velocity a frame.
     for (int k = 0; k < 3; ++k) one.muWas[k] = one.mu[k];
@@ -260,7 +274,15 @@ void RavenShow::update(float seconds) {
     owed_ = std::min(owed_ + frames, 8.0f);
     while (owed_ >= 1.0f) {
         for (Joint& one : joints_) {
-            if (one.alive && one.kind == kSpirit) flySpirit(one);
+            if (!one.alive || one.kind != kSpirit) continue;
+            flySpirit(one);
+            // Where it stood before the step goes onto its tails, the oldest dropped.
+            const int kept = std::min(one.tailCount, kTails - 1);
+            for (int i = kept; i > 0; --i) {
+                for (int k = 0; k < 3; ++k) one.tails[i][k] = one.tails[i - 1][k];
+            }
+            fromMu(one.muWas, one.tails[0]);
+            one.tailCount = kept + 1;
         }
         owed_ -= 1.0f;
     }
@@ -320,13 +342,48 @@ void RavenShow::gather(gfx::Effects& effects) const {
         // Its light down over its last frames: a streak's over all ten, a flare's ten, a spirit's
         // its own.
         const float fade = one.kind == kStreak ? std::clamp(left / one.life, 0.0f, 1.0f)
-                           : one.kind == kSpirit ? one.light
+                           : one.kind == kSpirit ? one.light * std::clamp(left / kStruck, 0.0f, 1.0f)
                                                  : std::clamp(left / 10.0f, 0.0f, 1.0f);
         const float* light = one.kind == kStreak ? kStreakLight : one.kind == kSpirit ? kSpiritLight : kFlareLight;
         const float wide = (one.kind == kStreak ? kStreakWide : one.kind == kSpirit ? kSpiritWide : kFlareWide) * kUnit;
         const bgfx::TextureHandle sheet = one.kind == kStreak ? light_ : one.kind == kSpirit ? spirit_ : flare_;
         if (!bgfx::isValid(sheet)) continue;
-        strip(effects, sheet, one.was, one.at, wide * 0.5f, light, fade);
+        if (one.kind == kSpirit) {
+            // Its ribbon from the head back through its tails, one sheet stretched along all of
+            // it (its bright end at the head), narrower and dimmer toward the end, as MU lays a
+            // joint's tails (ZzzEffectJoint.cpp's RenderJoints).
+            // Ours: drawn through a Catmull-Rom curve, three pieces a step, so its 20-30 degree turns
+            // a frame bend the ribbon rather than kink it.
+            const int points = one.tailCount + 1;
+            const auto point = [&](int i) -> const float* {
+                i = std::clamp(i, 0, points - 1);
+                return i == 0 ? one.at : one.tails[i - 1];
+            };
+            const float count = float(std::max(one.tailCount, 1));
+            float was[3];
+            for (int k = 0; k < 3; ++k) was[k] = one.at[k];
+            for (int i = 0; i + 1 < points; ++i) {
+                const float* p0 = point(i - 1);
+                const float* p1 = point(i);
+                const float* p2 = point(i + 1);
+                const float* p3 = point(i + 2);
+                for (int piece = 1; piece <= kBends; ++piece) {
+                    const float t = float(piece) / float(kBends), t2 = t * t, t3 = t2 * t;
+                    float at[3];
+                    for (int k = 0; k < 3; ++k) {
+                        at[k] = 0.5f * (2.0f * p1[k] + (p2[k] - p0[k]) * t +
+                                        (2.0f * p0[k] - 5.0f * p1[k] + 4.0f * p2[k] - p3[k]) * t2 +
+                                        (3.0f * p1[k] - p0[k] - 3.0f * p2[k] + p3[k]) * t3);
+                    }
+                    const float near = 1.0f - (float(i) + t - 1.0f / float(kBends)) / count;
+                    const float far = 1.0f - (float(i) + t) / count;
+                    strip(effects, sheet, at, was, wide * 0.5f * near, light, fade * near, far, near);
+                    for (int k = 0; k < 3; ++k) was[k] = at[k];
+                }
+            }
+        } else {
+            strip(effects, sheet, one.was, one.at, wide * 0.5f, light, fade);
+        }
         // A spirit's head: a light and a shine of 2 x life/10 + 2.
         if (one.kind == kSpirit && bgfx::isValid(light_)) {
             const float half = (2.0f * left / 10.0f + 2.0f) * 0.08f * kHeadSize;
