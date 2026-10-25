@@ -191,7 +191,7 @@ void Realm::eliteSpoils(const Body& dead, const Body& killer) {
             }
         }
     };
-    Held spoils[kEliteMostPieces + 3];
+    Held spoils[kEliteMostPieces + 6];
     int count = 0;
     const int pieces = eliteDice_.nextInt(kEliteLeastPieces, kEliteMostPieces + 1);
     // Which of them are excellent: one always, a second sometimes (-1 for none).
@@ -222,13 +222,33 @@ void Realm::eliteSpoils(const Body& dead, const Body& killer) {
         }
         spoils[count++] = what;
     }
-    // The golden one's Box of Kundun (sim::goldenBoxOn), always.
+    // The golden one's Box of Kundun (sim::goldenBoxOn), always; a 380 piece and a Gemstone
+    // always; an Ancient rune of the killer's class one time in kGoldenAncientOdds.
     if (const int box = goldenBoxOn(tables_->map);
         box > 0 && tables_->kinds[size_t(dead.kind)].number == goldenOn(tables_->map)) {
         for (size_t i = 0; i < tables_->items.size(); ++i) {
             if (!boxOfKundun(tables_->items[i])) continue;
             spoils[count++] = Held{int32_t(i), int16_t(box), 1};
             break;
+        }
+        if (const int32_t piece = draw([](const content::ItemRow& r) { return r.dropsFromMonsters() && kanturuGear(r); });
+            piece >= 0) {
+            const content::ItemRow& row = tables_->items[size_t(piece)];
+            Held what{piece, 0, int16_t(fullDurability(row, 0))};
+            if (takesOptions(row)) option(what);
+            spoils[count++] = what;
+        }
+        if (const int32_t stone = draw([](const content::ItemRow& r) { return gemstone(r); }); stone >= 0) {
+            spoils[count++] = Held{stone, 0, 1};
+        }
+        if (eliteDice_.nextInt(0, kGoldenAncientOdds) == 0) {
+            const int32_t rune = draw([](const content::ItemRow& r) { return creation(r); });
+            const uint8_t power = drawRuneOf(eliteDice_, killer.kin, killer.second, Rarity::Ancient);
+            if (rune >= 0 && power != 0) {
+                Held one{rune, 0, 1};
+                one.powers[0] = power;
+                spoils[count++] = one;
+            }
         }
     }
     // The jewels: the Bless, the Soul or the Chaos -- never the Life, never a rune.

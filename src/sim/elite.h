@@ -86,6 +86,10 @@ inline int goldenBoxOn(uint32_t map) {
     }
     return 0;
 }
+// And beside the box, the golden one's more (the user, 2026-10-25: "A 380 piece, A Gemstone, An
+// Ancient rune chance"): a piece of the 380 gear always, a Gemstone always, and an Ancient rune of
+// the killer's class one time in kGoldenAncientOdds. Ours.
+constexpr int kGoldenAncientOdds = 4;
 // Its life against its breed's on that map, 1 on a map with none.
 inline float eliteLifeOn(uint32_t map) {
     for (const EliteMap& row : kEliteMaps) {
