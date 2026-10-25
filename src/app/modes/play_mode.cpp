@@ -1928,6 +1928,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         // The Golden Invasion takes the birds out of the sky while it lasts: MU's ReceiveEvent
         // calls DeleteBoids() and its slots fill with dragons (GOBoid.cpp:1275).
         const bool birds = !world_.played().invasionStorm();
+        world_.boids().storm(!birds);
         if (birds) world_.boids().glow(ctx.renderer.effects());
         if (birds) {
             world_.boids().update(float(deltaSeconds), hero, walking, inside, world_.ground(),

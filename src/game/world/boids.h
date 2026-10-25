@@ -139,11 +139,20 @@ public:
     // --birds-now: the sky's FIRST flock arrives on the next frame rather than 20 to 90
     // seconds in. For a review run, which is a few seconds long. One-shot; see Flight::hurry.
     void hurry() { flight_.hurry(); }
+    // The Golden Invasion's storm, each frame: MU's ReceiveEvent calls DeleteBoids() as it starts
+    // and again as it ends (WSclient.cpp:7119-7131), so the sky is emptied both times and the next
+    // flock comes on its own wait, off the screen, rather than the frozen one going on mid-flight.
+    void storm(bool on) {
+        if (on == storm_) return;
+        storm_ = on;
+        flight_.reset();
+    }
     // How many are in the air right now, for the stats line.
     uint32_t flying() const { return flight_.flying(); }
 
 private:
     Flight flight_;
+    bool storm_ = false;
     // What runs along the floor under them: the Dungeon's rats, MU's fish slot. Opened, stepped
     // and drawn with the birds, and empty on every other map (game/world/scurry.h).
     Scurry scurry_;
