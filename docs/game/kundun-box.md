@@ -52,6 +52,9 @@ by order:
 - **Half the excellents a weapon** (the user: "we need also weapons"): `kKundunWeaponIn100` 50,
   from the class's weapons in the band (`sim::kundunPools`); a class with none there (the Dark
   Wizard at +4) draws its weapons of the band below. Shields count with the armour.
+- **Sets half a step lower** (the user: "little bit too good sets"): armour and shields at
+  35-59 / 60-84 / 85-104 / 105-124 (`kKundunSetLeast/Most`), weapons keep theirs; +4's sets top
+  out at Valiant, Thunder Hawk, Red Spirit, Dark Soul and Faith.
 
 Sources, highest first: WebZen GameServer 1.00.93 (`WZ`, under `Source/Server Side/GameServer/`,
 0.97d base unless a flag is named), MuMain (`MM`, `src/source/`), OpenMU (`OM`). The repo's

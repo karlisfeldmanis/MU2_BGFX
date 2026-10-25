@@ -978,7 +978,10 @@ bool kundunFine(const content::ItemRow& row, int tier, Kin kin, bool second) {
         kanturuGear(row)) {
         return false;
     }
-    if (row.dropLevel < kKundunFineLeast[t] || row.dropLevel > kKundunFineMost[t]) return false;
+    const bool weapon = row.group < kGroupShields;
+    const int least = weapon ? kKundunFineLeast[t] : kKundunSetLeast[t];
+    const int most = weapon ? kKundunFineMost[t] : kKundunSetMost[t];
+    if (row.dropLevel < least || row.dropLevel > most) return false;
     if (row.classes != 0 && (row.classes & (1 << int(kin))) == 0) return false;
     return !secondClassOnly(row) || second || kin == Kin::MagicGladiator;
 }

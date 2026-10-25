@@ -1695,13 +1695,17 @@ constexpr int kKundunRaidTier = 3;
 // jewels evenly. MU's own (EledoradoBoxOpenEven, Event.cpp:603, docs/game/kundun-box.md §3) was an
 // item at 30/25/20/15 in a hundred, 5/4/3/2 of those excellent, else Zen, off eventitembag8..12.
 constexpr int kKundunExcellentIn100[kKundunTiers] = {40, 50, 60, 70};
-// The excellent is the opener's own class's (as the raid's hoardFine), any slot, at drop levels
-// kKundunFineLeast..kKundunFineMost: +1 Plate to Guardian, +2 Light Plate to Iris, +3 Black
-// Dragon to Thunder Hawk, +4 Red Spirit to Great Dragon, short of Titan and Destroy (the user,
-// "little bit to good tire for exc": a step down from 50/80/105/125-147). Never Kanturu's gear
-// (sim::kanturuGear).
+// The excellent is the opener's own class's (as the raid's hoardFine), any slot; a weapon at drop
+// levels kKundunFineLeast..kKundunFineMost (the user, "little bit to good tire for exc": a step
+// down from 50/80/105/125-147), the rest at kKundunSetLeast..kKundunSetMost. Never Kanturu's
+// gear (sim::kanturuGear).
 constexpr int kKundunFineLeast[kKundunTiers] = {40, 65, 90, 115};
 constexpr int kKundunFineMost[kKundunTiers] = {64, 89, 114, 135};
+// The armour and shields half a step lower than the weapons (the user, "little bit too good
+// sets"): +1 Brass to Legendary, +2 Dragon to Iris, +3 Black Dragon to Dark Phoenix, +4 Valiant
+// to Faith, no Great Dragon or Hurricane.
+constexpr int kKundunSetLeast[kKundunTiers] = {35, 60, 85, 105};
+constexpr int kKundunSetMost[kKundunTiers] = {59, 84, 104, 124};
 bool kundunFine(const content::ItemRow& row, int tier, Kin kin, bool second);
 // Half the excellents a weapon (the user: "we need also weapons"), kKundunWeaponIn100; the
 // rest any other slot. A class with no weapon in the tier's band draws from its weapons of the
