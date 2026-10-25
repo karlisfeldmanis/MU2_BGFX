@@ -69,8 +69,8 @@ Needs asks(const content::ItemRow& row, int refinement, bool excellent) {
                                : secondWing(row) ? 5 * std::max(0, refinement)
                                                  : 0);
     // The Dark Horse asks 218 + 2 a horse level (WebZen zzzitem.cpp:580-583, MuMain's card
-    // GIPetManager.cpp:684-686): 220 for the level 1 every horse is here.
-    if (darkHorse(row)) n.level = row.needLevel + 2 * kHorseLevel;
+    // GIPetManager.cpp:684-686): a newborn's 220 here, its own level by sim::asks(row, Held).
+    if (darkHorse(row)) n.level = row.needLevel + 2;
     n.strength = ask(row.needStrength, 3);
     n.agility = ask(row.needAgility, 3);
     n.energy = ask(row.needEnergy, 4);
@@ -100,6 +100,13 @@ bool ridesUniria(const content::Tables& tables, const Satchel& bag) {
     return ridden.group == kGroupPets && ridden.number == 2;
 }
 
+bool barredFromAtlans(const content::Tables& tables, const Satchel& bag) {
+    const Held& mount = bag[kMount];
+    if (mount.empty() || size_t(mount.item) >= tables.items.size()) return false;
+    const content::ItemRow& ridden = tables.items[size_t(mount.item)];
+    return ridden.group == kGroupPets && (ridden.number == 2 || ridden.number == 3);
+}
+
 bool canFly(const content::Tables& tables, const Satchel& bag) {
     const Held& mount = bag[kMount];
     const content::ItemRow* ridden =
@@ -117,7 +124,9 @@ PetPower petPower(const content::ItemRow& row) {
     // gObjSpriteDamage divides both wear rates by fN = 10 (the `happycat@20050201` line); what
     // 0.75 itself divided by is not in any source read, so the documented 1.00.93 rate stands.
     if (row.number == 0) {
-        power.taken = 0.7;
+        // 20%, as WebZen's NEW_FORSKYLAND3 cut it from 30 (ObjAttack.cpp:1077-1087) and OpenMU's
+        // 0.75 row has it (the user, 2026-10-25: "20%, MU's").
+        power.taken = 0.8;
         power.health = 50;
         // Ours (the user, 2026-09-30): the Angel's price, his own blows at x0.8. No WebZen
         // server has it -- gObjAngelSprite is asked of the target only -- but it is how the
@@ -138,11 +147,13 @@ PetPower petPower(const content::ItemRow& row) {
         // The Horn of Dinorant, **0.95d's and not 0.75's** (OpenMU Version095d/Items/Pets.cs:40):
         // damage x1.15 and taken x0.9. WebZen's 1.00.93 takes 1 of the rider's life for each x1.15
         // blow, as the Imp's 3 (ObjAttack.cpp:1293-1306), absorbs `90 - option` (:1314-1328), and
-        // wears it by damage/200 a hit taken (user.cpp:10623-10628, NEW_SKILL_FORSKYLAND).
+        // wears it by damage/200 a hit taken (user.cpp:10623-10628, NEW_SKILL_FORSKYLAND). Its
+        // absorb takes its 1 from the one who struck, not the rider (`lpObj->Life -= 1` there).
         power.mount = true;
         power.dealt = 1.15;
         power.taken = 0.9;
         power.lifeCost = 1;
+        power.strikerToll = 1;
         power.wear = 1.0 / 200.0;
     } else if (row.number == kDarkHorseNumber) {
         // The Dark Horse, **the Dark Lord's, 0.99's and not 0.75's**. gObjDarkHorse is the
@@ -152,7 +163,8 @@ PetPower petPower(const content::ItemRow& row) {
         // into m_DurabilitySmall, a WORD, and a point of life goes each 1500 (user.cpp:
         // 10632-10650); at 0 it is dead (`return; // dead`), kept for the Trainer to raise.
         power.mount = true;
-        power.taken = double(100 - (30 + kHorseLevel) / 2) / 100.0;
+        // A newborn's 85; its own level by sim::petPower(row, Held).
+        power.taken = double(100 - (30 + 1) / 2) / 100.0;
         power.takenToll = 1;
         power.wear = 2.0 / 100.0;
         power.wearTally = 1500;
@@ -166,8 +178,6 @@ bool darkHorse(const content::ItemRow& row) {
 }
 
 bool scepter(const content::ItemRow& row) { return row.group == 2 && row.skill == skill::kForceWave; }
-
-int horseDefense(int agility) { return 5 + agility / 20 + 2 * kHorseLevel; }
 
 bool timedPet(const content::ItemRow& row) {
     return row.group == kGroupPets && row.number >= 0 && row.number <= 2;
@@ -758,13 +768,17 @@ const PowerRow* powerOf(uint8_t power) {
          "10% on a cast or a hit: drains life from the monster and heals you",
          kWizardOnly, kInWeapon, Rarity::Ancient, true, true},
         {Power::Requiem, "Requiem",
-         "10% on a cast or a hit: thorns strike up to 4 monsters within 2 tiles, "
+         "15% on a cast or a hit: thorns strike up to 8 monsters within 3 tiles, "
          "which bleed 20% of the hit per second for 5 s",
          kWizardOnly, kInWeapon, Rarity::Ancient, true, true},
         {Power::Sleep, "Sleep",
          "10% on a cast or a hit: puts up to 3 nearby monsters to sleep for up to 8 s; "
          "a hit wakes them",
          kWizardOnly, kInWeapon, Rarity::Ancient, true, true},
+        {Power::StrikeOfDestruction, "Strike of Destruction",
+         "15% on a hit or a skill: the ground breaks in fire under the target, striking up to 8 "
+         "monsters within 3 tiles and setting them burning",
+         kKnightOnly, kInWeapon, Rarity::Ancient, true, true},
     };
     for (const PowerRow& row : kPowers) {
         if (uint8_t(row.power) == power) return &row;
@@ -790,7 +804,8 @@ Stacking stackingOf(Power power) {
         case Power::Pollution:
         case Power::DrainLife:
         case Power::Requiem:
-        case Power::Sleep: return {false, "Doesn't stack"};
+        case Power::Sleep:
+        case Power::StrikeOfDestruction: return {false, "Doesn't stack"};
         // Half of each: whirlDamage summed and whirlPull the best; every Pyroblaster rolls its
         // burst but Fire Ball's +50% is asked `pyroblasts() > 0`.
         case Power::Whirlwind:
@@ -1011,8 +1026,9 @@ bool scrollOfArchangel(const content::ItemRow& row) {
 bool bloodBone(const content::ItemRow& row) { return row.group == kGroupPets && row.number == 17; }
 
 bool archangelWeapon(const content::ItemRow& row) {
+    // The staff, the sword, the crossbow, and the Dark Lord's scepter (2/13, 2026-10-25).
     return (row.group == 5 && row.number == 10) || (row.group == 0 && row.number == 19) ||
-           (row.group == 4 && row.number == 18);
+           (row.group == 4 && row.number == 18) || (row.group == 2 && row.number == 13);
 }
 
 bool classTreasure(const content::ItemRow& row) {

@@ -311,12 +311,12 @@ int64_t buyingPrice(const content::ItemRow& row, int refinement, int pieces, boo
     // A ring and a pendant on the same branch, times one and its option (WebZen's
     // `Gold += Gold * m_Option3` for AT_LIFE_REGENERATION, zzzitem.cpp:2532).
     // The Dark Horse is priced by its level, 2,000,000 a level, and sold for a third (WebZen
-    // CItem::PetValue, zzzitem.cpp; BUGFIX_SELL_PRICE_OF_DARKLOAD_PETS_20050310): 2,000,000 at
-    // the level 1 every horse is here (sim::kHorseLevel).
-    if (darkHorse(row)) return round(int64_t(kHorseLevel) * 2000000);
+    // CItem::PetValue, zzzitem.cpp; BUGFIX_SELL_PRICE_OF_DARKLOAD_PETS_20050310): a newborn's
+    // 2,000,000 here, its own level by sim::petValue.
+    if (darkHorse(row)) return 2000000;
     // And the Dark Raven 1,000,000 a level, the Spirit 30,000,000 at +0 (the horse's) and
     // 15,000,000 at +1 (the raven's) (WebZen zzzitem.cpp, CItem::Value; docs/plans/dark-lord-pets).
-    if (row.group == kPets && row.number == 5) return round(int64_t(kHorseLevel) * 1000000);
+    if (row.group == kPets && row.number == 5) return 1000000;
     if (row.group == kPets && row.number == 31) return round(refinement == 0 ? 30000000 : 15000000);
     if (row.group == kPets) {
         const int64_t dropLevel = row.dropLevel + refinement * 3;

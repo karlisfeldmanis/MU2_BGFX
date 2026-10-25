@@ -206,6 +206,10 @@ constexpr int32_t kRequiem = 224;
 // `AT_SKILL_SLEEP`, the Summoner's first curse: the Ancient rune Sleep's (sim/items.h kSleep...),
 // said as Loosed on each body it put to sleep (fx/sleep.h). MU's number.
 constexpr int32_t kSleep = 219;
+// `AT_SKILL_STRIKE_OF_DESTRUCTION`, the Blade Knight's Season 4 orb skill: the Ancient rune Strike
+// of Destruction's (sim/items.h kSoD...), said as Loosed on the point the ground breaks at
+// (fx/strike_of_destruction.h). MU's number.
+constexpr int32_t kStrikeOfDestruction = 232;
 }  // namespace skill
 
 // What an iced body's walking is multiplied by: OpenMU's `IcedMovementSpeedFactor`, 0.5, which

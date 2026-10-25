@@ -46,6 +46,7 @@ struct PetPower {
     double wear = 0.0;   // the pet's life lost per point of damage he takes
     bool mount = false;  // ridden: he rides off a safe tile (Body::riding)
     int takenToll = 0;   // his own life, paid on every blow he takes (the Dark Horse's 1)
+    int strikerToll = 0; // the striker's life, paid on every blow he takes (the Dinorant's 1)
     // A hit's wear counted whole -- floor(damage x wear) + 1 -- into a tally of this many to a
     // point of the pet's life, where 0 is `wear` a point of damage as it falls (the Dark Horse's).
     int wearTally = 0;

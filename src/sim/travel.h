@@ -43,8 +43,9 @@ int travelIndexOf(const std::string& key);
 // `Quest` is ours (the user, 2026-09-30: "dont allow to teleport to dungeon 1,2,3 if quest line is
 // not started"): a Dungeon floor's row asks its own link of the Golden Archer's chain taken once
 // -- the first floor The Catacombs, the second the next, the third the last (travelQuest).
-// `Wings` is MU's door rule on the Icarus row: wings or a Dinorant worn (sim::canFly).
-enum class TravelRefusal : uint8_t { None, Unknown, Here, Dead, Level, Zen, Quest, Wings, Away };
+// `Wings` is MU's door rule on the Icarus row: wings or a Dinorant worn (sim::canFly); `Mount`
+// Atlans's, no Uniria or Dinorant (sim::barredFromAtlans).
+enum class TravelRefusal : uint8_t { None, Unknown, Here, Dead, Level, Zen, Quest, Wings, Away, Mount };
 
 // The rows of `map`, a bit a row.
 uint32_t travelRowsOf(int32_t map);

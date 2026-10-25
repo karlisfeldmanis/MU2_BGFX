@@ -350,9 +350,22 @@ bool Realm::mix(Service service, int socket) {
         case Service::DarkRaven:
             if (j.recipe == Recipe::DarkHorse || j.recipe == Recipe::DarkRaven) {
                 // The Trainer's Resurrection (WebZen MixSystem.cpp:3051-3245): the box goes either
-                // way, and a success is a newborn pet, level 1, at its whole 255.
+                // way, and a success is a newborn pet, level 1, at its whole 255, with WebZen's rolls
+                // (:3187-3218): its skill at 6 + rate/5 in a hundred, luck one in five, and the
+                // option as a wing's.
                 me().machine.clear();
-                if (made) me().machine.put(0, Held{bred, 0, 255});
+                if (made) {
+                    Held pet{bred, 0, 255};
+                    pet.skill = mixDice_.nextInt(0, 100) < 6 + j.rate / 5;
+                    pet.luck = mixDice_.nextInt(0, 5) == 0;
+                    const int roll = mixDice_.nextInt(0, 100);
+                    switch (mixDice_.nextInt(0, 3)) {
+                        case 0: if (roll < 4) pet.option = 3; break;
+                        case 1: if (roll < 10) pet.option = 2; break;
+                        default: if (roll < 20) pet.option = 1; break;
+                    }
+                    me().machine.put(0, pet);
+                }
             } else if (j.recipe == Recipe::PlusTen || j.recipe == Recipe::PlusEleven) {
                 // The thing is Reference 1: StaysAsIs and up one on success, Disappear on
                 // failure. The jewels Disappear either way.

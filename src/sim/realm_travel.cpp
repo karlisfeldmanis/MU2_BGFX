@@ -321,6 +321,7 @@ TravelRefusal Realm::travelRefusal(int index) const {
     if (hero.level < moveLevel(to.level, hero.kin)) return TravelRefusal::Level;
     if (me().money < travelZen(index)) return TravelRefusal::Zen;
     if (rulesOf(uint32_t(to.map)).flight && !canFly(*tables_, me().bag)) return TravelRefusal::Wings;
+    if (uint32_t(to.map) == kAtlansMap && barredFromAtlans(*tables_, me().bag)) return TravelRefusal::Mount;
     return TravelRefusal::None;
 }
 

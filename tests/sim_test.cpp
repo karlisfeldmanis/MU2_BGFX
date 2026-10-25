@@ -27,6 +27,7 @@
 #include "sim/harmony.h"
 #include "sim/item_link.h"
 #include "sim/items.h"
+#include "sim/lord_pets.h"
 #include "sim/raid_party.h"
 #include "sim/random.h"
 #include "sim/realm_tuning.h"
@@ -998,10 +999,12 @@ void testItems(const content::Tables& tables) {
     // jewel and the two Refining Stones (docs/plans/jewel-of-harmony.md step 1). 425 the same
     // day: the Dark Lord's five scrolls (content/items/misc/Scroll*.json). 433 the same day:
     // his Adamantine set and the Cross Shield (docs/plans/dark-lord-gear.md batch 1); 438 his
-    // Dark Steel (batch 2). A count
+    // Dark Steel (batch 2); 461 his Glorious, Dark Master, Paewang and Sunlight sets and the
+    // Divine, Soleil and Absolute Scepters (batches 3-6); 463 the Crest of Monarch (13/6) and the
+    // Cape of Lord (13/30), cooked ahead of their rules (muremaster2-89's). A count
     // rather than a list, because what it is guarding is the cook -- a
     // recipe that stops being picked up is a row the shelf silently cannot sell.
-    checkEqual(long(tables.items.size()), 438, "438 item rows cooked");
+    checkEqual(long(tables.items.size()), 463, "463 item rows cooked");
     // And Noria's three shops sell only what is cooked: Elf Lala, Eo the Craftsman and Potion
     // Girl Amy, every offer a row (the user, 2026-09-28: "fill Noria's vendors").
     // And Lumen's, whose Guardian Angel and Imp are ours (the user, 2026-09-30: "put imp and
@@ -12571,7 +12574,7 @@ void testRequiemRune(const content::Tables& tables, int rune, int staff, int swo
     };
     std::vector<Pending> pending;
     int casts = 0, calls = 0, most = 0, landed = 0, far = 0, overCount = 0, wrongShare = 0,
-        early = 0, pulses = 0, mostPulses = 0;
+        early = 0, pulses = 0, mostPulses = 0, blows = 0, standing = 0;
     std::map<uint32_t, int> pulsed;  // a bleed's pulses so far, by the body
     ancientHunt(tables, staff, sim::Power::Requiem, true, [&](const sim::Realm& realm) {
         const int64_t now = int64_t(realm.tick());
@@ -12592,6 +12595,13 @@ void testRequiemRune(const content::Tables& tables, int rune, int staff, int swo
                     if (b.monster() && b.alive()) one.placed.push_back({b.id, {b.x, b.y}});
                 }
                 pending.push_back(one);
+            }
+            // Its blows, a rune's and thrown (the staff carries nothing else), and those that
+            // leave the body standing: each of those must bleed.
+            if (h.what == sim::What::Hit && h.rune && h.thrown && !h.bled) {
+                ++blows;
+                const sim::Body* on = realm.find(h.whom);
+                if (on != nullptr && on->alive() && h.a > 0) ++standing;
             }
             if (h.what == sim::What::Hit && h.bled) {
                 const sim::Body* on = realm.find(h.whom);
@@ -12635,17 +12645,21 @@ void testRequiemRune(const content::Tables& tables, int rune, int staff, int swo
     std::printf("  Requiem: %d casts, %d called, at most %d chosen, %d bleeds laid, %d pulses "
                 "(at most %d a bleed), %d far, %d early, %d off-share\n",
                 casts, calls, most, landed, pulses, mostPulses, far, early, wrongShare);
-    check(calls > 0 && landed > 0, "Requiem strikes and bleeds what it chose");
-    checkEqual(overCount, 0, "never more than four");
-    checkEqual(far, 0, "never past two tiles of the point");
+    std::printf("  Requiem: %d blows, %d left standing\n", blows, standing);
+    check(calls > 0 && blows > 0, "Requiem strikes what it chose");
+    // A spell's blow since the two Ancients were matched (2026-10-25): it fells most of
+    // Lorencia's monsters outright, Lightning having worn them, and a fallen one never bleeds.
+    checkEqual(landed, standing, "every body it leaves standing bleeds");
+    checkEqual(overCount, 0, "never more than eight");
+    checkEqual(far, 0, "never past three tiles of the point");
     checkEqual(early, 0, "its blows land 20 ticks after the roll, not before");
     checkEqual(wrongShare, 0, "a pulse is a fifth of the blow that landed");
     // Lightning kills most of Lorencia's monsters inside the bleed's 5 s, so few pulse five times.
-    check(pulses > 0, "and the bleed pulses after");
+    if (landed > 0) check(pulses > 0, "and the bleed pulses after");
     check(mostPulses <= 5, "no more than five pulses a bleed");
     if (casts > 0) {
         const double rate = double(calls) / casts;
-        check(rate > 0.05 && rate < 0.16, "about one cast in ten");
+        check(rate > 0.10 && rate < 0.21, "about one cast in seven (sim::kRequiemChance 0.15)");
     }
 }
 
@@ -12845,6 +12859,168 @@ void testSleepRune(const content::Tables& tables, int rune, int staff, int sword
     }
 }
 
+// Strike of Destruction, the Blade Knight's Season 4 skill on his sword (sim/items.h kSoD...):
+// about one landed swing in seven, and about one knight skill in seven that strikes something -- once
+// a use, never once a body, never on a skill that struck nothing -- the ground broken under what
+// he struck, up to eight bodies within three tiles struck at once, in fire, and set burning.
+void testStrikeOfDestructionRune(const content::Tables& tables, int rune, int staff, int sword) {
+    std::printf("strike of destruction rune\n");
+    using sim::Kin;
+    using sim::Power;
+    const sim::PowerRow* row = sim::powerOf(uint8_t(Power::StrikeOfDestruction));
+    check(row != nullptr && row->rarity == sim::Rarity::Ancient && row->second && row->once &&
+              row->weapon() && !sim::stackingOf(Power::StrikeOfDestruction).stacks,
+          "an Ancient weapon rune, a second class's, one to a thing, not stacking");
+    check(sim::powerOf(uint8_t(Power::Sleep) + 1) == row, "it follows Sleep, the numbers unbroken");
+    {
+        const auto held = [](int item, uint8_t sockets, Power first) {
+            sim::Held h{int32_t(item), 0, 1};
+            h.sockets = sockets;
+            h.powers[0] = uint8_t(first);
+            return h;
+        };
+        const auto sets = [&](int into, Kin kin, bool second) {
+            return sim::settable(tables, held(rune, 0, Power::StrikeOfDestruction),
+                                 held(into, 1, Power::None), kin, second);
+        };
+        check(sets(sword, Kin::DarkKnight, true), "a Blade Knight sets it in his sword");
+        check(!sets(sword, Kin::DarkKnight, false) && !sets(staff, Kin::DarkWizard, true) &&
+                  !sets(sword, Kin::MagicGladiator, true),
+              "nobody else does");
+        sim::Random dice(20261025);
+        int at = 0, below = 0;
+        for (int i = 0; i < 4000; ++i) {
+            at += sim::drawRunePower(dice, Kin::DarkKnight, true, 160) ==
+                  uint8_t(Power::StrikeOfDestruction);
+            below += sim::drawRunePower(dice, Kin::DarkKnight, true, 140) ==
+                     uint8_t(Power::StrikeOfDestruction);
+        }
+        std::printf("  Strike of Destruction in 4000 drops: %d at 140, %d at 160\n", below, at);
+        check(at > 0 && below == 0, "it falls past Aida and not before");
+    }
+    // A level-150 knight hunting in Lorencia with it in his sword, 12000 ticks: plain swings, or
+    // Twisting Slash every 25 ticks with his swings between.
+    struct Tally {
+        int swings = 0, uses = 0, rolls = 0, onSwing = 0, onSkill = 0, twice = 0, unstruck = 0,
+            most = 0, over = 0, far = 0, unchilled = 0, chilled = 0, struck = 0;
+    };
+    const auto hunt = [&](bool skills, bool second) {
+        Tally t;
+        sim::Realm realm;
+        realm.raise(&tables, 5, 200, 160, Kin::DarkKnight, 150);
+        if (second) promote(realm);
+        realm.learn(sim::skill::kTwistingSlash);
+        const uint8_t powers[3] = {uint8_t(Power::StrikeOfDestruction), 0, 0};
+        realm.give(sword, sim::kWeaponRight, 0, -1, false, 0, 0, 1, powers);
+        realm.undying(true);
+        int32_t swung = 0;  // the skill of the blow in his hands, from its Swung
+        uint32_t fighting = 0;
+        for (int tick = 0; tick < 12000 && realm.hero().alive(); ++tick) {
+            if (realm.hero().mana < 100) {
+                sim::HeroRecord record = realm.record();
+                record.mana = realm.hero().maxMana;
+                realm.restore(record);
+            }
+            const sim::Body& hero = realm.hero();
+            uint32_t nearest = 0;
+            float best = 1e9f;
+            for (const sim::Body& one : realm.bodies()) {
+                if (!one.monster() || !one.alive()) continue;
+                const float dx = one.x - hero.x, dy = one.y - hero.y;
+                if (dx * dx + dy * dy < best) {
+                    best = dx * dx + dy * dy;
+                    nearest = one.id;
+                }
+            }
+            if (skills && nearest != 0 && tick % 25 == 0 && best <= 4.0f) {
+                realm.invoke(sim::skill::kTwistingSlash, nearest);
+            } else if (nearest != 0 && nearest != fighting) {
+                fighting = nearest;
+                sim::Request request;
+                request.kind = sim::Request::Kind::Attack;
+                request.target = nearest;
+                realm.ask(request);
+            }
+            realm.step();
+            const int64_t now = int64_t(realm.tick());
+            const uint32_t me = realm.hero().id;
+            bool landed = false;
+            int rolled = 0;
+            const sim::Happening* loosed = nullptr;
+            for (const sim::Happening& h : realm.happenings()) {
+                if (h.who != me) continue;
+                if (h.what == sim::What::Swung) swung = h.a;
+                if (h.what == sim::What::Hit && !h.rune && !h.thrown && !h.reflected && !h.bled &&
+                    !h.poisoned && !h.burned) {
+                    landed = true;
+                }
+                if (h.what == sim::What::Loosed && h.a == sim::skill::kStrikeOfDestruction) {
+                    ++rolled;
+                    loosed = &h;
+                }
+            }
+            if (landed) {
+                if (swung == 0) ++t.swings;
+                else ++t.uses;
+            }
+            t.rolls += rolled;
+            t.twice += rolled > 1;
+            if (rolled > 0 && !landed) ++t.unstruck;
+            if (rolled > 0 && landed) {
+                if (swung == 0) ++t.onSwing;
+                else ++t.onSkill;
+            }
+            if (loosed == nullptr) continue;
+            t.most = std::max(t.most, loosed->c);
+            t.over += loosed->c < 1 || loosed->c > sim::kSoDMost;
+            // Its blows, each on a body within three tiles of the point (a little more for what
+            // stepped since in the same tick), each landed one set burning from now.
+            for (const sim::Happening& h : realm.happenings()) {
+                if (h.who != me || h.what != sim::What::Hit || !h.rune) continue;
+                ++t.struck;
+                const sim::Body* on = realm.find(h.whom);
+                if (on == nullptr) continue;
+                const float dx = on->x - loosed->x, dy = on->y - loosed->y;
+                t.far += dx * dx + dy * dy > (sim::kSoDTiles + 0.5f) * (sim::kSoDTiles + 0.5f);
+                if (h.a > 0 && on->alive() && !on->elite) {
+                    if (on->burnUntil == now + sim::kBurnRuneTicks) ++t.chilled;
+                    else ++t.unchilled;
+                }
+            }
+        }
+        return t;
+    };
+    const Tally plain = hunt(false, true);
+    std::printf("  swings: %d landed, %d rolls (%d on a swing), at most %d struck, %d struck in "
+                "all, %d burning\n",
+                plain.swings, plain.rolls, plain.onSwing, plain.most, plain.struck, plain.chilled);
+    check(plain.rolls > 0 && plain.struck >= plain.rolls, "it breaks the ground on his swings");
+    if (plain.swings > 0) {
+        const double rate = double(plain.onSwing) / plain.swings;
+        check(rate > 0.10 && rate < 0.21, "about one landed swing in seven (sim::kSoDChance 0.15)");
+    }
+    const Tally skilled = hunt(true, true);
+    std::printf("  Twisting Slash: %d uses that struck, %d swings, %d rolls (%d on a skill, %d on "
+                "a swing), %d twice in a tick, %d with nothing struck, at most %d struck\n",
+                skilled.uses, skilled.swings, skilled.rolls, skilled.onSkill, skilled.onSwing,
+                skilled.twice, skilled.unstruck, skilled.most);
+    check(skilled.onSkill > 0, "it rolls on a knight's skill that struck");
+    if (skilled.uses > 0) {
+        const double rate = double(skilled.onSkill) / skilled.uses;
+        check(rate > 0.05 && rate < 0.16, "about one skill use in ten, not one a body");
+    }
+    for (const Tally* t : {&plain, &skilled}) {
+        checkEqual(t->twice, 0, "never twice for one action");
+        checkEqual(t->unstruck, 0, "never on a blow or skill that struck nothing");
+        checkEqual(t->over, 0, "never more than eight");
+        checkEqual(t->far, 0, "never past three tiles of the point");
+        checkEqual(t->unchilled, 0, "each body it lands on set burning");
+    }
+    check(plain.chilled > 0, "and it burns");
+    const Tally first = hunt(true, false);
+    checkEqual(first.rolls, 0, "a first-class knight's never rolls");
+}
+
 void testAncientRunes(const content::Tables& tables) {
     std::printf("ancient runes\n");
     using sim::Kin;
@@ -12970,6 +13146,7 @@ void testAncientRunes(const content::Tables& tables) {
     testDrainLifeRune(tables, rune, staff, sword);
     testRequiemRune(tables, rune, staff, sword);
     testSleepRune(tables, rune, staff, sword);
+    testStrikeOfDestructionRune(tables, rune, staff, sword);
 }
 
 void testGroupRunes(const content::Tables& tables) {
@@ -13928,7 +14105,7 @@ void testPets(const content::Tables& tables) {
     if (angel < 0 || imp < 0) return;
     const sim::PetPower a = sim::petPower(tables.items[size_t(angel)]);
     const sim::PetPower i = sim::petPower(tables.items[size_t(imp)]);
-    check(a.taken == 0.7 && a.health == 50 && a.lifeCost == 0, "the Angel takes 30% and adds 50");
+    check(a.taken == 0.8 && a.health == 50 && a.lifeCost == 0, "the Angel takes 20% and adds 50");
     check(a.dealt == 0.8, "and costs 20% of his own damage (ours)");
     check(i.dealt == 1.3 && i.lifeCost == 3, "the Imp adds 30% for 3 life a blow");
     check(a.wear == 0.03 && i.wear == 0.02, "and they wear at gObjSpriteDamage's rates");
@@ -14166,7 +14343,7 @@ void testDinorant(const content::Tables& tables) {
 }
 
 // The Dark Horse (13/4, docs/game/mount.md): the Dark Lord's mount, at WebZen's rules and a
-// horse's level 1 (sim::kHorseLevel). Refused to the other classes and below 220.
+// newborn's level 1. Refused to the other classes and below 220.
 // A scepter is a mace, not a staff: its option and its excellent 4 and 5 are a mace's, and its
 // magic power is the Dark Raven's (OpenMU Weapons.cs:400-423, MuMain IsCepterItem).
 void testScepter(const content::Tables& tables) {
@@ -14206,7 +14383,7 @@ void testDarkHorse(const content::Tables& tables) {
     const sim::PetPower power = sim::petPower(row);
     check(power.mount && power.taken == 0.85 && power.takenToll == 1 && power.keeps,
           "ridden, 85% of each blow for 1 life, kept dead at none");
-    checkEqual(sim::horseDefense(100), 12, "defence 5 + 100/20 + 2");
+    checkEqual(sim::horseDefense(100, 1), 12, "defence 5 + 100/20 + 2");
     checkEqual(sim::buyingPrice(row, 0, 1, false, 0, 0), int64_t(2000000), "2,000,000 a level");
     checkEqual(sim::sellingPrice(row, 0, 1, false, 0, 0), int64_t(666600), "a third back");
     sim::Wearer lord;
@@ -14238,7 +14415,7 @@ void testDarkHorse(const content::Tables& tables) {
     check(realm.hero().riding, "he rides it off a safe tile");
     // Halved with the armour's (ObjCalCharacter.cpp:1183, rules.cpp's `* 0.5`).
     const int rise = realm.hero().stats.defense - bare;
-    check(std::abs(rise - sim::horseDefense(agility) / 2) <= 1, "his defence rises by half the horse's");
+    check(std::abs(rise - sim::horseDefense(agility, 1) / 2) <= 1, "his defence rises by half the horse's");
 }
 
 // Fire Breath (sim/skills.cpp, fx/firebreath.h): the horn's skill, not learned. A knight knows it

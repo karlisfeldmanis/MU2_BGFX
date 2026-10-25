@@ -70,7 +70,8 @@ int64_t mendPrice(int64_t value, int life) {
     const double root = std::sqrt(double(std::min<int64_t>(value, 400000000)));
     double price = 3.0 * root * std::sqrt(root) * (1.0 - double(std::max(0, life)) / 255.0) + 1.0;
     if (life <= 0) price *= 2.0;
-    return int64_t(price);
+    const int64_t zen = int64_t(price);
+    return zen >= 1000 ? zen / 100 * 100 : zen >= 100 ? zen / 10 * 10 : zen;
 }
 
 }  // namespace mu::sim

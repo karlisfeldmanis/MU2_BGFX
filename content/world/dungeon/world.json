@@ -65,7 +65,7 @@
         "boid_bat",
         ""
       ],
-      "note": "MODEL_BAT01 (GOBoid.cpp:1327-1328): the bird's 1.0, its light and its 0.5 (GOBoid.cpp:1316-1320), SOUND_BAT01 alone. The cook spaces its four keys 0.25 s apart, so 6.25 for MU's key a frame at 0.04 s."
+      "note": "MODEL_BAT01 (GOBoid.cpp:1333-1334): the bird's 1.0, its light and its 0.5 (GOBoid.cpp:1320-1324), SOUND_BAT01 alone. The cook spaces its four keys 0.25 s apart, so 6.25 for MU's key a frame at 0.04 s."
     },
     "crawls": {
       "model": "Rat01",

@@ -17,6 +17,7 @@
 
 #include "core/jobs.h"
 #include "core/log.h"
+#include "game/frustum.h"
 #include "game/play.h"
 #include "game/play_tuning.h"
 #include "game/roster.h"
@@ -484,12 +485,10 @@ void Play::petLevelled(const sim::Happening& happening) {
             if (otherPetsOf_[i] == happening.who) pets = &otherPets_[i];
         }
         if (pets && pets->ravenAt(at)) ravenShow_.level(at, up);
-    } else if (const Drawn* rider = drawnOf(happening.who)) {
-        // The horse's twelve flares round it (CSPetSystem's level flares; client.md section 2): ours
-        // the raven's spiral, at the rider's middle.
+    } else if (const Drawn* rider = drawnOf(happening.who); rider && up) {
+        // The horse's twelve flares about its hooves; nothing on a level down (GOBoid.cpp:469-491).
         for (int k = 0; k < 3; ++k) at[k] = rider->figure.position()[k];
-        at[1] += 0.6f;
-        ravenShow_.level(at, up);
+        ravenShow_.horseLevel(at);
     }
     if (happening.who == realm_.hero().id) {
         Gain gain{Gain::Kind::Notice, 0};
@@ -507,6 +506,12 @@ void Play::petLight(const Pets& pets, const Figure& owner) {
 }
 
 void Play::ravenFrame(Pets& pets, float seconds) {
+    // Unseen, it gives up what it was doing (Pets::ravenUnseen): TestFrustrum2D's test is of the
+    // ground under it, 20 out, so high over him it is still seen.
+    if (float bird[3]; ground_ && pets.ravenAt(bird)) {
+        bird[1] = ground_->heightAt(bird[0], bird[2]);
+        if (!Frustum(shot_).holds(bird, 0.2f)) pets.ravenUnseen();
+    }
     // What its steps asked for (fx/raven.h): a spark off a bone 0..65 as it flies, the dash's
     // streaks and flash at the bird, the charge's light on every other bone from 0 or 1, as MU's
     // `i < 66` counts them (CSPetSystem.cpp:425-437, 729-745, 759-775).
@@ -578,6 +583,81 @@ int Play::horseAction(const Drawn& rider, int mount) const {
                                                             : 0;
 }
 
+void Play::mountDust(const Drawn& rider, bool galloping, float& owed, float seconds) {
+    // White in Devias, MU's BITMAP_SMOKE, and smoke02's brown everywhere else (fx/dust.h); none
+    // over Icarus (WD_10HEAVEN), where only the Dark Horse's hooves strike up anything.
+    if (!galloping || !ground_ || realm_.tables()->map == sim::kIcarusMap) {
+        owed = 0.0f;
+        return;
+    }
+    const auto dustDice = [this]() {
+        dustSeed_ ^= dustSeed_ << 13;
+        dustSeed_ ^= dustSeed_ >> 17;
+        dustSeed_ ^= dustSeed_ << 5;
+        return dustSeed_;
+    };
+    owed += seconds * 25.0f / 2.0f;
+    while (owed >= 1.0f) {
+        owed -= 1.0f;
+        const float* feet = rider.figure.position();
+        float at[3] = {feet[0] + float(int(dustDice() % 64) - 32) * 0.01f, feet[1],
+                       feet[2] + float(int(dustDice() % 64) - 32) * 0.01f};
+        at[1] = ground_->heightAt(at[0], at[2]);
+        dust_.puff(at, rider.figure.yaw(), snowy_);
+    }
+}
+
+void Play::hoofWaves(Pets& pets, float seconds) {
+    // Over Icarus (WD_10HEAVEN) the Dark Horse strikes a ring off each hoof as it comes down, and
+    // 5-9 BITMAP_SMOKE about it, 25 either way and 10 under (GOBoid.cpp:346-385).
+    float at[3];
+    if (realm_.tables()->map != sim::kIcarusMap || !pets.hoof(seconds, at)) return;
+    const auto jitter = [this](int span) {
+        dustSeed_ ^= dustSeed_ << 13;
+        dustSeed_ ^= dustSeed_ >> 17;
+        dustSeed_ ^= dustSeed_ << 5;
+        return float(int(dustSeed_ % uint32_t(span)) - span / 2) * 0.01f;
+    };
+    const float ring[3] = {at[0] + jitter(16), at[1], at[2] + jitter(16)};
+    earthshake_.hoof(ring);
+    const int smoke = 5 + int(dustSeed_ % 5u);
+    for (int i = 0; i < smoke; ++i) {
+        const float puff[3] = {at[0] + jitter(50), at[1] + jitter(16) - 0.1f, at[2] + jitter(50)};
+        dust_.puff(puff, 0.0f, true);
+    }
+}
+
+void Play::otherHooves(float seconds) {
+    // SetPlayerWalk plays the gallop for every Dark Lord on his horse off a safe tile, one roll a
+    // frame each, on buffers of one channel the whole world shares (ZzzCharacter.cpp:764-767).
+    const std::vector<sim::Body>& bodies = realm_.bodies();
+    const uint32_t hero = realm_.hero().id;
+    for (size_t i = 0; i < drawn_.size() && i < bodies.size() && i < otherPets_.size(); ++i) {
+        const sim::Body& body = bodies[i];
+        Pets& pets = otherPets_[i];
+        const Drawn& rider = drawn_[i];
+        const FigureBody* look = rider.figure.body();
+        const bool galloping = body.player && body.id != hero && otherPetsOf_[i] == body.id && body.alive() &&
+                               rider.visible && look && rider.figure.clip() == look->horseRunClip &&
+                               !tables_.grid.safe(body.column(), body.row());
+        if (!galloping || heard_.hoof < 0) {
+            pets.hoofOwed = 0.0f;
+            continue;
+        }
+        pets.hoofOwed = std::min(pets.hoofOwed + seconds * 25.0f, 4.0f);
+        while (pets.hoofOwed >= 1.0f) {
+            pets.hoofOwed -= 1.0f;
+            hoofSeed_ ^= hoofSeed_ << 13;
+            hoofSeed_ ^= hoofSeed_ >> 17;
+            hoofSeed_ ^= hoofSeed_ << 5;
+            float& busy = hoofBusy_[hoofSeed_ % 3u];
+            if (busy > 0.0f) continue;
+            busy = std::max(sound_.seconds(heard_.hoof), 0.1f);
+            emit(heard_.hoof, rider.crown[0], rider.crown[2], rider.id);
+        }
+    }
+}
+
 // The other players' pets and mounts, as the hero's in Play::update and their wings above: each
 // off his own bag, the horse under him while he rides. Not the hero (pets_) and not a raider.
 void Play::otherPets(float seconds) {
@@ -608,8 +688,11 @@ void Play::otherPets(float seconds) {
         otherPets_[i].raven(seconds, rider.figure, raven, tables_.grid.safe(body.column(), body.row()),
                             mount == sim::kDarkHorseNumber);
         ravenFrame(otherPets_[i], seconds);
-        otherPets_[i].ride(seconds, rider.figure, mount, body.riding, horseAction(rider, mount));  // and as he dies (Play::update)
+        const int action = horseAction(rider, mount);
+        otherPets_[i].ride(seconds, rider.figure, mount, body.riding, action);  // and as he dies (Play::update)
         horseBreath(otherPets_[i], seconds);
+        hoofWaves(otherPets_[i], seconds);
+        mountDust(rider, action == 2 && body.riding && rider.visible, otherPets_[i].dustOwed, seconds);
     }
 }
 

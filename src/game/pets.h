@@ -81,6 +81,16 @@ public:
     // a BITMAP_SMOKE at (50, -4, 0) in bone 27's frame, Bone03, its head (GOBoid.cpp:432-447) --
     // whatever it is doing. True, with the world point in `at`, when one is due this frame.
     bool breathe(float seconds, float at[3]);
+    // The rider's Teleport fading the mount out with him, 1 for none: MU's mount loses a tenth of
+    // its alpha a frame while its owner is TELEPORT_BEGIN or TELEPORT (GOBoid.cpp:505-513).
+    void setRiderFade(float fade) { riderFade_ = fade; }
+    // Reference frames owed toward the next roll of the mount's dust and its hoofbeats, this
+    // rider's (Play::mountDust, Play::otherHooves).
+    float dustOwed = 0.0f, hoofOwed = 0.0f;
+    // **The Dark Horse's hooves over Icarus**, after `ride`: one roll a reference frame while its
+    // run's key is 1 to 1.8, each window its own leg -- bones 19, 25, 32 and 38 -- at (120, 0,
+    // -32..31) in that bone's frame (GOBoid.cpp:346-385). True, with the world point in `at`.
+    bool hoof(float seconds, float at[3]);
     // The mount's gallop, for a recording's cut (Play::Stride).
     float gallop() const { return horse_.clock(); }
     void setGallop(float clock) { horse_.setClock(clock); }
@@ -106,6 +116,9 @@ public:
     bool ravenLetGo(float from[3], float to[3], float& yaw);
     // Where it is, for its sounds and a level's flares; false while none flies.
     bool ravenAt(float out[3]) const;
+    // Off the screen this frame: whatever it was about, it flies on at 3, unless it is swinging in
+    // onto his hand (RenderPet's unseen branch, CSPetSystem.cpp:645-651).
+    void ravenUnseen();
     // Its cry, one reference frame in 6000 (CSPetSystem.cpp:592): true the frame it calls.
     bool ravenCry(float seconds);
     // What its steps this frame asked to be drawn about it (CSPetSystem's MovePet and
@@ -133,7 +146,7 @@ private:
     void stepRaven(const float owner[3], const float hand[3], const float perch[3], bool safe, bool horse);
     void drawRaven(gfx::Renderer& renderer, std::vector<float>& scratch,
                    std::vector<gfx::Drawable>& out, std::vector<gfx::Drawable>* casters);
-    void spawnAngel(const float owner[3]);
+    void spawnAngel(const float owner[3], float ownerYaw);
     void stepAngel(const float owner[3]);
     float roll();  // 0..1
     int dice(int n) { return int(roll() * float(n)) % n; }  // rand() % n
@@ -145,11 +158,13 @@ private:
     const FigureBody* darkHorseBody_ = nullptr;
     int breathBone_ = -1;      // the Dark Horse's Bone03, by name
     float breathOwed_ = 0.0f;  // reference frames toward the next roll
+    float hoofOwed_ = 0.0f;    // and the hooves'
     const FigureBody* horseOf_ = nullptr;  // which of the two `horse_` stands as
     Figure angel_, imp_, horse_;
     bool horseUp_ = false;
     bool flying_ = false;  // setFlying
     float horseIn_ = 0.0f;  // 0 gone, 1 there: the fade at a safe zone's edge
+    float riderFade_ = 1.0f;  // setRiderFade
     // Where the rider stood last frame: a jump past kHorseJump (a respawn, a warp) takes the horse
     // away at once rather than fading it in his new place.
     float riderAt_[3] = {};

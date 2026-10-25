@@ -286,6 +286,25 @@ void RavenShow::level(const float at[3], bool up) {
     }
 }
 
+void RavenShow::horseLevel(const float at[3]) {
+    constexpr float kOut = 50.0f * kUnit;
+    const float corners[4][2] = {{-kOut, 0.0f}, {0.0f, -kOut}, {kOut, 0.0f}, {0.0f, kOut}};
+    for (const auto& corner : corners) {
+        const float from[3] = {at[0] + corner[0], at[1], at[2] + corner[1]};
+        for (int i = 0; i < 3; ++i) {
+            Joint* one = free();
+            if (!one) return;
+            *one = Joint{};
+            one->alive = true;
+            one->kind = kFlare;
+            one->life = 50.0f;
+            one->spin = unit() * 2.0f * kPi;
+            one->rise = (2.0f + unit() * 2.5f) * kUnit;
+            for (int k = 0; k < 3; ++k) one->aim[k] = one->at[k] = one->was[k] = from[k];
+        }
+    }
+}
+
 void RavenShow::update(float seconds) {
     const float frames = seconds * kFps;
     // The spirits a whole frame at a time, for MU's rolls are a frame's.

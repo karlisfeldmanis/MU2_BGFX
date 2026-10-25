@@ -65,6 +65,9 @@ public:
     void ball(const float from[3], const float to[3], float yaw);
     // A level up (or down) at the bird.
     void level(const float at[3], bool up);
+    // The Dark Horse's level up: three of the same flares at each of four points 50 out round its
+    // hooves, square to the world (GOBoid.cpp:469-488, ExtState 1); a level down shows nothing.
+    void horseLevel(const float at[3]);
 
     void update(float seconds);
     void gather(gfx::Effects& effects) const;

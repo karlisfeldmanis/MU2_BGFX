@@ -1,0 +1,35 @@
+{
+  "item": "PlanCrackB",
+  "mu_name": "Strike of Destruction's a short streak crack, 0.8 m, with columns 0.7 m sinking -- the line toward the target",
+  "mu_name_from": "Data/Effect/knight_plancrack_b.bmd. MuMain (Season 6).",
+  "kind": "destruction",
+  "why_this_one": "MODEL_KNIGHT_PLANCRACK_B (ZzzOpenData.cpp:4587-4589), one every 55 units from the impact toward the target, turned his way +-10-29 degrees alternately (MoveHandlers.cpp:7560-7575). LifeTime 25, alpha -0.04, lifted 15, turned 90 (ZzzEffect.cpp:4834-4840; MoveHandlers.cpp:7697-7704). RENDER_TEXTURE | RENDER_BRIGHT in (0.3, 0.3, 1.0) x Alpha. See game/fx/strike_of_destruction.",
+  "mesh": "PlanCrackB_00.obj",
+  "mesh_from": "muextract export-obj --action=0 --key=N on Data/Effect/knight_plancrack_b.bmd, from MuMain: one action of 5 keys, 42 triangles.",
+  "poses": [
+    "PlanCrackB_00.obj",
+    "PlanCrackB_01.obj",
+    "PlanCrackB_02.obj",
+    "PlanCrackB_03.obj",
+    "PlanCrackB_04.obj"
+  ],
+  "poses_from": "All five keys, the columns standing in the cracks sinking from the first to the last; blended at 0.3 a key a frame and held at the last, as MU plays the action once.",
+  "parts": [
+    {
+      "group": "grandmark",
+      "sheet": "grandmark.png",
+      "blend": "additive",
+      "note": "Data/Effect/grandmark.OZJ, 128 by 64, a white jagged streak: the crack marks, added."
+    },
+    {
+      "group": "lines2",
+      "sheet": "lines2.png",
+      "blend": "additive",
+      "note": "Data/Effect/lines2.OZJ, 32 by 64, horizontal light streaks: the light columns, added, V scrolled up them (ZzzObject.cpp:599-603, :617-628)."
+    }
+  ],
+  "scale": 1.0,
+  "scale_from": "the caller's Scale.",
+  "frames": 25,
+  "frames_from": "`o->LifeTime = 25`."
+}

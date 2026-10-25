@@ -691,6 +691,7 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
         hero.pet.health += one.health;
         hero.pet.lifeCost += one.lifeCost;
         hero.pet.takenToll += one.takenToll;
+        hero.pet.strikerToll += one.strikerToll;
         hero.pet.mount = hero.pet.mount || one.mount;
         // The Dark Horse's defence, beside the armour's and never worn down with it
         // (ObjCalCharacter.cpp:1082-1090; sim::horseDefense).
@@ -919,6 +920,11 @@ bool Realm::moveItem(int from, int to) {
     if (rulesOf(tables_->map).flight) {
         Satchel trial = me().bag;
         if (!move(*tables_, wearer(), trial, from, to) || !canFly(*tables_, trial)) return false;
+    }
+    // In Atlans, no Uniria or Dinorant put on (gObjIsItemPut, user.cpp:15988-16003).
+    if (tables_->map == kAtlansMap && !barredFromAtlans(*tables_, me().bag)) {
+        Satchel trial = me().bag;
+        if (!move(*tables_, wearer(), trial, from, to) || barredFromAtlans(*tables_, trial)) return false;
     }
     if (!move(*tables_, wearer(), me().bag, from, to)) return false;
     if (wearable(from) || wearable(to)) rearm(mine());
@@ -2057,11 +2063,14 @@ void Realm::wearOnTaken(int took) {
 }
 
 void Realm::dropSpirit(const Body& dead, int level) {
-    if (level < kRavenSpiritFrom || spiritDice_.nextInt(0, kSpiritDropOdds) != 0) return;
+    if (level < kRavenSpiritFrom) return;
+    // One roll, each Spirit its own one in kSpiritDropOdds of it: the Raven's (+1) from 96, the
+    // Horse's (+0) from 102, so twice the chance of one past 102.
+    const int roll = spiritDice_.nextInt(0, kSpiritDropOdds);
+    const int plus = roll == 0 ? 1 : roll == 1 && level >= kHorseSpiritFrom ? 0 : -1;
+    if (plus < 0) return;
     const int32_t item = tables_->itemAt(kGroupPets, kSpiritNumber);
     if (item < 0) return;
-    // The Raven's from 96, the Horse's from 102: past 102 either, one drawn.
-    const int plus = level < kHorseSpiritFrom ? 1 : spiritDice_.nextInt(0, 2);
     Lying one;
     one.what = Held{item, int16_t(plus), 1};
     std::tie(one.column, one.row) = clearing(dead.column(), dead.row());
@@ -2076,9 +2085,11 @@ void Realm::feedPets(Body& hero, int32_t award) {
     const int at = playerOfId(hero.id);
     if (at < 0 || !tables_) return;
     For him(*this, size_t(at));
+    // Split by what is worn, dead or not (gObjSetExpPetItem, user.cpp:32513-32519): with both on,
+    // each its tenth, and a dead one's is lost (feedPet gives nothing at nought).
     const auto levelled = [&](int slot) {
         const Held& h = me().bag[slot];
-        return !h.empty() && levelledPet(tables_->items[size_t(h.item)]) && h.durability > 0;
+        return !h.empty() && levelledPet(tables_->items[size_t(h.item)]);
     };
     const bool horse = levelled(kMount), raven = levelled(kWeaponLeft);
     if (!horse && !raven) return;

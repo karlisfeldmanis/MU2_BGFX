@@ -1036,10 +1036,19 @@ void Realm::channel(Body& hero) {
         ++hero.channelStruckCount;
     }
     say(What::Loosed, hero, row->number, 0, int32_t(hero.channelLast), next->id);
+    const bool first = hero.channelLast == 0;
     hero.channelLast = next->id;
     hero.channelLastX = next->x;
     hero.channelLastY = next->y;
+    const size_t said = happenings_.size();
     strikeAt(hero, *next, heroForce(hero, *row), row, true);
+    // A knight's channel rolls his Ancient once, on its first strike that lands, as his skill
+    // does in Realm::land (sim/items.h kSoD...); a wizard's rolled as it began.
+    if (first && hero.player && hero.kin == Kin::DarkKnight && !row->wizardry && hero.alive() &&
+        struckSince(hero, said) != 0) {
+        Body* aimed = body(hero.channelAim);
+        channelRunes(hero, aimed != nullptr ? *aimed : *next);
+    }
 }
 
 bool Realm::blinkTo(const Body& hero, const SkillRow& row, int column, int row_, int* outColumn,

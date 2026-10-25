@@ -1,0 +1,21 @@
+{
+  "item": "NightWater01",
+  "mu_name": "Strike of Destruction's blades of light, a 4.5 m fan of long thin violet-blue spikes splayed up and out",
+  "mu_name_from": "ZzzOpenData.cpp:4582-4583: MODEL_NIGHTWATER_01, Data/Effect/nightwater01.bmd on Swordeff_mono. MuMain (Season 6).",
+  "kind": "destruction",
+  "why_this_one": "Four a Strike of Destruction (MoveHandlers.cpp:7549-7576, :7606-7634): two at the impact before him (scale 1), two at the point (2 and 1), each in (0.3, 0.3, 1.0). LifeTime 25, a random turn (ZzzEffect.cpp:4809-4815); Alpha -0.04 a frame (MoveHandlers.cpp:7671-7677). RENDER_TEXTURE | RENDER_BRIGHT, added in Light x Alpha (ZzzObject.cpp:611-616). See game/fx/strike_of_destruction.",
+  "mesh": "NightWater01.obj",
+  "mesh_from": "muextract export-obj on Data/Effect/nightwater01.bmd, from MuMain: one bone, one key, 40 triangles.",
+  "parts": [
+    {
+      "group": "Swordeff_mono",
+      "sheet": "swordeff_mono.png",
+      "blend": "additive",
+      "note": "Data/Effect/Swordeff_mono.OZJ, 64 square, a white upward spray of light: added."
+    }
+  ],
+  "scale": 1.0,
+  "scale_from": "`o->Scale` 1 or 2 by the caller.",
+  "frames": 25,
+  "frames_from": "`o->LifeTime = 25`."
+}

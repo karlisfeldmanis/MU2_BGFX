@@ -106,13 +106,14 @@ float Pets::roll() {
     return float(seed_ >> 8) / float(1u << 24);
 }
 
-void Pets::spawnAngel(const float owner[3]) {
-    // CreateMount's MODEL_HELPER case: anywhere within 256 of him and 128-256 above.
+void Pets::spawnAngel(const float owner[3], float ownerYaw) {
+    // CreateMount's MODEL_HELPER case: anywhere within 256 of him and 128-256 above, facing his
+    // way (CreateMountSub's `VectorCopy(Owner->Angle, o->Angle)`, GOBoid.cpp:92).
     at_[0] = owner[0] + float(dice(512) - 256);
     at_[1] = owner[1] + float(dice(512) - 256);
     at_[2] = owner[2] + float(dice(128) + 128);
     direction_[0] = direction_[1] = direction_[2] = 0.0f;
-    heading_ = float(dice(360));
+    heading_ = ownerYaw * 180.0f / kPi;
     drawnHeading_ = heading_;
     std::memcpy(was_, at_, sizeof(was_));
     frames_ = 0.0f;
@@ -177,7 +178,7 @@ void Pets::ride(float seconds, const Figure& hero, int worn, bool riding, int ac
         horseUp_ = false;
     }
     // Uniria's swing runs on its own clock, and the dragon's flight: he sits still on it then, and
-    // its wingbeat is its own (MU runs the two on two clocks). Everything else is held to his.
+    // its wingbeat is its own (MU runs the two on two clocks).
     const bool ownClock = action == 3 || (mounted_ == 3 && flying_);
     // The dragon's attack is its 4, Uniria's 3 (GOBoid.cpp:566-578); 0 and 2 are both's.
     if (mounted_ == 3 && action == 3) action = 4;
@@ -191,7 +192,9 @@ void Pets::ride(float seconds, const Figure& hero, int worn, bool riding, int ac
     // clock was cut at half by his quicker swings and begun again, and its idle held to his clip
     // jumped as his swing gave way to his stand (0.83 to 0.02 in a frame) -- the legs snapped
     // twice a swing. One swing is now one whole kick, as one bound is one stride.
-    const bool slaved = mounted_ == 4 ? action != 0 : !ownClock;
+    // Uniria's and the dragon's stand on their own 0.34 too (GOBoid.cpp:592), as MU runs every
+    // mount: only their run is held to his.
+    const bool slaved = mounted_ == 4 ? action != 0 : !ownClock && action == 2;
     // He sits 30 over the ground on the dragon (Play's kDinorantLift) and it stands on it.
     float ground[3] = {hero.position()[0], hero.position()[1], hero.position()[2]};
     if (mounted_ == 3) {
@@ -250,7 +253,7 @@ void Pets::ride(float seconds, const Figure& hero, int worn, bool riding, int ac
     // And in step with him. MU runs the two on two clocks, and Uniria's leap and its run ride
     // are both 7 keys at 0.34, so they hold together there; drawn here they part on a
     // crossfade, a hitch or a resumed walk phase, and the rider bounces off the saddle's beat.
-    // So the leap (and Uniria's stand) takes his clip's own place, as a fraction: one bound of
+    // So the leap takes his clip's own place, as a fraction: one bound of
     // the horse is one bounce of the rider, whatever the frame did. **ours**.
     // **But Earthshake's stomp on his clock, not his fraction**: MU sets the horse's 3 at 0.34 under
     // his 87 at 0.3 (GOBoid.cpp:338-342, ZzzCharacter.cpp:1013) and runs both, so the horse's ten
@@ -284,6 +287,30 @@ bool Pets::breathe(float seconds, float at[3]) {
     return due && horse_.pointOn(breathBone_, kNostril, at);
 }
 
+bool Pets::hoof(float seconds, float at[3]) {
+    const int clip = horse_.clip();
+    const FigureBody* look = horse_.body();
+    if (mounted_ != 4 || !horseUp_ || horseIn_ < 1.0f || !look || !look->library || clip < 0 ||
+        clip != look->library->find(1)) {
+        hoofOwed_ = 0.0f;
+        return false;
+    }
+    hoofOwed_ = std::min(hoofOwed_ + seconds / kReference, 4.0f);
+    if (hoofOwed_ < 1.0f) return false;
+    hoofOwed_ = std::fmod(hoofOwed_, 1.0f);
+    const content::CookedClip& cooked = look->library->clips.clips[size_t(clip)];
+    if (cooked.duration <= 0.0f || cooked.frames < 2) return false;
+    const float key = horse_.clock() / cooked.duration * float(cooked.frames - 1);
+    const int bone = key > 1.0f && key < 1.2f   ? 19
+                     : key > 1.1f && key < 1.4f ? 25
+                     : key > 1.3f && key < 1.6f ? 32
+                     : key > 1.5f && key <= 1.8f ? 38
+                                                 : -1;
+    if (bone < 0) return false;
+    const float local[3] = {120.0f / kUnits, 0.0f, float(dice(64) - 32) / kUnits};
+    return horse_.pointOn(bone, local, at);
+}
+
 void Pets::update(float seconds, const Figure& hero, int pet, bool alive) {
     if (pet != shown_) {
         shown_ = pet;
@@ -315,7 +342,7 @@ void Pets::update(float seconds, const Figure& hero, int pet, bool alive) {
     toMu(hero.position(), owner);
     if (!angelUp_ || std::fabs(owner[0] - at_[0]) > kAngelLost ||
         std::fabs(owner[1] - at_[1]) > kAngelLost) {
-        spawnAngel(owner);
+        spawnAngel(owner, hero.yaw());
     }
     frames_ += seconds / kReference;
     // Bounded, so a long hitch is not a burst of steps the eye sees as a jump.
@@ -362,7 +389,9 @@ void Pets::gather(gfx::Renderer& renderer, const Figure& hero, std::vector<float
     } else if (shown_ == 0 && angelUp_) {
         draw(angel_, std::clamp(angelIn_ / kAngelFadeIn, 0.0f, 1.0f));
     }
-    if ((mounted_ == 2 || mounted_ == 3 || mounted_ == 4) && horseUp_ && horseIn_ > 0.0f) draw(horse_, horseIn_);
+    if ((mounted_ == 2 || mounted_ == 3 || mounted_ == 4) && horseUp_ && horseIn_ * riderFade_ > 0.0f) {
+        draw(horse_, horseIn_ * riderFade_);
+    }
     drawRaven(renderer, scratch, out, casters);
 }
 

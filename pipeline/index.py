@@ -430,6 +430,14 @@ EFFECTS = {
     # water, the same pixels as MuMain's water.OZJ.
     "sleep_puff": "effects/kanturu/water.png",
 
+    # The Ancient rune Strike of Destruction's (game/fx/strike_of_destruction.h):
+    # BITMAP_SWORD_EFFECT_MONO, Effect/Swordeff_mono.jpg, the white flare at the impact
+    # (ZzzOpenData.cpp:5214); and BITMAP_WATERFALL_5, Effect/waterFall5.jpg, the grey speckle of
+    # its splash (ZzzOpenData.cpp:5334). Its BITMAP_WATERFALL_3 is Aida's waterfall_spray, the
+    # same pixels as MuMain's waterFall3.OZJ.
+    "destruction_flare": "effects/destruction/swordeff_mono.png",
+    "destruction_speckle": "effects/destruction/waterfall5.png",
+
     # A Whirlwind rune's pull (game/fx/chains.h): not MU 0.75's -- Season 17's Object132/so_chain,
     # a 128x64 strip of links that tiles end to end, the chain he hauls them in with.
     "whirl_chain": "effects/chain/so_chain.png",
@@ -604,6 +612,12 @@ EFFECTS = {
     # The Dark Lord's Critical Damage: BITMAP_FIRECRACKER, Effect/Fire04 (ZzzOpenData.cpp:5296), the
     # three ribbons that coil up a buffed player's weapon (ZzzEffectJoint.cpp:2489-2575).
     "critical_damage_fire04": "effects/critical_damage/fire04.png",
+    # The Absolute Scepter's crackle: BITMAP_LIGHTNING_MEGA1..3, Effect/lighting_mega01..03
+    # (ZzzOpenData.cpp:5232-5234), one of the three a tenth of a second at each of its two
+    # points while it is held (ZzzCharacter.cpp:7930-7971; fx/held_lights).
+    "lightning_mega_1": "effects/absolute/lighting_mega01.png",
+    "lightning_mega_2": "effects/absolute/lighting_mega02.png",
+    "lightning_mega_3": "effects/absolute/lighting_mega03.png",
     # And Summon: BITMAP_MAGIC_EMBLEM, Effect/Magic_b (ZzzOpenData.cpp:5190), the blue quarter star
     # MODEL_CIRCLE subtype 2 wears in place of Hellfire's magic_a01 (ZzzObject.cpp:1540-1544).
     "recall_magic_b": "effects/recall/magic_b.png",
@@ -2154,6 +2168,7 @@ def missiles(root: Path, build: Path) -> dict:
         **_models(root, build, "pollution"),
         **_models(root, build, "requiem"),
         **_models(root, build, "sleep"),
+        **_models(root, build, "destruction"),
     }
 
 

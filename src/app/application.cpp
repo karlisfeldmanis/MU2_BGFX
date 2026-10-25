@@ -19,6 +19,7 @@
 #endif
 #include "app/modes/lobby_mode.h"
 #include "app/modes/play_mode.h"
+#include "app/presence.h"
 #include "app/sweep.h"
 #include "app/tuner.h"
 #include "game/sound.h"
@@ -437,6 +438,9 @@ int Application::run(int argc, char** argv) {
 
     core::logf("running%s%s", args_.frames ? " for " : " until the window closes",
                args_.frames ? std::to_string(args_.frames).c_str() : "");
+    // His Discord says he is playing (app/presence.h): a run of the game, not the studio's, a
+    // sweep's or one counted in --frames, which are a developer's measurements.
+    if (!args_.studio && args_.frames == 0 && args_.sweepPath.empty()) presence::start();
 
     Frame at;
     int segment = 0;
@@ -778,6 +782,7 @@ int Application::run(int argc, char** argv) {
     }
 
     core::watchStop();
+    presence::stop();
     const bool withinBudget = stats.finish(args_.budget);
     if (sweep.active()) sweep.abort("the window closed or the frames ran out");
     sweep.close();

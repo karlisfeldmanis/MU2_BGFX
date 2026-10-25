@@ -740,6 +740,7 @@ add_library(mu_game STATIC
   src/game/fx/pet_lights.cpp
   src/game/fx/requiem.cpp
   src/game/fx/sleep.cpp
+  src/game/fx/strike_of_destruction.cpp
   src/game/fx/chains.cpp
   src/game/fx/stains.cpp
   src/game/fx/poison.cpp
@@ -868,6 +869,7 @@ add_executable(mu2
   src/app/application.cpp
   src/app/context.cpp
   src/app/preloader.cpp
+  src/app/presence.cpp
   src/app/sweep.cpp
   src/app/tuner.cpp
   src/app/modes/play_mode.cpp

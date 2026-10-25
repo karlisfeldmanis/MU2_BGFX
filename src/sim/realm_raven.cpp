@@ -57,14 +57,18 @@ void Realm::raven(Body& hero) {
         }
     }
     // MonsterAndMsgProc's 500 ms, and the next strike's time.
-    if (tick_ % kRavenTimerTicks != 0 || tick_ < hero.ravenNext || hero.ravenLands != 0) return;
-    if (mode == RavenMode::Normal || hero.kin != Kin::DarkLord || !tables_) return;
+    if (tick_ % kRavenTimerTicks != 0 || tick_ < hero.ravenNext) return;
+    if (hero.kin != Kin::DarkLord || !tables_) return;
     const Held& worn = me().bag[kWeaponLeft];
     if (worn.empty() || worn.durability <= 0 || !darkRaven(tables_->items[size_t(worn.item)])) return;
     // Run()'s gates (DarkSpirit.cpp:94-128): never off a safe tile, never short of its Command.
     if (tables_->grid.safe(hero.column(), hero.row())) return;
     const int level = petLevel(worn), command = hero.totalPoints().command;
     if (command < ravenCommand(level)) return;
+    // Past them the timer starts again whatever the mode finds, Normal's nothing too (:125-128).
+    const int ms = std::max(0, 1500 - 10 * ravenSpeed(level, command));
+    hero.ravenNext = tick_ + ms / 50;
+    if (mode == RavenMode::Normal) return;
 
     uint32_t aimed = 0;
     bool dash = false, top = false;
@@ -96,12 +100,14 @@ void Realm::raven(Body& hero) {
         dash = mode == RavenMode::Target;
         top = dash && ravenDice_.nextInt(0, 10) < kRavenDashIn10;
     }
+    // At speed 100 and over its 500 ms beat is shorter than the 600 ms a strike takes to land, and
+    // WebZen's land on top of each other; ours keeps one in the air, so the last lands now, a
+    // beat early.
+    if (hero.ravenLands != 0) ravenLand(hero);
     hero.ravenAimed = aimed;
     hero.ravenDash = dash;
     hero.ravenTop = top;
     hero.ravenLands = tick_ + kRavenLandTicks;
-    const int ms = std::max(0, 1500 - 10 * ravenSpeed(level, command));
-    hero.ravenNext = tick_ + ms / 50;
     say(What::Ravened, hero, dash ? 0 : 1, 0, 0, aimed);
 }
 

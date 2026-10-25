@@ -1,0 +1,41 @@
+{
+  "item": "PlanCrackGrand",
+  "mu_name": "Strike of Destruction's the big crack at the point: the star and five streak cracks running out 1.6 m, columns along all of them sinking",
+  "mu_name_from": "Data/Effect/knight_plancrack_grand.bmd. MuMain (Season 6).",
+  "kind": "destruction",
+  "why_this_one": "MODEL_RAKLION_BOSS_CRACKEFFECT (ZzzOpenData.cpp:4566-4567), laid once at the point at scale 1.2 (MoveHandlers.cpp:7606-7634). LifeTime 40, lifted 30, a random turn (ZzzEffect.cpp:1110-1117); alpha -0.03 a frame (MoveHandlers.cpp:1898-1906). RENDER_TEXTURE | RENDER_BRIGHT in (0.3, 0.3, 1.0) x Alpha. See game/fx/strike_of_destruction.",
+  "mesh": "PlanCrackGrand_00.obj",
+  "mesh_from": "muextract export-obj --action=0 --key=N on Data/Effect/knight_plancrack_grand.bmd, from MuMain: one action of 5 keys, 1524 triangles.",
+  "poses": [
+    "PlanCrackGrand_00.obj",
+    "PlanCrackGrand_01.obj",
+    "PlanCrackGrand_02.obj",
+    "PlanCrackGrand_03.obj",
+    "PlanCrackGrand_04.obj"
+  ],
+  "poses_from": "All five keys, the columns standing in the cracks sinking from the first to the last; blended at 0.3 a key a frame and held at the last, as MU plays the action once.",
+  "parts": [
+    {
+      "group": "grandmark2",
+      "sheet": "grandmark2.png",
+      "blend": "additive",
+      "note": "Data/Effect/grandmark2.OZJ, 128 square, a white splash-star: the crack mark, added."
+    },
+    {
+      "group": "grandmark",
+      "sheet": "grandmark.png",
+      "blend": "additive",
+      "note": "Data/Effect/grandmark.OZJ, 128 by 64, a white jagged streak: the crack marks, added."
+    },
+    {
+      "group": "lines2",
+      "sheet": "lines2.png",
+      "blend": "additive",
+      "note": "Data/Effect/lines2.OZJ, 32 by 64, horizontal light streaks: the light columns, added, V scrolled up them (ZzzObject.cpp:599-603, :617-628)."
+    }
+  ],
+  "scale": 1.2,
+  "scale_from": "the caller's Scale.",
+  "frames": 40,
+  "frames_from": "`o->LifeTime = 40`."
+}

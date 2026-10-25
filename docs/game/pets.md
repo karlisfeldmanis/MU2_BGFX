@@ -77,7 +77,8 @@ cross-checked against a Season 6 1.00.90 decompile and the 0.97k emulator:
   blow gets no x1.3; it never kills. In all three sources and muonlinefanz's item page; OpenMU
   and MuMain's tooltip leave it out. The Angel has no cost of any kind.
 - **The Angel absorbed 30%, not 20%**, unless `NEW_FORSKYLAND3` (ObjAttack.cpp:1077-1087, "30% cut
-  to 20%"). The flag reads as the Icarus update, after 0.75 -- an inference, not stated.
+  to 20%"). The flag reads as the Icarus update, after 0.75 -- an inference, not stated. OpenMU's
+  0.75 row has 20%, and so does ours since 2026-10-25 (the user: "20%, MU's").
 - **Wear is far faster** (user.cpp `gObjSpriteDamage`): per hit taken the Angel loses damage x
   0.3/10 and the Imp damage x 0.2/10 -- about 1 Life per 33 or 50 damage, 60-100x OpenMU's
   damage/2000. The Angel's is taken on the damage before its own cut. The /10 is tagged
@@ -88,17 +89,18 @@ cross-checked against a Season 6 1.00.90 decompile and the 0.97k emulator:
 ## In the game (2026-09-29)
 
 - **Rules** (`sim::PetPower`, `sim/items.cpp`): group 13 goes in slot 8 (`placeOf`); while its
-  Life is above 0 the Angel multiplies damage taken by 0.7 (with the guard skill's share, as two
+  Life is above 0 the Angel multiplies damage taken by 0.8 (with the guard skill's share, as two
   DamageReceiveDecrement power-ups multiply) and adds 50 to maximum health before the excellent
   x1.04, and -- ours, the user's, 2026-09-30, no server has it -- multiplies his own blows by 0.8
   (card: "Decrease 20% of attacking & Wizardry Dmg" in red); the Imp multiplies every blow dealt by 1.3 after the level floor (`rules.cpp` step 7)
   and takes 3 of his life for every blow that lands (`Realm::strikeAt`); with 3 or less he
   neither pays nor gets the x1.3 -- WebZen lays him at 0, ours stops short since 0 is dead here.
 - **Time, not wear, and they stack** (ours, the user, 2026-10-21: "i want that its time based 24
-  hours", then "make imp and gurdian angle not 24 hours but 2 hours", Uniria a day, and "we need to
-  stack imps and guardian angles and uniria mounts"): the Angel, the Imp and Uniria
+  hours", then "make imp and gurdian angle not 24 hours but 2 hours", Uniria a day, "we need to
+  stack imps and guardian angles and uniria mounts", and then "we need that imp and angel is for 12
+  hours"): the Angel, the Imp and Uniria
   (`sim::timedPet`) are not worn by blows and never mended. The first second one is worn,
-  `Realm::petClock` stamps it with `wall + petSeconds` -- 2 hours for the Angel and the Imp
+  `Realm::petClock` stamps it with `wall + petSeconds` -- 12 hours for the Angel and the Imp
   (`kSpiritSeconds`), 24 for Uniria (`kHornSeconds`); it runs on worn or not, online or not, and
   once a second anything past its second is taken from the bag or the vault (`What::PetLost`,
   "Your Imp's time is over: it is gone"). The second is kept in the three socket powers and the
@@ -117,7 +119,7 @@ cross-checked against a Season 6 1.00.90 decompile and the 0.97k emulator:
   Imp may still be listed on the Broker.
 - **Price and shelf** (`sim/market.cpp`): `dropLevel^3 + 100`, 12,200 and 22,000, a third back.
   Both on Lumen's shelf in the tavern, cells 2 and 3 -- ours, 0.75 sells them nowhere.
-- **Card** (`game/ui/describe.cpp`): type "Pet", MU's own lines ("Absorb 30% of Damage", "Max HP
+- **Card** (`game/ui/describe.cpp`): type "Pet", MU's own lines ("Absorb 20% of Damage", "Max HP
   +50 increased", "Increase 30% of attacking & Wizardry Dmg") with the numbers off `petPower`, and
   the Imp's price in red, "Life -3 for each successful attack" (ours: MuMain never printed it),
   `Time left: 23h 12m` in the foot (`Lasts 24 hours once worn` before). They

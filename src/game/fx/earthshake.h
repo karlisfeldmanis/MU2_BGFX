@@ -60,6 +60,11 @@ public:
               const content::Ground* ground);
     // The stomp begun at `feet`: the ground rings every 400 ms for `seconds`, his clip's length.
     void stomp(const float feet[3], float seconds);
+    // **The Dark Horse's hoof in Icarus**: a BITMAP_SHOCK_WAVE sub-type 1 at `at` -- LifeTime 20,
+    // Scale 1-1.9 growing 0-0.4 a frame, wandering 4 units a frame either way, laid on the
+    // ground at the horse's light (GOBoid.cpp:346-385; ZzzEffect.cpp:3544-3548; MoveHandlers.cpp:
+    // 5770-5776).
+    void hoof(const float at[3]);
     // The spikes for `owner` at `feet`, `wait` seconds on: the realm's strike.
     void strike(uint32_t owner, const float feet[3], float wait);
     // `chip(at)` where a stone throws its chip (the meteor's stones).
@@ -102,6 +107,8 @@ private:
         bool alive = false;
         float at[3] = {};
         float wait = 0.0f, age = 0.0f;  // seconds to its birth, frames since
+        bool hoof = false;               // sub-type 1, Earthshake::hoof
+        float scale = 0.0f;              // a hoof's, in tiles
     };
     struct Ring {
         bool alive = false;
@@ -128,7 +135,8 @@ private:
         float at[3] = {};
         float wait = 0.0f, left = kJoltSeconds;
     };
-    static constexpr int kWaves = 16, kRingPool = 16, kStones = 96, kJolts = 8, kPuffs = kStones * kChips;
+    static constexpr float kHoofLife = 20.0f;
+    static constexpr int kWaves = 32, kRingPool = 16, kStones = 96, kJolts = 8, kPuffs = kStones * kChips;
 
     struct Model {
         std::vector<EffectCorner> rock, seam;
@@ -167,7 +175,12 @@ void Earthshake::update(float seconds, Chip chip) {
             continue;
         }
         wave.age += frames;
-        if (wave.age >= kWaveScale) wave.alive = false;
+        if (wave.hoof) {
+            wave.scale += float(roll() % 5u) / 10.0f * frames;
+            wave.at[0] += (float(roll() % 8u) - 4.0f) * frames * metre();
+            wave.at[2] += (float(roll() % 8u) - 4.0f) * frames * metre();
+        }
+        if (wave.age >= (wave.hoof ? kHoofLife : kWaveScale)) wave.alive = false;
     }
     for (Ring& ring : rings_) {
         if (!ring.alive) continue;

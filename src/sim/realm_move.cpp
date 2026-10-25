@@ -280,6 +280,12 @@ bool Realm::throughGate(Body& hero) {
         say(What::Barred, hero, gate->number, ridesUniria(*tables_, me().bag) ? -2 : -1);
         return false;
     }
+    // And -4 Atlans's: no Uniria or Dinorant under the sea (sim::barredFromAtlans).
+    if (const ExitGate* out = exitGate(gate->target);
+        out && out->map == kAtlansMap && barredFromAtlans(*tables_, me().bag)) {
+        say(What::Barred, hero, gate->number, -4);
+        return false;
+    }
     // And -3 a quest not yet handed in: the Relics' door asks The Road to the Relics (the user,
     // 2026-10-25: "After the far road").
     if (gate->quest) {

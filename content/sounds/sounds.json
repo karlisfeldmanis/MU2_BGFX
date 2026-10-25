@@ -3221,6 +3221,13 @@
         "dred_death.wav"
       ],
       "from": "SOUND_KANTURU_2ND_DRED_DIE as it dies (GM_Kanturu_2nd.cpp:1030-1034); w38/dred_death.wav (MapManager.cpp:457)."
+    },
+    "spell_strike_of_destruction": {
+      "files": [
+        "BLOW_OF_DESTRUCTION.wav"
+      ],
+      "from": "SOUND_SKILL_BLOWOFDESTRUCTION, which ZzzOpenData loads from Data\\\\Sound\\\\BLOW_OF_DESTRUCTION.wav with one voice (:4925). MoveCharacter plays it as the MODEL_BLOW_OF_DESTRUCTION controller is born, the server echo of AT_SKILL_STRIKE_OF_DESTRUCTION (232) (ZzzCharacter.cpp:4170-4180).",
+      "note": "The Ancient rune Strike of Destruction (sim/items.h kSoD...), played once a roll where the ground bursts at the point (game/fx/strike_of_destruction)."
     }
   },
   "not_built_yet": "Built: a monster's Sounds[0]/[1] while it walks (SetPlayerWalk's rand_fps_check(16), every frame it moves, ZzzCharacter.cpp:788-804) and once as its walk ends (SetPlayerStop's, one in sixteen, :429-443) -- game/play_show.cpp. MuMain has no cry on an idle loop: PlayMonsterSound (:216-237) is map-specific and handles no 0.75 monster. Not built: SetPlayerStop's other callers (a refused path, a server stand), which the realm has no counterpart for."

@@ -150,7 +150,7 @@ with `pipeline/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Bow05 | arm | 2026-09-28 21:15 | passed | orange spined Tiger Bow, MU's own; arrow nocked |
 | CrossBow02 | arm | 2026-09-28 21:16 | passed | reads silver at noon: the sheet's prod is MU's blue-grey band (80,97,118), not gold paint -- 'Golden' is the name, and the steel is physical |
 | Shield04 | arm | 2026-09-28 21:18 | passed | pale feathered wings round a brass boss, MU's own; the wing edges are cut, not blended as MU blends them -- a closer look owed in the studio |
-| Spirit | set | 2026-09-28 21:25 | passed | dark green plate with pale fins, MU's own; bare arms skin; one boot highlight flashes white at dusk, a highlight and not a material |
+| Spirit | set | 2026-10-25 19:34 | awaiting |  |
 | Guardian | set | 2026-09-28 22:10 | passed | recooked with separate_meshes: the 44 arm triangles are skin at metal 0, the plate still plate_steel; MU's silver plate with gold trim |
 | Object74 | world | 2026-09-29 20:38 | awaiting |  |
 | Object59 | world | 2026-09-29 20:38 | awaiting |  |
@@ -413,3 +413,14 @@ with `pipeline/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Sword19 | arm | 2026-10-23 10:06 | awaiting |  |
 | NewFace05 | figure | 2026-10-23 16:15 | awaiting |  |
 | Elpis | figure | 2026-10-25 13:59 | awaiting |  |
+| Male27 | set | 2026-10-25 21:59 | awaiting |  |
+| Shield22 | arm | 2026-10-25 22:06 | awaiting |  |
+| Male28 | set | 2026-10-25 22:21 | awaiting |  |
+| DarkRavenFly | figure | 2026-10-25 22:41 | awaiting |  |
+| Male39 | set | 2026-10-25 23:04 | awaiting |  |
+| Male29 | set | 2026-10-25 23:08 | awaiting |  |
+| Male52 | set | 2026-10-25 23:13 | awaiting |  |
+| Male34 | set | 2026-10-25 23:17 | awaiting |  |
+| Mace14 | arm | 2026-10-25 23:18 | awaiting |  |
+| Mace15 | arm | 2026-10-25 23:20 | awaiting |  |
+| Mace18 | arm | 2026-10-25 23:21 | awaiting |  |

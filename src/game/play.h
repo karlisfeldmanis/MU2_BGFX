@@ -50,6 +50,7 @@
 #include "game/fx/pet_lights.h"
 #include "game/fx/raven.h"
 #include "game/fx/requiem.h"
+#include "game/fx/strike_of_destruction.h"
 #include "game/fx/sleep.h"
 #include "game/fx/chains.h"
 #include "game/fx/ice.h"
@@ -1102,6 +1103,9 @@ public:
     Requiem& requiem() { return requiem_; }
     // And the Ancient rune Sleep's circle, rings and a sleeper's puffs. fx/sleep.h.
     Sleep& sleep() { return sleep_; }
+    // And the Ancient rune Strike of Destruction's flares, blades, cracks and splash.
+    // fx/strike_of_destruction.h.
+    StrikeOfDestruction& destruction() { return destruction_; }
     // And a Whirlwind rune's pull, the chains he hauls them in by. fx/chains.h.
     Chains& chains() { return chains_; }
     // What a death leaves by the head: MU's CreateBlood. fx/stains.h.
@@ -1958,6 +1962,13 @@ private:
     // Bull Fighter's snort (fx/snort.h), and in Atlans a bubble instead (GOBoid.cpp:438-445),
     // which the world's bubbles take (takeBreathBubbles).
     void horseBreath(Pets& pets, float seconds);
+    // A mount's dust while it gallops, for any rider: rand_fps_check(2) at the horse +-32 on the
+    // ground (GOBoid.cpp:385-402, 542-556), none in Icarus; `owed` his own clock.
+    void mountDust(const Drawn& rider, bool galloping, float& owed, float seconds);
+    // A Dark Horse's rings and smoke off its hooves over Icarus (Pets::hoof), after `ride`.
+    void hoofWaves(Pets& pets, float seconds);
+    // The other riders' Dark Horse hoofbeats, on the hero's three buffers (Play::steps).
+    void otherHooves(float seconds);
     std::vector<std::array<float, 3>> breathBubbles_;
 
 public:
@@ -2033,6 +2044,7 @@ private:
     PetLights petLights_;  // the Guardian Angel's twinkle and glow, the Imp's ember (fx/pet_lights.h)
     Requiem requiem_;
     Sleep sleep_;
+    StrikeOfDestruction destruction_;
     Chains chains_;
     Stains stains_;
     TrapShow trapShow_;
@@ -2226,6 +2238,7 @@ private:
         int drainLife = -1;                    // SE_Ch_summoner_skill07, the Ancient rune Drain Life's
         int requiem = -1, requiemThorns = -1;  // SE_Ch_summoner_skill06_requiem01/02, Requiem's
         int sleep = -1;                        // SE_Ch_summoner_skill03_sleep, the Ancient rune Sleep's
+        int destruction = -1;                  // BLOW_OF_DESTRUCTION, the Ancient rune Strike of Destruction's
         int bloodAttack = -1;                  // eBloodAttack, Fire Slash's cut landing on a body
         int whirlPull = -1;                    // whirl_pull, a Whirlwind rune's pull landing
         // The knight's skills, one wave each -- and Cyclone and Slash share SWORD4, which is

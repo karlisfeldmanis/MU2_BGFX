@@ -110,6 +110,8 @@ def spawns(number, version):
         for m in re.finditer(pattern, text):
             args = [a.strip() for a in m.group(2).split(",")]
             nums = [int(a) for a in args if a.isdigit()]
+            if len(nums) < 2:
+                continue  # an event's wave spawn on named bounds (DevilSquare5.cs's x1, x2, y1, y2)
             if len(nums) >= 4 and not args[2].startswith("Direction"):
                 x1, x2, y1, y2 = nums[:4]
                 count = nums[4] if len(nums) > 4 else 1
@@ -310,7 +312,8 @@ def item_model(group, number):
     path = os.path.join(MUMAIN, "Engine", "Object", "ZzzOpenData.cpp")
     text = read(path)
     call = r'AccessModel\(([^,]+), L"Data\\\\(\w+)\\\\", L"(\w+)"(?:, ([^)]+))?\)'
-    for m in re.finditer(rf"for \(int i = (\d+); i < (\d+); [^)]*\)", text):
+    # `i <= 53` as well as `i < 53`: the socket sets' loops (45..53) count inclusively.
+    for m in re.finditer(rf"for \(int i = (\d+); i (<=?) (\d+); [^)]*\)", text):
         rest = text[m.end():].lstrip()
         body = rest[:rest.find("}")] if rest.startswith("{") else rest[:rest.find(";") + 1]
         for c in re.finditer(call, body):
@@ -321,7 +324,7 @@ def item_model(group, number):
             if not c.group(4) or not (shape or (named and named.group(1) in starts)):
                 continue
             i = number - (int(shape.group(1) or 0) if shape else starts[named.group(1)])
-            if int(m.group(1)) <= i < int(m.group(2)):
+            if int(m.group(1)) <= i < int(m.group(3)) + (m.group(2) == "<="):
                 offset = int(re.sub(r"[^\d]", "", c.group(4)) or 0)
                 return f"{c.group(2)}/{c.group(3)}{i + offset:02d}.bmd", rel(path, line_of(text, m.start()))
     for c in re.finditer(call, text):

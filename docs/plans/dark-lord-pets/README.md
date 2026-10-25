@@ -81,3 +81,19 @@ with pets for DL"). The two research files beside this one are the sources, ever
    chrome and pulsing glow on dkthreebody (ZzzObject.cpp:981-1001). The 350 over the Dark Horse is
    MU's intent, dead code in both clients (Helper.Type holds a MODEL_): kept, the user's (2026-10-25,
    "Keep 350"). Both cooks done since (dfa023a5): the level-40 chrome and glow, the dash's puffs.
+   Then the rest of the audit (2026-10-25, second session): the Spirits each their own 0.1% on one
+   roll (the Raven's from 96, the Horse's from 102); a horse or raven sells for a third at any life;
+   the exp share split by what is worn, dead or not; the raven's timer starts again on every Run past
+   its gates, and a strike at speed 100+ lands the one still in the air; the Trainer's price rounds
+   as a repair; the Dinorant's absorb costs the striker 1 life (sim::PetPower::strikerToll); the
+   Guardian Angel absorbs 20%, not 30% (the user: "20%, MU's"); no Uniria or Dinorant into Atlans or
+   put on there (the user: "Ban them, like MU"); kHorseLevel gone. Client: the horse's level up is
+   twelve flares round its hooves and a level down nothing; other riders' mounts raise dust and the
+   Dark Horse's hooves sound for every rider; no dust in Icarus; the Angel starts facing its owner.
+   Then the rest of that list: the Dark Horse's rings and smoke off its hooves over Icarus
+   (GOBoid.cpp:346-385; Earthshake::hoof, Pets::hoof), MU's size kept (the user, 2026-10-25: "use mu
+   rings"); Uniria's and the dragon's stand on their own 0.34; the mount faded out with its rider's
+   Teleport (a respawn still hides it at once, the user's); an off-screen raven set flying
+   (CSPetSystem.cpp:645-651, tested on the ground under it); bred pets' skill, luck and option rolls
+   (MixSystem.cpp:3187-3218). Left: the birds' calls by ground distance (flight.cpp keeps the bird's
+   height, judged so), and the sounds.json crow note, which needs a showing cook.

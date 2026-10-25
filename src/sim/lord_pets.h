@@ -97,14 +97,15 @@ bool spirit(const content::ItemRow& row);
 constexpr int kBreedRate = 60;
 constexpr int kHorseBless = 5, kHorseSoul = 5, kRavenBless = 2, kRavenSoul = 2;
 constexpr int64_t kHorseBreedZen = 5000000, kRavenBreedZen = 1000000;
-// **The Spirits' drops** (OpenMU Pets.cs:206-220; WebZen's C++ drops none): one roll a kill of its own,
-// one in kSpiritDropOdds, the Horse's from monster level 102, the Raven's from 96 -- both open past 102,
-// one drawn.
+// **The Spirits' drops** (OpenMU VersionSeasonSix Pets.cs:208-225; WebZen's C++ drops none): one roll
+// a kill of its own, on which each Spirit has its one in kSpiritDropOdds -- the Horse's from monster
+// level 102, the Raven's from 96.
 constexpr int kSpiritDropOdds = 1000;
 constexpr int kHorseSpiritFrom = 102, kRavenSpiritFrom = 96;
 
 // What MU asks to mend it at the Trainer (1.03.35's ConvertRepairGold over the pet's whole value):
-// 3 x sqrt(V) x V^(1/4) x (1 - life/255) + 1, twice that at nought, nought when whole.
+// 3 x sqrt(V) x V^(1/4) x (1 - life/255) + 1, twice that at nought, nought when whole; from 1000
+// to the hundred, from 100 to the ten, as any repair (protocol.cpp:8525-8536).
 int64_t mendPrice(int64_t value, int life);
 
 }  // namespace mu::sim

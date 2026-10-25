@@ -99,6 +99,18 @@ void Earthshake::puff(const float at[3]) {
     }
 }
 
+void Earthshake::hoof(const float at[3]) {
+    for (Wave& wave : waves_) {
+        if (wave.alive) continue;
+        wave = Wave{};
+        wave.alive = wave.hoof = true;
+        wave.scale = float(roll() % 10u + 10u) / 10.0f;
+        for (int k = 0; k < 3; ++k) wave.at[k] = at[k];
+        wave.at[1] = floorAt(at[0], at[2]);
+        return;
+    }
+}
+
 void Earthshake::stomp(const float feet[3], float seconds) {
     // From the press, every 400 ms while the horse plays its clip 3.
     for (float at = 0.0f; at < seconds; at += kWaveEvery) {
@@ -173,11 +185,11 @@ float Earthshake::sunk(const Stone& stone) const {
 
 void Earthshake::gatherEffects(gfx::Effects& effects, float daylight, const float eye[3]) const {
     const float m = metre();
-    // The ground rings: twenty tiles across, closing one a frame.
+    // The ground rings: twenty tiles across, closing one a frame; a hoof's growing.
     if (bgfx::isValid(waveTex_)) {
         for (const Wave& wave : waves_) {
             if (!wave.alive || wave.wait > 0.0f) continue;
-            const float half = 0.5f * std::max(0.0f, kWaveScale - wave.age) * 100.0f * m;
+            const float half = 0.5f * (wave.hoof ? wave.scale : std::max(0.0f, kWaveScale - wave.age)) * 100.0f * m;
             if (half <= 0.0f) continue;
             gfx::Sprite sprite;
             for (int k = 0; k < 3; ++k) sprite.position[k] = wave.at[k];

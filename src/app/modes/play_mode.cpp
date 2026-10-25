@@ -24,6 +24,7 @@
 #include "launcher/crash_upload.h"
 #endif
 #include "app/preloader.h"
+#include "app/presence.h"
 #include "core/args.h"
 #include "core/files.h"
 #include "core/loading.h"
@@ -547,6 +548,9 @@ bool PlayMode::open(Context& ctx) {
                 world_.played().sleep().open(assets, ctx.textures,
                                              world_.played().showing().table(),
                                              &world_.ground());
+                world_.played().destruction().open(assets, ctx.textures,
+                                                   world_.played().showing().table(),
+                                                   &world_.ground());
                 world_.played().chains().open(assets, ctx.textures,
                                               world_.played().showing().table());
                 world_.played().stains().open(assets, ctx.textures,
@@ -1060,6 +1064,13 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     }
 
     rejoin(ctx, deltaSeconds);
+
+    // What his Discord says (app/presence.h): the map, his class and level, his party.
+    if (world_.played().isOpen()) {
+        const sim::Body& hero = world_.played().realm().hero();
+        presence::playing(game::worldShow(args.world).name.c_str(), sim::className(int(hero.kin), hero.second),
+                          hero.level, hero.rebirths, int(world_.played().party().members.size()));
+    }
 
     // Through a gate on the last tick: on to the map it leads to, at the tile the realm chose
     // there, facing the way the exit gate says (sim/gates.h).
@@ -1590,7 +1601,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                             world_.played().fury().quakeDegrees() +
                             world_.played().earthshake().quakeDegrees() +
                             world_.played().hellfire().quakeDegrees() +
-                            world_.played().shadowStars().hellMaine().quakeDegrees();
+                            world_.played().shadowStars().hellMaine().quakeDegrees() +
+                            world_.played().destruction().quakeDegrees();
         if (pitch != 0.0f) {
             float ahead[3], right[3], up[3];
             for (int a = 0; a < 3; ++a) ahead[a] = eye.position[a] - eye.target[a];
@@ -2060,6 +2072,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().petLights().gather(ctx.renderer.effects());
         world_.played().requiem().gather(ctx.renderer.effects());
         world_.played().sleep().gather(ctx.renderer.effects());
+        world_.played().destruction().gather(ctx.renderer.effects());
         world_.played().chains().gather(ctx.renderer.effects(), eye.position);
         world_.played().trapShow().gatherEffects(ctx.renderer.effects());
         world_.played().poison().gather(ctx.renderer.effects());

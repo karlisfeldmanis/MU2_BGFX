@@ -147,11 +147,9 @@ bool placesIn(const content::ItemRow& row, Kin kin, int slot);
 // 13/2 and Dinorant 13/3, and the Dark Horse 13/4. Nothing for any other row, and nothing -- the caller's to check -- for one whose life is gone.
 PetPower petPower(const content::ItemRow& row);
 // **The Dark Horse** (13/4, docs/game/mount.md), the Dark Lord's mount: OpenMU VersionSeasonSix
-// Items/Pets.cs:66-73 for the row, WebZen 1.00.93 for what it does. It has a level, 1 to 50
-// (MAX_DARK_HORSE_LEVEL), which nothing here raises yet: every horse is the level it is born at,
-// m_PetItem_Level = 1 (zzzitem.cpp:95), wherever a rule reads one.
+// Items/Pets.cs:66-73 for the row, WebZen 1.00.93 for what it does. Its level, 1 to 50, is
+// sim/lord_pets.h's.
 constexpr int kDarkHorseNumber = 4;
-constexpr int kHorseLevel = 1;
 bool darkHorse(const content::ItemRow& row);
 // **A scepter**: a mace carrying Force Wave, the Dark Lord's own (MU 2/8-2/15 and 2/17). Its magic
 // power is not a staff's: it takes the physical options as any mace, and its power is the Dark
@@ -160,9 +158,6 @@ bool darkHorse(const content::ItemRow& row);
 bool scepter(const content::ItemRow& row);
 // A staff's magic power: what the wizardry band reads, nought on a scepter.
 inline bool staffPower(const content::ItemRow& row) { return row.magicPower > 0 && !scepter(row); }
-// What it adds to the rider's defence while it has life: 5 + Agility/20 + 2 a level, the whole
-// of his agility (WebZen ObjCalCharacter.cpp:1082-1090, `Dexterity` there).
-int horseDefense(int agility);
 // **The Guardian Angel, the Imp and the Horn of Uniria are timed** (the user, 2026-10-21: "i
 // want that its time based 24 hours", then "make imp and gurdian angle not 24 hours but 2
 // hours", and Uniria a day as well; then "we need that imp and angel is for 12 hours"): not worn down by blows and never mended, but gone
@@ -881,7 +876,9 @@ enum class Power : uint8_t {
     // The Summoner's Book of Neil (kRequiem...).
     Requiem = 78,
     // The Summoner's first curse (kSleep...).
-    Sleep = 79
+    Sleep = 79,
+    // The Blade Knight's Season 4 orb skill, his one Ancient (kSoD...).
+    StrikeOfDestruction = 80
 };
 // **A rune's group** (the user, 2026-10-02: "we need to start group runes which is only for
 // specific classes, for specific weapon slots"): which classes may set it, a bit a class, and
@@ -1397,10 +1394,17 @@ inline int drainLife(int energy, int level) { return energy / 15 + int(float(lev
 // MU's 60% (the user, 2026-10-25), so the rune stays in line with the other Ancients. A Requiem
 // on a body it already bleeds restarts it; on a body bleeding from something else (a knight's
 // Rend) it takes the bleed only when its pulse is the larger. A Soul Master's weapon only.
-constexpr double kRequiemChance = 0.10;  // a cast in ten; the user may tune it
-constexpr float kRequiemForce = 0.975f;
-constexpr float kRequiemTiles = 2.0f;
-constexpr int kRequiemMost = 4;
+// **Matched to the knight's Strike of Destruction** (the user, 2026-10-25: "they have to match";
+// it added +22-54% to his damage an hour where Requiem added 0-13% to the wizard's): its chance,
+// its 3 tiles and its count, 4 surely and up to 8 on coin flips, and the blow a spell's -- his
+// wizardry sum with MU's 65 on it (Realm::requiemStrike) -- at kRequiemForce, measured on the
+// Kanturu bench. Ours.
+constexpr double kRequiemChance = 0.15;
+constexpr float kRequiemForce = 2.0f;
+constexpr int32_t kRequiemDamage = 65;
+constexpr float kRequiemTiles = 3.0f;
+constexpr int kRequiemSure = 4;
+constexpr int kRequiemMost = 8;
 constexpr int64_t kRequiemHoldTicks = 20;  // WebZen's and S17's 1000 ms
 constexpr float kRequiemBleedShare = 0.2f;
 // **Sleep**, the seventh Ancient and the Summoner's first curse: MU's AT_SKILL_SLEEP (219; S17
@@ -1423,6 +1427,28 @@ inline int sleepSeconds(int energy, int level) {
     const int seconds = 5 + energy / 100 - level / 20;
     return seconds < kSleepMostSeconds ? seconds : kSleepMostSeconds;
 }
+// **Strike of Destruction**, the eighth Ancient and the Dark Knight's one: MU's
+// AT_SKILL_STRIKE_OF_DESTRUCTION (232; S17 skill_template 232: 110 damage, ice, the Blade Knight's;
+// docs/plans/ancient-runes/strike-of-destruction.md). A swing that lands, or a knight's skill that
+// strikes something -- once a use, never once a body -- has kSoDChance to break the ground under
+// what he struck (on a skill whose struck one has fallen, the nearest within kStormcallReach,
+// Realm::runeAim): that one first, then the others in sight of the point within kSoDTiles in body
+// order, the first kSoDSure surely and the next ones to kSoDMost each on a coin flip on the rune
+// dice -- WebZen's SkillAreaMonsterAttack count (nMinCount 4, nMaxCount 8). Struck at once, on the
+// roll (ours: WebZen and S17 hold each blow 500 ms; the user wants the blow to land with the burst
+// we draw at once), by his rune's blow (runeStrike) at kSoDForce, ice: MU's 110 against Ice Storm's
+// 80 at 1.2. **Fire, not MU's ice** (ours, the user, 2026-10-25: "more like fire"): the blow is
+// fire, and each body it lands on is set burning, surely, in place of WebZen's 10 s of Cold: the
+// Immolate rune's burn (kBurnRuneTicks, a pulse every kBurnRuneEvery), each pulse kSoDBurnShare of
+// the landed blow -- four pulses, +100% of it, as Requiem's bleed adds its own. A Blade Knight's
+// weapon only.
+// 15% and 2.2, the user, 2026-10-25 ("hits harder, procs more often"): a third over MU's 110.
+constexpr double kSoDChance = 0.15;
+constexpr float kSoDForce = 2.2f;
+constexpr float kSoDTiles = 3.0f;    // ours: a disc of 3, where WebZen's is a 7x7 square
+constexpr int kSoDSure = 4;
+constexpr int kSoDMost = 8;
+constexpr float kSoDBurnShare = 0.25f;
 // **The Common runes** (Rarity::Common), each a Legendary at a fraction, every one first-class:
 // **Cinder** Ring of Fire's ring and **Gust** Twister's storm, a knight's; **Chill** Frost Arrow's
 // freeze for half as long with half its wound, the elf's; **Faint Echo** Arcane Echo's second
@@ -1602,6 +1628,10 @@ constexpr uint32_t kIcarusMap = 10;
 bool canFly(const content::Tables& tables, const Satchel& bag);
 // The Horn of Uniria in the mount slot: the one thing that grounds him even with wings on.
 bool ridesUniria(const content::Tables& tables, const Satchel& bag);
+// **Atlans takes no Uniria and no Dinorant** (the user, 2026-10-25: "Ban them, like MU"): none
+// rides in through a gate or the travel list, and none is put on there (WebZen gObjMoveGate,
+// user.cpp:26243-26288; gObjIsItemPut, :15988-16003). The Dark Horse goes in.
+bool barredFromAtlans(const content::Tables& tables, const Satchel& bag);
 // **Blood Castle's ticket** (docs/worlds/blood-castle-port.md, Part A 2.2): the Scroll of Archangel
 // (13, 16) and the Blood Bone (13, 17) of one level make the Invisibility Cloak (13, 18) of that
 // level in the Chaos Machine. The level is the castle's, carried in the refinement.

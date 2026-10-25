@@ -257,5 +257,63 @@ void testLordPets(void (*check)(bool, const char*), void (*checkEqual)(long long
     check(!sim::mendable(row) && !sim::mendable(tables.items[size_t(ravenRow)]), "no smith mends the horse or the raven");
     checkEqual(sim::npcValue(tables, horse), 20000000 / 3 / 100 * 100, "a level 10 horse sells for a third of 20M");
     checkEqual(sim::buyingPrice(tables.items[size_t(spiritRow)], 1, 1, false, 0, 0), 15000000, "a Spirit +1 is 15M");
+    // At any life (protocol.cpp:8289-8324 takes PetValue's third as it is).
+    sim::Held hurt = horse;
+    hurt.durability = 40;
+    checkEqual(sim::npcValue(tables, hurt), sim::npcValue(tables, horse), "a hurt horse sells for the same");
+    // The Trainer rounds as any repair: from 1000 to the hundred.
+    checkEqual(sim::mendPrice(20000000, 100) % 100, 0, "his price is to the hundred");
+
+    // The raven's numbers (CDarkSpirit::Set, DarkSpirit.cpp:640-689) at level 10 and 300 Command.
+    checkEqual(sim::ravenLeast(10, 300), 180 + 150 + 37, "its least 180 + 15L + Cmd/8");
+    checkEqual(sim::ravenMost(10, 300), 200 + 150 + 75, "its most 200 + 15L + Cmd/4");
+    checkEqual(sim::ravenSpeed(10, 300), 20 + 8 + 6, "its speed 20 + 4L/5 + Cmd/50");
+    checkEqual(sim::ravenAttackRate(30), 1000 + 30 + 2, "its attack rate 1000 + L + L/15");
+
+    // The Dinorant (ObjAttack.cpp:1293-1327): x1.15 for 1 of his life, x0.9 for 1 of the striker's.
+    const int dino = tables.itemAt(13, 3), uniria = tables.itemAt(13, 2);
+    if (dino >= 0 && uniria >= 0) {
+        const sim::PetPower power = sim::petPower(tables.items[size_t(dino)]);
+        check(power.dealt == 1.15 && power.lifeCost == 1 && power.taken == 0.9 && power.strikerToll == 1,
+              "the Dinorant's blows and its toll on the striker");
+        // Atlans takes neither horn, and does take the Dark Horse.
+        const auto barred = [&](int mount) {
+            sim::Realm rider;
+            rider.raise(&tables, 5, 200, 160, sim::Kin::DarkLord, 250);
+            rider.give(mount, sim::kMount);
+            return sim::barredFromAtlans(tables, rider.satchel());
+        };
+        check(barred(dino) && barred(uniria), "the Dinorant and Uniria are barred from Atlans");
+        check(!barred(horn), "and the Dark Horse is not");
+    }
+
+    // Both worn, each a tenth, though one is dead (user.cpp:32513-32519): the dead horse's is lost.
+    sim::Realm both;
+    check(both.raise(&tables, 5, 200, 160, sim::Kin::DarkLord, 250), "a lord raises in the field");
+    check(both.spend(0, 0, 0, 0, 300), "he spends 300 on Command");
+    both.give(horn, sim::kMount, 0, 0);
+    both.give(ravenRow, sim::kWeaponLeft);
+    both.step();
+    uint32_t prey = 0;
+    float closest = 1e9f;
+    for (const sim::Body& one : both.bodies()) {
+        if (!one.monster() || !one.alive()) continue;
+        const float d = std::hypot(one.x - both.hero().x, one.y - both.hero().y);
+        if (d < closest) closest = d, prey = one.id;
+    }
+    sim::Request strike;
+    strike.kind = sim::Request::Kind::Attack;
+    strike.target = prey;
+    both.ask(strike);
+    uint64_t tenth = 0;
+    for (int tick = 0; tick < 4000 && tenth == 0; ++tick) {
+        both.step();
+        for (const sim::Happening& h : both.happenings()) {
+            if (h.what == sim::What::Gained && h.who == both.hero().id) tenth += uint64_t(h.a) * 10 / 100;
+        }
+    }
+    check(tenth > 0, "he kills it and gains");
+    checkEqual(sim::petExp(both.satchel()[sim::kWeaponLeft]), tenth, "the raven took a tenth, its dead horse beside it");
+    checkEqual(sim::petExp(both.satchel()[sim::kMount]), 0, "and the dead horse nothing");
 }
 

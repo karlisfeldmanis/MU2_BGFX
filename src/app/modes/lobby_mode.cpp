@@ -8,6 +8,7 @@
 
 #include "app/options.h"
 #include "app/preloader.h"
+#include "app/presence.h"
 #include "core/files.h"
 #include "core/loading.h"
 #include "core/log.h"
@@ -412,6 +413,7 @@ void LobbyMode::enter(Context& ctx, int slot) {
 
 void LobbyMode::frame(Context& ctx, const Frame& at) {
     core::Args& args = ctx.args;
+    presence::choosing();
     const float seconds = float(at.deltaSeconds);
     const float w = float(ctx.window.width()), h = float(ctx.window.height());
 

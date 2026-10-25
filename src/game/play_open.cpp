@@ -608,6 +608,7 @@ void Play::openSound(const std::string& assetDir, bool muted, bool offline) {
     heard_.requiem = sound_.load("spell_requiem", true);
     heard_.requiemThorns = sound_.load("spell_requiem_thorns", true);
     heard_.sleep = sound_.load("spell_sleep", true);
+    heard_.destruction = sound_.load("spell_strike_of_destruction", true);
     // The knight's skills, by the table's own index, so a cast asks for its wave by the same
     // number its cooldown is kept under. Both `sKnightSkill4` names are the same file: MU plays
     // SWORD4 for Cyclone and for Slash alike.

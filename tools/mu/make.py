@@ -338,7 +338,9 @@ def plan_thing(thing, threads):
                           COOK + ["--world", thing.world, "--only", "figures", "--monsters", thing.name] + t,
                           cook_test([os.path.join(COOKED, "figures", "figures.json" if thing.world == "lorencia"
                                                   else f"figures_{thing.world}.json")],
-                                    [glb, os.path.join(ASSETS, "index.json")], "the figures table"),
+                                    # The recipe too: a castle's copy shares castle 1's older glb.
+                                    [glb, os.path.join(ASSETS, "index.json"), thing.recipe],
+                                    "the figures table"),
                           "cooked", lock="figures",
                           after=jobs(os.path.join(COOKED, "figures", "jobs.txt"), 60)))
         steps.append(build_game(threads))

@@ -31,10 +31,11 @@ int64_t npcValue(const content::Tables& tables, const Held& what) {
                                 what.durability, row.durability, what.luck, what.option,
                                 excellentCount(what.excellent));
     if (!counted) paid *= pieces;
-    // The Dark Horse and the Dark Raven by their level, a third back (CItem::PetValue).
+    // The Dark Horse and the Dark Raven by their level, a third back at any life (CItem::PetValue;
+    // protocol.cpp:8289-8324 takes m_SellMoney as it is).
     if (levelledPet(row)) paid = petValue(row, what) / 3 / 100 * 100;
     // Worn gear fetches less: 0.6 of the share gone comes off (CalculateSellingPrice).
-    if (wears(row)) paid = wornSellingPrice(paid, what.durability, maximumDurability(row, what));
+    else if (wears(row)) paid = wornSellingPrice(paid, what.durability, maximumDurability(row, what));
     // A rune is a share of the Jewel of Creation's price by its rarity (sim/items.h kRuneSale).
     if (const PowerRow* power = powerOf(what.powers[0]); creation(row) && power != nullptr) {
         paid = int64_t(double(paid) * kRuneSale[int(power->rarity)]);

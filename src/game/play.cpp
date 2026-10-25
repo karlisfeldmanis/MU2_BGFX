@@ -1171,6 +1171,8 @@ void Play::update(double seconds) {
                     happening.b == 0
                         ? std::string(sealed && sealed->sealed ? sealed->sealed : "The way")
                               + " is sealed. Its door will not open."
+                    : happening.b == -4
+                        ? std::string("A Uniria or a Dinorant cannot go into Atlans. Take it off first.")
                     : happening.b == -3
                         ? std::string("The door to the Relics opens to those who cleared Elpis's far road.")
                     : happening.b == -2
@@ -1509,6 +1511,25 @@ void Play::update(double seconds) {
                         if (requiem_.cast(self, there, caster->id)) {
                             pollution_.circle(self, Pollution::kRequiemPalette);
                             if (heard_.requiem >= 0) emit(heard_.requiem, self[0], self[2], caster->id);
+                        }
+                    } else if (happening.a == sim::skill::kStrikeOfDestruction) {
+                        // The Ancient rune Strike of Destruction: the ground broken under the
+                        // body the realm struck, at once -- MU's sixteen frames of his leap
+                        // skipped, so the burst shows with the blows -- with BLOW_OF_DESTRUCTION
+                        // there, and the camera shaken for the hero's own (fx/strike_of_destruction.h).
+                        // One at a time: a roll while one plays strikes unseen.
+                        // Where the realm laid it (`x`, `y` in tiles): on the ground a killed
+                        // one fell on, it has no drawn body to stand under.
+                        const float self[3] = {caster->crown[0], feet, caster->crown[2]};
+                        if (!(target && target->placed)) {
+                            const float tile = ground_->metresPerTile();
+                            to[0] = (happening.x + 0.5f) * tile;
+                            to[2] = -(happening.y + 0.5f) * tile;
+                        }
+                        const float there[3] = {to[0], ground_->heightAt(to[0], to[2]), to[2]};
+                        const bool own = happening.who == realm_.hero().id;
+                        if (destruction_.cast(self, there, caster->id, own) && heard_.destruction >= 0) {
+                            emit(heard_.destruction, there[0], there[2], caster->id);
                         }
                     } else if (happening.a == sim::skill::kIce) {
                         // The block where the body is drawn, turned to his yaw, as MU turns it.
@@ -2669,6 +2690,7 @@ void Play::update(double seconds) {
     raid(float(seconds));
     otherWings(float(seconds));
     otherPets(float(seconds));
+    otherHooves(float(seconds));
     breath_.update(float(seconds));
     // The bones a skeleton left, on the drawing's clock like everything else here.
     bones_.update(float(seconds));
@@ -2739,6 +2761,9 @@ void Play::update(double seconds) {
     ravenShow_.update(float(seconds));
     petLights_.update(float(seconds));
     requiem_.update(float(seconds));
+    // Strike of Destruction's burst, and its 5-7 stones -- the meteor's (fx/strike_of_destruction.h).
+    destruction_.update(float(seconds),
+                        [&](const float* at) { meteor_.stones(at[0], at[2], at[1], 1); });
     // Sleep's rings follow their sleepers' feet (fx/sleep.h).
     sleep_.update(float(seconds), [&](uint32_t id, float* out) {
         const Drawn* drawn = drawnOf(id);
@@ -3747,34 +3772,19 @@ void Play::update(double seconds) {
             // The horse under him while he dies, as MU's, whose mount lives as long as its rider
             // (`o->Live = o->Owner->Live`, GOBoid.cpp:494, :597): he falls off it where it stands,
             // and it goes with him into town, where every mount fades.
+            // Faded out with him as he teleports (Play's blinkOut_); put down, it comes back as a
+            // jump's does (Pets::ride).
+            const float out = blinkOut_ >= 0.0f ? std::clamp(blinkOut_ / kBlinkFadeSeconds, 0.0f, 1.0f) : 0.0f;
+            pets_.setRiderFade(1.0f - out * out * (3.0f - 2.0f * out));
             pets_.ride(float(seconds), hero->figure, mount, realm_.hero().riding, action);
             horseBreath(pets_, float(seconds));
+            hoofWaves(pets_, float(seconds));
             if (pinning_ && pinned_.gallop >= 0.0f && realm_.hero().riding) {
                 pets_.setGallop(pinned_.gallop);
             }
             pinning_ = false;
-            // And its dust while it runs, rand_fps_check(2) at the horse +-32 on the ground
-            // (GOBoid.cpp:542-556): white in Devias, MU's BITMAP_SMOKE, and smoke02's brown
-            // everywhere else (fx/dust.h).
-            if (galloping && realm_.hero().riding && ground_) {
-                const auto dustDice = [this]() {
-                    dustSeed_ ^= dustSeed_ << 13;
-                    dustSeed_ ^= dustSeed_ >> 17;
-                    dustSeed_ ^= dustSeed_ << 5;
-                    return dustSeed_;
-                };
-                dustOwed_ += float(seconds) * 25.0f / 2.0f;
-                while (dustOwed_ >= 1.0f) {
-                    dustOwed_ -= 1.0f;
-                    const float* feet = hero->figure.position();
-                    float at[3] = {feet[0] + float(int(dustDice() % 64) - 32) * 0.01f, feet[1],
-                                   feet[2] + float(int(dustDice() % 64) - 32) * 0.01f};
-                    at[1] = ground_->heightAt(at[0], at[2]);
-                    dust_.puff(at, hero->figure.yaw(), snowy_);
-                }
-            } else {
-                dustOwed_ = 0.0f;
-            }
+            // And its dust while it runs (Play::mountDust).
+            mountDust(*hero, galloping && realm_.hero().riding, dustOwed_, float(seconds));
         }
     }
 }

@@ -2008,6 +2008,10 @@ private:
     // A channelled spell's (Lightning, Aqua Beam...), begun on `aimed`: only his Ancient spell
     // runes roll, once a channel, as `land` rolls them once a cast -- Stormcall is not asked here.
     void channelRunes(Body& hero, Body& aimed);
+    // The first monster `hero` landed a blow of his own on in the happenings said since `from`
+    // -- not a rune's, a reflect or a pulse -- or 0: what a knight's skill must do for his
+    // Ancient to roll, and where it lands (Realm::land, sim/items.h kSoD...).
+    uint32_t struckSince(const Body& hero, size_t from) const;
     // His Weakness field's look round, while it lies (sim/items.h kWeakness...): each monster in
     // its reach not cursed already rolls MU's odds. How many it cursed.
     int weaknessLook(Body& hero);
@@ -2357,6 +2361,9 @@ private:
     bool echoing_ = false;
     // A shield rune's spirit is striking (spiritStrike): a passive's blow, which stings no ring.
     bool runeSpirit_ = false;
+    // A rune's blow thrown as a spell, with a row for its wizardry sum (Requiem's,
+    // requiemStrike): still a rune's -- no talents twice, no talent procs, said as a rune's.
+    bool runeSpell_ = false;
     bool wingDemo_ = false;  // `wingDemo`
     bool benchUndying_ = false;
     bool benchMonstersDie_ = false;

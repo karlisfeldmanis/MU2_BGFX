@@ -270,6 +270,12 @@ void Pets::stepRaven(const float owner[3], const float hand[3], const float perc
     }
 }
 
+void Pets::ravenUnseen() {
+    if (!ravenUp_) return;
+    batSpeed_ = 3.0f;
+    if (bird_ != Bird::Perching) bird_ = Bird::Flying;
+}
+
 void Pets::ravenStrike(bool ball, const float target[3]) {
     if (!ravenUp_ || bird_ == Bird::Perched || bird_ == Bird::Perching) return;
     toMu(target, batPrey_);
