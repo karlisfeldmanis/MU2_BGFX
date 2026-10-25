@@ -1127,7 +1127,9 @@ float Realm::whirl(Body& hero, const SkillRow& row, float force) {
         route(*target).clear();
         target->onStep = 0;
         target->whirledBy = hero.id;
-        target->whirlForce = force;
+        // With his element runes on it, which strikeAround lays only after this returns: the
+        // pulled were struck softer than the slash's own (Piddy on Discord, 2026-10-25).
+        target->whirlForce = force * elementForce(hero, skillElement(row.number));
         say(What::Shoved, *target, column, rowAt);
     }
     return force;

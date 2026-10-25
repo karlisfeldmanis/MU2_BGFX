@@ -1406,7 +1406,10 @@ void Realm::step() {
                     Body* by = body(beast.whirledBy);
                     const SkillRow* slash = skillNumbered(skill::kTwistingSlash);
                     if (by && by->alive() && slash && within(*by, beast, slash->reach)) {
+                        // As the slash's sweep, so its talents ride on it too (`sweep_`).
+                        sweep_ = slash;
                         strikeAt(*by, beast, beast.whirlForce, nullptr, false);
+                        sweep_ = nullptr;
                     }
                     beast.whirledBy = 0;
                 }
