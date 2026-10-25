@@ -583,6 +583,8 @@ bool PlayMode::open(Context& ctx) {
                 world_.played().criticalDamage().open(assets, ctx.textures, &world_.ground());
                 world_.played().recall().open(assets, ctx.textures, &world_.ground());
                 world_.played().fireScream().open(assets, ctx.textures, &world_.ground());
+                world_.played().earthshake().open(assets, ctx.textures, world_.played().showing().table(),
+                                                  &world_.ground());
                 world_.played().fireBreath().open(assets, ctx.textures,
                                                   world_.played().showing().table(),
                                                   &world_.ground());
@@ -1555,6 +1557,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         // wall (fx/hellfire.h) and Hell Maine's storm (fx/hell_maine.h).
         const float pitch = world_.played().meteor().quakeDegrees() +
                             world_.played().fury().quakeDegrees() +
+                            world_.played().earthshake().quakeDegrees() +
                             world_.played().hellfire().quakeDegrees() +
                             world_.played().shadowStars().hellMaine().quakeDegrees();
         if (pitch != 0.0f) {
@@ -1763,6 +1766,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         // And Rageful Blow's broken ground, MU's red under its fires, as one.
         count += world_.played().fury().lights(falling + count,
                                                kGatheredLights - count);
+        // And Earthshake's spikes, MU's warm light under them, as one.
+        count += world_.played().earthshake().lights(falling + count, kGatheredLights - count);
         // And Hellfire's wall, MU's orange four tiles round (fx/hellfire.h).
         count += world_.played().hellfire().lights(falling + count,
                                                    kGatheredLights - count);
@@ -2039,6 +2044,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().criticalDamage().gatherEffects(ctx.renderer.effects());
         world_.played().recall().gatherEffects(ctx.renderer.effects());
         world_.played().fireScream().gatherEffects(ctx.renderer.effects());
+        world_.played().earthshake().gatherEffects(ctx.renderer.effects(), daylightOf(ctx.lighting));
         world_.played().fireBreath().gatherEffects(ctx.renderer.effects(), eye.position,
                                                    eye.target, daylightOf(ctx.lighting));
         // And what is lying on the grass: MU2's Drops, tossed up out of the corpse and

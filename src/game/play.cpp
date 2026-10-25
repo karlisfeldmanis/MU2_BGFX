@@ -1237,6 +1237,16 @@ void Play::update(double seconds) {
             if (happening.what == sim::What::Arrowless && happening.who == realm_.hero().id) {
                 ui(Ui::Refused);
             }
+            // Earthshake begun: the ground rings off the horse every 400 ms of his clip, and
+            // sDarkEarthQuake at the press, as MU plays it (ClassAttack.cpp:948-952).
+            if (happening.what == sim::What::Swung && happening.a == sim::skill::kEarthshake) {
+                if (const Drawn* caster = drawnOf(happening.who); caster != nullptr && caster->placed && ground_) {
+                    const float at[3] = {caster->crown[0], ground_->heightAt(caster->crown[0], caster->crown[2]),
+                                         caster->crown[2]};
+                    earthshake_.stomp(at, kEarthshakeClipSeconds);
+                    if (heard_.earthshake >= 0) emit(heard_.earthshake, at[0], at[2], happening.who);
+                }
+            }
             if (happening.what == sim::What::Shoved) {
                 if (Drawn* pushed = drawnOf(happening.who);
                     pushed != nullptr && pushed->placed && pushed->shockClip >= 0) {
@@ -1621,6 +1631,17 @@ void Play::update(double seconds) {
                         const float at[3] = {caster->crown[0], feet, caster->crown[2]};
                         fireScream_.loose(at, float(happening.c) / 1000.0f);
                         if (heard_.fireScream >= 0) emit(heard_.fireScream, at[0], at[2], happening.who);
+                    } else if (happening.a == sim::skill::kEarthshake) {
+                        // Earthshake's spikes on the tick the realm strikes (`b` ticks on), round
+                        // where he stands, and Rageful Blow's crater without its weapon 0.8 tile
+                        // down his aim (`c`), made six frames before the spikes so it breaks three
+                        // after them, as MU's WeaponLevel 19 driver (GOBoid.cpp:764-768).
+                        const float at[3] = {caster->crown[0], feet, caster->crown[2]};
+                        const float wait = float(happening.b) * float(kTickSeconds);
+                        earthshake_.strike(happening.who, at, wait);
+                        const float way = float(happening.c) / 1000.0f;
+                        fury_.cast(happening.who, at, std::atan2(std::cos(way), -std::sin(way)),
+                                   std::max(0.0f, wait - 6.0f / 25.0f), nullptr, ShineLook{}, false, true);
                     } else if (happening.a == sim::skill::kExplosion) {
                         // Its Explosion: MU's three bombs off the struck body, eExplosion once,
                         // on the tick its numbers come (fx/fire_scream.h).
@@ -2552,6 +2573,7 @@ void Play::update(double seconds) {
             here.z = me->crown[2];
         }
         meteor_.quakeFor = fury_.quakeFor = hellfire_.quakeFor = shadowStars_.hellMaine().quakeFor = here;
+        earthshake_.quakeFor = here;
     }
     meteor_.update(float(seconds), meteorImpacts_);
     // Cometfall's landings, each Ice's crystals and an impact as a rock's is: the
@@ -2929,6 +2951,8 @@ void Play::update(double seconds) {
         },
         [&](const float* at) { meteor_.stones(at[0], at[2], at[1], 1); },
         [&](const float* at) { meteor_.blast(at, 0.5f); });
+    // Earthshake's rings and spikes, a meteor stone off each spike (fx/earthshake.h).
+    earthshake_.update(float(seconds), [&](const float* at) { meteor_.stones(at[0], at[2], at[1], 1); });
     // The Dinorant's breath, and SOUND_EXPLOTION01 as its DinoE burst is born (fx/firebreath.h).
     fireBreath_.update(float(seconds), [&](const float* at) {
         if (heard_.explosion >= 0) emit(heard_.explosion, at[0], at[2]);

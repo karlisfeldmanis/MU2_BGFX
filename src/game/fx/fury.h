@@ -78,8 +78,12 @@ public:
     // A blow for `owner`, standing at `feet` facing `yaw`, to leave his hand once his clip passes
     // its first key: `wait` seconds from now. `weapon` is what his right hand holds; null breaks
     // the ground alone.
+    // `groundOnly` is MU's Kind 2, Earthshake's crater (GOBoid.cpp:764-768): no weapon, no
+    // streaks, sparks or flash (MoveHandlers.cpp:2993-3012, 3122-3151), the crater 80 ahead and
+    // 25 to his left of `feet` itself.
     void cast(uint32_t owner, const float feet[3], float yaw, float wait,
-              const content::Mesh* weapon, const ShineLook& shine, bool polearm);
+              const content::Mesh* weapon, const ShineLook& shine, bool polearm,
+              bool groundOnly = false);
 
     // `sound(which, at)` is called with 2 and 3 when MU plays SOUND_FURY_STRIKE2 and 3, and
     // `stone(at)` when a fire kicks up a stone; `blast(at)` once, at the impact, for the
@@ -173,6 +177,7 @@ private:
         const content::Mesh* weapon = nullptr;
         ShineLook shine;
         bool polearm = false;
+        bool groundOnly = false;
         float feet[3] = {};
         float yaw = 0.0f;
         float wait = 0.0f;   // seconds to the weapon leaving his hand
@@ -332,21 +337,22 @@ void Fury::step(Blow& blow, Sound& sound, Blast& blast) {
     if (life == 11) {
         // The impact: 80 ahead of the weapon and 25 to his left (MU's (-25, -80, 0) turned by his
         // angle), on the ground.
-        float at[3] = {blow.weaponAt[0] + fs * kAhead * kUnit - fc * kLeft * kUnit, 0.0f,
-                       blow.weaponAt[2] + fc * kAhead * kUnit + fs * kLeft * kUnit};
+        const float* from = blow.groundOnly ? blow.feet : blow.weaponAt;
+        float at[3] = {from[0] + fs * kAhead * kUnit - fc * kLeft * kUnit, 0.0f,
+                       from[2] + fc * kAhead * kUnit + fs * kLeft * kUnit};
         at[1] = floorAt(at[0], at[2]);
         for (int k = 0; k < 3; ++k) blow.impact[k] = at[k];
         const float burst[3] = {at[0], at[1] + 0.25f, at[2]};
         blast(burst);
         // JOINT_SPARKs on (rand() % 60 - 60, 0, rand() % 30 + 90) plus the effect's own angle.
         const float yawDegrees = blow.yaw / kDegrees + kTurned;
-        for (int i = 0; i < kSparks; ++i) {
+        for (int i = 0; i < (blow.groundOnly ? 0 : kSparks); ++i) {
             const float from[3] = {burst[0] + float(int(roll() % 20u) - 10) * kUnit, burst[1],
                                    burst[2] + float(int(roll() % 20u) - 10) * kUnit};
             sparks_.fling(from, -60.0f, yawDegrees + 90.0f, true, roll() % 8u == 0u);
         }
         for (Flash& flash : flashes_) {
-            if (flash.alive) continue;
+            if (flash.alive || blow.groundOnly) continue;
             flash = Flash{};
             flash.alive = true;
             for (int k = 0; k < 3; ++k) flash.at[k] = at[k];
@@ -414,7 +420,7 @@ void Fury::step(Blow& blow, Sound& sound, Blast& blast) {
         blow.alive = false;
         return;
     } else {
-        if (life == 13) {
+        if (life == 13 && !blow.groundOnly) {
             // The streaks: two columns of four under the weapon, 40 ahead and 25 to his left.
             const float x = blow.weaponAt[0] + fs * 40.0f * kUnit - fc * kLeft * kUnit;
             const float z = blow.weaponAt[2] + fc * 40.0f * kUnit + fs * kLeft * kUnit;

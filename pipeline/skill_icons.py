@@ -132,6 +132,8 @@ SKILLS = {
     63: ("Dark Lord", "Summon"),
     # And Fire Scream, 78: cell 21 (column 5, row 2).
     78: ("Dark Lord", "Fire Scream"),
+    # And Earthshake, 62: cell 5 (NewUIMuHelper.cpp:1771-1776, 62 - 57).
+    62: ("Dark Lord", "Earthshake"),
     # And Fire Breath, cut on 2026-10-04 because the game now has it (the user: "do it", of the
     # Dinorant's breath): 0.95d's, carried by the Horn of Dinorant and not learned. Below 57 and
     # not use-type 4, so the arithmetic above finds its cell.

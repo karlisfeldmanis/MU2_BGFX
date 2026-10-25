@@ -167,7 +167,8 @@ void Pets::ride(float seconds, const Figure& hero, int worn, bool riding, int ac
     // The Dark Horse's own numbers (GOBoid.cpp:338-428): 1 under its rider's run ride, 2 under
     // his ride strikes and swings, 0 under the rest. Its 3 is Earthshake's, its 5 and 6 the two
     // horse idles, which nothing here plays.
-    if (mounted_ == 4) action = action == 2 ? 1 : action == 3 ? 2 : 0;
+    // And 7, Earthshake's stomp (Play::horseAction), its 3 at the model's 0.34.
+    if (mounted_ == 4) action = action == 2 ? 1 : action == 3 ? 2 : action == 7 ? 3 : 0;
     // **The Dark Horse follows his clip in its run and its attack, and keeps its own in its idle**
     // (ours, 2026-10-25, the user: "horde legs aniamtiins dont feel 60fps"): its attack on its own
     // clock was cut at half by his quicker swings and begun again, and its idle held to his clip

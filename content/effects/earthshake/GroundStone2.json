@@ -1,0 +1,22 @@
+{
+  "item": "GroundStone2",
+  "mu_name_from": "Data/Skill/GroundStone2.bmd, MODEL_GROUND_STONE2 (ZzzOpenData.cpp:4321-4324, 4390-4391): six a ring, two rings, round the Dark Horse as Earthshake's horse clip 3 passes its frame 8 (GOBoid.cpp:744-763; 1.03.35 GOBoid.cpp:871-886).",
+  "kind": "skill",
+  "why_this_one": "Earthshake's rock spikes: LifeTime 40, Scale 1.0 + rand() % 30 / 100, a random yaw, its one 5-key clip at 0.3 once (rising 174.8 units out of the ground on key 0 to 1, then settling a few units), the last 8 frames fading Alpha /1.3 and BlendMeshLight /2 a frame (ZzzEffect.cpp:3480-3520, MoveHandlers.cpp:5687-5714). game/fx/earthshake.h draws it off the realm's Loosed 62.",
+  "mesh": "GroundStone2.obj",
+  "mesh_from": "muextract export-obj --action=0 --key=1 on Data/Skill/GroundStone2.bmd: the risen pose (key 0 is the same shape 174.8 units lower, keys 2-4 3.6, 0.6 and 3.5 under key 1; every key a rigid lift).",
+  "parts": [
+    {
+      "group": "DhorSS",
+      "sheet": "dhorss.png",
+      "blend": "alpha",
+      "note": "Data/Skill/DhorSS.OZJ, 128 x 128: the brown rock, lit."
+    },
+    {
+      "group": "DhorSS_R",
+      "sheet": "dhorss_r.png",
+      "blend": "additive",
+      "note": "Data/Skill/DhorSS_R.OZJ, 32 x 64: the glowing seams; _R is TextureScript's bright (TextureScript.cpp:38), drawn additive at BodyLight x BlendMeshLight."
+    }
+  ]
+}

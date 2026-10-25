@@ -468,6 +468,9 @@ int Play::horseAction(const Drawn& rider, int mount) const {
     const sim::SkillRow* swung = rider.swingSkill != 0 ? sim::skillNumbered(rider.swingSkill) : nullptr;
     const bool riderSkill = mount == 3 && rider.swinging > 0.0f && swung != nullptr && !swung->wizardry &&
                             !swung->onSelf() && swung->arrows == 0;
+    // And the Dark Horse's stomp, its clip 3, while he plays Earthshake's 87 (GOBoid.cpp:338-342):
+    // said here as 7, which Pets::ride turns into the horse's 3.
+    if (mount == 4 && rider.swinging > 0.0f && rider.castSkill == sim::skill::kEarthshake) return 7;
     return riderSkill                                       ? 6
            : rider.swinging > 0.0f && rider.castSkill == 0 ? 3
            : galloping                                     ? 2

@@ -80,7 +80,7 @@ void Fury::clear() {
 }
 
 void Fury::cast(uint32_t owner, const float feet[3], float yaw, float wait,
-                const content::Mesh* weapon, const ShineLook& shine, bool polearm) {
+                const content::Mesh* weapon, const ShineLook& shine, bool polearm, bool groundOnly) {
     Blow* blow = nullptr;
     for (Blow& one : blows_) {
         if (!one.alive) {
@@ -95,6 +95,7 @@ void Fury::cast(uint32_t owner, const float feet[3], float yaw, float wait,
     blow->weapon = weapon;
     blow->shine = shine;
     blow->polearm = polearm;
+    blow->groundOnly = groundOnly;
     for (int k = 0; k < 3; ++k) blow->feet[k] = feet[k];
     blow->yaw = yaw;
     blow->wait = wait;

@@ -739,6 +739,7 @@ add_library(mu_game STATIC
   src/game/fx/critical_damage.cpp
   src/game/fx/recall.cpp
   src/game/fx/fire_scream.cpp
+  src/game/fx/earthshake.cpp
   src/game/fx/electric_spike.cpp
   src/game/fx/firebreath.cpp
   src/game/fx/bolt.cpp

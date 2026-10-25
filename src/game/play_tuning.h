@@ -26,6 +26,9 @@ namespace mu::game {
 // The sim's own rate. docs/reference/conventions.md, "Time": the tick never reads the frame's delta and
 // the frame never decides how many ticks have passed except by this number.
 constexpr double kTickSeconds = 1.0 / 20.0;
+// PLAYER_ATTACK_DARKHORSE, 11 keys at 0.3 (ZzzCharacter.cpp:1013): how long the horse plays its
+// stomp, which the ground rings run for (fx/earthshake.h).
+constexpr float kEarthshakeClipSeconds = 11.0f / (0.3f * 25.0f);
 // The longest a hero's shot waits for her string (Play::nocking_): her clip cut short -- a
 // click away, a death -- still lets the arrow go.
 constexpr float kNockHold = 0.33f;
@@ -318,12 +321,14 @@ inline bool rideAction(int slot) {
 // What a Dark Lord's skill plays on the Dark Horse (13/4): PLAYER_ATTACK_RIDE_TELEPORT 83 for
 // Summon (WSclient.cpp:4702-4706), _ATTACK_FLASH 85 for Electric Spike (ClassAttack.cpp:933-937),
 // _ATTACK_MAGIC 86 for Critical Damage (WSclient.cpp:4685-4691), and PLAYER_ATTACK_RIDE_STRIKE 82
-// for the rest -- Force, Force Wave, Fire Burst, Fire Scream (:4243-4248). player.muc's numbers.
+// for the rest -- Force, Force Wave, Fire Burst, Fire Scream (:4243-4248). player.muc's numbers. And
+// PLAYER_ATTACK_DARKHORSE 87 for Earthshake (ClassAttack.cpp:948-952), the horse's own stomp.
 inline int lordHorseClip(int skill) {
     switch (skill) {
         case sim::skill::kSummon: return 83;
         case sim::skill::kElectricSpike: return 85;
         case sim::skill::kCriticalDamage: return 86;
+        case sim::skill::kEarthshake: return 87;
         default: return 82;
     }
 }

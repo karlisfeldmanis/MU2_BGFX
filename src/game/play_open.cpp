@@ -568,6 +568,7 @@ void Play::openSound(const std::string& assetDir, bool muted, bool offline) {
     heard_.criticalDamage = sound_.load("critical_damage", true);
     heard_.recall = sound_.load("recall", true);
     heard_.fireScream = sound_.load("fire_scream", true);
+    heard_.earthshake = sound_.load("earthshake", true);
     heard_.click = sound_.load("window_click", false);
     heard_.refused = sound_.load("window_refused", false);
     heard_.opened = sound_.load("window_open", false);
