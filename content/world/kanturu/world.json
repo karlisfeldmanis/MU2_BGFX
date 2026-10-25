@@ -257,12 +257,13 @@
     "event": false,
     "floors": false,
     "move_order": 11,
-    "note": "Kanturu Ruins, MU's map 37, entered from Tarkan's west door (gates 125/127, the next step). arrive is the middle of the spawn gate 138's box, the camp by the door (OpenMU VersionSeasonSix Gates.cs:276-280), where a death lands too; not 126's arrival box, which overlaps the way back on three tiles (docs/worlds/kanturu-port.md 2.1). The Town Portal goes to Tarkan's town (home 8): the camp has no merchant (decision 6). Last on the M key's walk (11), so no other map's order moves. Its own drops: the 380 gear (kanturu_gear), and Loch's Feather and the Scroll of Nova as Tarkan and Icarus drop them (the user, 2026-10-25: \"Feather + Nova\"; MU's Nova comes off the Ruins).",
+    "note": "Kanturu Ruins, MU's map 37, entered from Tarkan's west door (gates 125/127, the next step). arrive is the middle of the spawn gate 138's box, the camp by the door (OpenMU VersionSeasonSix Gates.cs:276-280), where a death lands too; not 126's arrival box, which overlaps the way back on three tiles (docs/worlds/kanturu-port.md 2.1). The Town Portal goes to Tarkan's town (home 8): the camp has no merchant (decision 6). Last on the M key's walk (11), so no other map's order moves. Its own drops: the 380 gear (kanturu_gear), and Loch's Feather and the Scroll of Nova as Tarkan and Icarus drop them (the user, 2026-10-25: \"Feather + Nova\"; MU's Nova comes off the Ruins). And the Gemstone, one kill in 150 beside its drop (sim::kGemstoneOdds; docs/plans/jewel-of-harmony.md).",
     "exp_bonus": 1.25,
     "drops": [
       "kanturu_gear",
       "feather",
-      "nova_scroll"
+      "nova_scroll",
+      "gemstone"
     ]
   },
   "npcs": [

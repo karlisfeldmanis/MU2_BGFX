@@ -1,7 +1,7 @@
 # Jewel of Harmony, and Kanturu's drops
 
 Plan, 2026-10-25. Built: step 1 (21a4568a, the four items, dormant), step 2 (8409b267, the option
-on the item, protocol 55), step 3 (bb869b7e, ad138709, it counts worn and shows on the card). The user: "we need drops which amke sense for kanturu
+on the item, protocol 55), step 3 (bb869b7e, ad138709, it counts worn and shows on the card), step 4 (the Gemstone drop, one kill in 150 in the Ruins and the Relics on its own dice, snapshot shape 27). The user: "we need drops which amke sense for kanturu
 monsters", picking Feather + Nova, Gemstone -> Harmony and the Golden Satyros box; then "what is
 that jewel of harmonu? how we can use it?", "lets make a plan how we implement this system", and
 "what about end game orbs and scrolls for all classes?".

@@ -1457,6 +1457,21 @@ void Realm::leave(const Body& dead, const Body& killer) {
             break;
         }
     }
+    // The Gemstone in the Ruins and the Relics, any kill's, the same way (sim::kGemstoneOdds).
+    if (gemstoneMap(tables_->map) && gemstoneDice_.nextInt(0, kGemstoneOdds) == 0) {
+        for (size_t i = 0; i < tables_->items.size(); ++i) {
+            if (!gemstone(tables_->items[i])) continue;
+            Lying stone;
+            stone.what = Held{int32_t(i), 0, 1};
+            std::tie(stone.column, stone.row) = clearing(dead.column(), dead.row());
+            stone.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
+            stone.owner = mine().id;
+            stone.id = nextId_++;
+            lying_.push_back(stone);
+            say(What::Dropped, dead, int32_t(stone.id), int32_t(i), 0);
+            break;
+        }
+    }
     // The first wings in Icarus, the hero's class's, the same way (sim::kIcarusWingOdds).
     if (rulesOf(tables_->map).firstWings &&
         (wingDice_.nextInt(0, kIcarusWingOdds) == 0 || wingDemo_)) {

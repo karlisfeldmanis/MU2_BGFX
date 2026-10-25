@@ -17233,6 +17233,39 @@ void testHarmony(const content::Tables& tables) {
     // Damage taken stays MU's percent: 5 at level 11.
     const sim::HarmonyOption* taken = sim::harmonyOption(sim::HarmonyFamily::Defence, 7);
     check(taken != nullptr && sim::harmonyAt(*taken, 11) == 5, "and Damage taken keeps MU's percent");
+
+    // The Gemstone: one in 150 kills in the Ruins and the Relics, any monster's, on its own roll;
+    // never elsewhere.
+    check(sim::gemstoneMap(37) && sim::gemstoneMap(38) && !sim::gemstoneMap(8) && !sim::gemstoneMap(0),
+          "the Gemstone falls in the Ruins and the Relics, not Tarkan or Lorencia");
+    const auto gemstonesIn = [](const content::Tables& map, int level, int kills) {
+        int found = 0;
+        auto at = std::make_unique<sim::Realm>();
+        for (int i = 0; i < kills; ++i) {
+            if (i % 500 == 0) {
+                at = std::make_unique<sim::Realm>();
+                at->raise(&map, uint32_t(91 + i), 20, 218, sim::Kin::DarkKnight, 50);
+            }
+            at->dropFor(level);
+            for (const sim::Lying& one : at->lying()) {
+                found += sim::gemstone(map.items[size_t(one.what.item)]);
+            }
+        }
+        return found;
+    };
+    checkEqual(gemstonesIn(tables, 40, 30000), 0, "Lorencia's kills leave no Gemstone");
+    content::Tables ruins;
+    std::string error;
+    if (!content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/kanturu/kanturu.mur", ruins, error)) {
+        check(false, "the Ruins' tables load");
+        return;
+    }
+    const int kills = 45000;
+    const int fallen = gemstonesIn(ruins, 100, kills);
+    std::printf("  the Ruins: %d Gemstones off %d kills (one in %d wanted)\n", fallen, kills,
+                sim::kGemstoneOdds);
+    const double want = double(kills) / sim::kGemstoneOdds;
+    check(std::abs(fallen - want) < want * 0.15, "a Ruins kill leaves one one time in 150");
 }
 
 void testKept(const content::Tables& tables) {

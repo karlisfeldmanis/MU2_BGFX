@@ -66,6 +66,9 @@ struct MapRow {
     // Ancient runes in a kill's rune draw (sim::drawRunePower): the manifest's drops
     // `ancient_runes`, the Relics and the boss's map, never the Ruins.
     bool ancientRunes = false;
+    // The Gemstone (sim::kGemstoneOdds) on its own roll: the manifest's drops `gemstone`, the Ruins
+    // and the Relics.
+    bool gemstone = false;
 };
 
 // The rules of MU's map `number`: its row, or a row of the defaults for a map not in the table

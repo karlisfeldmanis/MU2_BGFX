@@ -19,7 +19,7 @@ The gates in MU's map order, each world's rows in its manifest's order.
 
 A world's rules: {"arrive": [column, row], "home": map, "event", "floors", "move_order",
 "summons"?: false, "drops"?: ["feather", "nova_scroll", "firecracker", "first_wings",
-"second_gear"], "invasion"?: true, "treasure"?: "map" | "last_floor", "flight"?: true,
+"second_gear", "kanturu_gear", "ancient_runes", "gemstone"], "invasion"?: true, "treasure"?: "map" | "last_floor", "flight"?: true,
 "second_class"?: true, "note"}.
 The world table in `move_order`, which is the M key's walk (sim::mapAfter); a manifest with no
 `rules` (the character screen's) is not a world anyone stands in.
@@ -85,7 +85,7 @@ def flag(value) -> str:
 
 
 DROPS = ("feather", "nova_scroll", "firecracker", "first_wings", "second_gear", "kanturu_gear",
-         "ancient_runes")
+         "ancient_runes", "gemstone")
 TREASURE = {None: "None", "map": "Map", "last_floor": "LastFloor"}
 
 
@@ -119,6 +119,8 @@ def maps() -> str:
             fields.append(f'.kanturuGear = true')
         if "ancient_runes" in drops:
             fields.append(f'.ancientRunes = true')
+        if "gemstone" in drops:
+            fields.append(f'.gemstone = true')
         rows.append("    {" + ", ".join(fields) + "},")
     return (HEAD.format(block="rules", owner="maps.cpp")
             + "\nconstexpr MapRow kMaps[] = {\n" + "\n".join(rows) + "\n};\n")

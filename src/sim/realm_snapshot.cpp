@@ -17,7 +17,7 @@ namespace mu::sim {
 namespace {
 
 constexpr uint32_t kMagic = 0x4E53554Du;  // "MUSN"
-constexpr uint32_t kShape = 26;           // bumped when serialize() changes (4: a Player's trade; 5: Devil Square's door and dice; 6: the castle's winner; 7: Player::goneAt; 8: Body::hurt; 9: Player::autoDrink; 10: Player::brokering; 11: Player::event, the EventSeat; 12: Body::bleed, Happening::bled; 13: Player's 27 quests, Aida's two; 14: Player::jeweling; 15: Body::talents; 16: the talents' timed states, talentDice_; 17: Body::elite, eliteDice_ and eliteSlots_; 18: Body::twoHanded; 19: Body::rebirths, Player::rebirthing; 20: QuestProgress::life; 21: Body::defenseCutUntil, Fire Slash's; 22: Body::swell and swellUntil, Swell Life's; 23: Body::bleedRequiem and Requiem's held blows; 24: Body::sleepUntil, the Sleep rune's; 25: Held::harmony and harmonyLevel, in what was its padding; 26: Body's Dark Raven, spiritDice_ and ravenDice_)
+constexpr uint32_t kShape = 27;           // bumped when serialize() changes (4: a Player's trade; 5: Devil Square's door and dice; 6: the castle's winner; 7: Player::goneAt; 8: Body::hurt; 9: Player::autoDrink; 10: Player::brokering; 11: Player::event, the EventSeat; 12: Body::bleed, Happening::bled; 13: Player's 27 quests, Aida's two; 14: Player::jeweling; 15: Body::talents; 16: the talents' timed states, talentDice_; 17: Body::elite, eliteDice_ and eliteSlots_; 18: Body::twoHanded; 19: Body::rebirths, Player::rebirthing; 20: QuestProgress::life; 21: Body::defenseCutUntil, Fire Slash's; 22: Body::swell and swellUntil, Swell Life's; 23: Body::bleedRequiem and Requiem's held blows; 24: Body::sleepUntil, the Sleep rune's; 25: Held::harmony and harmonyLevel, in what was its padding; 26: Body's Dark Raven, spiritDice_ and ravenDice_; 27: gemstoneDice_)
 
 struct Writer {
     static constexpr bool reading = false;
@@ -146,7 +146,8 @@ void Realm::serialize(Archive& a) {
                          &chillDice_, &crackerDice_, &featherDice_, &novaScrollDice_, &wingDice_,
                          &gearDice_, &ticketDice_, &devilDice_, &treasureDice_, &orbDice_, &showerDice_,
                          &invasionDice_, &raidDice_, &raiderDice_, &mixDice_, &lifeDice_, &talentDice_,
-                         &eliteDice_, &burstDice_, &recallDice_, &screamDice_, &spiritDice_, &ravenDice_}) {
+                         &eliteDice_, &burstDice_, &recallDice_, &screamDice_, &spiritDice_, &ravenDice_,
+                         &gemstoneDice_}) {
         a.pod(*dice);
     }
     a.vec(eliteSlots_);

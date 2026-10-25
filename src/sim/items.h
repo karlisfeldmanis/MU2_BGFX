@@ -1075,6 +1075,11 @@ bool refiningStone(const content::ItemRow& row);  // either
 bool higherRefiningStone(const content::ItemRow& row);
 // Any of the four: they stack, are guarded as jewels are, and trade as jewels.
 bool harmonyMaterial(const content::ItemRow& row);
+// The Gemstone falls in the Ruins and the Relics (MapRow::gemstone): a kill leaves one, one in
+// kGemstoneOdds, its own roll beside the kill's drop (the user: 1 in 150). MU's comes off
+// Kanturu's monsters as their ordinary drop.
+constexpr int kGemstoneOdds = 150;
+inline bool gemstoneMap(uint32_t map) { return rulesOf(map).gemstone; }
 // The name a thing is shown by: its row's, but a Rune of Creation that carries a power is the
 // rune of that power, "Rune of Stormcall" (the user, 2026-10-18: 'we need to show Rune of "rune
 // name" not jewel of creation'). No plus: each caller adds its own.

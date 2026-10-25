@@ -2382,6 +2382,8 @@ private:
     // Whether a kill in Tarkan, Icarus or Blood Castle 6 leaves a Loch's Feather (sim::kFeatherOdds).
     Random featherDice_{0};
     Random novaScrollDice_{0};
+    // Whether a kill in the Ruins or the Relics leaves a Gemstone (sim::kGemstoneOdds).
+    Random gemstoneDice_{0};
     // Whether a kill in Icarus leaves the first wings (sim::kIcarusWingOdds).
     Random wingDice_{0};
     // And whether Atlans's strongest leave a piece of the second class's gear
