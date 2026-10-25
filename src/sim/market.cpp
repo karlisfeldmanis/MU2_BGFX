@@ -314,6 +314,10 @@ int64_t buyingPrice(const content::ItemRow& row, int refinement, int pieces, boo
     // CItem::PetValue, zzzitem.cpp; BUGFIX_SELL_PRICE_OF_DARKLOAD_PETS_20050310): 2,000,000 at
     // the level 1 every horse is here (sim::kHorseLevel).
     if (darkHorse(row)) return round(int64_t(kHorseLevel) * 2000000);
+    // And the Dark Raven 1,000,000 a level, the Spirit 30,000,000 at +0 (the horse's) and
+    // 15,000,000 at +1 (the raven's) (WebZen zzzitem.cpp, CItem::Value; docs/plans/dark-lord-pets).
+    if (row.group == kPets && row.number == 5) return round(int64_t(kHorseLevel) * 1000000);
+    if (row.group == kPets && row.number == 31) return round(refinement == 0 ? 30000000 : 15000000);
     if (row.group == kPets) {
         const int64_t dropLevel = row.dropLevel + refinement * 3;
         const int64_t base = dropLevel * dropLevel * dropLevel + 100;

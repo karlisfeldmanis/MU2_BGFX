@@ -27,7 +27,10 @@ bool wears(const content::ItemRow& row) {
 }
 
 bool mendable(const content::ItemRow& row) {
-    return wears(row) && !(row.group == kGroupPets && row.number >= 0 && row.number <= 1);
+    // Nor the Dark Horse and the Dark Raven: only the Pet Trainer mends them (Realm::mendPets; in
+    // WebZen's 0.97/0.99 base a pet is repaired only with the trainer's window open).
+    return wears(row) && !(row.group == kGroupPets && row.number >= 0 && row.number <= 1) &&
+           !(row.group == kGroupPets && (row.number == 4 || row.number == 5));
 }
 
 double weaponWear(const content::ItemRow& row, const Held& held, int defense) {

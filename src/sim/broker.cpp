@@ -5,6 +5,7 @@
 #include <cstring>
 #include <type_traits>
 
+#include "sim/lord_pets.h"
 #include "sim/market.h"
 #include "sim/quests.h"
 #include "sim/wear.h"
@@ -30,6 +31,8 @@ int64_t npcValue(const content::Tables& tables, const Held& what) {
                                 what.durability, row.durability, what.luck, what.option,
                                 excellentCount(what.excellent));
     if (!counted) paid *= pieces;
+    // The Dark Horse and the Dark Raven by their level, a third back (CItem::PetValue).
+    if (levelledPet(row)) paid = petValue(row, what) / 3 / 100 * 100;
     // Worn gear fetches less: 0.6 of the share gone comes off (CalculateSellingPrice).
     if (wears(row)) paid = wornSellingPrice(paid, what.durability, maximumDurability(row, what));
     // A rune is a share of the Jewel of Creation's price by its rarity (sim/items.h kRuneSale).

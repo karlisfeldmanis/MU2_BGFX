@@ -9,7 +9,10 @@
 #include "sim/command.h"
 #include "sim/lord_pets.h"
 #include "sim/machine.h"
+#include "sim/broker.h"
+#include "sim/market.h"
 #include "sim/realm.h"
+#include "sim/wear.h"
 
 using namespace mu;
 
@@ -191,5 +194,10 @@ void testLordPets(void (*check)(bool, const char*), void (*checkEqual)(long long
     watch(1200);
     check(dashes > 0, "in Random it strikes");
     check(ravenHits > 0, "and its blows land, his");
+
+    // Only the Trainer mends them, and a merchant pays a pet by its level.
+    check(!sim::mendable(row) && !sim::mendable(tables.items[size_t(ravenRow)]), "no smith mends the horse or the raven");
+    checkEqual(sim::npcValue(tables, horse), 20000000 / 3 / 100 * 100, "a level 10 horse sells for a third of 20M");
+    checkEqual(sim::buyingPrice(tables.items[size_t(spiritRow)], 1, 1, false, 0, 0), 15000000, "a Spirit +1 is 15M");
 }
 

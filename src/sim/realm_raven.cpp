@@ -151,7 +151,16 @@ void Realm::ravenLand(Body& hero) {
         if (ball) damage = damage * 2 / 3;
         damage = std::max(1, damage);
         // Its life, worn by its own landed hits of 50 or more (:1630-1650).
-        if (damage >= kRavenWearFrom) wearDown(kWeaponLeft, double(damage * 2 / 100) / double(kRavenWearTally));
+        if (damage >= kRavenWearFrom) {
+            wearDown(kWeaponLeft, double(damage * 2 / 100) / double(kRavenWearTally));
+            // Worn out: it stays, inert, and bleeds a tenth of its level's span (sim::bleedPet).
+            if (me().bag[kWeaponLeft].durability <= 0) {
+                Held dead = me().bag[kWeaponLeft];
+                const int down = bleedPet(dead);
+                me().bag.put(kWeaponLeft, dead);
+                if (down > 0) say(What::PetLevelled, hero, kWeaponLeft, down, 0);
+            }
+        }
         const int bite = std::min(damage, target.health);
         target.health -= bite;
         noteHurt(target, hero, bite);
