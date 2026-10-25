@@ -826,12 +826,12 @@ void Card::rebuild() {
         while (caps > 5.0f &&
                controls::capsWidth(caps * k, now_.keys[i].label, 0.04f) > (keyW - 9.0f) * k)
             caps -= 0.25f;
-        controls::caps(canvas_, x + cx * k, at(kKeysTop + 4.5f, kSmallCaps), caps * k, kQuiet,
+        controls::caps(canvas_, x + cx * k, at(kKeysTop + 2.0f, kSmallCaps), caps * k, kQuiet,
                        now_.keys[i].label, 0.04f);
         float size = kKeySize;
         while (size > 6.5f && controls::labelWidth(size * k, now_.keys[i].value) > (keyW - 10.0f) * k)
             size -= 0.5f;
-        left(cx, kKeysTop + 11.0f, size, kHeading, now_.keys[i].value);
+        left(cx, kKeysTop + 8.5f, size, kHeading, now_.keys[i].value);
     }
 
     const float drop = dropFor(now_.points);
