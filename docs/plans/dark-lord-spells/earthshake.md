@@ -396,3 +396,18 @@ cook, icon cell 5, and the fx.
 Blocks a build: **the Dark Horse does not exist** -- no model, no horn, no item row, no mount power, no drawing (6.4 items 1-4);
 after it, the row needs `kSkills` 47 and the kept layout's cools, and the showing cook for `sDarkEarthQuake.wav`. Everything else
 (the release branch pattern, the push, fx/fury, the camera, the shockwave sheet, the stone chips) exists.
+
+## 8. Decided
+
+Settled 2026-10-25. The user picked call 1 ("MU's round stomp") and the Dark Horse first ("Build the horse"); the rest from section 7's
+recommendations against "DL has to be true on actual MU" and "the hit lands with the visual":
+
+1. **MU's disc, round him**: every monster within whole-tile distance under 5, behind him as in front; the ring and both spike rings
+   all round; the crater 0.8 tile ahead (11). "Only frontal" yields here -- the user's pick.
+2. **Every monster in the disc**, monsters only, capped by `kVictims`; the aimed body only if it stands in it.
+3. **Struck when the first spike ring rises** (ours, marked), about 20 ticks after the cast, the spikes drawn off the sim's say.
+4. **Pushed 2 tiles straight away**, hit or missed, as `Realm::push` slides; a wall or a safe tile stops it; bosses spared.
+5. **MU's 10 s as the cooldown**, no mana, no AG.
+6. **MU's damage**: 150..225 + Str/10 + Command/5 + 10 a horse level in place of Str/25 + Ene/50, x(200 + Ene/20)%.
+7. **Horse level 1** (+10) until phase 5's pet levels. 8. **Refused at no horse life.** 9. **No target needed**; he turns to the
+   pointer. 10. **Clip 87 at 0.3, let go on key 5 of 11.** 12. **Mounted only.**
