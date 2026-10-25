@@ -995,7 +995,8 @@ void Play::update(double seconds) {
                     // The barrier, thrown with the clip: its ribbons begin a fresh climb, circle
                     // and all, and loop for as long as the guard stands (Play::guardStep; the
                     // user, 2026-10-21 -- two seconds at the cast from 2026-09-25). A guard's alone -- Defense, Soul Barrier and the elf's
-                    // Greater Defense -- and not her Heal or Greater Damage, which raise none.
+                    // Greater Defense -- and not her Heal, which raises none. Greater Damage's,
+                    // and every aura's colour in a shared swirl, are guardStep's.
                     // Any player's, not the hero's alone (the user, 2026-10-16).
                     // On whom it fell: an elf's aid -- or a wizard's Magic Shield -- on another player
                     // rises on him (sim::SkillRow::aids).
@@ -1007,7 +1008,8 @@ void Play::update(double seconds) {
                         guardRise(aided->id, row->number);
                     }
                     // Her Heal and Greater Damage: a burst on whom it fell, once (fx/aura.h,
-                    // kMending and kMight -- ours, MU draws neither). A knight's Swell Life takes
+                    // kMending and kMight -- ours; MU draws neither at the cast, and Greater
+                    // Damage's look while it stands is Aura::might's). A knight's Swell Life takes
                     // kMight's for now, on him: MU's ring of spirits is not drawn yet.
                     if (row && (row->mends || row->mightTicks > 0 || row->swellTicks > 0) &&
                         (happening.who == heroId || caster->visible) && aided->placed && ground_) {
@@ -1015,7 +1017,8 @@ void Play::update(double seconds) {
                             aided->crown[0],
                             ground_->heightAt(aided->crown[0], aided->crown[2]),
                             aided->crown[2]};
-                        aura_.cast(row->mends ? kMending : kMight, feet, aided->yaw,
+                        aura_.cast(row->mends ? kMending : row->swellTicks > 0 ? kSwelling : kMight,
+                                   feet, aided->yaw,
                                    ground_->metresPerTile());
                     }
                     // A channel: its clip, looping for as long as it runs. No blow follows the
@@ -3629,6 +3632,25 @@ void Play::update(double seconds) {
                 if (bone >= 0 && drawn.figure.pointOn(bone, origin, points[lit])) ++lit;
             }
             aura_.swell(points, lit, float(seconds), ground_->metresPerTile());
+        }
+        // Greater Damage standing on a player drawn: its red glow on both arms (Aura::might,
+        // bug report #69: "There is no visual effect for the Greater Damage Buff on the hands").
+        for (size_t i = 0; i < bodies.size() && i < drawn_.size(); ++i) {
+            const sim::Body& body = bodies[i];
+            const Drawn& drawn = drawn_[i];
+            if (!body.player || !body.alive() || body.mightUntil <= realm_.tick() ||
+                drawn.id != body.id || !drawn.placed || !drawn.visible) {
+                continue;
+            }
+            const FigureBody* look = drawn.figure.body();
+            if (!look) continue;
+            const float origin[3] = {0.0f, 0.0f, 0.0f};
+            float points[6][3];
+            int lit = 0;
+            for (int bone : look->armBones) {
+                if (bone >= 0 && drawn.figure.pointOn(bone, origin, points[lit])) ++lit;
+            }
+            aura_.might(body.id, points, lit);
         }
     }
     warp_.update(float(seconds));

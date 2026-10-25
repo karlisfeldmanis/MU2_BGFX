@@ -1192,14 +1192,60 @@ void Play::landed() {
 // Two calls and not one because the barrier follows the body, which the level-up's flares do
 // not: MU leaves a burst where it was thrown (`TargetPosition` is never assigned), and a guard
 // that stayed behind while he walked out of it would be a guard around nobody.
+namespace {
+
+// Every aura standing on `body`, each a colour in its shared swirl (Aura::guard's `kinds`), and
+// a key telling the set apart: the guard -- green, or the wizard's blue Soul Barrier -- Greater
+// Damage's red, and beside another of them Swell Life's orange and Critical Damage's violet,
+// which alone keep their embers and coils (the user, 2026-10-25: "this has to work on all
+// classes if there is mixed auras together we need to mix colors on ribbons"). None: 0.
+int auraKinds(const sim::Body& body, int64_t tick, const Recipe* kinds[Aura::kKinds],
+              uint32_t& key) {
+    int count = 0;
+    key = 0;
+    if (!body.alive()) return 0;
+    if (body.boonUntil > tick) {
+        const bool barrier = body.boonSkill == sim::skill::kSoulBarrier;
+        kinds[count++] = barrier ? &kBarrier : &kGuarding;
+        key |= barrier ? 2u : 1u;
+    }
+    if (body.mightUntil > tick) {
+        kinds[count++] = &kFury;
+        key |= 4u;
+    }
+    const bool swell = body.swellUntil > tick, keen = body.keenUntil > tick;
+    if (count + int(swell) + int(keen) < 2) return count;
+    if (swell) {
+        kinds[count++] = &kSwellRibbons;
+        key |= 8u;
+    }
+    if (keen) {
+        kinds[count++] = &kKeenRibbons;
+        key |= 16u;
+    }
+    return count;
+}
+
+}  // namespace
+
 void Play::guardRise(uint32_t who, int32_t skill) {
     const Drawn* caster = drawnOf(who);
     if (caster == nullptr || !caster->placed || ground_ == nullptr) return;
     const float feet[3] = {caster->crown[0],
                            ground_->heightAt(caster->crown[0], caster->crown[2]),
                            caster->crown[2]};
-    aura_.guard(who, feet, caster->yaw, ground_->metresPerTile(),
-                skill == sim::skill::kSoulBarrier ? kBarrier : kGuarding);
+    // What stands on him, every aura in its own colour; a `--guard` preview, with none behind
+    // it, the skill's own look.
+    const Recipe* kinds[Aura::kKinds];
+    uint32_t key = 0;
+    const sim::Body* body = realm_.find(who);
+    const int count = body ? auraKinds(*body, int64_t(realm_.tick()), kinds, key) : 0;
+    if (count > 0) {
+        aura_.guard(who, feet, caster->yaw, ground_->metresPerTile(), kinds, count, key);
+    } else {
+        aura_.guard(who, feet, caster->yaw, ground_->metresPerTile(),
+                    skill == sim::skill::kSoulBarrier ? kBarrier : kGuarding);
+    }
 }
 
 void Play::showGuard() {
@@ -1226,15 +1272,24 @@ void Play::guardStep() {
         const Drawn& drawn = drawn_[i];
         if (!body.player || drawn.id != body.id) continue;
         const bool held = preview && body.id == hero.id;
-        const bool guarded = body.alive() && body.boonUntil > realm_.tick();
+        // Every aura on him in one swirl (auraKinds): Greater Damage raises it as the guard
+        // does -- MU's eBuff_Attack makes the guard's five SPEARSKILL sub 4 joints
+        // (ZzzCharacter.cpp:10789-10795; bug report #69) -- and a set that changes, an aura
+        // coming or lapsing, throws it again in the new colours.
+        const Recipe* kinds[Aura::kKinds];
+        uint32_t key = 0;
+        const bool guarded = auraKinds(body, int64_t(realm_.tick()), kinds, key) > 0;
+        const bool seen = drawn.placed && (body.id == hero.id || drawn.visible);
         if (!aura_.guarding(body.id)) {
-            if (guarded && drawn.placed && (body.id == hero.id || drawn.visible)) {
-                guardRise(body.id, body.boonSkill);
-            }
+            if (guarded && seen) guardRise(body.id, body.boonSkill);
             continue;
         }
         if (!held && !guarded) {
             aura_.release(body.id);
+            continue;
+        }
+        if (guarded && aura_.guardKey(body.id) != key && seen) {
+            guardRise(body.id, body.boonSkill);
             continue;
         }
         if (!drawn.placed) continue;

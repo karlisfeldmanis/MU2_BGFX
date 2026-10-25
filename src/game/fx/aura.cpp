@@ -49,6 +49,12 @@ constexpr float kEmberStrength = 2.4f;
 // sparkles" (2026-10-25).
 constexpr float kEmberRate = 3.0f;
 
+// Greater Damage's glints (Aura::might): how wide one is in metres and how bright, judged on
+// shots, and red where MU's is (1, 0.3, 0.2) (the user, 2026-10-25: "it has to be red").
+constexpr float kGlintAcross = 0.30f;
+constexpr float kGlintStrength = 2.2f;
+constexpr float kGlintLight[3] = {1.0f, 0.08f, 0.06f};
+
 // --- the circle, ZzzEffect.cpp BITMAP_MAGIC + 1 subtype 0 ----------------------------------
 constexpr float kRingTicks = 20.0f;      // LifeTime
 constexpr float kRingDims = 5.0f;        // full until five ticks are left...
@@ -250,12 +256,35 @@ void Aura::learn(const float feet[3], float metresPerTile) {
 
 void Aura::guard(uint32_t owner, const float feet[3], float yaw, float metresPerTile,
                  const Recipe& kind) {
+    const Recipe* kinds[1] = {&kind};
+    guard(owner, feet, yaw, metresPerTile, kinds, 1, 0);
+}
+
+void Aura::guard(uint32_t owner, const float feet[3], float yaw, float metresPerTile,
+                 const Recipe* const* kinds, int count, uint32_t key) {
     // One a body: a guard thrown again replaces the one standing, which is what the realm
     // does with the boon (`throwSkill` overwrites it) and what MU does with its own
     // `g_isCharacterBuff` test -- the circle flashes again and no second set of ribbons is made.
     release(owner);
-    Burst* b = throwOne(kind, feet, yaw, metresPerTile);
-    if (b != nullptr) b->owner = owner;
+    count = std::clamp(count, 1, kKinds);
+    Recipe shared = *kinds[0];
+    shared.joints = std::min(kJoints, shared.joints * count);
+    Burst* b = throwOne(shared, feet, yaw, metresPerTile);
+    if (b == nullptr) return;
+    b->owner = owner;
+    b->key = key;
+    b->kinds = count;
+    for (int i = 0; i < count; ++i) {
+        std::copy(kinds[i]->light, kinds[i]->light + 3, b->kindLight[i]);
+        b->kindBlue[i] = kinds[i]->blue;
+    }
+}
+
+uint32_t Aura::guardKey(uint32_t owner) const {
+    for (const Burst& b : bursts_) {
+        if (b.living && b.owner == owner) return b.key;
+    }
+    return 0;
 }
 
 void Aura::follow(uint32_t owner, const float feet[3]) {
@@ -311,10 +340,28 @@ void Aura::swell(const float (*points)[3], int count, float seconds, float metre
     }
 }
 
+void Aura::might(uint32_t who, const float (*points)[3], int count) {
+    if (!bgfx::isValid(light_)) return;
+    // Rolled once a reference frame and held between, a body and a bone each, so a fast display
+    // flickers at MU's pace and not its own.
+    const uint32_t frame = uint32_t(frame_);
+    for (int k = 0; k < count && glintCount_ < kGlints; ++k) {
+        uint32_t roll = (who * 2654435761u) ^ (uint32_t(k) * 40503u) ^ (frame * 2246822519u);
+        roll ^= roll >> 15;
+        roll *= 2246822519u;
+        roll ^= roll >> 13;
+        Glint& g = glints_[glintCount_++];
+        std::copy(points[k], points[k] + 3, g.at);
+        g.light = float(roll % 30u + 70u) * 0.01f;
+    }
+}
+
 void Aura::update(float seconds) {
     // No cap on a long frame, where MU2 had one: nothing is laid per step any more, so a hitch
     // moves the burst on and cannot leave a streak behind it.
     const float ticks = seconds * kReference;
+    glintCount_ = 0;
+    frame_ = std::fmod(frame_ + ticks, 1.0e6f);
     // Swell Life's embers on MU's frame: the pace gains 5.7-9.5 units a frame, the scale loses
     // 0.04-0.08; ten frames and gone. MU puts the particle back on its bone every frame and then
     // adds the pace once (ZzzEffectParticle.cpp:8065-8075), so its height over the bone IS the
@@ -416,10 +463,26 @@ void Aura::gatherEmbers(gfx::Effects& effects) const {
     }
 }
 
+void Aura::gatherGlints(gfx::Effects& effects) const {
+    for (int i = 0; i < glintCount_; ++i) {
+        const Glint& g = glints_[i];
+        const float light = kGlintStrength * g.light;
+        gfx::Sprite sprite;
+        sprite.sheet = light_;
+        sprite.blend = gfx::Blend::Additive;
+        std::copy(g.at, g.at + 3, sprite.position);
+        sprite.halfWidth = sprite.halfHeight = kGlintAcross * 0.5f;
+        for (int d = 0; d < 3; ++d) sprite.colour[d] = kGlintLight[d] * light;
+        sprite.colour[3] = 1.0f;
+        if (!effects.add(sprite)) return;
+    }
+}
+
 void Aura::gather(gfx::Effects& effects, const content::Ground& ground,
                   const float eye[3]) const {
     gatherPuffs(effects);
     gatherEmbers(effects);
+    gatherGlints(effects);
     for (const Burst& b : bursts_) {
         if (!b.living) continue;
         if (b.r.circle && b.laps == 0) gatherCircle(effects, ground, b);
@@ -448,6 +511,8 @@ void Aura::gather(gfx::Effects& effects, const content::Ground& ground,
         sprite.sheet = b.r.blue && bgfx::isValid(flareBlue_) ? flareBlue_ : flare_;
         sprite.blend = gfx::Blend::Additive;
         sprite.colour[3] = 1.0f;
+        // The joint's own light: its kind's on a shared guard (Aura::guard's `kinds`).
+        const float* tint = b.r.light;
 
         // One segment of one strip, between two points of the trail `axis` wide either side.
         // U walks the sheet from its dark rim at the head through its bright middle to the dark
@@ -479,7 +544,7 @@ void Aura::gather(gfx::Effects& effects, const content::Ground& ground,
             const float facing = std::fabs(n[0] * v[0] + n[1] * v[1] + n[2] * v[2]) / (tl * vl);
             const float fade = smoothstep(kEdgeGone, kEdgeFull, facing);
             if (fade <= 0.0f) return;
-            for (int d = 0; d < 3; ++d) sprite.colour[d] = b.r.light[d] * light * fade;
+            for (int d = 0; d < 3; ++d) sprite.colour[d] = tint[d] * light * fade;
 
             const float top = flipped ? 1.0f : 0.0f, bottom = 1.0f - top;
             const float side[4] = {-half, half, half, -half};
@@ -500,6 +565,11 @@ void Aura::gather(gfx::Effects& effects, const content::Ground& ground,
 
         for (int k = 0; k < b.r.joints; ++k) {
             const Joint& j = b.joints[k];
+            if (b.kinds > 0) {
+                const int kind = k % b.kinds;
+                tint = b.kindLight[kind];
+                sprite.sheet = b.kindBlue[kind] && bgfx::isValid(flareBlue_) ? flareBlue_ : flare_;
+            }
             float p0[3], p1[3];
             at(b, j, over, p0);
             float u0 = 1.0f;

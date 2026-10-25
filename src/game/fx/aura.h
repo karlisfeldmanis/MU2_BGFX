@@ -136,6 +136,23 @@ inline constexpr Recipe kGuarding{3,    50.0f, 12.0f, 100.0f, 1.6f, 1.6f, 19.0f,
 inline constexpr Recipe kBarrier{3,    50.0f, 12.0f, 100.0f, 1.6f, 1.6f, 19.0f, 0.0f,
                                  true, true,  true,  {0.55f, 0.55f, 0.55f},
                                  {0.4f, 0.6f, 1.0f}, 0.15f, 10.0f, 0.0f, 0.0f, true, true, true};
+// The elf's Greater Damage standing on a player: the guard's ribbons in red (bug report #69; the
+// user, 2026-10-25: "it has to be red"). MU throws its green SPEARSKILL sub 4 for eBuff_Attack as
+// for eBuff_Defense; ours tells the two apart.
+inline constexpr Recipe kFury{3,    50.0f, 12.0f, 100.0f, 1.6f, 1.6f, 19.0f, 0.0f,
+                              true, true,  true,  {0.75f, 0.06f, 0.05f},
+                              {0.4f, 0.6f, 1.0f}, 0.15f, 10.0f, 0.0f, 0.0f, true, false, true};
+// Swell Life's and Critical Damage's colours in a shared swirl (Play::auraKinds): neither raises
+// ribbons alone -- the embers and the coils are their looks -- but beside another aura each
+// lends the swirl its ribbons, Swell Life's in its embers' orange and Critical Damage's in its
+// coils' violet (the user, 2026-10-25: "this has to work on all classes if there is mixed auras
+// together we need to mix colors on ribbons").
+inline constexpr Recipe kSwellRibbons{3,    50.0f, 12.0f, 100.0f, 1.6f, 1.6f, 19.0f, 0.0f,
+                                      true, true,  true,  {0.75f, 0.36f, 0.05f},
+                                      {0.4f, 0.6f, 1.0f}, 0.15f, 10.0f, 0.0f, 0.0f, true, false, true};
+inline constexpr Recipe kKeenRibbons{3,    50.0f, 12.0f, 100.0f, 1.6f, 1.6f, 19.0f, 0.0f,
+                                     true, true,  true,  {0.50f, 0.22f, 0.75f},
+                                     {0.4f, 0.6f, 1.0f}, 0.15f, 10.0f, 0.0f, 0.0f, true, false, true};
 // The elf's Heal and Greater Damage (sprint 15), ours: MuMain draws neither -- ReceiveMagic plays
 // the elf's cast and SOUND_SKILL_DEFENSE and registers the buff, and nothing renders
 // eBuff_Attack. Eight ribbons spread evenly round a ring wider than she is, thrown once at the
@@ -150,9 +167,14 @@ inline constexpr Recipe kBarrier{3,    50.0f, 12.0f, 100.0f, 1.6f, 1.6f, 19.0f, 
 inline constexpr Recipe kMending{8,    70.0f, 30.0f, 22.0f, 7.5f, 7.5f, 12.0f, 0.0f,
                                  true, false, false, {0.45f, 1.70f, 0.60f},
                                  {0.4f, 0.6f, 1.0f}, 0.15f, 2.0f, 0.0f, 0.0f, false, false, false, true};
+// Greater Damage's in red since 2026-10-25 (the user: "it has to be red"); Swell Life keeps the
+// red-orange it borrowed (kSwelling).
 inline constexpr Recipe kMight{8,    70.0f, 34.0f, 16.0f, 10.5f, 10.5f, 10.0f, 0.0f,
-                               true, false, false, {2.20f, 0.55f, 0.15f},
+                               true, false, false, {2.20f, 0.20f, 0.12f},
                                {0.4f, 0.6f, 1.0f}, 0.15f, 2.0f, 0.0f, 0.0f, false, false, false, true};
+inline constexpr Recipe kSwelling{8,    70.0f, 34.0f, 16.0f, 10.5f, 10.5f, 10.0f, 0.0f,
+                                  true, false, false, {2.20f, 0.55f, 0.15f},
+                                  {0.4f, 0.6f, 1.0f}, 0.15f, 2.0f, 0.0f, 0.0f, false, false, false, true};
 // The Dark Phoenix's shield going up, ours: WebZen raises it every six seconds and MuMain
 // answers with the wizard's Soul Barrier buff on the bird (ZzzCharacter.cpp:4976-4979), whose
 // look this game does not draw. Ten ember-red ribbons round a ring the bird's width, rising
@@ -210,6 +232,15 @@ public:
     // `recipe` is the knight's and the elf's green kGuarding or the wizard's blue kBarrier.
     void guard(uint32_t owner, const float feet[3], float yaw, float metresPerTile,
                const Recipe& recipe = kGuarding);
+    // Several auras standing on one body share one swirl (the user, 2026-10-25: "if there is
+    // multiple auras we need combine colors from each aura"): the first kind's ribbons times
+    // `count`, laid evenly round him and dealt out in turn, each in its own kind's light and
+    // sheet -- a guard and Greater Damage, three green and three red, alternating. `key` says
+    // which set it is, so a change in it can be told (guardKey).
+    void guard(uint32_t owner, const float feet[3], float yaw, float metresPerTile,
+               const Recipe* const* kinds, int count, uint32_t key);
+    // The key of the set standing on `owner`, 0 for none.
+    uint32_t guardKey(uint32_t owner) const;
     // Where the body is now, every frame it is drawn: the one thing a following burst needs.
     void follow(uint32_t owner, const float feet[3]);
     // Every living burst moved to where the body is now: an Aura of one body's own, as a set's
@@ -232,6 +263,15 @@ public:
     // bone; it is a soft round dot (ember_soft.png) and not MU's rayed flare01; and its size is
     // judged on shots (kEmberAcross), not MU's sprite scale.
     void swell(const float (*points)[3], int count, float seconds, float metresPerTile);
+    // Greater Damage standing on a player: MU's eBuff_Attack look (ZzzCharacter.cpp:10772-10795),
+    // every frame a BITMAP_SHINY + 1 sprite at 1.5 on each hand's grip and the two bones up that
+    // arm (Weapon[i].LinkBone, - 6, - 7), lit L*(1, 0.3, 0.2) with L rolled (rand() % 30 + 70) *
+    // 0.01 each frame -- a flickering glow on both arms. `points` are those bones this frame
+    // (FigureBody::armBones), `count` of them; called once a drawn frame per body, after
+    // update(). Its ribbons, SPEARSKILL sub 4, are the guard's (Play::guardStep, kFury).
+    // **Ours**: the soft dot of the embers and not MU's rayed shiny02, red where MU's is
+    // orange (the user, 2026-10-25: "it has to be red"), at a size judged on shots.
+    void might(uint32_t who, const float (*points)[3], int count);
 
     // Ages every burst on MU's clock. `seconds` is the frame's own.
     void update(float seconds);
@@ -243,6 +283,7 @@ public:
     int live() const;
 
     static constexpr int kJoints = 15;  // the most any recipe asks for
+    static constexpr int kKinds = 4;    // auras one swirl shares, at most
     // MaxTails - 1 for BITMAP_FLARE: how many ticks long the level-up's trail grows.
     static constexpr int kTrailTicks = 19;
     // Points sampled a tick: the ring turns 0.5 rad a tick, so four is a 7-degree chord.
@@ -275,6 +316,12 @@ private:
         float age = 0.0f;     // reference ticks since it was thrown, or since its lap began
         int laps = 0;         // laps run, for a burst that loops
         Joint joints[kJoints];
+        // A shared guard's kinds (Aura::guard): joint k is drawn in kind k % kinds; none, the
+        // recipe's own.
+        int kinds = 0;
+        float kindLight[kKinds][3] = {};
+        bool kindBlue[kKinds] = {};
+        uint32_t key = 0;
     };
 
     // One wisp of a learned skill's smoke. Lengths in world metres, times in reference ticks.
@@ -306,6 +353,17 @@ private:
     float emberDebt_ = 0.0f;  // embers owed by the frames fed so far
     void gatherEmbers(gfx::Effects& effects) const;
     bgfx::TextureHandle light_ = BGFX_INVALID_HANDLE;  // the embers' soft dot
+
+    // Greater Damage's glints, this frame's only: six a body, room for a party and the street.
+    struct Glint {
+        float at[3] = {0.0f, 0.0f, 0.0f};
+        float light = 1.0f;  // MU's Luminosity, 0.7-1.0
+    };
+    static constexpr int kGlints = 6 * 24;
+    Glint glints_[kGlints];
+    int glintCount_ = 0;
+    float frame_ = 0.0f;  // reference frames, so the flicker rolls at MU's 25 a second
+    void gatherGlints(gfx::Effects& effects) const;
 
     // Where joint `j` of `b` was `back` ticks ago, as an offset from the feet.
     static void at(const Burst& b, const Joint& j, float back, float out[3]);
