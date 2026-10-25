@@ -239,10 +239,11 @@ void Pets::ride(float seconds, const Figure& hero, int worn, bool riding, int ac
     // his 87 at 0.3 (GOBoid.cpp:338-342, ZzzCharacter.cpp:1013) and runs both, so the horse's ten
     // keys are down in 29 frames of his 37 -- its frame 8, where the spikes rise
     // (GOBoid.cpp:744-763), 23.5 frames in, as sim::kQuakeStrikes strikes. Held to his fraction
-    // its kick was stretched over his whole clip and its hooves came down after the rock. Held on
-    // its last key while he finishes, as a clip that does not loop ends.
+    // its kick was stretched over his whole clip and its hooves came down after the rock. And
+    // wrapped past its tenth key while he finishes, as MU's PlayAnimation wraps a clip whose
+    // `Loop` (its hold) is not set (ZzzBMD.cpp:723-741): into its first keys' crouch again.
     if (slaved && mounted_ == 4 && action == 3) {
-        horse_.setClock(std::min(hero.clock(), horse_.length() * 0.999f));
+        horse_.setClock(hero.clock());
     } else if (slaved) {
         const float cycle = stride ? float(horse_.cycleKeys() - 1) / float(horse_.cycleKeys()) : 1.0f;
         horse_.setClock(hero.through() * cycle * horse_.length());
