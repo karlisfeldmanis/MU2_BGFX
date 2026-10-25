@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <iterator>
 #include <string>
 
 #include "content/tables.h"
@@ -1668,12 +1669,14 @@ struct BagRow {
 //
 // MU's 14, 11 at level 0 and at levels 8-12; here, as the Firecracker, a row each at a free number
 // (content/items/misc/MagicBox01.json and MagicBox08.json), the Kundun box's tier its plus, +1 to
-// +3 (invention). Thrown on the ground each is spent and opens (Realm::crack), with no show, as
+// +4 (invention). Thrown on the ground each is spent and opens (Realm::crack), with no show, as
 // MU's open with none. The raid's: the Golden Budge Dragons' and the Golden Dragon's
 // (docs/game/golden-dragon-raid.md section 1, Loot).
 bool boxOfLuck(const content::ItemRow& row);
 bool boxOfKundun(const content::ItemRow& row);
-constexpr int kKundunTiers = 3;
+constexpr int kKundunTiers = 4;
+// The Golden Dragon's hoard keeps its +3 boxes (sim::kHoardBoxes) as the +4 came.
+constexpr int kKundunRaidTier = 3;
 // An item, of which an excellent one; else the Zen (EledoradoBoxOpenEven, Event.cpp:603,
 // docs/game/kundun-box.md 2.2-2.3). **Ours, rising with the tier** (the user, 2026-10-06: 'we
 // need that there is decenet excelent drop for any drop of kundum', 'but not to crasy'): an
@@ -1681,14 +1684,15 @@ constexpr int kKundunTiers = 3;
 // of kundum'). WebZen's shipped rates (0.99.60T
 // commonserver.cfg) were 30/25/20 and 5/4/3 -- 1.5, 1 and 0.6 in a hundred, rarer as the box
 // got better. An item in 50, 55 and 60 boxes in a hundred, from 30, 35 and 40 (a player,
-// 2026-10-21: "Last 20 boxes I get only zen"): an excellent in 20, 27.5 and 36 now.
-constexpr int kKundunItemIn100[kKundunTiers] = {50, 55, 60};
-constexpr int kKundunExcellentIn100[kKundunTiers] = {40, 50, 60};
-constexpr int64_t kKundunZen[kKundunTiers] = {50000, 100000, 150000};
-// A plain row's level is the bag file's plus `rand()%addlevel` (2 for +1 to +3): +5/+6 from
-// the +1 box, +4/+5 from the +2 and +3.
-constexpr int kKundunPlainLevel[kKundunTiers] = {5, 4, 4};
-constexpr int kKundunAddLevel = 2;
+// 2026-10-21: "Last 20 boxes I get only zen"): an excellent in 20, 27.5 and 36 now. The +4 one
+// step on (65 and 70, an excellent in 45.5; WebZen's 15 and 2), its Zen WebZen's 200,000.
+constexpr int kKundunItemIn100[kKundunTiers] = {50, 55, 60, 65};
+constexpr int kKundunExcellentIn100[kKundunTiers] = {40, 50, 60, 70};
+constexpr int64_t kKundunZen[kKundunTiers] = {50000, 100000, 150000, 200000};
+// A plain row's level is the bag file's plus `rand()%addlevel` (EledoradoBoxOpenEven's, 2 for +1
+// to +3 and 1 for +4): +5/+6 from the +1 box, +4/+5 from the +2 and +3, +4 from the +4.
+constexpr int kKundunPlainLevel[kKundunTiers] = {5, 4, 4, 4};
+constexpr int kKundunAddLevel[kKundunTiers] = {2, 2, 2, 1};
 // The Box of Luck as OpenMU's Version095d opens it (BoxOfLuck.cs): one in two an item at +6
 // off its list, else 10,000 Zen. WebZen's own eventitembag.txt is not in hand.
 constexpr int kLuckItemIn100 = 50;
@@ -1706,9 +1710,10 @@ inline constexpr BagRow kLuckBag[] = {
     {7, 8}, {8, 8}, {9, 8}, {10, 8}, {11, 8}, {7, 10}, {8, 10}, {9, 10}, {10, 10}, {11, 10},
     {7, 11}, {8, 11}, {9, 11}, {10, 11}, {11, 11}, {7, 12}, {8, 12}, {9, 12}, {10, 12}, {11, 12},
 };
-// WebZen's eventitembag8..10.txt (0.99.60T; docs/game/kundun-box.md 2.4), each in its two
+// WebZen's eventitembag8..11.txt (0.99.60T; docs/game/kundun-box.md 2.4), each in its two
 // pools: the plain rows (`//일반아이템`) and the excellent ones (`//엑설런트`). By name off our own
-// rows; Thunder Staff is 0.75's Lightning Staff and Katache its Katana.
+// rows; Thunder Staff is 0.75's Lightning Staff and Katache its Katana. Checked row by row against
+// the files on 2026-10-25: bag8 lists Leather Boots twice and no Vine Boots, read here as Vine.
 inline constexpr BagRow kKundunPlain1[] = {
     {12, 15}, {14, 14}, {14, 13}, {13, 0}, {13, 1}, {13, 2}, {7, 5}, {8, 5}, {9, 5}, {10, 5},
     {11, 5}, {7, 2}, {8, 2}, {9, 2}, {10, 2}, {11, 2}, {7, 10}, {8, 10}, {9, 10}, {10, 10},
@@ -1733,7 +1738,7 @@ inline constexpr BagRow kKundunExcellent2[] = {
     {0, 10}, {0, 5}, {0, 13}, {1, 6}, {1, 7}, {2, 3}, {3, 7}, {3, 0}, {4, 11}, {4, 4}, {4, 12},
 };
 inline constexpr BagRow kKundunPlain3[] = {
-    {12, 15}, {14, 14}, {14, 13}, {14, 16}, {7, 3}, {8, 3}, {9, 3}, {10, 3}, {11, 3}, {7, 13},
+    {12, 15}, {14, 14}, {14, 13}, {14, 16}, {7, 9}, {8, 9}, {9, 9}, {10, 9}, {11, 9}, {7, 13},
     {8, 13}, {9, 13}, {10, 13}, {11, 13}, {7, 7}, {8, 7}, {9, 7}, {10, 7}, {11, 7}, {0, 11},
     {0, 15}, {0, 14}, {3, 4}, {4, 5}, {4, 12}, {5, 4},
 };
@@ -1741,6 +1746,30 @@ inline constexpr BagRow kKundunExcellent3[] = {
     {13, 8}, {13, 9}, {13, 12}, {13, 13}, {7, 12}, {8, 12}, {9, 12}, {10, 12}, {11, 12},
     {7, 8}, {8, 8}, {9, 8}, {10, 8}, {11, 8}, {7, 7}, {8, 7}, {9, 7}, {10, 7}, {11, 7},
     {5, 3}, {0, 11}, {0, 15}, {1, 8}, {4, 12},
+};
+// eventitembag11, the Golden Lizard King's ("아틀란스 습격"): the Dragon, Guardian and Legendary
+// sets, Bill of Balrog; its excellents the Plate and Spirit sets.
+inline constexpr BagRow kKundunPlain4[] = {
+    {12, 15}, {14, 14}, {14, 13}, {14, 16}, {7, 1}, {8, 1}, {9, 1}, {10, 1}, {11, 1}, {7, 14},
+    {8, 14}, {9, 14}, {10, 14}, {11, 14}, {7, 3}, {8, 3}, {9, 3}, {10, 3}, {11, 3}, {6, 13},
+    {5, 5}, {4, 14}, {4, 13}, {2, 5}, {2, 4}, {3, 9},
+};
+inline constexpr BagRow kKundunExcellent4[] = {
+    {13, 8}, {13, 9}, {13, 12}, {13, 13}, {7, 9}, {8, 9}, {9, 9}, {10, 9}, {11, 9}, {7, 13},
+    {8, 13}, {9, 13}, {10, 13}, {11, 13}, {3, 4}, {0, 14}, {4, 5}, {5, 4},
+};
+// Each tier's two pools, +1 first.
+struct KundunBag {
+    const BagRow* plain;
+    size_t plains;
+    const BagRow* fine;
+    size_t fines;
+};
+inline constexpr KundunBag kKundunBags[kKundunTiers] = {
+    {kKundunPlain1, std::size(kKundunPlain1), kKundunExcellent1, std::size(kKundunExcellent1)},
+    {kKundunPlain2, std::size(kKundunPlain2), kKundunExcellent2, std::size(kKundunExcellent2)},
+    {kKundunPlain3, std::size(kKundunPlain3), kKundunExcellent3, std::size(kKundunExcellent3)},
+    {kKundunPlain4, std::size(kKundunPlain4), kKundunExcellent4, std::size(kKundunExcellent4)},
 };
 
 inline constexpr BagRow kFirecrackerBag[] = {

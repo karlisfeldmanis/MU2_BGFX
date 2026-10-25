@@ -339,7 +339,7 @@ void Realm::dragonHoard(const Body& dragon) {
     Held hoard[kHoardBoxes + kHoardRunes + kHoardLives + kHoardJewels + 1 + kHoardExcellents + 1];
     int count = 0;
     const int32_t box = first([](const content::ItemRow& r) { return boxOfKundun(r); });
-    for (int i = 0; i < kHoardBoxes && box >= 0; ++i) hoard[count++] = Held{box, int16_t(kKundunTiers), 1};
+    for (int i = 0; i < kHoardBoxes && box >= 0; ++i) hoard[count++] = Held{box, int16_t(kKundunRaidTier), 1};
     const int32_t rune = first([](const content::ItemRow& r) { return creation(r); });
     for (int i = 0; i < kHoardRunes && rune >= 0; ++i) {
         Held one{rune, 0, 1};

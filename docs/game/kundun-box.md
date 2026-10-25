@@ -5,12 +5,31 @@ the Kundun box and everything around it that carries Kundun's name, and (§9) ev
 opens by a throw, with the Firecracker.
 
 **Where it stands.** Built: the Box of Luck (`MagicBox01`), the Box of Kundun +1 to +3
-(`MagicBox08`, its tier its plus; ours, three tiers, rates rising with the tier, the user
+(`MagicBox08`, its tier its plus; ours, four tiers, rates rising with the tier, the user
 2026-10-06) and the Firecracker (`MagicBox03`), each a row at a free number, opened by a throw
 (`Realm::crack`, `sim/items.h`). Their sources: quest rewards (`sim/quests.cpp`), the Golden
 Dragon raid's Golden Budge Dragons and Golden Dragon (`docs/game/golden-dragon-raid.md`), and the
-Firecracker one in 300 off dungeon and event monsters (§9.5). Not built: the +4 and +5 boxes,
+Firecracker one in 300 off dungeon and event monsters (§9.5). Not built: the +5 box,
 the Eldorado golden monsters, the Marks of Kundun and Kalima (§4).
+
+**2026-10-25: the +4 box, and every bag checked against WebZen.** The user: "we need to make
+kundum box +4 and udnerstand what drops from that", "double chekc if all box of kundumg is
+authentic item drops from webzen"; asked what the +4 holds, they picked "MU's list as is".
+WZD's eventitembag8..12.txt (Files.rar of github.com/makaytrue/0.99.60T) compared by item, not
+by order:
+
+- +1: our pools are WebZen's but one row: bag8's plain pool lists Leather Boots (11,5) twice and
+  no Vine Boots; ours holds Vine Boots (11,10), as the excellent pool does. Read as a typo.
+- +2: both pools identical.
+- +3: the plain pool held the **Legendary** set (7..11, 3) where bag10 has the **Plate** set
+  (7..11, 9), against the table in §3. Fixed to Plate. The excellent pool was identical.
+- +4: built from bag11 row for row (`sim::kKundunPlain4`, `kKundunExcellent4`), plain at +4 as
+  `addlevel` 1 gives, 200,000 Zen otherwise. Rates ours, one step on: an item 65 in 100, 70 of
+  those excellent (45.5 in 100 boxes; WebZen's 15 and 2). Its drop levels are 44-72, so in the
+  Ruins (a kill there drops 127-141) it is a jewel box with old gear. Nothing drops it yet: the
+  Golden Satyros (docs/plans/jewel-of-harmony.md §5) is next. The raid's hoard stays +3
+  (`sim::kKundunRaidTier`).
+- Rates of +1 to +3 are ours, not WebZen's (§3), as the user picked on 2026-10-06 and 10-21.
 
 Sources, highest first: WebZen GameServer 1.00.93 (`WZ`, under `Source/Server Side/GameServer/`,
 0.97d base unless a flag is named), MuMain (`MM`, `src/source/`), OpenMU (`OM`). The repo's

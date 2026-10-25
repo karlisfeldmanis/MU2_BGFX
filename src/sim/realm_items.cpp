@@ -2633,12 +2633,10 @@ Cracked Realm::openBox(Cracked cracked, bool luck, int tier) {
         if (luck) {
             item = pick(kLuckBag, std::size(kLuckBag));
         } else {
-            const BagRow* plain = t == 0 ? kKundunPlain1 : t == 1 ? kKundunPlain2 : kKundunPlain3;
-            const size_t plains = t == 0 ? std::size(kKundunPlain1)
-                                  : t == 1 ? std::size(kKundunPlain2) : std::size(kKundunPlain3);
-            const BagRow* fine = t == 0 ? kKundunExcellent1 : t == 1 ? kKundunExcellent2 : kKundunExcellent3;
-            const size_t fines = t == 0 ? std::size(kKundunExcellent1)
-                                 : t == 1 ? std::size(kKundunExcellent2) : std::size(kKundunExcellent3);
+            const BagRow* plain = kKundunBags[t].plain;
+            const size_t plains = kKundunBags[t].plains;
+            const BagRow* fine = kKundunBags[t].fine;
+            const size_t fines = kKundunBags[t].fines;
             if (dice_.nextInt(0, 100) < kKundunExcellentIn100[t]) {
                 // An excellent one, at its feet as any (Realm::excellentOf).
                 Lying one;
@@ -2669,7 +2667,7 @@ Cracked Realm::openBox(Cracked cracked, bool luck, int tier) {
                 // An excellent one at +0 with the skill; a plain one at the bag's level and up to
                 // one more, the skill at a half. The luck at a half either way, and the option where
                 // the skill or the luck missed: one in five +12, else +0, +4 or +8.
-                const int plus = luck ? kLuckPlus : kKundunPlainLevel[t] + dice_.nextInt(0, kKundunAddLevel);
+                const int plus = luck ? kLuckPlus : kKundunPlainLevel[t] + dice_.nextInt(0, kKundunAddLevel[t]);
                 const int refinement = std::min(plus, kRefineCap);
                 one.what = Held{item, int16_t(refinement), int16_t(fullDurability(row, refinement))};
                 const bool skill = dice_.nextInt(0, 2) == 1;

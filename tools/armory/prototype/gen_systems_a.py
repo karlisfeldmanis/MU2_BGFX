@@ -377,9 +377,10 @@ for k, r in sorted(ITEMS.items()):
         ki = array(items_h, "kKundunItemIn100")
         kx = array(items_h, "kKundunExcellentIn100")
         kl = array(items_h, "kKundunPlainLevel")
-        does.append("Opens on the ground. Its plus (+1 to +3) is its tier: a better tier holds better items.")
+        ka = array(items_h, "kKundunAddLevel")
+        does.append("Opens on the ground. Its plus (+1 to +4) is its tier: a better tier holds better items.")
         rates = {"tiers": [{"plus": t + 1, "item": ki[t], "excellent_of_items": kx[t],
-                            "plain_plus": "+%d..+%d" % (kl[t], kl[t] + IC["kKundunAddLevel"] - 1), "zen": kz[t]} for t in range(3)]}
+                            "plain_plus": "+%d..+%d" % (kl[t], kl[t] + ka[t] - 1), "zen": kz[t]} for t in range(len(kz))]}
     elif g == 13 and n == 14:
         does.append("Needed for the 2nd Level Wings mix at the Chaos Machine.")
     elif g == 13 and n in (16, 17):
@@ -414,7 +415,7 @@ for k, r in sorted(ITEMS.items()):
         ki = array(items_h, "kKundunItemIn100")
         kx = array(items_h, "kKundunExcellentIn100")
         o["contents"] = {"+%d" % (t + 1): contents("kKundunPlain%d" % (t + 1), ki[t] / 100, 1 - kx[t] / 100,
-                                                   "kKundunExcellent%d" % (t + 1), kx[t] / 100) for t in range(3)}
+                                                   "kKundunExcellent%d" % (t + 1), kx[t] / 100) for t in range(len(ki))}
     cons[k] = o
 
 # ---- 3) mixes --------------------------------------------------------------------------------------------

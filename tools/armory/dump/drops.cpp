@@ -479,14 +479,14 @@ void dragonHoard(const Kill& k, Model& m) {
 #ifdef ARMORY_HOARD_PER_CLASS
     // Each hero's own: Boxes of Kundun +3, runes of his class, a Jewel of Life beside the three
     // jewels, and excellents off his own class's top gear (sim::hoardFine).
-    constexpr int kBoxLow = sim::kKundunTiers;
+    constexpr int kBoxLow = sim::kKundunRaidTier;
 #else
     // The release's: Boxes of Kundun +1..+3, the runes, the +3 box's excellents.
     constexpr int kBoxLow = 1;
 #endif
     const int32_t box = first(t, [](const ItemRow& r) { return sim::boxOfKundun(r); });
     if (box >= 0) {
-        Roll r{Roll::Kind::Own, "raid_hoard", 1.0, kBoxLow, sim::kKundunTiers};
+        Roll r{Roll::Kind::Own, "raid_hoard", 1.0, kBoxLow, sim::kKundunRaidTier};
         r.count = sim::kHoardBoxes;
         m.add(box, r);
     }
@@ -786,17 +786,12 @@ J dumpBoxes(const Dump& d) {
         box.set("items", items).set("zen", J::p(1.0 - p)).set("zen_amount", J(sim::kLuckZen));
         out[t.items[size_t(luck)].name] = box;
     }
-    // The Box of Kundun +1..+3: an item at kKundunItemIn100, excellent at kKundunExcellentIn100
+    // The Box of Kundun +1..+4: an item at kKundunItemIn100, excellent at kKundunExcellentIn100
     // of those from its excellent bag (the plain bag when that has none here).
     if (const int32_t kundun = first(t, [](const ItemRow& r) { return sim::boxOfKundun(r); }); kundun >= 0) {
-        const sim::BagRow* plains[3] = {sim::kKundunPlain1, sim::kKundunPlain2, sim::kKundunPlain3};
-        const size_t plainCounts[3] = {std::size(sim::kKundunPlain1), std::size(sim::kKundunPlain2), std::size(sim::kKundunPlain3)};
-        const sim::BagRow* fines[3] = {sim::kKundunExcellent1, sim::kKundunExcellent2, sim::kKundunExcellent3};
-        const size_t fineCounts[3] = {std::size(sim::kKundunExcellent1), std::size(sim::kKundunExcellent2),
-                                      std::size(sim::kKundunExcellent3)};
         for (int tier = 0; tier < sim::kKundunTiers; ++tier) {
-            const auto plain = bagRows(t, plains[tier], plainCounts[tier], false);
-            const auto fine = bagRows(t, fines[tier], fineCounts[tier], true);
+            const auto plain = bagRows(t, sim::kKundunBags[tier].plain, sim::kKundunBags[tier].plains, false);
+            const auto fine = bagRows(t, sim::kKundunBags[tier].fine, sim::kKundunBags[tier].fines, true);
             const double item = sim::kKundunItemIn100[tier] / 100.0;
             const double exc = fine.empty() ? 0.0 : sim::kKundunExcellentIn100[tier] / 100.0;
             J box = J::obj(), items = J::obj();
@@ -813,7 +808,7 @@ J dumpBoxes(const Dump& d) {
                 r.how = "item";
                 if (sim::takesOptions(t.items[size_t(one)])) {
                     r.plusLow = std::min(sim::kKundunPlainLevel[tier], sim::kRefineCap);
-                    r.plusHigh = std::min(sim::kKundunPlainLevel[tier] + sim::kKundunAddLevel - 1, sim::kRefineCap);
+                    r.plusHigh = std::min(sim::kKundunPlainLevel[tier] + sim::kKundunAddLevel[tier] - 1, sim::kRefineCap);
                     boxOptions(r, sim::kBoxLuckIn100 / 100.0, true);
                 }
                 // The excellent's row in `items` is keyed the same: kept apart under its own name.
