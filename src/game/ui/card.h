@@ -94,6 +94,9 @@ private:
         // its card is up. `totals` is what it reads, his points with the runes in.
         int overStat = -1;
         int totals[5] = {};
+        // The pointer on Agility's Defense line: its card, from his worn armour and the figure.
+        bool overDefense = false;
+        int worn = 0, defense = 0;
         bool closing = false, overClose = false;
         int step = 1;          // 1, 10 or 0 for all, as a press now spends (10 is All under ten)
         int returnable = 0;    // the points a reset would take back

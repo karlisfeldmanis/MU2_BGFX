@@ -313,6 +313,39 @@ tip::Sheet statSheet(int stat, sim::Kin kin, const int totals[5]) {
     return sheet;
 }
 
+// The Defense line's card: the parts sim::reckon adds up, so a player who sums his pieces' Armor
+// sees where the other half went (Discord, denio, 2026-10-25: "When I add up the defense from 5
+// items, I get over 400"). The halving is every class's (rules.cpp, reckon); whatever the set,
+// runes, talents and the Gladiator's share add is what is left of the figure, so the rows always
+// sum to it.
+tip::Sheet defenseSheet(sim::Kin kin, int agility, int worn, int defense) {
+    const sim::ClassRow& row = sim::rowOf(kin);
+    const double fromAgility = double(agility) * double(row.defensePerAgility);
+    const int base = int((fromAgility + double(worn)) * 0.5);
+    const int agilityPart = int(fromAgility * 0.5);
+    const int rest = defense - base;
+
+    tip::Sheet sheet;
+    sheet.name = "Defense";
+    sheet.nameTone = tip::Tone::White;
+    sheet.wide = kStatTipWide;
+    tip::Section parts;
+    const auto add = [&](const std::string& label, int value) {
+        parts.rows.push_back(tip::Row{label, {tip::Value{"+" + panel::commas(value), tip::Tone::White}}, "",
+                                      tip::Tone::White});
+    };
+    const int per = int(std::lround(1.0 / double(row.defensePerAgility)));
+    add("Agility " + panel::commas(agility) + " / " + std::to_string(per) + " / 2", agilityPart);
+    add("Armor " + panel::commas(worn) + " / 2", base - agilityPart);
+    if (rest != 0) add(kin == sim::Kin::MagicGladiator ? "Class, set, runes, talents" : "Set, runes, talents", rest);
+    sheet.sections.push_back(parts);
+    tip::Section notes;
+    notes.rows.push_back(tip::Row{"", {}, "Armor and agility count half, for every class, as in MU: a piece "
+                                          "showing 92 Armor adds 46 here.", tip::Tone::Gray});
+    sheet.sections.push_back(notes);
+    return sheet;
+}
+
 }  // namespace
 
 void Card::open(const gfx::Interface& interface, panel::Arts* arts) {
@@ -595,7 +628,13 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
         if (tab_ == 0 && (over_ < 0 || over_ >= wells)) {
             for (int i = 0; i < wells; ++i)
                 if (under({kWellX, tops[i], kWellW, kAttrTall})) now_.overStat = i;
+            // Agility's first line, Defense: what it is the sum of.
+            const float lineStep = attrTops(wells, counts, tops, drop);
+            now_.overDefense = now_.overStat < 0 &&
+                               under({kWellX, tops[1] + kAttrTall + kLineTop, kWellW, lineStep});
         }
+        now_.worn = hero->wornDefense;
+        now_.defense = f.defense;
         now_.totals[0] = total.strength;
         now_.totals[1] = total.agility;
         now_.totals[2] = total.vitality;
@@ -1115,6 +1154,16 @@ void Card::rebuild() {
         attrTops(now_.wells, counts, tops, drop);
         const tip::Sheet sheet = statSheet(now_.overStat, now_.who->kin, now_.totals);
         tip::draw(tip_, sheet, panel::scaled(x, y, {kWellX, tops[now_.overStat], kWellW, kAttrTall}),
+                  now_.width, now_.height);
+    }
+    if (now_.tab == 0 && now_.overDefense) {
+        const size_t counts[5] = {now_.lines[0].size(), now_.lines[1].size(), now_.lines[2].size(),
+                                  now_.lines[3].size(), now_.lines[4].size()};
+        float tops[5];
+        const float lineStep = attrTops(now_.wells, counts, tops, drop);
+        const tip::Sheet sheet = defenseSheet(now_.who->kin, now_.totals[1], now_.worn, now_.defense);
+        tip::draw(tip_, sheet,
+                  panel::scaled(x, y, {kWellX, tops[1] + kAttrTall + kLineTop, kWellW, lineStep}),
                   now_.width, now_.height);
     }
 }

@@ -566,6 +566,12 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                 Tone::White);
         }
     }
+    // What the Armor comes to on the character's Defense: half, as sim::reckon halves every
+    // class's (a player summed his five pieces' Armor to 408 against a sheet's 253, Discord,
+    // denio, 2026-10-25).
+    const auto halfOn = [&](int armor) {
+        if (armor > 1) rail("+" + std::to_string(armor / 2), Tone::Gray, "to your Defense, armor counts half");
+    };
     const bool worn = row.armour() || row.shield();
     const int defense = worn ? row.defense + sim::defenseBonus(row.shield(), plus) +
                                    (what.excellent != 0 ? sim::excellentDefense(row) : 0)
@@ -581,6 +587,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             rail("+" + std::to_string(refined), Tone::Yellow, "refined to +" + std::to_string(plus));
         }
         if (excellent > 0) rail("+" + std::to_string(excellent), Tone::Green, "excellent");
+        halfOn(defense);
     }
     // A wing's defence, 3 a plus on a 1st, 2 on a 2nd (sim::wingDefense).
     if (sim::anyWing(row)) {
@@ -593,6 +600,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             rail("+" + std::to_string(defense - row.defense), Tone::Yellow,
                  "refined to +" + std::to_string(plus));
         }
+        halfOn(defense);
     }
     if (row.defenseRate > 0) {
         // Its refinement too, on the armour's table, as `Realm::rearm` adds it: a +9 shield's
