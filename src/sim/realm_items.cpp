@@ -1516,6 +1516,31 @@ void Realm::leave(const Body& dead, const Body& killer) {
             break;
         }
     }
+    // And the 380 gear from the Ruins road's hard half (sim::kKanturuHardGearOdds), on the same
+    // dice: a realm is one map, so Atlans's rolls never meet these.
+    if (rulesOf(tables_->map).kanturuGear && level >= kKanturuHardLevel &&
+        gearDice_.nextInt(0, kKanturuHardGearOdds) == 0) {
+        int count = 0;
+        for (const content::ItemRow& r : tables_->items) count += r.dropsFromMonsters() && kanturuGear(r) ? 1 : 0;
+        int pick = count > 0 ? gearDice_.nextInt(0, count) : -1;
+        for (size_t i = 0; pick >= 0 && i < tables_->items.size(); ++i) {
+            const content::ItemRow& r = tables_->items[i];
+            if (!r.dropsFromMonsters() || !kanturuGear(r) || pick-- != 0) continue;
+            Lying gear;
+            gear.what = Held{int32_t(i), 0, int16_t(fullDurability(r, 0))};
+            gear.what.luck = gearDice_.nextInt(0, 100) < kLuckIn100;
+            const int under = gearDice_.nextInt(0, 100);
+            const int which = gearDice_.nextInt(0, 3);
+            if (under < kOptionUnder[which]) gear.what.option = int8_t(kMostOptionDropped - which);
+            std::tie(gear.column, gear.row) = clearing(dead.column(), dead.row());
+            gear.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
+            gear.owner = mine().id;
+            gear.id = nextId_++;
+            lying_.push_back(gear);
+            say(What::Dropped, dead, int32_t(gear.id), int32_t(i), 0);
+            break;
+        }
+    }
     // The Orb of Summoning, its own roll off its own dice and beside the rest (sim/items.h).
     if (orbDice_.nextInt(0, kSummonOrbOdds) == 0) {
         for (size_t i = 0; i < tables_->items.size(); ++i) {

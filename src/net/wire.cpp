@@ -165,6 +165,18 @@ sim::Held takeHeld(In& in, int layout = kKeptLayout) {
     return h;
 }
 
+// How many quests a layout's row carries: 3 and 4 carry 24, 5 to 7 carry 25, 8 to 11 carry 27,
+// 12 to 17 carry 28, 18 to 20 carry 30.
+int keptQuests(int layout) {
+    const int carried = layout >= 21   ? sim::kQuests
+                        : layout >= 18 ? 30
+                        : layout >= 12 ? 28
+                        : layout >= 8  ? 27
+                        : layout >= 5  ? 25
+                                       : 24;
+    return std::min(carried, sim::kQuests);
+}
+
 void putKept(Out& o, const sim::Kept& k, int layout = kKeptLayout) {
     const sim::HeroRecord& r = k.hero;
     o.u8(uint8_t(r.kin));
@@ -190,7 +202,10 @@ void putKept(Out& o, const sim::Kept& k, int layout = kKeptLayout) {
     o.i32(r.might);
     o.i64(r.mightTicksLeft);
     for (const sim::Held& h : r.slots) putHeld(o, h, layout);
-    for (const sim::QuestProgress& q : r.quests) {
+    // A layout under 21 written without the quests it does not carry (keptQuests).
+    const int quests = keptQuests(layout);
+    for (int i = 0; i < quests; ++i) {
+        const sim::QuestProgress& q = r.quests[size_t(i)];
         o.u8(uint8_t(q.state));
         for (uint16_t c : q.counts) o.u32(c);
         o.i64(q.availableAt);
@@ -216,7 +231,7 @@ void putKept(Out& o, const sim::Kept& k, int layout = kKeptLayout) {
         for (const uint8_t rank : column) o.u8(rank);
     }
     o.i32(r.rebirths);
-    for (const sim::QuestProgress& q : r.quests) o.u8(q.life);
+    for (int i = 0; i < quests; ++i) o.u8(r.quests[size_t(i)].life);
     o.i32(r.points.command);
 }
 
@@ -255,11 +270,8 @@ sim::Kept takeKept(In& in, int layout = kKeptLayout) {
     r.might = in.i32();
     r.mightTicksLeft = in.i64();
     for (sim::Held& h : r.slots) h = takeHeld(in, layout);
-    // Layouts 3 and 4 carry 24 quests, 5 to 7 carry 25, 8 to 11 carry 27, 12 to 17 carry 28; the
-    // rest stand untaken.
-    const int quests = layout >= 18 ? sim::kQuests
-                                    : std::min(layout >= 12 ? 28 : layout >= 8 ? 27 : layout >= 5 ? 25 : 24,
-                                               sim::kQuests);
+    // The rest stand untaken (keptQuests).
+    const int quests = keptQuests(layout);
     for (int i = 0; i < quests; ++i) {
         sim::QuestProgress& q = r.quests[size_t(i)];
         q.state = sim::QuestState(in.u8());

@@ -540,6 +540,9 @@ QuestRow halls() {
     // Tersia's fourth floor (2026-10-09).
     row.paid[n++] = {.item = "Book09", .kin = wizard, .firstOnly = true};    // Scroll of Evil Spirit
     row.paid[n++] = {.item = "Gem05", .plus = 4, .kin = elf, .firstOnly = true};  // Dark Knight
+    // And the Dark Lord's Spirit of Dark Raven, for the Pet Trainer's Resurrection
+    // (docs/plans/dark-lord.md section 6; docs/plans/dark-lord-pets/README.md decision 8).
+    row.paid[n++] = {.item = "Spirit", .plus = 1, .kin = int8_t(Kin::DarkLord), .firstOnly = true};
     row.paid[n++] = {.item = "Jewel01", .count = 3};  // Jewels of Bless
     row.paid[n++] = {.item = "Jewel15"};              // a Jewel of Chaos: the machine opens
     row.paidCount = n;
@@ -1784,6 +1787,9 @@ QuestRow kantursCaptain() {
     row.paid[n++] = {.item = "Shield19", .kin = gladiator, .sockets = 2,
                      .firstOnly = true, .rank = Rank::Second};  // Salamander Shield
     row.paid[n++] = {.item = "Jewel03"};  // a Jewel of Life
+    // And the Dark Lord's Spirit of Dark Horse, for the Pet Trainer (docs/plans/dark-lord.md
+    // section 6): his mount, which nothing else in the plan's road gives.
+    row.paid[n++] = {.item = "Spirit", .kin = int8_t(Kin::DarkLord), .firstOnly = true};
     row.paid[n++] = {.item = "Quest04"};  // Loch's Feather
     row.paidCount = n;
     return row;
@@ -2041,10 +2047,10 @@ QuestRow kantursGate() {
     return row;
 }
 
-// The Ruins of Kantur, Elpis's clear: the eight Ruins breeds in the order the walk meets them
-// from the camp to the Relics door, each count its nests' (content/world/kanturu/nests.json)
-// scaled to 200 kills, about 40 minutes for a hero in the best pre-Kanturu gear at da0e7426's
-// balance (the user, 2026-10-25: "About 40 minutes"). Ours.
+// The Ruins of Kantur, Elpis's clear of the road's easy half: the four breeds the walk meets first
+// from the camp, each count its nests' (content/world/kanturu/nests.json) scaled to 200 kills over
+// the whole road (the user, 2026-10-25: "About 40 minutes"); the far four are The Road to the
+// Relics (the user: "kanturu on 2 parts, easy aprt and hard part at end"). Ours.
 //
 // The pay is act X's (docs/game/quest-rewards.md stops at Aida's IX): every clear a step above the
 // Seed Master's, and the first clear two pieces of the class's 380 set (the user: "A set piece or
@@ -2060,14 +2066,12 @@ QuestRow ruinsOfKantur() {
         "them. When the empire died, nobody told them.\"";
     row.offer[1] =
         "\"The wolves came first, to run down thieves. Then the riders and their iron. The Satyros "
-        "and the hunters were the road's wardens. The Kentauros were its archers, the Gigantis its "
-        "walls.\"";
+        "and the hunters were the road's wardens.\"";
     row.offer[2] =
-        "\"The Berserkers and the Genocider were made for war, and kept nearest the Relics. They "
-        "are what stands between us and the door.\"";
+        "\"Further on, nearer the Relics, the vats bred worse. Leave the far road for now.\"";
     row.offer[3] =
-        "\"Clear the road, from this camp to that door. They will be back by morning: the old "
-        "breeding vats still work. But for one night, the road is ours.\"";
+        "\"Clear the near road, from this camp to the hunters' ground. They will be back by "
+        "morning: the old breeding vats still work. But for one night, the near road is ours.\"";
     row.underway = "\"I can still hear them on the road.\"";
     row.handIn[0] = "\"Quiet. I had forgotten what the Ruins sound like without them.\"";
     row.handIn[1] =
@@ -2079,12 +2083,8 @@ QuestRow ruinsOfKantur() {
     row.steps[1] = {QuestStepKind::Clear, 352, 28, "Iron Riders"};      // 144, 21
     row.steps[2] = {QuestStepKind::Clear, 353, 32, "Satyros"};          // 146, 25
     row.steps[3] = {QuestStepKind::Clear, 354, 28, "Blade Hunters"};    // 148, 22
-    row.steps[4] = {QuestStepKind::Clear, 355, 18, "Kentauros"};        // 150, 13
-    row.steps[5] = {QuestStepKind::Clear, 356, 12, "Gigantis"};         // 152, 9
-    row.steps[6] = {QuestStepKind::Clear, 350, 36, "Berserkers"};       // 154, 28
-    row.steps[7] = {QuestStepKind::Clear, 357, 16, "Genocider"};        // 156, 11, by the door
-    row.steps[8] = {QuestStepKind::Return, 0, 1, "Return to Elpis"};
-    row.stepCount = 9;
+    row.steps[4] = {QuestStepKind::Return, 0, 1, "Return to Elpis"};
+    row.stepCount = 5;
     row.repeatSeconds = 12 * 60 * 60;
     row.minLevel = 320;
     row.gateLevel = true;
@@ -2119,6 +2119,64 @@ QuestRow ruinsOfKantur() {
     row.paid[n++] = {.item = "HelmMale32", .plus = 7, .kin = elf, .sockets = 2, .firstOnly = true};
     row.paid[n++] = {.item = "ArmorMale33", .plus = 7, .kin = gladiator, .sockets = 2, .firstOnly = true};
     row.paid[n++] = {.item = "PantMale33", .plus = 7, .kin = gladiator, .sockets = 2, .firstOnly = true};
+    row.paidCount = n;
+    return row;
+}
+
+// The Road to the Relics, Elpis's second: the road's hard half, from the hunters' ground to the
+// Relics door, its four breeds raised to sim::kKanturuHardLevel and over (each kill there may
+// leave a piece of the 380 gear besides its own, sim::kKanturuHardGearOdds). After the Ruins of
+// Kantur, every twelve hours as it. Its pay is a Box of Kundun +4 every clear (the user,
+// 2026-10-25: "we need to give kundum box+4 when finish kanturu"), with more jewels and more
+// experience than the near road's. No set pieces: those are the near road's first clear.
+QuestRow roadToRelics() {
+    QuestRow row;
+    row.giver = kElpisNumber;
+    row.giverName = "Elpis";
+    row.place = "the Ruins of Kantur";
+    row.title = "The Road to the Relics";
+    row.offer[0] =
+        "\"The far road is another matter. The Kentauros were its archers, the Gigantis its "
+        "walls.\"";
+    row.offer[1] =
+        "\"The Berserkers and the Genocider were made for war, and kept nearest the Relics. The "
+        "vats there run hotter, and what comes out of them is stronger every year.\"";
+    row.offer[2] =
+        "\"Kantur's armourers kept their best work near the door. What those beasts guard, they "
+        "guard well.\"";
+    row.offer[3] = "\"Clear the far road, to the Relics door, and come back to me alive.\"";
+    row.underway = "\"The far road is still loud.\"";
+    row.handIn[0] = "\"The door stands quiet. Nobody has seen that in a long age.\"";
+    row.handIn[1] =
+        "\"Kantur sealed his treasures in boxes such as this one. Take it, and open it far from "
+        "the vats.\"";
+    row.resting = "\"The far road's vats are breeding again. Come back when they are done.\"";
+    row.voice = "elpis_2";
+    row.steps[0] = {QuestStepKind::Clear, 355, 18, "Kentauros"};   // level 158, 13 nests
+    row.steps[1] = {QuestStepKind::Clear, 356, 12, "Gigantis"};    // 160, 9
+    row.steps[2] = {QuestStepKind::Clear, 350, 36, "Berserkers"};  // 162, 28
+    row.steps[3] = {QuestStepKind::Clear, 357, 16, "Genocider"};   // 164, 11, by the door
+    row.steps[4] = {QuestStepKind::Return, 0, 1, "Return to Elpis"};
+    row.stepCount = 5;
+    row.repeatSeconds = 12 * 60 * 60;
+    row.minLevel = 320;
+    row.gateLevel = true;
+    row.afterAny = 1u << kRuinsOfKantur;
+    constexpr int8_t knight = int8_t(Kin::DarkKnight);
+    constexpr int8_t wizard = int8_t(Kin::DarkWizard);
+    constexpr int8_t elf = int8_t(Kin::FairyElf);
+    row.natives = uint8_t((1u << knight) | (1u << wizard) | (1u << elf));
+    row.strangers = true;
+    // Half again the near road's, for fewer and harder kills.
+    row.experience = 6000000;
+    row.firstExperience = 20000000;
+    row.zen = 1000000;
+    int n = 0;
+    row.paid[n++] = {.item = "Jewel03", .count = 2};    // Jewels of Life
+    row.paid[n++] = {.item = "Jewel15"};                // a Jewel of Chaos
+    row.paid[n++] = {.item = "Jewel01", .count = 3};    // Jewels of Bless
+    row.paid[n++] = {.item = "Jewel02", .count = 3};    // Jewels of Soul
+    row.paid[n++] = {.item = "MagicBox08", .plus = 4};  // a Box of Kundun +4
     row.paidCount = n;
     return row;
 }
@@ -2159,6 +2217,7 @@ const QuestRow kRawTable[kQuests] = {
     keyed(kantursCaptain(), "kanturs_captain"),
     keyed(kantursGate(), "kanturs_gate"),
     keyed(ruinsOfKantur(), "ruins_of_kantur"),
+    keyed(roadToRelics(), "road_to_relics"),
 };
 
 // **Every quest pays three Firecrackers** besides its own reward, every completion, to every

@@ -207,7 +207,10 @@ PENDING = REFS / "pending_pages.json"
 RETAKES = {("sevina_1", "handin"): 23, ("sevina_2", "handin"): 23,
            ("seed_master_1", "offer"): 23, ("seed_master_1", "handin"): 23,
            # Lugard on seed 11 read "not yet the edge", "Right" for "Rise" and "the lot" for "the light".
-           ("lugard", "resting"): 23, ("lugard", "risen"): 23, ("lugard", "again"): 23}
+           ("lugard", "resting"): 23, ("lugard", "risen"): 23, ("lugard", "again"): 23,
+           # Elpis's far road on seed 11 read "Clear the far road" as "I'll give the far road";
+           # its resting, on 11 and 23, swallowed "vats" (2026-10-25).
+           ("elpis_2", "offer"): 23, ("elpis_2", "resting"): 5}
 
 # Words the model says wrong, spelled as they are said: the window keeps the written form. MU is
 # one syllable, "moo" (the user, 2026-09-29: "Moo is correct").

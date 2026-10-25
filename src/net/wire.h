@@ -192,7 +192,9 @@ namespace mu::net {
 // 56: the Dark Lord's pets (docs/plans/dark-lord-pets/README.md, 2026-10-25): the Pet Trainer's
 //     services (sim::Service 11-13), the Dark Raven's mode command (Command::Kind::RavenMode) and its
 //     two happenings, and a pet's level and exp in the bytes it left nought.
-constexpr uint32_t kVersion = 56;
+// 57: Kanturu in two halves, The Road to the Relics (sim::kQuests 31, kKeptLayout 21, 2026-10-25):
+//     a quest more in a character's bytes, and the hard half's 380 roll a 56 client does not know.
+constexpr uint32_t kVersion = 57;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box,
 // by its name, so the game talks to mu-classic.com as the launcher does, not to a bare address.
 constexpr const char* kDefaultHost = "mu-classic.com";
@@ -213,8 +215,9 @@ constexpr const char* kDefaultHost = "mu-classic.com";
 // 18 30 quests, Kanturu's two (2026-10-25), where 12-17 carry 28; 19 the Dark Lord's seven
 // skills' cools (kSkills 50), where 17-18 carry 43, and his Command, last (docs/plans/dark-lord.md),
 // where 3-18 carry none and read as 0; 20 each item's Jewel of Harmony option, its number and level
-// (sim::Held::harmony, 2026-10-25), where 3-19 carry none.
-constexpr int kKeptLayout = 20;
+// (sim::Held::harmony, 2026-10-25), where 3-19 carry none; 21 31 quests, Elpis's second, The Road to
+// the Relics (2026-10-25), where 18-20 carry 30.
+constexpr int kKeptLayout = 21;
 // MU's GameServer listened on 55901; ours is its own.
 constexpr int kDefaultPort = 44406;
 // The longest frame a client accepts: a Welcome with its snapshot, about half a MB for a town of

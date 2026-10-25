@@ -6333,6 +6333,24 @@ void testTalentCommands(const content::Tables& tables) {
         sim::Kept back;
         check(net::keptFrom(bytes, back), "the kept bytes read");
         check(back.hero.talents == saved.talents, "with his talents");
+        // A layout-20 row has no 31st quest, The Road to the Relics (kKeptLayout 21, 2026-10-25):
+        // putKept writes it without when asked, and it reads untaken.
+        {
+            sim::Kept far = kept;
+            far.hero.quests[sim::kRoadToRelics].completions = 2;
+            std::vector<uint8_t> whole, twenty;
+            net::putKept(whole, far);
+            net::putKept(twenty, far, 20);
+            checkEqual(long(whole.size() - twenty.size()), long(1 + 4 * sim::kQuestSteps + 8 + 4 + 1),
+                       "a layout-20 row is one quest shorter");
+            sim::Kept read;
+            check(net::keptFrom(whole, read) && read.hero.quests[sim::kRoadToRelics].completions == 2,
+                  "the far road's quest is kept");
+            check(net::keptFrom(twenty, read, 20) && read.hero.quests[sim::kRoadToRelics].completions == 0 &&
+                      read.hero.talents == saved.talents,
+                  "and a layout-20 row reads with it untaken");
+            check(!net::keptFrom(twenty, read, 21), "and is not a layout 21");
+        }
         // A layout-19 row has no Jewel of Harmony option on its items (kKeptLayout 20): two bytes
         // fewer in every item, which putKept writes as a 19 when asked. Every older layout below
         // is cut from that 19.
@@ -6347,9 +6365,10 @@ void testTalentCommands(const content::Tables& tables) {
             sim::Kept read;
             check(net::keptFrom(harmonisedBytes, read) && read.hero.slots[first].harmony == 3 && read.hero.slots[first].harmonyLevel == 9,
                   "an item's Harmony option is kept");
-            std::vector<uint8_t> nineteen;
+            std::vector<uint8_t> nineteen, twenty;
             net::putKept(nineteen, harmonised, 19);
-            checkEqual(long(harmonisedBytes.size() - nineteen.size()),
+            net::putKept(twenty, harmonised, 20);
+            checkEqual(long(twenty.size() - nineteen.size()),
                        long(2 * (sim::kSlots + sim::kVaultCells + sim::kMachineCells)),
                        "a layout-19 row is two bytes an item shorter");
             check(net::keptFrom(nineteen, read, 19) && read.hero.slots[first].harmony == 0 &&
@@ -15445,11 +15464,41 @@ void testKantursGate() {
         }
         check(here, "every breed it asks spawns in the Ruins");
     }
-    checkEqual(breeds, 8, "all eight Ruins breeds");
-    checkEqual(kills, 200, "200 kills, camp to door");
+    checkEqual(breeds, 4, "the near road's four Ruins breeds");
+    checkEqual(kills, 118, "118 kills, camp to the hunters' ground");
     for (int i = 0; i < clear.paidCount; ++i) {
         check(ruins.itemNamed(clear.paid[i].item) >= 0, "everything it pays is an item here");
     }
+    // The far road, The Road to the Relics: the other four, raised to the hard half's level, and
+    // a Box of Kundun +4 every clear. A breed's level as the Ruins' tables cook it.
+    const auto levelOf = [&](int32_t number) {
+        for (const content::MonsterKind& kind : ruins.kinds) {
+            if (kind.number == number) return int(kind.level);
+        }
+        return -1;
+    };
+    for (int s = 0; s < clear.stepCount; ++s) {
+        if (clear.steps[s].kind != sim::QuestStepKind::Clear) continue;
+        check(levelOf(clear.steps[s].target) < sim::kKanturuHardLevel, "the near road's breeds stand below the hard half");
+    }
+    const sim::QuestRow& far = sim::questAt(sim::kRoadToRelics);
+    check(far.giver == sim::kElpisNumber && far.afterAny == 1u << sim::kRuinsOfKantur,
+          "Elpis gives the far road after the near");
+    int farBreeds = 0, farKills = 0;
+    for (int s = 0; s < far.stepCount; ++s) {
+        if (far.steps[s].kind != sim::QuestStepKind::Clear) continue;
+        ++farBreeds;
+        farKills += far.steps[s].count;
+        check(levelOf(far.steps[s].target) >= sim::kKanturuHardLevel, "the far road's breeds are the hard half's");
+    }
+    checkEqual(farBreeds, 4, "the far road's four breeds");
+    checkEqual(farKills, 82, "82 kills, the hunters' ground to the door");
+    int boxes = 0;
+    for (int i = 0; i < far.paidCount; ++i) {
+        check(ruins.itemNamed(far.paid[i].item) >= 0, "everything the far road pays is an item here");
+        boxes += std::string(far.paid[i].item) == "MagicBox08" && far.paid[i].plus == 4 && !far.paid[i].firstOnly;
+    }
+    checkEqual(boxes, 1, "a Box of Kundun +4 every clear");
 
     const auto finish = [&](sim::Realm& realm) {
         sim::HeroRecord done = realm.record();
@@ -15483,6 +15532,22 @@ void testKantursGate() {
     finish(camp);
     check(camp.completeQuest(sim::kRuinsOfKantur, -1), "and handed in again");
     checkEqual(holds(camp, "ArmorMale30"), 1, "a second clear pays no second armour");
+    camp.closeQuest();
+    check(camp.questOffered(sim::kRoadToRelics), "the near road cleared, she offers the far");
+    check(talkTo(camp, elpis) && camp.acceptQuest(sim::kRoadToRelics), "the far road taken");
+    {
+        sim::HeroRecord done = camp.record();
+        for (int s = 0; s < far.stepCount; ++s) done.quests[sim::kRoadToRelics].counts[s] = uint16_t(far.steps[s].count);
+        done.quests[sim::kRoadToRelics].state = sim::QuestState::Ready;
+        camp.restore(done);
+    }
+    check(camp.completeQuest(sim::kRoadToRelics, -1), "cleared and handed in");
+    int plusFour = 0;
+    for (int slot = 0; slot < sim::kSlots; ++slot) {
+        const sim::Held& one = camp.satchel()[slot];
+        plusFour += !one.empty() && one.item == ruins.itemNamed("MagicBox08") && one.refinement == 4;
+    }
+    checkEqual(plusFour, 1, "and a Box of Kundun +4 is in his bag");
 
     // The Gladiator: his Volcano armour and pants, never the knight's Dragon Knight.
     sim::Realm mg;
@@ -17284,6 +17349,37 @@ void testHarmony(const content::Tables& tables) {
     check(std::abs(fallen - want) < want * 0.15, "a Ruins kill leaves one one time in 150");
 }
 
+// The Ruins road's two halves: a hard-half kill (sim::kKanturuHardLevel and over) leaves more of
+// the 380 gear than a near-road one, its own roll (kKanturuHardGearOdds) beside the drop.
+void testKanturuHalves() {
+    std::printf("kanturu halves\n");
+    content::Tables ruins;
+    std::string error;
+    if (!content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/kanturu/kanturu.mur", ruins, error)) {
+        check(false, "the Ruins' tables load");
+        return;
+    }
+    const auto gearIn = [&](int level, int kills) {
+        int found = 0;
+        auto at = std::make_unique<sim::Realm>();
+        for (int i = 0; i < kills; ++i) {
+            if (i % 500 == 0) {
+                at = std::make_unique<sim::Realm>();
+                at->raise(&ruins, uint32_t(57 + i), 20, 218, sim::Kin::DarkKnight, 50);
+            }
+            at->dropFor(level);
+            for (const sim::Lying& one : at->lying()) found += sim::kanturuGear(ruins.items[size_t(one.what.item)]);
+        }
+        return found;
+    };
+    const int kills = 30000;
+    const int nearRoad = gearIn(148, kills), farRoad = gearIn(sim::kKanturuHardLevel + 4, kills);
+    std::printf("  380 pieces off %d kills: %d on the near road (148), %d on the far (%d)\n", kills, nearRoad,
+                farRoad, sim::kKanturuHardLevel + 4);
+    check(farRoad > nearRoad * 3 / 2, "the far road leaves more of the 380 gear");
+    check(farRoad > kills / sim::kKanturuHardGearOdds * 4 / 5, "at least its own roll's share");
+}
+
 void testKept(const content::Tables& tables) {
     std::printf("kept\n");
     sim::Realm from;
@@ -17749,6 +17845,7 @@ int main() {
     testRoadOfKantur();
     testSealedWood();
     testKantursGate();
+    testKanturuHalves();
 
     std::printf("%d checks, %d failed\n", g_checks, g_failures);
     return g_failures ? 1 : 0;

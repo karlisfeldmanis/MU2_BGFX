@@ -1,4 +1,4 @@
-# Kanturu's quests: Kantur's Gate and The Ruins of Kantur
+# Kanturu's quests: Kantur's Gate, The Ruins of Kantur and The Road to the Relics
 
 Written 2026-10-25, **built the same day** (8233863c): quests 28 and 29, `testKantursGate`, protocol 53 / kept layout 18. Voices not yet made. Step 5 of opening the Ruins (the user: "step 5"). The shape is
 Atlans's, Tarkan's and Aida's (docs/game/lirien-quest.md, tarkan-quest.md, aida-quest.md): a hook
@@ -74,11 +74,15 @@ Resting: "The shrine stays lit. It always has."
 Pay: **4,000,000 experience, 1,000,000 Zen**, the 3 Firecrackers. Opens the Kanturu row of the
 Move window, as the Road opens Tarkan's.
 
-## 2. The Ruins of Kantur (Elpis, the clear)
+## 2. The Ruins of Kantur (Elpis, the near road)
 
-Offered once the hook is handed in, from **320**, every 12 hours, to every class. All eight Ruins
-breeds, in the order the walk meets them from the camp to the Relics door; counts follow each
-breed's nests (`content/world/kanturu/nests.json`), scaled to about 200 kills.
+**2026-10-25: the road in two halves** (the user: "we need kanturu on 2 parts, easy aprt and hard
+part at end with options to players get more gear"; picked: split the Ruins road, the hard half
+paying a Box of Kundun +4 and more 380 gear). The near road is this quest, the far road §3.
+
+Offered once the hook is handed in, from **320**, every 12 hours, to every class. The four breeds
+the walk meets first from the camp; counts follow each breed's nests
+(`content/world/kanturu/nests.json`), scaled as the whole road was to about 200 kills.
 
 | # | step | breed | level | count | nests |
 |---|---|---|---:|---:|---:|
@@ -86,27 +90,21 @@ breed's nests (`content/world/kanturu/nests.json`), scaled to about 200 kills.
 | 2 | Iron Riders | 352 | 144 | 28 | 21 |
 | 3 | Satyros | 353 | 146 | 32 | 25 |
 | 4 | Blade Hunters | 354 | 148 | 28 | 22 |
-| 5 | Kentauros | 355 | 150 | 18 | 13 |
-| 6 | Gigantis | 356 | 152 | 12 | 9 |
-| 7 | Berserkers | 350 | 154 | 36 | 28 |
-| 8 | Genocider | 357 | 156 | 16 | 11 |
-| 9 | Return to Elpis | | | 1 | |
+| 5 | Return to Elpis | | | 1 | |
 
-200 kills. At the balance of da0e7426 a hero in the best pre-Kanturu gear kills 300-450 Ruins
-monsters an hour, so the clear takes 30-45 minutes, walking included.
+118 kills.
 
 Offer:
 > "Kantur's engineers bred beasts to guard the refinery road, and built machines to ride them.
 > When the empire died, nobody told them."
 >
 > "The wolves came first, to run down thieves. Then the riders and their iron. The Satyros and
-> the hunters were the road's wardens. The Kentauros were its archers, the Gigantis its walls."
+> the hunters were the road's wardens."
 >
-> "The Berserkers and the Genocider were made for war, and kept nearest the Relics. They are what
-> stands between us and the door."
+> "Further on, nearer the Relics, the vats bred worse. Leave the far road for now."
 >
-> "Clear the road, from this camp to that door. They will be back by morning: the old breeding
-> vats still work. But for one night, the road is ours."
+> "Clear the near road, from this camp to the hunters' ground. They will be back by morning: the
+> old breeding vats still work. But for one night, the near road is ours."
 
 Underway: "I can still hear them on the road."
 
@@ -117,6 +115,47 @@ Hand-in:
 > they go to you. Come back when the vats have done their work."
 
 Resting: "Rest. The vats are slow, but they never stop."
+
+## 3. The Road to the Relics (Elpis, the far road)
+
+Offered once the near road is handed in (`afterAny` The Ruins of Kantur), from 320, every 12
+hours, to every class: quest **30** (`road_to_relics`, `sim::kRoadToRelics`), voice `elpis_2`.
+
+| # | step | breed | level | count | nests |
+|---|---|---|---:|---:|---:|
+| 1 | Kentauros | 355 | 158 | 18 | 13 |
+| 2 | Gigantis | 356 | 160 | 12 | 9 |
+| 3 | Berserkers | 350 | 162 | 36 | 28 |
+| 4 | Genocider | 357 | 164 | 16 | 11 |
+| 5 | Return to Elpis | | | 1 | |
+
+82 kills. **The hard half**: its four breeds raised eight levels (150-156 to 158-164,
+`sim::kKanturuHardLevel` 158), life x1.3, damage x1.2, defence x1.15, attack and defence rates
+x1.1 (content/monsters/*01.json `combat`, each note says so). Ours. Each kill there also leaves
+a piece of the 380 gear one time in 60 (`sim::kKanturuHardGearOdds`, `Realm::leave`, on the
+Atlans gear roll's dice), any class's, +0, luck and the option as any drop: their level puts
+most 380 pieces (drop levels 111-147) below the [L-15, L] window. Measured in `testKanturuHalves`:
+263 pieces off 30,000 near-road kills (level 148), 1,121 off 30,000 far-road ones (162).
+
+Offer:
+> "The far road is another matter. The Kentauros were its archers, the Gigantis its walls."
+>
+> "The Berserkers and the Genocider were made for war, and kept nearest the Relics. The vats there
+> run hotter, and what comes out of them is stronger every year."
+>
+> "Kantur's armourers kept their best work near the door. What those beasts guard, they guard
+> well."
+>
+> "Clear the far road, to the Relics door, and come back to me alive."
+
+Underway: "The far road is still loud."
+
+Hand-in:
+> "The door stands quiet. Nobody has seen that in a long age."
+>
+> "Kantur sealed his treasures in boxes such as this one. Take it, and open it far from the vats."
+
+Resting: "The far road's vats are breeding again. Come back when they are done."
 
 ## Rewards
 
@@ -134,6 +173,11 @@ per chain (a piece or two a link).
   a goal; the other three pieces and the weapon are the Ruins' drops.
 - **No rune.** No Ancient (the user: "No Ancient as quest pay"), and the ladder pays no weapon
   rune twice.
+- **The far road, every clear:** 6,000,000 experience (20,000,000 the first), 1,000,000 Zen,
+  2 Jewels of Life, a Jewel of Chaos, 3 of Bless, 3 of Soul, **a Box of Kundun +4** (the user:
+  "we need to give kundum box+4 when finish kanturu"), the 3 Firecrackers. No set pieces.
+- **A quest's box at its plus** (fixed 2026-10-25, `Realm::completeQuest`'s pay): a box stacks,
+  and the stacking path gave it at +0, so every quest's Box of Kundun +1 to +3 had opened as a +1.
 
 ## To build
 

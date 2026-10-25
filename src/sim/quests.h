@@ -26,7 +26,7 @@
 namespace mu::sim {
 
 // How many quests the table holds. A save carries one progress a quest by this index.
-inline constexpr int kQuests = 30;
+inline constexpr int kQuests = 31;
 inline constexpr int kQuestSteps = 9;
 inline constexpr int kQuestChoices = 7;
 inline constexpr int kQuestPaid = 24;
@@ -272,6 +272,8 @@ inline constexpr int kSeedMastersClearing = 26;
 // quest moves.
 inline constexpr int kKantursGate = 28;
 inline constexpr int kRuinsOfKantur = 29;
+// Elpis's second, the Ruins road's hard half (the user, 2026-10-25), last as the rest.
+inline constexpr int kRoadToRelics = 30;
 // Elpis, MU's own NPC 368, the Tower of Refinement's keeper, stood in the Ruins camp
 // (content/world/kanturu/world.json npcs): every Kanturu quest is hers (the user, 2026-10-25).
 inline constexpr int32_t kElpisNumber = 368;

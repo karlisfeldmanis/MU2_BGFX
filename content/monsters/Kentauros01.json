@@ -23,20 +23,20 @@
     "cantas_02": "painted_steel"
   },
   "combat": {
-    "level": 150,
-    "health": 123200,
-    "minimum_damage": 1450,
-    "maximum_damage": 1526,
-    "defense": 666,
+    "level": 158,
+    "health": 160200,
+    "minimum_damage": 1740,
+    "maximum_damage": 1831,
+    "defense": 766,
     "move_range": 3,
     "attack_range": 5,
     "view_range": 7,
     "move_delay": 500,
     "attack_delay": 1500,
-    "attack_rate": 2005,
-    "defense_rate": 675,
+    "attack_rate": 2206,
+    "defense_rate": 743,
     "attack_skill": null,
-    "note": "OpenMU VersionSeasonSix (KanturuRuins.cs:434): level 93, 38500 life, 470-505, 370, 645/220. Raised past Aida (decision 3): two above the Blade Hunter, its numbers the Splinter Wolf's times OpenMU's ratio between the two (life 2.41, damage 1.52/1.49, defense 1.61); ranges and speeds as MU but its reach: attack range 5, as the Iron Rider's and our archers', for the arrows MU looses (OpenMU 1; the user, 2026-10-23: \"if its a range monsters it has to be range monster\"). Ours (2026-10-23). Retuned 2026-10-25 for geared level-400 heroes (the user: a step harder than Aida, a steady climb from the camp): life 103,500 (Wolf) to 138,000 (Genocider), damage 1,250 to 1,680, defence 620 to 700, levels and rates kept -- about 1.3x Aida's typical time to kill on average, measured with the best pre-Kanturu kits (a scratch skill_sweep at each nest). The defence MU's scale gave (780 to 1,747) left melee and bows at the damage floor."
+    "note": "OpenMU VersionSeasonSix (KanturuRuins.cs:434): level 93, 38500 life, 470-505, 370, 645/220. Raised past Aida (decision 3): two above the Blade Hunter, its numbers the Splinter Wolf's times OpenMU's ratio between the two (life 2.41, damage 1.52/1.49, defense 1.61); ranges and speeds as MU but its reach: attack range 5, as the Iron Rider's and our archers', for the arrows MU looses (OpenMU 1; the user, 2026-10-23: \"if its a range monsters it has to be range monster\"). Ours (2026-10-23). Retuned 2026-10-25 for geared level-400 heroes (the user: a step harder than Aida, a steady climb from the camp): life 103,500 (Wolf) to 138,000 (Genocider), damage 1,250 to 1,680, defence 620 to 700, levels and rates kept -- about 1.3x Aida's typical time to kill on average, measured with the best pre-Kanturu kits (a scratch skill_sweep at each nest). The defence MU's scale gave (780 to 1,747) left melee and bows at the damage floor. The Ruins road's hard half (the user, 2026-10-25: \"kanturu on 2 parts, easy aprt and hard part at end\"): raised from level 150 to 158 (sim::kKanturuHardLevel), life x1.3, damage x1.2, defence x1.15, rates x1.1. Ours."
   },
   "why_this_one": "The Ruins' fifth breed: 13 OpenMU spots in the north (x 72-181, y 15-71), past the Blade Hunters; the second archer, its multishot ranged as the port's decision 9 asked (docs/worlds/kanturu-port.md 4.1, 4.4).",
   "mu_checklist": [

@@ -545,6 +545,13 @@ inline bool secondClassOnly(const content::ItemRow& row) { return ((row.classes 
 constexpr int kKanturuGearLevel = 380;
 // Its weight in an ordinary drop's pool, a row's 1 / this (Realm::leave).
 constexpr int kKanturuGearWeight = 4;
+// The Ruins road's hard half (the user, 2026-10-25: "kanturu on 2 parts, easy aprt and hard part at
+// end with options to players get more gear"): its breeds stand at kKanturuHardLevel or over, and
+// each kill there leaves a piece of the 380 gear one in kKanturuHardGearOdds besides its own drop
+// (Realm::leave), as Atlans's strongest leave the second class's. Their level puts most of the
+// 380 pieces below the drop window, so the ordinary pool alone would give fewer. Ours.
+constexpr int kKanturuHardLevel = 158;
+constexpr int kKanturuHardGearOdds = 60;
 inline bool kanturuGear(const content::ItemRow& row) { return row.needLevel >= kKanturuGearLevel; }
 // Whether it asks `kin` in particular for his second class: the bit eight above his. The Staff of
 // Kundun is the Soul Master's and the Magic Gladiator's, who has no second (OpenMU S6

@@ -19,20 +19,20 @@
     "busersword": "blade_steel"
   },
   "combat": {
-    "level": 154,
-    "health": 133100,
-    "minimum_damage": 1550,
-    "maximum_damage": 1629,
-    "defense": 689,
+    "level": 162,
+    "health": 173000,
+    "minimum_damage": 1860,
+    "maximum_damage": 1955,
+    "defense": 792,
     "move_range": 3,
     "attack_range": 2,
     "view_range": 7,
     "move_delay": 500,
     "attack_delay": 1550,
-    "attack_rate": 2263,
-    "defense_rate": 782,
+    "attack_rate": 2489,
+    "defense_rate": 860,
     "attack_skill": null,
-    "note": "OpenMU VersionSeasonSix (KanturuRuins.cs:274): level 100, 44370 life, 555-590, 443, 728/255, attack every 1550 ms. Raised past Aida (decision 3): two above the Gigantis, its numbers the Splinter Wolf's times OpenMU's ratio between the two (life 2.77, damage 1.79/1.74, defense 1.93); ranges and speeds as MU. Ours (2026-10-23). Retuned 2026-10-25 for geared level-400 heroes (the user: a step harder than Aida, a steady climb from the camp): life 103,500 (Wolf) to 138,000 (Genocider), damage 1,250 to 1,680, defence 620 to 700, levels and rates kept -- about 1.3x Aida's typical time to kill on average, measured with the best pre-Kanturu kits (a scratch skill_sweep at each nest). The defence MU's scale gave (780 to 1,747) left melee and bows at the damage floor."
+    "note": "OpenMU VersionSeasonSix (KanturuRuins.cs:274): level 100, 44370 life, 555-590, 443, 728/255, attack every 1550 ms. Raised past Aida (decision 3): two above the Gigantis, its numbers the Splinter Wolf's times OpenMU's ratio between the two (life 2.77, damage 1.79/1.74, defense 1.93); ranges and speeds as MU. Ours (2026-10-23). Retuned 2026-10-25 for geared level-400 heroes (the user: a step harder than Aida, a steady climb from the camp): life 103,500 (Wolf) to 138,000 (Genocider), damage 1,250 to 1,680, defence 620 to 700, levels and rates kept -- about 1.3x Aida's typical time to kill on average, measured with the best pre-Kanturu kits (a scratch skill_sweep at each nest). The defence MU's scale gave (780 to 1,747) left melee and bows at the damage floor. The Ruins road's hard half (the user, 2026-10-25: \"kanturu on 2 parts, easy aprt and hard part at end\"): raised from level 154 to 162 (sim::kKanturuHardLevel), life x1.3, damage x1.2, defence x1.15, rates x1.1. Ours."
   },
   "why_this_one": "The Ruins' seventh breed and its most common: 28 OpenMU spots in the north and west (x 31-188, y 11-104), past the Gigantis (docs/worlds/kanturu-port.md 4.1, 4.4).",
   "mu_checklist": [
