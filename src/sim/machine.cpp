@@ -68,6 +68,7 @@ struct Sorted {
     int runes = 0;                        // Runes of Creation carrying a power
     int tiers[kRarities] = {};            // and of them, by their rarity (Add Luck's three)
     int luckless = 0, lucklessCell = -1;  // things that take Luck and have none
+    int lucky = 0, luckyCell = -1;        // and that have it
     int spirits[2] = {};                  // the Trainer's: Spirits +0 (the horse's) and +1 (the raven's)
     int runeCells[kMostSockets + 1] = {-1, -1, -1, -1};
     int things = 0;     // everything that is not one of the three jewels
@@ -167,9 +168,9 @@ Sorted sort(const content::Tables& tables, const Machine& box) {
                 s.socketCell = cell;
             }
             // What rolls Luck as a drop: the option-bearing set and the wings.
-            if ((takesOptions(*row) || anyWing(*row)) && !what.luck) {
-                ++s.luckless;
-                s.lucklessCell = cell;
+            if (takesOptions(*row) || anyWing(*row)) {
+                ++(what.luck ? s.lucky : s.luckless);
+                (what.luck ? s.luckyCell : s.lucklessCell) = cell;
             }
         }
     }
@@ -585,7 +586,7 @@ void addSocket(const content::Tables& tables, const Machine& box, const Sorted& 
     const std::string name = labelAt(tables, box, j.target);
     j.title = "Socket " + std::to_string(has + 1) + " for the " + name;
     j.success = name + " with " + std::to_string(has + 1) + (has == 0 ? " socket" : " sockets");
-    j.failure = "The jewels are lost, the " + name + " is kept";
+    j.failure = "The jewels are lost, never the " + name;
     j.ready = s.things == 1 + s.life && s.life == kAddSocketLife && s.chaos == kAddSocketChaos &&
               s.soul == kAddSocketSoul && s.bless == kAddSocketBless;
 }
@@ -594,15 +595,19 @@ void addLuck(const content::Tables& tables, const Machine& box, const Sorted& s,
     const int rare = s.tiers[int(Rarity::Rare)], epic = s.tiers[int(Rarity::Epic)],
               legendary = s.tiers[int(Rarity::Legendary)];
     need(j, "Item without Luck", s.luckless, 1);
-    need(j, "Jewel of Chaos", s.chaos, 1);
-    need(j, "Jewel of Bless", s.bless, 1);
-    need(j, "Jewel of Soul", s.soul, 1);
-    need(j, "Jewel of Life", s.life, 1);
+    need(j, "Jewels of Chaos", s.chaos, kAddLuckJewels);
+    need(j, "Jewels of Bless", s.bless, kAddLuckJewels);
+    need(j, "Jewels of Soul", s.soul, kAddLuckJewels);
+    need(j, "Jewels of Life", s.life, kAddLuckJewels);
     need(j, "Rare rune", rare, 1);
     need(j, "Epic rune", epic, 1);
     need(j, "Legendary rune", legendary, 1);
     j.zen = kAddLuckZen;
     j.rate = kAddLuckRate;
+    if (s.luckless == 0 && s.lucky > 0) {
+        j.title = "The " + labelAt(tables, box, s.luckyCell) + " already has Luck";
+        return;
+    }
     if (s.luckless != 1) {
         j.title = s.luckless == 0 ? "Put in a weapon, armour, shield or wings" : "One item at a time";
         return;
@@ -611,10 +616,11 @@ void addLuck(const content::Tables& tables, const Machine& box, const Sorted& s,
     const std::string name = labelAt(tables, box, j.target);
     j.title = "Luck for the " + name;
     j.success = name + " with Luck";
-    j.failure = "The jewels and runes are lost, the " + name + " is kept";
+    j.failure = "The jewels and runes are lost, never the " + name;
     // A Common or an Ancient rune is a fourth rune: things counts it, so the box is not ready.
     j.ready = s.things == 1 + s.life + 3 && s.runes == 3 && rare == 1 && epic == 1 &&
-              legendary == 1 && s.chaos == 1 && s.bless == 1 && s.soul == 1 && s.life == 1;
+              legendary == 1 && s.chaos == kAddLuckJewels && s.bless == kAddLuckJewels &&
+              s.soul == kAddLuckJewels && s.life == kAddLuckJewels;
 }
 
 void fuseRunes(const content::Tables& tables, const Machine& box, const Sorted& s, Judged& j) {

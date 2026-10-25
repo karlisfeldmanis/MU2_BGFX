@@ -134,9 +134,10 @@ const char* firstWingName(Kin kin);
 //     rune of the next rarity, one his class may set; 100%.
 //   * **Add Luck** (Bruno on Discord, 2026-10-25: "please add Jewel of Luck!!" -- MU has none;
 //     the user: "maybe we can add option on chaos machine?", "lett also ask for 1 rune from each
-//     tier", "basicaly all jewels"): one weapon, armour, shield or wing without Luck, one each of
-//     the Chaos, Bless, Soul and Life, and a Rare, an Epic and a Legendary rune. 50%; failure
-//     takes the jewels and the runes only.
+//     tier", "basicaly all jewels", then "lets ask 3 of each jewel", "because its very strong
+//     feature"): one weapon, armour, shield or wing without Luck, three each of the Chaos, Bless,
+//     Soul and Life, and a Rare, an Epic and a Legendary rune. 50%; failure takes the jewels and
+//     the runes only.
 //   * **1st Wings** and **2nd Wings** (the user, 2026-10-05: 'chaos machine missing wings
 //     creations', 'it has to be a service', then a page each): the box read as that one wing mix
 //     and nothing else, so its needs stand on the page before a thing is put in. Run as Combine
@@ -200,7 +201,8 @@ constexpr int64_t kRemoveRuneZen[4] = {100000, 200000, 300000, 20000};
 constexpr int kAddSocketRate[3] = {50, 35, 20};                     // for the 1st, 2nd, 3rd
 constexpr int64_t kAddSocketZen = 300000;
 constexpr int kAddSocketLife = 1, kAddSocketChaos = 1, kAddSocketSoul = 2, kAddSocketBless = 2;
-// Add Luck: one of each jewel and one rune of each tier, Add Socket's first rate and Zen.
+// Add Luck: three of each jewel and one rune of each tier, Add Socket's first rate and Zen.
+constexpr int kAddLuckJewels = 3;
 constexpr int kAddLuckRate = 50;
 constexpr int64_t kAddLuckZen = 300000;
 constexpr int64_t kFuseZen = 100000;

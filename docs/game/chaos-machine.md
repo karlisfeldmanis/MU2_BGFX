@@ -77,6 +77,7 @@ The services (`sim::Service`, `sim::judge(tables, box, service, socket, kin)`):
 | Combine | phase one's recipes | as above | as above | as above |
 | Remove Rune | one thing with a rune, 1 Chaos | 100% | 500k / 1M / 1.5M by rarity | the picked socket's rune back as a Rune of Creation, the socket empty |
 | Add Socket | one thing with room for a socket, 1 Life, 1 Chaos, 2 Souls, 2 Blesses (the user, 2026-10-04) | 50 / 35 / 20% for the 1st / 2nd / 3rd | 1,000,000 | one more socket; failure takes the jewels only |
+| Add Luck | one weapon, armour, shield or wing without Luck, 3 Chaos, 3 Bless, 3 Souls, 3 Lifes, and a Rare, an Epic and a Legendary rune (the user, 2026-10-25, for Bruno's "Jewel of Luck" -- MU has none; three of each "because its very strong feature") | 50% | 300,000 | the thing gains Luck; failure takes the jewels and runes only |
 | Fuse Runes | three runes of one rarity (not Legendary), 1 Chaos | 100% | 500,000 | one random rune of the next rarity his class may set |
 
 All three rune services are invention, and their numbers are the proposal's first guesses.
@@ -91,7 +92,7 @@ matched to Sanctuary. Phase two's service row and its page turn are gone.
   (`Mixer::kWide`, `panel::columnX(width, 4)`), the bag beside it.
 - **The list**, on the left: the services under MIXES (Upgrade, Chaos Weapon, 1st Wings,
   2nd Wings, Dinorant), TICKETS (Invisibility Cloak, Devil's Invitation) and RUNES (Remove Rune,
-  Add Socket, Fuse Runes). Each one is a bordered iron row, and the picked one is in the travel
+  Add Socket, Add Luck, Fuse Runes). Each one is a bordered iron row, and the picked one is in the travel
   list's gold. At its right is **Ready** in green when the bag and the box hold everything it
   needs, else **N missing**. A press picks the service and plays `quest_page_turn`.
 - **The page**, on the right: the service's name in Cinzel and what the box is to it, then the

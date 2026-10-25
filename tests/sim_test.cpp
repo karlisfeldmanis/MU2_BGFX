@@ -999,7 +999,7 @@ void testItems(const content::Tables& tables) {
     // day: the Dark Lord's five scrolls (content/items/misc/Scroll*.json). A count
     // rather than a list, because what it is guarding is the cook -- a
     // recipe that stops being picked up is a row the shelf silently cannot sell.
-    checkEqual(long(tables.items.size()), 425, "425 item rows cooked");
+    checkEqual(long(tables.items.size()), 427, "427 item rows cooked");
     // And Noria's three shops sell only what is cooked: Elf Lala, Eo the Craftsman and Potion
     // Girl Amy, every offer a row (the user, 2026-09-28: "fill Noria's vendors").
     // And Lumen's, whose Guardian Angel and Imp are ours (the user, 2026-09-30: "put imp and
@@ -9467,16 +9467,17 @@ void testCraftsFromTheBag() {
             sword = int32_t(i);
         }
     }
-    uint8_t rare = 0, legendary = 0;
-    for (int p = 1; p < 256 && (rare == 0 || legendary == 0); ++p) {
+    uint8_t rare = 0, epic = 0, legendary = 0;
+    for (int p = 1; p < 256 && (rare == 0 || epic == 0 || legendary == 0); ++p) {
         const sim::PowerRow* row = sim::powerOf(uint8_t(p));
         if (!row) continue;
         if (row->rarity == sim::Rarity::Rare && rare == 0) rare = uint8_t(p);
+        if (row->rarity == sim::Rarity::Epic && epic == 0) epic = uint8_t(p);
         if (row->rarity == sim::Rarity::Legendary && legendary == 0) legendary = uint8_t(p);
     }
     check(chaos >= 0 && bless >= 0 && soul >= 0 && life >= 0 && axe >= 0 && uniria >= 0 &&
               scroll >= 0 && bone >= 0 && eye >= 0 && key >= 0 && feather >= 0 && rune >= 0 &&
-              wing >= 0 && sword >= 0 && rare != 0 && legendary != 0,
+              wing >= 0 && sword >= 0 && rare != 0 && epic != 0 && legendary != 0,
           "every craft's things are in Noria's tables");
     if (sword < 0 || eye < 0 || key < 0 || feather < 0 || rune < 0 || wing < 0 || rare == 0) return;
     const int16_t whole = int16_t(sim::maximumDurability(noria.items[size_t(uniria)], sim::Held{uniria, 0, 0}));
@@ -9490,7 +9491,7 @@ void testCraftsFromTheBag() {
     // 5 axe, 6 uniria, 7 scroll, 8 bone, 9 eye, 10 key, 11 feather, 12 rune, 13 wing.
     const int32_t rows[14] = {chaos, bless, soul, life, sword, axe, uniria, scroll, bone, eye, key,
                               feather, rune, wing};
-    const uint8_t powers[2] = {rare, legendary};
+    const uint8_t powers[3] = {rare, legendary, epic};
     const Craft crafts[] = {
         {sim::Service::Upgrade,
          [](sim::Realm& r, const int32_t* k, const uint8_t*, int16_t) {
@@ -9545,6 +9546,15 @@ void testCraftsFromTheBag() {
              for (int i = 0; i < 3; ++i) r.give(k[12], -1, 0, -1, false, 0, 0, 0, rareSet);
              r.give(k[0]); r.give(k[3]);
          }, 5},
+        {sim::Service::AddLuck,
+         [](sim::Realm& r, const int32_t* k, const uint8_t* p, int16_t) {
+             r.give(k[4], -1, 5);
+             for (int i = 0; i < 4; ++i) r.give(k[i], -1, 0, sim::kAddLuckJewels);
+             for (int i = 0; i < 3; ++i) {
+                 const uint8_t set[3] = {p[i], 0, 0};
+                 r.give(k[12], -1, 0, -1, false, 0, 0, 0, set);
+             }
+         }, 4 + 4 * sim::kAddLuckJewels},
     };
     check(int(sizeof(crafts) / sizeof(crafts[0])) == sim::kRowCount, "a craft for every service on the list");
 
@@ -9552,7 +9562,7 @@ void testCraftsFromTheBag() {
     const auto sign = [](const sim::Held& h) {
         return std::to_string(h.item) + "/" + std::to_string(h.refinement) + "/" +
                std::to_string(h.sockets) + "/" + std::to_string(h.powers[0]) + "/" +
-               std::to_string(h.powers[1]);
+               std::to_string(h.powers[1]) + (h.luck ? "/L" : "");
     };
     for (const Craft& craft : crafts) {
         const std::string name = sim::serviceName(craft.service);
@@ -10275,7 +10285,7 @@ void testChaosMachine() {
             // Every mix a page of its own, and no plain Combine on the row (the user, 2026-10-05).
             bool combineShown = false;
             for (sim::Service one : sim::kRowServices) combineShown |= one == sim::Service::Combine;
-            check(!combineShown && sim::kRowCount == 10, "ten pages, Combine on none");
+            check(!combineShown && sim::kRowCount == 11, "eleven pages, Combine on none");
             check(sim::judge(noria, weapon, sim::Service::ChaosWeapon).recipe ==
                       sim::Recipe::ChaosWeapon,
                   "the Chaos Weapon page makes the Chaos weapon");
@@ -10702,6 +10712,65 @@ void testChaosMachine() {
     const sim::PowerRow* fused = sim::powerOf(realm.machine()[0].powers[0]);
     check(realm.machine()[0].item == rune && fused && fused->rarity == sim::Rarity::Epic,
           "into one epic rune");
+    check(realm.takeOut(0) >= 0 && realm.machine().empty(), "the epic comes out");
+
+    // Add Luck: a sword without Luck, three of each jewel and a Rare, an Epic and a Legendary rune,
+    // until it takes; failure keeps the sword. A lucky sword is no target.
+    uint8_t tier[3] = {};
+    for (int p = 1; sim::powerOf(uint8_t(p)); ++p) {
+        const int r = int(sim::powerOf(uint8_t(p))->rarity);
+        if (r < 3 && tier[r] == 0) tier[r] = uint8_t(p);
+    }
+    check(tier[0] && tier[1] && tier[2], "a rune of each tier");
+    const auto luckBox = [&](bool lucky) {
+        bool in = realm.putIn(realm.give(sword, -1, 0, -1, lucky)) >= 0;
+        for (const int32_t jewel : {chaos, bless, soul, life}) {
+            in = in && realm.putIn(realm.give(jewel, -1, 0, sim::kAddLuckJewels)) >= 0;
+        }
+        for (int i = 0; i < 3; ++i) {
+            const uint8_t power[1] = {tier[i]};
+            in = in && realm.putIn(realm.give(rune, -1, 0, 1, false, 0, 0, 0, power)) >= 0;
+        }
+        return in;
+    };
+    const auto emptyBox = [&] {
+        for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+            if (realm.machine()[cell].empty()) continue;
+            if (const int back = realm.takeOut(cell); back >= 0) realm.sell(back);
+        }
+    };
+    check(luckBox(true), "a lucky sword, three of each jewel and three runes go in");
+    j = realm.judged(sim::Service::AddLuck);
+    check(!j.ready && j.needs[0].have == 0, "a lucky sword is no target");
+    check(j.title.find("already has Luck") != std::string::npos, "and the page says it has Luck");
+    emptyBox();
+    bool lucked = false;
+    for (int attempt = 0; attempt < 30 && !lucked; ++attempt) {
+        check(luckBox(false), "a sword, three of each jewel and three runes go in");
+        j = realm.judged(sim::Service::AddLuck);
+        check(j.ready, "Add Luck is ready");
+        checkEqual(j.rate, sim::kAddLuckRate, "at its rate");
+        check(!realm.judged(sim::Service::Combine).ready, "and the same box is no Combine");
+        check(realm.mix(sim::Service::AddLuck), "the Goblin tries");
+        int left = 0, at = -1;
+        for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+            if (!realm.machine()[cell].empty()) ++left, at = cell;
+        }
+        checkEqual(left, 1, "only the sword is left, made or not");
+        lucked = at >= 0 && realm.machine()[at].item == sword && realm.machine()[at].luck;
+        if (const int back = realm.takeOut(at); back >= 0) realm.sell(back);
+    }
+    check(lucked, "thirty tries give the sword Luck");
+    // Two of a tier and none of another is not one of each.
+    check(luckBox(false), "the box again");
+    for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+        const sim::Held& h = realm.machine()[cell];
+        if (!h.empty() && h.item == rune && h.powers[0] == tier[2]) realm.takeOut(cell);
+    }
+    const uint8_t second[1] = {tier[1]};
+    check(realm.putIn(realm.give(rune, -1, 0, 1, false, 0, 0, 0, second)) >= 0, "a second epic");
+    check(!realm.judged(sim::Service::AddLuck).ready, "two epics stand in for no legendary");
+    emptyBox();
 }
 
 // Lorencia's one quest (sim/quests.h): Marlon offers it, a kill of his own counts, a hand-in pays
@@ -14857,7 +14926,7 @@ void testBoxes(const content::Tables& tables) {
     check(kundun >= 0 && sim::boxOfKundun(tables.items[size_t(kundun)]),
           "the Box of Kundun has a row (14, 52)");
     if (luck < 0 || kundun < 0) return;
-    // tier 0 the Box of Luck, 1 to 3 the Kundun box at that plus.
+    // tier 0 the Box of Luck, 1 to 4 the Kundun box at that plus.
     for (int tier = 0; tier <= sim::kKundunTiers; ++tier) {
         const int tries = 6000;
         int items = 0, excellent = 0, badPlus = 0, badZen = 0, kept = 0;
@@ -14885,11 +14954,12 @@ void testBoxes(const content::Tables& tables) {
             const int plus = lying.what.refinement;
             badPlus += tier == 0 ? plus != sim::kLuckPlus
                                  : plus < sim::kKundunPlainLevel[tier - 1] ||
-                                       plus >= sim::kKundunPlainLevel[tier - 1] + sim::kKundunAddLevel;
+                                       plus >= sim::kKundunPlainLevel[tier - 1] + sim::kKundunAddLevel[tier - 1];
         }
         const double rate = tier == 0 ? sim::kLuckItemIn100 / 100.0 : sim::kKundunItemIn100[tier - 1] / 100.0;
         std::printf("  %s: %d of %d an item, %d of them excellent\n",
-                    tier == 0 ? "Box of Luck" : tier == 1 ? "Kundun +1" : tier == 2 ? "Kundun +2" : "Kundun +3",
+                    tier == 0 ? "Box of Luck" : tier == 1 ? "Kundun +1" : tier == 2 ? "Kundun +2"
+                    : tier == 3 ? "Kundun +3" : "Kundun +4",
                     items, tries, excellent);
         checkEqual(kept, 0, "every box thrown is spent");
         check(std::abs(double(items) / tries - rate) < 0.025, "an item at its rate");
