@@ -1005,6 +1005,42 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         does.rows.push_back(stat("Additional Damage", "+1", Tone::Blue));
     }
     if (!does.rows.empty()) sheet.sections.push_back(does);
+    // What the Jewel of Harmony can lay, by the kind of piece (the user, 2026-10-25: "can we show
+    // what bonuses it will give also on tooltip?"): each option from its first level to the top,
+    // off the table the realm draws from (sim/harmony.h), and the plus it asks to be drawn.
+    if (sim::jewelOfHarmony(row)) {
+        constexpr struct {
+            sim::HarmonyFamily family;
+            const char* kicker;
+        } kFamilies[] = {{sim::HarmonyFamily::Weapon, "On a weapon:"},
+                         {sim::HarmonyFamily::Staff, "On a staff:"},
+                         {sim::HarmonyFamily::Defence, "On armour or a shield:"}};
+        for (const auto& family : kFamilies) {
+            // An item card draws no kicker (tip.cpp), so the kind of piece is the block's first line.
+            Section table;
+            Row head;
+            head.free = family.kicker;
+            head.freeTone = Tone::White;
+            table.rows.push_back(head);
+            for (int number = 1; number <= 10; ++number) {
+                const sim::HarmonyOption* option = sim::harmonyOption(family.family, number);
+                if (!option) continue;
+                const bool cut = option->effect == sim::HarmonyEffect::StrengthAsked ||
+                                 option->effect == sim::HarmonyEffect::AgilityAsked;
+                const std::string sign = cut ? "-" : "+", unit = option->percent ? "%" : "";
+                Row line;
+                line.free = option->name;
+                line.freeTone = Tone::Gray;
+                line.tail = sign + std::to_string(sim::harmonyAt(*option, option->least)) + unit + " to " +
+                            sign + std::to_string(sim::harmonyAt(*option, sim::kHarmonyTop)) + unit;
+                if (option->least > 0) line.tail += ", from +" + std::to_string(option->least);
+                line.mark = tip::Mark::Diamond;
+                line.markTone = Tone::Yellow;
+                table.rows.push_back(line);
+            }
+            sheet.sections.push_back(table);
+        }
+    }
 
     // ---- its options ----------------------------------------------------------------------------
     // GetSpecialOptionText's lines in SetItemAttributes' order -- luck, then the additional
