@@ -970,6 +970,17 @@ bool boxOfLuck(const content::ItemRow& row) { return row.group == kGroupPotions 
 
 bool boxOfKundun(const content::ItemRow& row) { return row.group == kGroupPotions && row.number == 52; }
 
+bool kundunFine(const content::ItemRow& row, int tier, Kin kin, bool second) {
+    const int t = std::clamp(tier, 1, kKundunTiers) - 1;
+    if (!excellentable(row) || !takesOptions(row) || !row.dropsFromMonsters() || archangelWeapon(row) ||
+        kanturuGear(row)) {
+        return false;
+    }
+    if (row.dropLevel < kKundunFineLeast[t] || row.dropLevel > kKundunFineMost[t]) return false;
+    if (row.classes != 0 && (row.classes & (1 << int(kin))) == 0) return false;
+    return !secondClassOnly(row) || second || kin == Kin::MagicGladiator;
+}
+
 bool scrollOfArchangel(const content::ItemRow& row) {
     return row.group == kGroupPets && row.number == 16;
 }

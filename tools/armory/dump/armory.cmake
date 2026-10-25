@@ -57,3 +57,9 @@ int main() { return Fine{} && mu::sim::kHoardLives > 0 ? 0 : 0; }")
 armory_probe(ARMORY_RUNE_HERO_LEVEL "
 #include \"sim/items.h\"
 int main() { return mu::sim::kRuneHeroLevel[0] > 0 ? 0 : 0; }")
+# The Kundun box an excellent of the opener's band or a jewel (2026-10-25): sim::kundunFine.
+armory_probe(ARMORY_KUNDUN_BANDS "
+#include \"sim/items.h\"
+#include \"content/tables.h\"
+using Fine = decltype(mu::sim::kundunFine(mu::content::ItemRow{}, 1, mu::sim::Kin::DarkKnight, true));
+int main() { return Fine{} && mu::sim::kKundunFineLeast[0] > 0 ? 0 : 0; }")

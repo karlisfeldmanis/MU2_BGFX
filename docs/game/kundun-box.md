@@ -39,6 +39,14 @@ by order:
   excellent bag11's plain list without the Dragon Shield). Bag8 is gone. The raid's +3 boxes now
   hold bag11. The plain levels and rates above are unchanged; excellents stay +0. In §3's table
   read each row as the box one below ours.
+- **Our own bands, an excellent or a jewel, never Zen** (the user, 2026-10-25: "increase tire and
+  always drop exc or jewels"; picked bands 50-80 / 80-105 / 105-125 / 125-147 and the excellent
+  rising with the tier). Each box is an excellent item of the opener's own class at drop level
+  `kKundunFineLeast..kKundunFineMost` (`sim::kundunFine`, as the raid's `hoardFine`; any slot,
+  never Kanturu's 380 gear) at 40/50/60/70 in 100, else one of the Chaos, Bless, Soul and Life
+  evenly (`kKundunJewels`). No plain items and no Zen; MU's bags (the two notes above) are gone.
+  A set's pieces sit in different bands, as their drop levels differ (a Great Dragon helm falls in
+  +2's band, its armour in +4's).
 
 Sources, highest first: WebZen GameServer 1.00.93 (`WZ`, under `Source/Server Side/GameServer/`,
 0.97d base unless a flag is named), MuMain (`MM`, `src/source/`), OpenMU (`OM`). The repo's

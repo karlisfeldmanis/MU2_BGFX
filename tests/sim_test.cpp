@@ -14917,8 +14917,9 @@ void testNova(const content::Tables& tables) {
     check(!again, "pressed again two seconds later, it is still cooling");
 }
 
-// The Box of Luck and the Box of Kundun (sim/items.h): thrown, each is spent and opens -- an item
-// at its rate and its levels, else its Zen.
+// The Box of Luck and the Box of Kundun (sim/items.h): thrown, each is spent and opens. The Box
+// of Luck an item at its rate and level, else its Zen; the Kundun box always an excellent one of
+// the opener's own gear in its tier's band at its rate, else a jewel.
 void testBoxes(const content::Tables& tables) {
     std::printf("boxes\n");
     const int luck = tables.itemAt(14, 51), kundun = tables.itemAt(14, 52);
@@ -14926,10 +14927,16 @@ void testBoxes(const content::Tables& tables) {
     check(kundun >= 0 && sim::boxOfKundun(tables.items[size_t(kundun)]),
           "the Box of Kundun has a row (14, 52)");
     if (luck < 0 || kundun < 0) return;
+    const auto jewel = [](const content::ItemRow& row) {
+        for (const sim::BagRow& one : sim::kKundunJewels) {
+            if (row.group == one.group && row.number == one.number) return true;
+        }
+        return false;
+    };
     // tier 0 the Box of Luck, 1 to 4 the Kundun box at that plus.
     for (int tier = 0; tier <= sim::kKundunTiers; ++tier) {
         const int tries = 6000;
-        int items = 0, excellent = 0, badPlus = 0, badZen = 0, kept = 0;
+        int items = 0, excellent = 0, badPlus = 0, badZen = 0, kept = 0, badFine = 0, badJewel = 0;
         auto fresh = std::make_unique<sim::Realm>();
         for (int i = 0; i < tries; ++i) {
             if (i % 200 == 0) {
@@ -14942,30 +14949,39 @@ void testBoxes(const content::Tables& tables) {
             const sim::Cracked cracked = realm.crack(slot);
             kept += !cracked.opened || !realm.satchel()[slot].empty();
             if (cracked.id == 0) {
-                const int64_t want = tier == 0 ? sim::kLuckZen : sim::kKundunZen[tier - 1];
-                badZen += realm.money() - purse != want;
+                badZen += tier == 0 ? realm.money() - purse != sim::kLuckZen : 1;
                 continue;
             }
             ++items;
             const sim::Lying& lying = realm.lying().back();
             const content::ItemRow& row = tables.items[size_t(lying.what.item)];
             excellent += lying.what.excellent != 0;
-            if (!sim::takesOptions(row) || lying.what.excellent) continue;
-            const int plus = lying.what.refinement;
-            badPlus += tier == 0 ? plus != sim::kLuckPlus
-                                 : plus < sim::kKundunPlainLevel[tier - 1] ||
-                                       plus >= sim::kKundunPlainLevel[tier - 1] + sim::kKundunAddLevel[tier - 1];
+            if (tier > 0) {
+                if (lying.what.excellent) {
+                    badFine += !sim::kundunFine(row, tier, realm.hero().kin, realm.hero().second);
+                } else {
+                    badJewel += !jewel(row);
+                }
+                continue;
+            }
+            if (sim::takesOptions(row)) badPlus += lying.what.refinement != sim::kLuckPlus;
         }
-        const double rate = tier == 0 ? sim::kLuckItemIn100 / 100.0 : sim::kKundunItemIn100[tier - 1] / 100.0;
         std::printf("  %s: %d of %d an item, %d of them excellent\n",
                     tier == 0 ? "Box of Luck" : tier == 1 ? "Kundun +1" : tier == 2 ? "Kundun +2"
                     : tier == 3 ? "Kundun +3" : "Kundun +4",
                     items, tries, excellent);
         checkEqual(kept, 0, "every box thrown is spent");
-        check(std::abs(double(items) / tries - rate) < 0.025, "an item at its rate");
-        checkEqual(badZen, 0, "else its Zen into the purse");
-        checkEqual(badPlus, 0, "a plain item at its levels");
-        if (tier > 0) check(excellent > 0, "and now and then an excellent one");
+        if (tier == 0) {
+            check(std::abs(double(items) / tries - sim::kLuckItemIn100 / 100.0) < 0.025, "an item at its rate");
+            checkEqual(badZen, 0, "else its Zen into the purse");
+            checkEqual(badPlus, 0, "an item at its level");
+            continue;
+        }
+        checkEqual(badZen, 0, "a Kundun box never Zen");
+        check(std::abs(double(excellent) / tries - sim::kKundunExcellentIn100[tier - 1] / 100.0) < 0.025,
+              "an excellent one at its rate");
+        checkEqual(badFine, 0, "the excellent one the opener's own, in the tier's band");
+        checkEqual(badJewel, 0, "else a jewel");
     }
 }
 

@@ -2643,33 +2643,34 @@ Cracked Realm::openBox(Cracked cracked, bool luck, int tier) {
         }
         return -1;
     };
-    if (dice_.nextInt(0, 100) < (luck ? kLuckItemIn100 : kKundunItemIn100[t])) {
+    if (!luck || dice_.nextInt(0, 100) < kLuckItemIn100) {
         int32_t item = -1;
         if (luck) {
             item = pick(kLuckBag, std::size(kLuckBag));
         } else {
-            const BagRow* plain = kKundunBags[t].plain;
-            const size_t plains = kKundunBags[t].plains;
-            const BagRow* fine = kKundunBags[t].fine;
-            const size_t fines = kKundunBags[t].fines;
+            // Ours: an excellent one of the opener's own gear in the tier's band, else a jewel.
+            std::vector<BagRow> fine;
             if (dice_.nextInt(0, 100) < kKundunExcellentIn100[t]) {
-                // An excellent one, at its feet as any (Realm::excellentOf).
-                Lying one;
-                if (excellentOf(fine, fines, dice_, &one.what)) {
-                    std::tie(one.column, one.row) = clearing(hero.column(), hero.row());
-                    one.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
-                    one.owner = mine().id;
-                    one.id = nextId_++;
-                    lying_.push_back(one);
-                    cracked.id = one.id;
-                    cracked.item = one.what.item;
-                    cracked.column = one.column;
-                    cracked.row = one.row;
-                    say(What::Cracked, hero, int32_t(one.id), one.what.item, 0);
-                    return cracked;
+                for (const content::ItemRow& r : tables_->items) {
+                    if (kundunFine(r, tier, hero.kin, hero.second)) fine.push_back({int8_t(r.group), int16_t(r.number)});
                 }
             }
-            if (item < 0) item = pick(plain, plains);
+            // An excellent one, at its feet as any (Realm::excellentOf).
+            Lying one;
+            if (!fine.empty() && excellentOf(fine.data(), fine.size(), dice_, &one.what)) {
+                std::tie(one.column, one.row) = clearing(hero.column(), hero.row());
+                one.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
+                one.owner = mine().id;
+                one.id = nextId_++;
+                lying_.push_back(one);
+                cracked.id = one.id;
+                cracked.item = one.what.item;
+                cracked.column = one.column;
+                cracked.row = one.row;
+                say(What::Cracked, hero, int32_t(one.id), one.what.item, 0);
+                return cracked;
+            }
+            item = pick(kKundunJewels, std::size(kKundunJewels));
         }
         if (item >= 0) {
             const content::ItemRow& row = tables_->items[size_t(item)];
@@ -2679,11 +2680,9 @@ Cracked Realm::openBox(Cracked cracked, bool luck, int tier) {
                 // and the pets and the jewellery whole.
                 one.what = Held{item, 0, int16_t(bareDurability(row))};
             } else {
-                // An excellent one at +0 with the skill; a plain one at the bag's level and up to
-                // one more, the skill at a half. The luck at a half either way, and the option where
-                // the skill or the luck missed: one in five +12, else +0, +4 or +8.
-                const int plus = luck ? kLuckPlus : kKundunPlainLevel[t] + dice_.nextInt(0, kKundunAddLevel[t]);
-                const int refinement = std::min(plus, kRefineCap);
+                // The Box of Luck's, at +6, the skill at a half. The luck at a half, and the option
+                // where the skill or the luck missed: one in five +12, else +0, +4 or +8.
+                const int refinement = std::min(kLuckPlus, kRefineCap);
                 one.what = Held{item, int16_t(refinement), int16_t(fullDurability(row, refinement))};
                 const bool skill = dice_.nextInt(0, 2) == 1;
                 one.what.luck = dice_.nextInt(0, 100) < kBoxLuckIn100;
@@ -2704,7 +2703,8 @@ Cracked Realm::openBox(Cracked cracked, bool luck, int tier) {
             return cracked;
         }
     }
-    cracked.zen = int64_t(double(luck ? kLuckZen : kKundunZen[t]) * hero.excel.zenRate);
+    // Only a Box of Luck's miss, or a tree without the jewels.
+    cracked.zen = luck ? int64_t(double(kLuckZen) * hero.excel.zenRate) : 0;
     me().money += cracked.zen;
     say(What::Cracked, hero, -1, -1, int32_t(cracked.zen));
     return cracked;
