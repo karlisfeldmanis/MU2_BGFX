@@ -47,7 +47,7 @@ int Play::swingSound(const sim::Body& body) const {
     return heard_.swing;
 }
 
-void Play::steps() {
+void Play::steps(float seconds) {
     // PlayWalkSound, and the hero's alone: the client guards it with `c == Hero`, so nobody
     // else in the world has feet you can hear. MU2's Crowd.Steps.
     Drawn* hero = drawnOf(realm_.hero().id);
@@ -66,12 +66,35 @@ void Play::steps() {
                          (clip == look->walkClip || clip == look->walkSafeClip ||
                           clip == look->combatWalkClip || clip == look->runClip || riding ||
                           swimming);
+    for (float& busy : hoofBusy_) busy = std::max(0.0f, busy - seconds);
     if (!walking || ground_ == nullptr) {
         // Not walking, so the next cycle starts fresh: the client clears both latches the
         // moment the animation is not running.
         leftFoot_ = rightFoot_ = striding_ = false;
+        hoofOwed_ = 0.0f;
         return;
     }
+    // **The Dark Horse's gallop, as MU sounds it**: SetPlayerWalk runs every frame he moves and
+    // plays `SOUND_RUN_DARK_HORSE_1 + rand() % 3` each time (ZzzCharacter.cpp:764-767), three
+    // buffers of one channel each (ZzzOpenData.cpp:4863-4865), so the one rolled starts only if
+    // it is not still sounding. Three phrases of two or three hoofbeats each, each begun again as
+    // soon as a roll finds it done: one roll a 25 fps reference frame, a busy clock per buffer.
+    // Not on his feet's keys, which were Uniria's two a bound (ours, mount_hoof's note).
+    if (clip == look->horseRunClip) {
+        hoofOwed_ = std::min(hoofOwed_ + seconds * 25.0f, 4.0f);
+        while (hoofOwed_ >= 1.0f) {
+            hoofOwed_ -= 1.0f;
+            hoofSeed_ ^= hoofSeed_ << 13;
+            hoofSeed_ ^= hoofSeed_ >> 17;
+            hoofSeed_ ^= hoofSeed_ << 5;
+            float& busy = hoofBusy_[hoofSeed_ % 3u];
+            if (busy > 0.0f || heard_.hoof < 0) continue;
+            busy = std::max(sound_.seconds(heard_.hoof), 0.1f);
+            emit(heard_.hoof, hero->crown[0], hero->crown[2], hero->id);
+        }
+        return;
+    }
+    hoofOwed_ = 0.0f;
     const float key = keyOf(hero->figure);
     // A change of walk -- into the run or out of it, over the zone's edge -- keeps the phase
     // but not the key count, so it is a fresh start and not a wrap.

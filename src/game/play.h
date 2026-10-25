@@ -2153,7 +2153,7 @@ private:
     void hearFrom(int event, const float* at, float full, float reach);
     // The hero's footsteps and the smith's hammer, after the clips have been advanced this
     // frame, since both are read off where a clip's clock stands.
-    void steps();
+    void steps(float seconds);
     // A drop coming into view -- its dropper down, or the hero's own discard -- makes its noise
     // where it lies. Called from releaseDrops for each one let go.
     void landed(uint32_t drop);
@@ -2171,6 +2171,11 @@ private:
     bool leftFoot_ = false, rightFoot_ = false, striding_ = false;
     float stepKey_ = 0.0f;  // the walk's key on the last frame, so a wrap can be seen
     int stepClip_ = -1;     // and which walk it was
+    // The Dark Horse's three hoof buffers, each busy for as long as it sounds, and the
+    // reference frames owed a roll among them (steps()).
+    float hoofBusy_[3] = {0.0f, 0.0f, 0.0f};
+    float hoofOwed_ = 0.0f;
+    uint32_t hoofSeed_ = 0x9e3779b9u;
     // A level the realm has given and the drawing has not shown: it waits, as MU2's did, for
     // the blow that killed `levelOn_` to land, so the flares do not go up half a swing before
     // the monster that earned them is hit. 0 is no one, and shows at once. Counted, not a flag:

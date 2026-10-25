@@ -1928,10 +1928,14 @@ void Play::follow(float seconds) {
         // Slowed (iced), the ride slows with the ground it covers, and the horse with it, since
         // it takes the rider's place in the clip (Pets::ride): at full rate over half the ground
         // the two galloped on the spot (the user, 2026-10-03). **ours**.
+        // The Dark Horse's run ride, 79, is cooked at its own 0.33 already, which is MU's
+        // (ZzzCharacter.cpp:532): 0.34 over it ran his bounce, and the horse's stride held to it
+        // (Pets::ride), 13% fast.
         constexpr float kRideRunRate = 0.34f / 0.3f;
         if (isRide(one.figure.clip())) {
             const float full = body->speed * sim::strideFactor(*body);
-            one.clipRate = kRideRunRate * (full > 1e-4f ? std::min(pace / full, 1.0f) : 1.0f);
+            const float rate = one.figure.clip() == look->horseRunClip ? 1.0f : kRideRunRate;
+            one.clipRate = rate * (full > 1e-4f ? std::min(pace / full, 1.0f) : 1.0f);
         }
         // A swim is paced as a walk is (below), by the water it covers against the stroke's own
         // travel: MU's 0.35 strokes 3.09 m a 0.69 s cycle, 4.5 m/s, far past what he swims, and

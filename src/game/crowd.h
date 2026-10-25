@@ -128,6 +128,13 @@ public:
     // through exactly; a figure's own clips are left linear, where a curve would round a
     // blow's snap.
     void smoothKeys(bool on) { smooth_ = on; }
+    // The playing clip's cycle as its first `keys` keys alone, its last key-to-first interval
+    // left out, when its last authored key is its first again: MU wraps such a clip through a
+    // hold of one interval, which a stride held to another clip's (Pets::ride) cannot have.
+    // 0 is the clip's own cycle. The curve above wraps over the same keys. **Ours**.
+    void loopKeys(int keys) { loopKeys_ = keys; }
+    // How many key intervals the playing clip's own cycle is: its keys less the closing one.
+    int cycleKeys() const;
     // Draws his right hand's weapon or not: Rageful Blow's is in the air while its clip is
     // under its fourth key (fx/fury.h). Only in the hand -- slung, it is drawn.
     void emptyHand(bool on) { emptyHand_ = on; }
@@ -244,6 +251,7 @@ private:
     float fadeLength_ = 0.0f;
     bool safe_ = false;  // standing on a safe tile: weapon on the back, unarmed stance
     bool smooth_ = false;  // curved between keys; see smoothKeys
+    int loopKeys_ = 0;  // the cycle's keys when shorter than the clip's; see loopKeys
     bool mounted_ = false;  // drawn in mount_'s frame; see mount
     bool emptyHand_ = false;  // the right hand's weapon left out; see emptyHand
     bool nockGone_ = false;   // the weapon's nocked missile left out; see nock

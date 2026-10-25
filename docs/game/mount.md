@@ -278,4 +278,35 @@ MuMain. Earthshake (skill 62), which the horse carries, is not built yet
   Icarus still asks wings (0.97d's gObjMoveGate; the 2008 fix lets the horse in). Its level is 1
   everywhere a level is read (`sim::kHorseLevel`), until pet levels are built.
 
+## The ride, audited against MuMain (2026-10-25)
+
+The user: "i just want that DL riding is correct". MU's numbers, and what is ours:
+
+- **Rider clips and speeds** (player.muc's indices; actions.json's labels run one high from 75):
+  78 stand 0.3 (`ZzzOpenData.cpp:374`), 79 run 0.33 (`ZzzCharacter.cpp:532`), 84 every swing
+  0.25 + attack speed (:951, :1108-1111), 82 Force/Force Wave/Fire Burst/Fire Scream 0.2 + (:950,
+  :4535-4537), 83 Summon 0.3 (:1012), 85 Electric Spike 0.4 + magic (:952), 86 Critical Damage
+  0.3 + magic (:953). His 79 had been played at Uniria's 0.34/0.3 on top of its own 0.33 --
+  **fixed**: at 0.33, a bounce in 0.73 s.
+- **Horse clips** (`GOBoid.cpp:338-428`): 1 at 0.34 under 79, 2 at 0.34 under 82-86, 0 at 0.3
+  otherwise (3 under 87, 5/6 under 88/89, none built). Its stand ran at the model's 0.34 --
+  **fixed**: 0.3, on its own clock.
+- **The stride, ours**: action 1's seventh key is its first again, so MU holds the horse one
+  interval in seven of every bound (`ZzzBMD.cpp:723-741`). Held to his six-key bounce, the
+  horse's back sank under him through the hold and he rose 10 cm off the saddle each stride. Its
+  stride is now its first six keys (`Figure::loopKeys`): six at 0.34 is 0.71 s, his six at 0.33
+  0.73 s, peak on peak. His pelvis over the saddle's spine bone: 0.563 m standing, 0.604-0.625
+  galloping (it was 0.576-0.660).
+- **The seat** is MU's own: the horse at his spot, angles and scale 1.0, no bone link, BoneHead 7
+  (an unskinned bone, so his look never turns it). His pelvis stands 2.00 m over the ground on 78
+  (player.bmd's Bip01 at 200) and the horse's Bip01 at 149.9; Season 17's Class05 parts carry the
+  same 51 bind bones as MU's Class01-04 parts, exactly, so the body does not move him.
+- **Hooves**: MU plays `SOUND_RUN_DARK_HORSE_1 + rand() % 3` every frame he moves, three
+  one-channel buffers, each begun again once done (`ZzzCharacter.cpp:764-767`,
+  `ZzzOpenData.cpp:4863-4865`) -- **fixed** from Uniria's two a bound on his feet's keys
+  (`Play::steps`).
+- **Kept**: no flinch while mounted (`ZzzCharacter.cpp:1369`); the safe zone's hide as a 0.25 s
+  fade, his town stand and walk there; dust as Uniria's; the breath every third frame, the run
+  included (MuMain comments out 1.03.35's `CurrentAction != 1`).
+
 Test: `out/build/mu2 --arena "Giant" --class 4 --level 250 --spend-even --give DarkHorseHorn::W --mute`.

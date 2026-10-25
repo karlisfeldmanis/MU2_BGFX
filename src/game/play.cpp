@@ -2524,7 +2524,7 @@ void Play::update(double seconds) {
         }
         one.lastClock = one.figure.clock();
     }
-    steps();
+    steps(float(seconds));
     hammer();
     chatter(float(seconds));
     orbs(float(seconds));

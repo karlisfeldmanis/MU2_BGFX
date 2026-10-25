@@ -113,6 +113,12 @@ float Figure::played() const {
     return once_ ? onceEnd(clip) : clip.duration;
 }
 
+int Figure::cycleKeys() const {
+    if (!body_ || !body_->library || clip_ < 0) return 0;
+    const content::CookedClip& clip = body_->library->clips.clips[size_t(clip_)];
+    return clip.frames > 1 ? int(clip.frames) - 1 : 0;
+}
+
 float Figure::through() const {
     const float duration = length();
     return duration > 0.0f ? time_ / duration : 0.0f;
@@ -224,7 +230,9 @@ void Figure::sample(int clip, float time, size_t limit, float* rotations,
     if (smooth_ && one.frames >= 4 && !one.hold) {
         // A looping clip's last key is its first again (CookedClip), so the cycle is
         // frames - 1 keys long and the neighbours either side of a key wrap round it.
-        const int period = int(one.frames) - 1;
+        const int period = clip == clip_ && loopKeys_ > 1 && loopKeys_ < int(one.frames) - 1
+                               ? loopKeys_
+                               : int(one.frames) - 1;
         const auto key = [&](int k) {
             k = ((k % period) + period) % period;
             return &clips.rows[(size_t(one.firstRow) + size_t(k) * bones) * 7];

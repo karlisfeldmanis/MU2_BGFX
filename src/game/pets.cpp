@@ -36,6 +36,9 @@ constexpr float kHeadingEase = 10.0f;
 // tile and back (GOBoid.cpp:498-502), a cut; **ours**, a short fade, as a pop on screen is
 // closed (docs/game/mount.md).
 constexpr float kHorseFade = 0.25f;
+// The Dark Horse's stand against the 0.34 its model is cooked at: MU plays it at 0.3
+// (GOBoid.cpp:424-428).
+constexpr float kDarkHorseStand = 0.3f / 0.34f;
 
 // This engine's world against MU's: x east alike, MU's y north is -z, MU's z up is y.
 void toMu(const float world[3], float mu[3]) {
@@ -195,13 +198,27 @@ void Pets::ride(float seconds, const Figure& hero, int worn, bool riding, int ac
     // straight lines between them the legs' speed jumps at every key. Its kick is held, and a
     // held clip stays linear, so the blow keeps its snap. Uniria and the dragon as MU draws them.
     horse_.smoothKeys(mounted_ == 4);
-    horse_.update(seconds);
-    // And in step with him. MU runs the two on two clocks at one rate, and its run ride and the
-    // horse's leap are both 7 keys at 0.34, so they hold together there; drawn here they part
-    // on a crossfade, a hitch or a resumed walk phase, and the rider bounces off the saddle's
-    // beat. So the leap and the stand take his clip's own place, as a fraction: one bound of
+    // **The Dark Horse's stride is its first six keys** (ours): its run's seventh key is its
+    // first again (every bone but the unskinned Bip01 Footsteps), so MU, wrapping a free clip
+    // at its key count, holds the horse still for one interval in seven of every bound
+    // (ZzzBMD.cpp:723-741). Held to his 79 -- six keys, a bounce over all of them -- the
+    // horse's back then peaked at 3/7 of his bounce and sank under him through the hold: he
+    // rose 10 cm off the saddle each stride. Six keys at MU's 0.34 are 0.71 s, his six at 0.33
+    // 0.73 s: one bound is one bounce, peak on peak.
+    const bool stride = mounted_ == 4 && action == 1 && horse_.cycleKeys() > 2;
+    horse_.loopKeys(stride ? horse_.cycleKeys() - 1 : 0);
+    // Its stand on its own clock at MU's own `o->Velocity = 0.3f` (GOBoid.cpp:427); the
+    // model's 0.34 is its run's and its kick's.
+    horse_.update(seconds, mounted_ == 4 && action == 0 ? kDarkHorseStand : 1.0f);
+    // And in step with him. MU runs the two on two clocks, and Uniria's leap and its run ride
+    // are both 7 keys at 0.34, so they hold together there; drawn here they part on a
+    // crossfade, a hitch or a resumed walk phase, and the rider bounces off the saddle's beat.
+    // So the leap (and Uniria's stand) takes his clip's own place, as a fraction: one bound of
     // the horse is one bounce of the rider, whatever the frame did. **ours**.
-    if (slaved) horse_.setClock(hero.through() * horse_.length());
+    if (slaved) {
+        const float cycle = stride ? float(horse_.cycleKeys() - 1) / float(horse_.cycleKeys()) : 1.0f;
+        horse_.setClock(hero.through() * cycle * horse_.length());
+    }
 }
 
 bool Pets::breathe(float seconds, float at[3]) {
