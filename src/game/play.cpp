@@ -976,11 +976,13 @@ void Play::update(double seconds) {
                         const bool horse = row->kin == sim::Kin::DarkLord && onDarkHorse(heroId);
                         if (happening.who == heroId && realm_.hero().riding && !row->arrows &&
                             (!row->onSelf() || wizard || horse)) {
-                            // The Dark Lord's strike skills have MU's own ride strike,
-                            // PLAYER_ATTACK_RIDE_STRIKE (82; WSclient.cpp:4245-4248).
-                            const int ridden = caster->figure.body()->library->find(
-                                wizard ? 155 : horse ? lordHorseClip(row->number)
-                                       : row->kin == sim::Kin::DarkLord ? 82 : 68);
+                            // The Dark Lord's have MU's own ride clips (lordRideClip); -1 is
+                            // his standing one, kept.
+                            const int clip = wizard ? 155 : horse ? lordHorseClip(row->number)
+                                           : row->kin == sim::Kin::DarkLord ? lordRideClip(row->number)
+                                                                            : 68;
+                            const int ridden =
+                                clip < 0 ? -1 : caster->figure.body()->library->find(clip);
                             if (ridden >= 0) caster->castClip = ridden;
                         }
                     }
@@ -1805,12 +1807,14 @@ void Play::update(double seconds) {
                                     // Impale has MU's own ride thrust, 70 (sim/skills.cpp).
                                     const bool horse =
                                         row->kin == sim::Kin::DarkLord && onDarkHorse(realm_.hero().id);
-                                    const int ridden = swinger->figure.body()->library->find(
+                                    const int clip =
                                         row->kin == sim::Kin::DarkWizard     ? 155
                                         : row->number == sim::skill::kImpale ? 70
                                         : horse                              ? lordHorseClip(row->number)
-                                        : row->kin == sim::Kin::DarkLord     ? 82
-                                                                             : 68);
+                                        : row->kin == sim::Kin::DarkLord     ? lordRideClip(row->number)
+                                                                             : 68;
+                                    const int ridden =
+                                        clip < 0 ? -1 : swinger->figure.body()->library->find(clip);
                                     if (ridden >= 0) swinger->castClip = ridden;
                                 }
                             }

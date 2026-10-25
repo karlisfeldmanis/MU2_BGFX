@@ -37,7 +37,7 @@
   },
   "why_this_one": "MU's first scepter, the Dark Lord's (docs/plans/dark-lord.md section 5): built with Force Wave, which every scepter carries here (the user, 2026-10-25: 'Every scepter', 'Yes, Battle Scepter'; docs/plans/dark-lord-spells/force-wave.md).",
   "stance": "sword",
-  "stance_from": "Width 1: a one-handed scepter stands PLAYER_STOP_SWORD, as every one-handed mace here; the Dark Lord stands his own clip 76 with it.",
+  "stance_from": "Width 1: a one-handed scepter stands PLAYER_STOP_SWORD, as every one-handed mace here and as MuMain has him (ZzzCharacter.cpp:345-350); his 76/77 are a safe zone with the Dark Raven out (:278-281), not the scepter.",
   "two_handed": false,
   "sheet_from": "Data/Item/sep01 (32x64, the deep blue head and the purple-banded shaft) and sep011 (32x64, the pale blue-white blades), from MuMain.",
   "sheet_materials": {

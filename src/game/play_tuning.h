@@ -333,6 +333,20 @@ inline int lordHorseClip(int skill) {
     }
 }
 
+// And on Uniria or the Dinorant: PLAYER_ATTACK_RIDE_TELEPORT 83 for Summon (its case takes every
+// horn from Uniria to the Dark Horse, WSclient.cpp:4702-4706), and PLAYER_ATTACK_RIDE_STRIKE 82 for
+// his strikes (:4243-4248). Electric Spike and Critical Damage ask the Dark Horse alone, else
+// their standing SKILL_FLASH and SKILL_HAND1 (ClassAttack.cpp:933-946, WSclient.cpp:4685-4697):
+// -1, the row's own clip.
+inline int lordRideClip(int skill) {
+    switch (skill) {
+        case sim::skill::kSummon: return 83;
+        case sim::skill::kElectricSpike:
+        case sim::skill::kCriticalDamage: return -1;
+        default: return 82;
+    }
+}
+
 // An angle folded into a half turn either side of nothing, so that a body a few degrees the
 // other side of due north turns the short way. The sim has its own copy (realm.cpp's `wrapped`)
 // and this is deliberately not shared with it: the sim must not grow a dependency on the
