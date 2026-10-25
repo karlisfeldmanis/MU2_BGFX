@@ -1726,9 +1726,9 @@ void testPowerSlash(const content::Tables& cooked) {
               "Fire Slash's weapon rule");
     }
     check(sim::skillElement(row->number) == sim::Element::None, "no element");
-    check(sim::skillIndexOf(sim::skill::kPowerSlash) == sim::kSkills - 1 &&
-              sim::skillIndexOf(sim::skill::kFireSlash) == sim::kSkills - 2,
-          "the last row, past Fire Slash");
+    check(sim::skillIndexOf(sim::skill::kPowerSlash) == sim::kSkills - 2 &&
+              sim::skillIndexOf(sim::skill::kFireSlash) == sim::kSkills - 3,
+          "past Fire Slash, Swell Life's after it");
     {
         const sim::HeroPoints points{900, 300, 300, 400};
         const sim::SkillRow* fire = sim::skillNumbered(sim::skill::kFireSlash);
@@ -1958,6 +1958,133 @@ void testPowerSlash(const content::Tables& cooked) {
     check(even > 0.35 && even < 0.65, "the sixth to the eleventh about half the time");
     check(past == 0 && most <= 11 && fewest >= 5, "and none past the eleventh, five to eleven a cast");
 }
+
+// Swell Life (the knight's, off the Orb of Greater Fortitude, 2026-10-25): the row, MU's share
+// under the cap, the orb, and the cast on his party in reach -- the most health up, the health
+// where it was, a stronger swell left standing, five minutes, and gone on death.
+void testSwellLife(const content::Tables& cooked) {
+    std::printf("swell life\n");
+    const sim::Kin dk = sim::Kin::DarkKnight;
+    const sim::SkillRow* row = sim::skillNumbered(sim::skill::kSwellLife);
+    check(row != nullptr, "Swell Life has a row");
+    if (row == nullptr) return;
+    check(sim::skillFor(*row, dk) && !sim::skillFor(*row, sim::Kin::MagicGladiator) &&
+              !sim::skillFor(*row, sim::Kin::FairyElf),
+          "the knight's alone");
+    check(row->mana == 22 && row->clip == 67 && row->needLevel == 120 && row->swellTicks == 6000 &&
+              row->anyHand && row->onSelf() && row->aura() && !row->aids() && sim::lentBuff(*row),
+          "MU's mana and clip, learned at 120, five minutes, any hand, cast on his own");
+    check(sim::skillIndexOf(sim::skill::kSwellLife) == sim::kSkills - 1, "the last row");
+    // MU's sum: 12%, energy / 20, vitality / 100, a percent a member; under kSwellCap.
+    checkNear(sim::swellShare(sim::HeroPoints{1043, 490, 447, 40}, 0), 0.1847f, 0.0005f,
+              "Dirk alone: 12 + 2 + 4.47");
+    checkNear(sim::swellShare(sim::HeroPoints{1043, 490, 447, 40}, 5), 0.2347f, 0.0005f,
+              "and five in his party: 5 more");
+    checkNear(sim::swellShare(sim::HeroPoints{100, 100, 400, 1500}, 0), sim::kSwellCap, 0.0001f,
+              "1500 energy stops at the cap");
+
+    // The orb: the cooked row once the tables cook has run, else the Orb of Death Stab's made
+    // into it as content/items/misc/OrbSwellLife.json says.
+    content::Tables tables = cooked;
+    int32_t orb = tables.itemAt(12, 29);
+    if (orb < 0) {
+        const int32_t stab = tables.itemAt(12, 19);
+        content::ItemRow made;
+        if (stab >= 0) made = tables.items[size_t(stab)];
+        made.name = "OrbSwellLife";
+        made.label = "Orb of Greater Fortitude";
+        made.group = 12;
+        made.number = 29;
+        made.dropLevel = 60;
+        made.classes = 1 << int(dk);
+        made.needLevel = 120;
+        made.needStrength = made.needAgility = made.needEnergy = made.needVitality = 0;
+        made.teaches = sim::skill::kSwellLife;
+        made.teachesLevel = 120;
+        made.teachesEnergy = 0;
+        made.teachesName = row->name;
+        made.teachesTells = row->tells;
+        tables.items.push_back(made);
+        orb = int32_t(tables.items.size() - 1);
+        std::printf("  (12/29 not cooked: the orb made here from 12/19%s)\n",
+                    stab >= 0 ? "" : ", which is not cooked either");
+    } else {
+        const content::ItemRow& cookedOrb = tables.items[size_t(orb)];
+        check(cookedOrb.teaches == sim::skill::kSwellLife && cookedOrb.dropLevel == 60 &&
+                  cookedOrb.needLevel == 120 && cookedOrb.teachesLevel == 120 &&
+                  cookedOrb.needEnergy == 0 && cookedOrb.classes == (1 << int(dk)) &&
+                  cookedOrb.dropsFromMonsters(),
+              "the cooked orb: Swell Life, drop level 60, level 120, the knight's, dropped");
+    }
+    const auto readOrb = [&](sim::Realm& r) {
+        const int at = r.give(orb);
+        return at >= 0 && r.useItem(at);
+    };
+    {
+        sim::Realm young;
+        young.raise(&tables, 7, 190, 110, dk, 119);
+        check(!readOrb(young) && !young.knows(sim::skill::kSwellLife), "a knight at 119 cannot read it");
+        sim::Realm mg;
+        mg.raise(&tables, 7, 190, 110, sim::Kin::MagicGladiator, 400);
+        check(!readOrb(mg) && !mg.knows(sim::skill::kSwellLife), "nor a gladiator at 400");
+    }
+    sim::Realm realm;
+    check(realm.raise(&tables, 7, 190, 110, dk, 150), "a knight's realm raises");
+    sim::HeroRecord record = realm.record();
+    record.points.vitality = 400;
+    record.points.energy = 100;
+    realm.restore(record);
+    check(readOrb(realm) && realm.knows(sim::skill::kSwellLife), "at 150 he reads it and knows it");
+    check(!readOrb(realm), "and a second orb is refused");
+
+    // His party: an elf beside him, a wizard far off, and a stranger beside him.
+    const uint32_t knight = realm.hero().id;
+    const int col = realm.hero().column(), rw = realm.hero().row();
+    const uint32_t elf = realm.join(sim::Kin::FairyElf, 100, col + 1, rw);
+    const uint32_t stranger = realm.join(sim::Kin::FairyElf, 100, col, rw + 1);
+    const uint32_t far = realm.join(sim::Kin::DarkWizard, 100, col + 30, rw);
+    check(elf && stranger && far, "three more join");
+    for (uint32_t one : {knight, elf, far}) {
+        realm.command({.kind = sim::Command::Kind::PartySet, .a = 7, .target = one});
+    }
+    realm.step();
+    const auto most = [&](uint32_t id) { return realm.find(id)->maxHealth; };
+    const int knightMost = most(knight), elfMost = most(elf), farMost = most(far), strangerMost = most(stranger);
+    // Hurt him first, so the cast is seen not to heal.
+    {
+        sim::HeroRecord hurt = realm.record();
+        hurt.health = knightMost / 2;
+        realm.restore(hurt);
+    }
+    const int knightHad = realm.hero().health;
+    check(knightHad < knightMost, "he stands hurt");
+    const float share = sim::swellShare(realm.hero().totalPoints(), 2);
+    bool cast = false;
+    for (int tick = 0; tick < 80 && !cast; ++tick) {
+        if (realm.cooling(sim::skill::kSwellLife) <= 0 && realm.hero().castUntil <= realm.tick()) {
+            realm.invoke(sim::skill::kSwellLife, 0);
+        }
+        realm.step();
+        for (const sim::Happening& h : realm.happenings()) {
+            cast |= h.what == sim::What::Cast && h.who == knight && h.a == sim::skill::kSwellLife;
+        }
+    }
+    check(cast, "he casts it");
+    checkNear(realm.hero().swell, share, 0.0001f, "at MU's share for two in his party");
+    checkEqual(most(knight), int(double(knightMost) * (1.0 + double(share))), "his most health rises by it");
+    check(realm.hero().health < knightHad + (most(knight) - knightMost),
+          "and his health is not raised with it: it is no heal");
+    checkEqual(most(elf), int(double(elfMost) * (1.0 + double(share))), "the elf beside him has it too");
+    checkEqual(most(far), farMost, "the wizard of his party far off has not");
+    checkEqual(most(stranger), strangerMost, "nor the stranger beside him");
+    // Five minutes, then the most health back where it was.
+    for (int tick = 0; tick < row->swellTicks + 5; ++tick) realm.step();
+    checkEqual(most(knight), knightMost, "five minutes on, his most health is back");
+    checkEqual(most(elf), elfMost, "and the elf's");
+    check(realm.hero().health <= knightMost && realm.find(elf)->health <= elfMost,
+          "and no health is left past it");
+}
+
 
 void testAutoDrink(const content::Tables& tables) {
     std::printf("auto-drink\n");
@@ -3447,8 +3574,10 @@ void testCastLock(const content::Tables& tables) {
                   "Summon Alquamos is the 40th row");
             check(sim::skillIndexOf(sim::skill::kFireSlash) == 40,
                   "and Fire Slash, the gladiator's, the 41st");
-            check(sim::skillIndexOf(sim::skill::kPowerSlash) == sim::kSkills - 1 && sim::kSkills == 42,
-                  "and Power Slash, his blade's, the last");
+            check(sim::skillIndexOf(sim::skill::kPowerSlash) == 41,
+                  "and Power Slash, his blade's, the 42nd");
+            check(sim::skillIndexOf(sim::skill::kSwellLife) == sim::kSkills - 1 && sim::kSkills == 43,
+                  "and Swell Life, the knight's, the last");
             check(alq.summons == 69 && alq.summonsAs == 150 && alq.airborne && alq.kin == sim::Kin::FairyElf,
                   "it raises the Alquamos, standing as Bali, flying, the elf's");
             check(sim::summonsHere(alq, sim::kIcarusMap) && !sim::summonsHere(bali, sim::kIcarusMap) &&
@@ -6143,28 +6272,40 @@ void testTalentCommands(const content::Tables& tables) {
         check(net::keptFrom(bytes, back), "the kept bytes read");
         check(back.hero.talents == saved.talents, "with his talents");
         // A layout-15 row has no 41st or 42nd cool, Fire Slash's and Power Slash's (kKeptLayout 16,
-        // 2026-10-24): found by the first byte the 41st moves, sixteen bytes. The older layouts
-        // below are cut from the whole row and then lose them too (`fifteen`), so every offset is
-        // the whole row's.
+        // 2026-10-24), nor a 43rd, Swell Life's (17, 2026-10-25): found by the first byte the 41st
+        // moves, twenty-four bytes. A layout 16 lacks the last eight. The older layouts below are
+        // cut from the whole row and then lose them too (`fifteen`), so every offset is the whole
+        // row's.
         sim::Kept cooled = kept;
-        cooled.hero.coolsLeft[sim::kSkills - 2] = 33;
-        cooled.hero.coolsLeft[sim::kSkills - 1] = 34;
+        cooled.hero.coolsLeft[sim::kSkills - 3] = 33;
+        cooled.hero.coolsLeft[sim::kSkills - 2] = 34;
+        cooled.hero.coolsLeft[sim::kSkills - 1] = 35;
         std::vector<uint8_t> cooledBytes;
         net::putKept(cooledBytes, cooled);
         size_t coolAt = 0;
         while (coolAt < bytes.size() && bytes[coolAt] == cooledBytes[coolAt]) ++coolAt;  // its low byte
         const auto fifteen = [&](std::vector<uint8_t> whole) {
-            whole.erase(whole.begin() + std::ptrdiff_t(coolAt), whole.begin() + std::ptrdiff_t(coolAt + 16));
+            whole.erase(whole.begin() + std::ptrdiff_t(coolAt), whole.begin() + std::ptrdiff_t(coolAt + 24));
+            return whole;
+        };
+        const auto sixteen = [&](std::vector<uint8_t> whole) {
+            whole.erase(whole.begin() + std::ptrdiff_t(coolAt + 16), whole.begin() + std::ptrdiff_t(coolAt + 24));
             return whole;
         };
         {
             sim::Kept read;
-            check(net::keptFrom(cooledBytes, read) && read.hero.coolsLeft[sim::kSkills - 2] == 33 &&
-                      read.hero.coolsLeft[sim::kSkills - 1] == 34,
-                  "Fire Slash's and Power Slash's cools are kept");
-            check(net::keptFrom(fifteen(bytes), read, 15) && read.hero.coolsLeft[sim::kSkills - 2] == 0 &&
-                      read.hero.coolsLeft[sim::kSkills - 1] == 0 && read.hero.talents == saved.talents,
-                  "a layout-15 row reads, both cold");
+            check(net::keptFrom(cooledBytes, read) && read.hero.coolsLeft[sim::kSkills - 3] == 33 &&
+                      read.hero.coolsLeft[sim::kSkills - 2] == 34 && read.hero.coolsLeft[sim::kSkills - 1] == 35,
+                  "Fire Slash's, Power Slash's and Swell Life's cools are kept");
+            check(net::keptFrom(sixteen(cooledBytes), read, 16) && read.hero.coolsLeft[sim::kSkills - 3] == 33 &&
+                      read.hero.coolsLeft[sim::kSkills - 2] == 34 && read.hero.coolsLeft[sim::kSkills - 1] == 0 &&
+                      read.hero.talents == saved.talents,
+                  "a layout-16 row reads, Swell Life cold");
+            check(!net::keptFrom(sixteen(bytes), read, 17), "and is not a layout 17");
+            check(net::keptFrom(fifteen(bytes), read, 15) && read.hero.coolsLeft[sim::kSkills - 3] == 0 &&
+                      read.hero.coolsLeft[sim::kSkills - 2] == 0 && read.hero.coolsLeft[sim::kSkills - 1] == 0 &&
+                      read.hero.talents == saved.talents,
+                  "a layout-15 row reads, all three cold");
             check(!net::keptFrom(fifteen(bytes), read, 16), "and is not a layout 16");
         }
         // A layout-11 row has no 28th quest, Kantur's Captain (2026-10-21): found by the first
@@ -16634,6 +16775,7 @@ int main() {
     testGladiatorSkills(tables);
     testFireSlash(tables);
     testPowerSlash(tables);
+    testSwellLife(tables);
     testDungeonRunes(tables);
     testElementRunes(tables);
     testGroupRunes(tables);

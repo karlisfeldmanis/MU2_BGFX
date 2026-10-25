@@ -533,6 +533,8 @@ bool QuestAuto::guard(Play& play) {
             if (hero.boonUntil > realm.tick()) continue;
         } else if (row->mightTicks > 0) {
             if (hero.mightUntil > realm.tick()) continue;
+        } else if (row->swellTicks > 0) {
+            if (hero.swellUntil > realm.tick()) continue;
         } else {
             continue;
         }

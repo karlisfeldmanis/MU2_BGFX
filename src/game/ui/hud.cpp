@@ -1067,6 +1067,17 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
         }
         return sheet;
     }
+    if (row->swellTicks > 0) {
+        // A knight's Swell Life: his party's most health raised by the share held at the cast
+        // (sim::swellShare), the caster's and not this hero's.
+        sheet.base = "AURA \xc2\xb7 DARK KNIGHT";
+        tip::Section what;
+        what.rows.push_back(said("Most health", "+" + percent(hero_->swell), tip::Tone::Green));
+        what.rows.push_back(prose("12%, a percent each 20 energy and each 100 vitality, and one a "
+                                  "member of the party it fell on"));
+        sheet.sections.push_back(what);
+        return sheet;
+    }
     const bool barrier = row->number == sim::skill::kSoulBarrier;
     const bool ward = row->number == sim::skill::kGreaterDefense;
     sheet.base = barrier ? "AURA \xc2\xb7 DARK WIZARD"

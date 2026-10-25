@@ -97,6 +97,10 @@ int aurasOf(const sim::Realm& realm, const sim::Body& body, Hud::Boon* out) {
         const sim::SkillRow* row = sim::skillNumbered(sim::skill::kGreaterDamage);
         if (Hud::Boon* one = add(body.mightUntil, row ? row->mightTicks : 0)) one->skill = sim::skill::kGreaterDamage;
     }
+    {
+        const sim::SkillRow* row = sim::skillNumbered(sim::skill::kSwellLife);
+        if (Hud::Boon* one = add(body.swellUntil, row ? row->swellTicks : 0)) one->skill = sim::skill::kSwellLife;
+    }
     if (Hud::Boon* one = add(body.aleUntil, sim::kAleTicks)) one->ale = true;
     if (Hud::Boon* one = add(body.frenzyUntil, sim::kFrenzyTicks)) {
         one->frenzy = true;

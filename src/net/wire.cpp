@@ -227,8 +227,9 @@ sim::Kept takeKept(In& in, int layout = kKeptLayout) {
     r.money = in.i64();
     r.learned = in.u64();
     // Layouts 3 to 8 carry 39 skills' cools; 9 to 15 the Alquamos's too (40); 16 Fire Slash's
-    // and Power Slash's (kSkills 42). The rest stand cold.
-    const int cools = layout >= 16 ? sim::kSkills
+    // and Power Slash's (42); 17 Swell Life's (kSkills 43). The rest stand cold.
+    const int cools = layout >= 17 ? sim::kSkills
+                      : layout >= 16 ? std::min(42, sim::kSkills)
                       : layout >= 9 ? std::min(40, sim::kSkills)
                                     : std::min(39, sim::kSkills);
     for (int i = 0; i < cools; ++i) r.coolsLeft[i] = in.i64();

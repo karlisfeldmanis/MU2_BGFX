@@ -91,7 +91,7 @@ HelperKind helperKind(const sim::SkillRow& row, bool rightSlot) {
     if (row.channelled()) return HelperKind::Held;
     if (row.summons > 0) return HelperKind::Summon;
     if (row.mends) return HelperKind::Heal;
-    if (row.boonTicks > 0 || row.mightTicks > 0) return HelperKind::Aura;
+    if (row.boonTicks > 0 || row.mightTicks > 0 || row.swellTicks > 0) return HelperKind::Aura;
     if (row.spread != sim::Spread::One || row.splash > 0.0f || row.arrows > 1) return HelperKind::Area;
     return HelperKind::Single;
 }
@@ -577,7 +577,9 @@ bool Helper::support(Play& play, const HelperSettings& settings) {
         const HelperUse use = settings.use(skill, kind);
         bool wanted = false;
         if (use == HelperUse::KeepUp) {
-            wanted = row->boonTicks > 0 ? hero.boonUntil <= realm.tick() : hero.mightUntil <= realm.tick();
+            wanted = row->boonTicks > 0    ? hero.boonUntil <= realm.tick()
+                     : row->swellTicks > 0 ? hero.swellUntil <= realm.tick()
+                                           : hero.mightUntil <= realm.tick();
         } else if (use == HelperUse::WhenHurt) {
             wanted = hero.maxHealth > 0 && hero.health * 100 < hurtLine * hero.maxHealth;
         } else if (use == HelperUse::KeepOut) {
@@ -644,7 +646,8 @@ bool Helper::aid(Play& play, const HelperSettings& settings) {
     // Then the buffs, on whoever's has run out.
     for (int i = 0; i < barCount_; ++i) {
         const sim::SkillRow* row = nullptr;
-        if (i == 5 || !ready(bar_[i], row, HelperUse::KeepUp) || row->mends) continue;
+        // Swell Life is aimed at nobody: it falls on the party round him, kept up as his own.
+        if (i == 5 || !ready(bar_[i], row, HelperUse::KeepUp) || row->mends || row->swellTicks > 0) continue;
         for (const sim::Body* one : near) {
             const bool down = row->mightTicks > 0 ? one->mightUntil <= realm.tick() : one->boonUntil <= realm.tick();
             if (down && !tried(bar_[i], *one)) return cast(bar_[i], *row, *one);

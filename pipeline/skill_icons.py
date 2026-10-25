@@ -146,6 +146,11 @@ SKILLS = {
     # Reign Blade, an Explosion Blade, a Sword Dancer, an Imperial Sword or a Rune Blade is held.
     # Below 57 and not use-type 4, so the arithmetic above finds its cell.
     56: ("Magic Gladiator", "Power Slash"),
+    # And Swell Life, cut on 2026-10-25 because the game now has it (Discord, 2026-10-25: "there's
+    # no orb of greater fortitude in the game?"): the knight's, Season 1's (AT_SKILL_SWELL_LIFE),
+    # off the Orb of Greater Fortitude. Below 57 and not use-type 4, so the arithmetic above finds
+    # its cell.
+    48: ("Dark Knight", "Swell Life"),
 }
 
 

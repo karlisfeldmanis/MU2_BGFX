@@ -2218,6 +2218,8 @@ void Realm::kill(Body& dead, Body& killer) {
         dead.risesAt = tick_ + kRiseTicks;
         dead.boonUntil = 0;
         dead.mightUntil = 0;
+        dead.swellUntil = 0;
+        dead.swell = 0.0f;
         dead.might = 0;
         dead.boonDamageTaken = 1.0f;
         dead.stats.damageTaken = dead.pet.taken;
@@ -2256,6 +2258,8 @@ void Realm::kill(Body& dead, Body& killer) {
         me().potionUntil = 0;
         dead.boonUntil = 0;
         dead.mightUntil = 0;
+        dead.swellUntil = 0;
+        dead.swell = 0.0f;
         dead.might = 0;
         dead.channelSkill = 0;
         dead.channelUntil = 0;

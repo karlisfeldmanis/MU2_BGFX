@@ -322,6 +322,9 @@ standing dummy-like monster), so the skull halo does not show.
   kKeptLayout **17** (main's 16 reads 42 cools, layouts 9-15 read 40), with wire.cpp's `cools` ladder one rung longer
   and its kVersion past main's. Its test saves (layout 15 with 44 cools) do not read after the merge; nothing of it is
   deployed. Its orbs keep 12/23, 24 and 26; Fire Slash's orb is 12/27.
+- **And since 2026-10-25, Swell Life on main** (the knight's, row 42, skill 48, the Orb of Greater Fortitude at
+  12/29): darklord's four rows go on at 43-46, kSkills 47, and its cools take kKeptLayout **18** (main's 17 reads 43
+  cools, 16 reads 42), its kVersion past main's 52.
 - **Area**: `Spread::Arc` is ±`kArcHalfAngle` 67.5° (skills.h:555), one constant. `Realm::gather`
   (realm_skills.cpp:677-746, Arc test :719-725) skips safe tiles and walls. `strikeAround` (:748-785) strikes each with
   `sweep_ = &row`; element at :765 via `skillElement` (realm_tuning.h:501-518).

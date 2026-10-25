@@ -958,6 +958,22 @@ constexpr SkillRow kRows[kSkills] = {
               "six tiles ahead of him as they reach it: the nearest five, and up to six more.",
      .clip = 146, .sound = "player_skill_sword3", .built = true, .families = arms::kEvery,
      .needLevel = 150, .kin = Kin::MagicGladiator, .release = 0.0f, .afoot = true},
+
+    // ---- Swell Life 48, the knight's, on the end so no save's learned bit moves ----------------
+    //
+    // MU's row: twenty-two mana, the knight's alone (OpenMU VersionSeasonSix/SkillsInitializer.cs:
+    // 167, CharacterClasses.AllKnights -- not the Magic Gladiator's), learned at 120 off the Orb of
+    // Greater Fortitude, cast on his party in view (SkillTarget.ImplicitParty).
+    // PLAYER_SKILL_VITALITY, clip 67, as MuMain's click plays it (ClassAttack.cpp:960-965). What it
+    // gives is MU's sum, under our cap (swellShare). Ours: **five minutes** where MU gives
+    // 60 s and a little more for energy -- every buff here stands five (Greater Damage's row) --
+    // and three seconds of cooldown at his hands, as the elf's lent buffs (lentBuff): it falls
+    // on others, and a recast only puts the clock back, never the health.
+    {.number = skill::kSwellLife, .name = "Swell Life", .mana = 22, .coolTicks = 60,
+     .tells = "His party's most health raised for five minutes, him with them. The keener and "
+              "hardier the knight, and the more of them near him, the more.",
+     .clip = 67, .sound = "player_skill_defense", .built = true, .families = arms::kNone,
+     .needLevel = 120, .kin = Kin::DarkKnight, .anyHand = true, .swellTicks = 6000},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy
@@ -1144,6 +1160,7 @@ bool skillFor(const SkillRow& row, Kin kin) {
         case skill::kRagefulBlow:
         case skill::kDeathStab:
         case skill::kCometfall: return false;  // the Soul Master's alone (secondSkill)
+        case skill::kSwellLife: return false;  // the knight's alone, as MU's AllKnights
         default: return true;
     }
 }
@@ -1308,6 +1325,12 @@ bool summonsHere(const SkillRow& row, uint32_t map) { return row.airborne || rul
 int healOf(const HeroPoints& points) { return 5 + std::max(0, points.energy) / 5; }
 
 int mightOf(const HeroPoints& points) { return 3 + std::max(0, points.energy) / 7; }
+
+float swellShare(const HeroPoints& points, int members) {
+    const float share = kSwellBase + float(std::max(0, points.energy)) / 2000.0f +
+                        float(std::max(0, points.vitality)) / 10000.0f + float(std::max(0, members)) / 100.0f;
+    return std::min(kSwellCap, share);
+}
 
 float boonShare(const SkillRow& row, const HeroPoints& points, int shieldDefense) {
     if (row.number == skill::kGreaterDefense) return wardShare(points);

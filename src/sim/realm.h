@@ -607,6 +607,11 @@ struct Body {
     // Greater Damage on her: the bonus reckoned at the cast, and the tick it lapses.
     int32_t might = 0;
     int64_t mightUntil = 0;
+    // Swell Life on him, a knight's or his own: the share of his most health it adds, reckoned
+    // off the caster at the cast (sim::swellShare), and the tick it lapses. Not saved: it ends on
+    // death, as MU's StopByDeath, and five minutes is not worth a character's bytes.
+    float swell = 0.0f;
+    int64_t swellUntil = 0;
     // Being pushed (`Realm::push`): tiles a tick to slide, and how many ticks are left. While it
     // runs the body neither thinks nor walks.
     float pushX = 0.0f, pushY = 0.0f;

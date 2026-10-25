@@ -967,8 +967,9 @@ void Play::update(double seconds) {
                         guardRise(aided->id, row->number);
                     }
                     // Her Heal and Greater Damage: a burst on whom it fell, once (fx/aura.h,
-                    // kMending and kMight -- ours, MU draws neither).
-                    if (row && (row->mends || row->mightTicks > 0) &&
+                    // kMending and kMight -- ours, MU draws neither). A knight's Swell Life takes
+                    // kMight's for now, on him: MU's ring of spirits is not drawn yet.
+                    if (row && (row->mends || row->mightTicks > 0 || row->swellTicks > 0) &&
                         (happening.who == heroId || caster->visible) && aided->placed && ground_) {
                         const float feet[3] = {
                             aided->crown[0],

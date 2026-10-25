@@ -2207,6 +2207,15 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
         boon.seconds = left * 0.05f;
         boon.share = row && row->mightTicks > 0 ? left / float(row->mightTicks) : 0.0f;
     }
+    // A knight's Swell Life, his or one of his party's, beside both: its own clock (Body::swellUntil).
+    if (hero.swellUntil > realm.tick() && standing < Hud::kBoons) {
+        const sim::SkillRow* row = sim::skillNumbered(sim::skill::kSwellLife);
+        const float left = float(hero.swellUntil - realm.tick());
+        Hud::Boon& boon = boons[standing++];
+        boon.skill = sim::skill::kSwellLife;
+        boon.seconds = left * 0.05f;
+        boon.share = row && row->swellTicks > 0 ? left / float(row->swellTicks) : 0.0f;
+    }
     if (const int64_t left = realm.aleLeft(); left > 0) {
         Hud::Boon& boon = boons[standing++];
         boon.ale = true;

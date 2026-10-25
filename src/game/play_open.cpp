@@ -1215,6 +1215,11 @@ void Play::walkBench(float seconds) {
                     told = true;
                     break;
                 }
+                if (number == sim::skill::kSwellLife && hero->swellUntil <= now) {
+                    cast(number, 0);
+                    told = true;
+                    break;
+                }
                 if (number == sim::skill::kGreaterDamage && hero->mightUntil <= now) {
                     cast(number, 0);
                     told = true;

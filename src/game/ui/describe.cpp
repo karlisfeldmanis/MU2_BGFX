@@ -329,6 +329,15 @@ void selfLines(const sim::SkillRow& row, const content::Tables* tables, const si
         note(sum);
         out.push_back(
             stat("Lasts", sim::spoken(float(row.mightTicks) * 0.05f), tone(Tone::White)));
+    } else if (row.swellTicks > 0) {
+        // Swell Life: MU's sum under kSwellCap (sim::swellShare), as he stands alone.
+        out.push_back(stat("Most health", "+" + sim::absorbed(sim::swellShare(has, 0)),
+                           tone(Tone::Green)));
+        std::snprintf(sum, sizeof sum, "12%% + %d ene / 20 + %d vit / 100, +1%% a member (max %d%%)",
+                      has.energy, has.vitality, int(std::lround(sim::kSwellCap * 100.0f)));
+        note(sum);
+        out.push_back(
+            stat("Lasts", sim::spoken(float(row.swellTicks) * 0.05f), tone(Tone::White)));
     } else if (row.mends) {
         // Heal: `5 + energy / 5` at once (sim::healOf).
         out.push_back(stat("Heals", std::to_string(sim::healOf(has)), tone(Tone::Green)));

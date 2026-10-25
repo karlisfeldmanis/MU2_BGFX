@@ -368,6 +368,9 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
     if (excel.undyingRate != 1.0) *maxHealth = int(double(*maxHealth) * excel.undyingRate);
     // And his talents', last.
     if (talent.maxLife != 0) *maxHealth = int(double(*maxHealth) * (1.0 + talent.maxLife));
+    // And a knight's Swell Life on him, on all of it (MU's SwellLifeHealthIncrease multiplies
+    // the whole MaximumHealth).
+    if (arms.swell > 0.0) *maxHealth = int(double(*maxHealth) * (1.0 + arms.swell));
 }
 
 int maximumMana(Kin kin, int level, const HeroPoints& points) {

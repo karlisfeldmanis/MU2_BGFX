@@ -74,6 +74,7 @@ Arms Realm::armsOf(const Body& one) const {
         arms.archery = one.archer != 0;
         arms.quiverPlus = one.quiverPlus;
         arms.greaterDamage = one.mightUntil > tick_ ? one.might : 0;
+        arms.swell = one.swellUntil > tick_ ? double(one.swell) : 0.0;
         if (one.talentShare.any) {
             const TalentShares& t = one.talentShare;
             arms.talent = {t.attackRate / 100.0, t.defenseRate / 100.0, t.defense / 100.0, t.critical / 100.0,

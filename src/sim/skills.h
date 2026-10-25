@@ -146,6 +146,10 @@ constexpr int32_t kFireSlash = 55;
 // row carries it is in his right hand (Realm::knows). Five waves fan out ahead of him and strike
 // the bodies in a widening wedge as they reach them (docs/plans/mg-skills/power-slash.md).
 constexpr int32_t kPowerSlash = 56;
+// `AT_SKILL_SWELL_LIFE`, the knight's Swell Life, off the Orb of Greater Fortitude: Season 1's and
+// not 0.75's (OpenMU VersionSeasonSix/SkillsInitializer.cs:167, MuMain _enum.h:337). His party's
+// most health raised by a share for five minutes (Body::swell, sim::swellShare). MU's number.
+constexpr int32_t kSwellLife = 48;
 // `AT_SKILL_BLAST_FREEZE`, Ice Storm, the Soul Master's Season 3 spell: no row and never learned,
 // only the Ancient rune's (sim/items.h kIceStorm...), said as Loosed so the drawing lets its
 // blizzard fall (fx/blizzard.h). MU's number, free in this table.
@@ -494,6 +498,10 @@ struct SkillRow {
     // Fenrir (ClassAttack.cpp:660-697), and the bar greys it there. Learned off its orb as any
     // other; only the mount is asked.
     bool afoot = false;
+    // ---- Swell Life's, appended after Power Slash's -------------------------------------------
+    // **His party's most health raised** by sim::swellShare for this many ticks: on him and every
+    // member of his party within kPartyReach (Realm::throwSkill, Body::swellUntil). 0 for none.
+    int32_t swellTicks = 0;
     // The Arc's half-angle this row is gathered with (Realm::gather).
     float arcHalfAngle() const;
     // **Whether a press aims it at the ground under the pointer** rather than at a body: the
@@ -533,10 +541,12 @@ struct SkillRow {
                number == skill::kFireSlash || number == skill::kPowerSlash;
     }
     // Whether it is cast on the caster and takes no target.
-    bool onSelf() const { return boonTicks > 0 || mends || mightTicks > 0 || summons > 0; }
+    bool onSelf() const {
+        return boonTicks > 0 || mends || mightTicks > 0 || summons > 0 || swellTicks > 0;
+    }
     // Whether it is an aura: a self-cast that is not a summon. Blood Castle's court lets these
     // be raised on its safe tiles, to go into the fight with them (Realm::throwSkill).
-    bool aura() const { return boonTicks > 0 || mends || mightTicks > 0; }
+    bool aura() const { return boonTicks > 0 || mends || mightTicks > 0 || swellTicks > 0; }
     // **Whether it may be cast on another player**: the elf's Heal, Greater Defense and Greater
     // Damage, as MU casts them on a player -- on whoever she is pointing at or has picked, within
     // kAidReach (Realm::throwSkill; the user, 2026-10-19: "elf can buff, heal other players by
@@ -567,11 +577,12 @@ struct SkillRow {
 // learned mask is sixty-four bits since
 // Inferno, the thirty-third (`Body::learned`, and the save writes it whole), Nova past
 // Impale, the Magic Gladiator's Fire Slash, the forty-first, past the Alquamos, and his blade's
-// Power Slash past it (kKeptLayout 16 keeps both cools); past sixty-four it needs widening
+// Power Slash past it (kKeptLayout 16 keeps both cools), and the knight's Swell Life past that
+// (kKeptLayout 17); past sixty-four it needs widening
 // again, which the static_assert below says. Also the width of a body's cooldown array -- and
 // the learned mask is by INDEX, so a new row goes on the END of the table or an old save
 // gives a knight somebody else's skill.
-constexpr int kSkills = 42;
+constexpr int kSkills = 43;
 
 // What each of Nova's stages adds to its blow: OpenMU's NovaDamageTable (NovaSkillStartPlugin.cs:30),
 // stage 0 to 12, with the strength's half beside it (SkillsInitializer.cs:610-611).
@@ -716,8 +727,9 @@ inline bool elfBuff(const SkillRow& row) {
 // And the wizard's Magic Shield beside them since it is cast on others (2026-10-21): held at its
 // five minutes he could shield one player of his party in five minutes. Its own twelve seconds
 // are its wait, as her three seconds are hers.
+// Swell Life with them: it falls on his party too, and a recast only puts the clock back.
 inline bool lentBuff(const SkillRow& row) {
-    return elfBuff(row) || row.number == skill::kSoulBarrier;
+    return elfBuff(row) || row.number == skill::kSoulBarrier || row.number == skill::kSwellLife;
 }
 
 // How much of every blow Defense takes away, 0 to kGuardCap, off the shield he holds, his
@@ -754,6 +766,15 @@ float barrierShare(const HeroPoints& points, int shieldDefense);
 // points stands where theirs is -- a Buckler +1's, which is what the knight's own 16.3% is
 // measured behind -- and no shield is asked. A new elf's is 14.4%, beside theirs.
 constexpr float kWardShieldPoints = 15.0f;
+// **Swell Life's share of the most health**, MU's own sum: 12%, a percent each 20 energy and each
+// 100 vitality, and a percent a member of his party it falls on, him among them, none alone (OpenMU
+// LifeSwellEffectInitializer.cs: 0.12 + energy/2000 + vitality/10000 + NearbyPartyMemberCount/100).
+// Reckoned off the caster at the cast and held. Ours: kSwellCap, where OpenMU allows 200% -- a
+// level-400 knight of 1500 energy alone would be at 95%. Dirk, the sweep's knight (447 vitality,
+// 40 energy), is at 18.5% alone and 23.5% in a party of five.
+constexpr float kSwellBase = 0.12f;
+constexpr float kSwellCap = 0.40f;
+float swellShare(const HeroPoints& points, int members);
 float wardPoints(const HeroPoints& points);
 float wardShare(const HeroPoints& points);
 // **A summon scales with her energy** -- the user's, 2026-09-28: "if an elf player decided to go

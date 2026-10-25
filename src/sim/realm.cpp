@@ -1172,6 +1172,12 @@ void Realm::press() {
         hero.might = 0;
         rearm(hero);
     }
+    // And Swell Life, its health past the most he has now taken with it (rearm's clamp).
+    if (hero.swellUntil != 0 && tick_ >= hero.swellUntil) {
+        hero.swellUntil = 0;
+        hero.swell = 0.0f;
+        rearm(hero);
+    }
 
     if (me().order.kind == Request::Kind::Perch) {
         if (!hero.walking) perch(hero);
@@ -1544,10 +1550,21 @@ void Realm::heroAfter() {
         // Pushed by a beast's Lightning: he slides as a pushed monster does, and walks on when
         // he lands. The push goes when the bolt lands; one whose beast is far off by then --
         // he teleported or left the map -- is dropped.
+        // One push in three goes at the beast, not away (gObjBackSpring, WebZen user.cpp
+        // 7563-7575), and none when that is his tile -- MU's stand bit refuses it. Away every
+        // time, a Devil in Lost Tower 4 shoved a knight off it at each bolt (bug #62,
+        // 2026-10-23: "keeps pushing all the time"). Off the sockets' stream, as heroResists.
         if (hero.pushAt != 0 && tick_ >= hero.pushAt) {
             hero.pushAt = 0;
             const float dx = hero.x - hero.pushFromX, dy = hero.y - hero.pushFromY;
-            if (dx * dx + dy * dy < 12.0f * 12.0f) push(hero, hero.pushFromX, hero.pushFromY);
+            const float far = dx * dx + dy * dy;
+            if (far < 12.0f * 12.0f) {
+                if (runeDice_.nextInt(0, 3) != 0) {
+                    push(hero, hero.pushFromX, hero.pushFromY);
+                } else if (far > 1.5f * 1.5f) {
+                    push(hero, hero.x + dx, hero.y + dy);
+                }
+            }
         }
         if (hero.pushTicks > 0) {
             hero.x += hero.pushX;

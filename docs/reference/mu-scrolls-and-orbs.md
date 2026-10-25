@@ -134,7 +134,7 @@ Note the orb's **drop level of 3** on a +0 orb: the item is meant to be in a lev
 | 7 | Orb of Twisting Slash | Twisting Slash | **0.95d** (DK + MG) | `Version095d/Items/Orbs.cs:32` (class inherits 0.75's, `:14`) |
 | 12 | Orb of Rageful Blow | Rageful Blow | Season 6 in this tree | `VersionSeasonSix/Items/Orbs.cs:43` |
 | 13 | Orb of Impale | Impale | Season 6 | `…/Orbs.cs:44` |
-| 14 | Orb of Greater Fortitude | Swell Life | Season 6 | `…/Orbs.cs:45` |
+| 14 | Orb of Greater Fortitude | Swell Life | Season 6 | `…/Orbs.cs:45`; ours is **12/29** (OrbSwellLife, 2026-10-25: 12/14 is the Wings of Soul here; drop 60, level 120, the knight's alone) |
 | 16 | Orb of Fire Slash | Fire Slash | Season 6 (WebZen: Icarus era) | `…/Orbs.cs:46`; ours is **12/27** (OrbFireSlash, 2026-10-24: drop 60, level 120, strength 596) |
 | — | Orb of Power Slash | Power Slash | **ours** (MU's skill 56 is his blades', AT_SKILL_SWORD6) | ours is **12/28** (OrbPowerSlash, 2026-10-24: drop 75, level 150, no strength) |
 | 17 | Orb of Penetration | Penetration | Season 6 | `…/Orbs.cs:47` |

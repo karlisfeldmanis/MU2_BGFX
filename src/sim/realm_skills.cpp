@@ -354,6 +354,35 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
                     to.mercy = spare;
                 }
             }
+        } else if (row.swellTicks > 0) {
+            // Swell Life: on him and every member of his party alive within kPartyReach, as MU's
+            // ImplicitParty, at the share his points and their count give (swellShare). The most
+            // health rises and the health does not -- MU's bar falls back as the cap goes up --
+            // so a recast is never a heal. A stronger swell standing on one is left standing.
+            Body* on[kPartyMost];
+            int members = 0;
+            if (hero.party == 0) {
+                on[members++] = &hero;
+            } else {
+                for (const Player& player : heroes_) {
+                    Body& one = bodies_[player.body];
+                    if (one.gone || !one.alive() || one.party != hero.party || members == kPartyMost) continue;
+                    const float dx = one.x - hero.x, dy = one.y - hero.y;
+                    if (&one != &hero && dx * dx + dy * dy >= kPartyReach * kPartyReach) continue;
+                    on[members++] = &one;
+                }
+            }
+            const float share = swellShare(hero.totalPoints(), hero.party == 0 ? 0 : members);
+            for (int i = 0; i < members; ++i) {
+                Body& to = *on[i];
+                if (&to != &hero && to.swellUntil > tick_ && to.swell > share) continue;
+                const int had = to.health;
+                to.swell = share;
+                to.swellUntil = tick_ + row.swellTicks;
+                For theirs(*this, to);
+                rearm(to);
+                to.health = std::min(to.maxHealth, had);
+            }
         } else if (row.mightTicks > 0) {
             // Greater Damage: reckoned off her energy now and held for the minute; a second cast
             // replaces the first rather than stacking, as MU's magic effects do.
