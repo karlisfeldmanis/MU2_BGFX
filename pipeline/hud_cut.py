@@ -173,8 +173,10 @@ ICONS = {
 #: pointer -- as newui_menu_Bt01/02 draw an open main-frame button: (closed, closed-hovered,
 #: open, open-hovered), the four the HUD reads -- and at 0.7 of their light, as the main frame's
 #: open states are baked (inventory 0.73 and 0.72, character 0.69 and 0.66, measured on the cut
-#: sheets: an open window's button sits pressed in and dim). The decoder hands this
-#: TGA back bottom-up (the gold state first, the spine on top), so it is flipped.
+#: sheets: an open window's button sits pressed in and dim). The sheet keeps the gold state
+#: first, so the grey is picked first (`keep`); it was flipped top to bottom for that until
+#: 2026-10-25, which put the grey first and turned the book over with it (Discord #66: '"L" icon
+#: for quests is upside down').
 #:
 #: **Its lit state is the grey one's frame with the gold book laid in** (LIT_ONTO_REST; the user,
 #: 2026-10-05: "when i hover on quest button its offset is little bitt different"). MU's gold
@@ -184,7 +186,7 @@ ICONS = {
 #: cell's warm book pixels pasted a pixel right, where the grey book is.
 MUMAIN = PROJECT.parent / "LEGACY" / "reference" / "MuMain" / "src" / "bin" / "Data" / "Interface"
 #: name -> (lit state, rest state, dx, dy): the lit state rebuilt as above.
-LIT_ONTO_REST = {"hud_button_quest": (1, 0, 1, 0)}
+LIT_ONTO_REST = {"hud_button_quest": (0, 1, 1, 0)}
 
 
 def lit_onto_rest(strip: Image.Image, tall: int, lit: int, rest: int, dx: int, dy: int) -> Image.Image:
@@ -206,9 +208,9 @@ def lit_onto_rest(strip: Image.Image, tall: int, lit: int, rest: int, dx: int, d
 
 
 MUMAIN_ICONS = {
-    "hud_button_quest": ("newui_chainfo_btn_quest.OZT", (36, 58), 2, (0, 1, 0, 1),
-                         ((6, 3, 30, 27), (6, 3, 30, 27), (5, 2, 29, 26), (5, 2, 29, 26)),
-                         True, (1.0, 1.0, 0.7, 0.7)),
+    "hud_button_quest": ("newui_chainfo_btn_quest.OZT", (36, 58), 2, (1, 0, 1, 0),
+                         ((6, 2, 30, 26), (6, 2, 30, 26), (5, 1, 29, 25), (5, 1, 29, 25)),
+                         False, (1.0, 1.0, 0.7, 0.7)),
     # The guild's (the user, 2026-10-16: "lets add guild button in hud near chat and menu"): the
     # chat window's guild-channel toggle, MU's own "@", cut as the chat's bubble is -- the same
     # 27 by 52 sheet, lit first, the grey kept as the rest -- and not flipped.

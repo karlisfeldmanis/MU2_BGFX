@@ -236,6 +236,22 @@ void spellLines(const sim::SkillRow& row, const sim::Wearer& who, bool dim,
         out.push_back(stat("Area", "a line of " + std::to_string(int(sim::kLineTiles)) + " tiles",
                            tone(Tone::White)));
         note("strikes everything it passes through");
+    } else if (row.walks > 0.0f && row.burns > 0) {
+        // Twister: Flame's fire rows walked out from his feet (`Realm::light`), so it is asked
+        // first -- under Flame's branch it said "the fire burns on the ground" (Discord #65,
+        // 2026-10-25: "Twister has the same tooltip as flame"). How far its last strike lands:
+        // walked from the let-go's tick, `kStormFirst` to the first and `kStormEvery` after.
+        const float far = row.walks * float(sim::kStormFirst + 1 +
+                                            sim::kStormEvery * (row.burns - 1));
+        char round[32], strikes[48], walked[64];
+        std::snprintf(round, sizeof(round), "%.1f tiles round the storm", double(row.burnTiles));
+        std::snprintf(strikes, sizeof(strikes), "%d, %.1f s apart", row.burns,
+                      double(sim::kStormEvery) * 0.05);
+        std::snprintf(walked, sizeof(walked), "the storm walks %.0f tiles ahead of him",
+                      double(far));
+        out.push_back(stat("Area", round, tone(Tone::White)));
+        out.push_back(stat("Strikes", strikes, tone(Tone::White)));
+        note(walked);
     } else if (row.burns > 0) {
         // Flame: a fire on the ground, `Realm::burn`.
         char round[32], strikes[48];
@@ -547,8 +563,10 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         }
     }
     if (row.defenseRate > 0) {
-        const int block =
-            row.defenseRate + (what.excellent != 0 ? sim::excellentBlock(row) : 0);
+        // Its refinement too, on the armour's table, as `Realm::rearm` adds it: a +9 shield's
+        // card read its +0 block (Discord #66, 2026-10-25).
+        const int block = row.defenseRate + sim::defenseBonus(false, plus) +
+                          (what.excellent != 0 ? sim::excellentBlock(row) : 0);
         does.rows.push_back(stat("Block rate", std::to_string(block),
                                  what.excellent != 0 ? Tone::Blue : Tone::White));
     }
