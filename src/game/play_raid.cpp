@@ -471,9 +471,6 @@ void Play::ravened(const sim::Happening& happening) {
     const float at[3] = {target->figure.position()[0], target->figure.position()[1],
                          target->figure.position()[2]};
     pets->ravenStrike(happening.a == 1, at);
-    // The dash's gold burst off the bird as it goes (fx/raven.h); the ball waits for its charge.
-    float bird[3];
-    if (happening.a == 0 && pets->ravenAt(bird)) ravenShow_.dash(bird);
     // SetAttack's PlayBuffer, not placed: the dash's rush, the ball's missile (CSPetSystem.cpp:245-286).
     const int sound = happening.a == 1 ? heard_.ravenMissile : heard_.ravenRush;
     if (sound >= 0) sound_.play(sound);}
@@ -504,9 +501,33 @@ void Play::petLevelled(const sim::Happening& happening) {
 }
 
 void Play::ravenFrame(Pets& pets, float seconds) {
+    // What its steps asked for (fx/raven.h): a spark off a bone 0..65 as it flies, the dash's
+    // streaks and flash at the bird, the charge's light on every other bone from 0 or 1, as MU's
+    // `i < 66` counts them (CSPetSystem.cpp:425-437, 729-745, 759-775).
+    float from[3], to[3], yaw = 0.0f;
+    const Pets::RavenCue* cues = nullptr;
+    const int count = pets.ravenCues(&cues);
+    const int bones = std::min(pets.ravenBones(), 66);
+    for (int i = 0; i < count; ++i) {
+        switch (cues[i]) {
+            case Pets::RavenCue::Spark:
+                if (bones > 0 && pets.ravenBone(pets.ravenRoll(bones), from)) ravenShow_.spark(from, pets.ravenYaw());
+                break;
+            case Pets::RavenCue::Streaks:
+                if (pets.ravenAt(from)) ravenShow_.streaks(from);
+                break;
+            case Pets::RavenCue::Flash:
+                if (pets.ravenAt(from)) ravenShow_.flash(from);
+                break;
+            case Pets::RavenCue::Glow:
+                for (int bone = pets.ravenRoll(2); bone < bones; bone += 2) {
+                    if (pets.ravenBone(bone, from)) ravenShow_.glow(from);
+                }
+                break;
+        }
+    }
     // The ball let go at its charge's end, and the bird's cry now and then (game/pets_raven.cpp).
-    float from[3], to[3];
-    if (pets.ravenLetGo(from, to)) ravenShow_.ball(from, to);
+    if (pets.ravenLetGo(from, to, yaw)) ravenShow_.ball(from, to, yaw);
     if (heard_.ravenShout >= 0 && pets.ravenCry(seconds) && pets.ravenAt(from)) emit(heard_.ravenShout, from[0], from[2]);
 }
 

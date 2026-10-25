@@ -66,5 +66,17 @@ with pets for DL"). The two research files beside this one are the sources, ever
    **Shift+1-4** (MU's keys; Target the monster under the pointer), the card's damage, speed and
    Command. Ours: a line in the lane when a pet's level moves (MU says nothing). No pet info window:
    the boon's card and the item card carry its numbers. tools/record/raven.cue. The Spirits' quest
-   pay (Halls, Kantur's Captain) is written in sim/quests.cpp, uncommitted beside another session's
-   Kanturu work there.
+   pay (Halls, Kantur's Captain) went in with the Kanturu quest commit 53f1f082.
+5. **The audit against MU** (2026-10-25, the user: "check we ported all birds and pet mechanics
+   correctly", then "fix it"). Fixed: the ball strikes every monster within 4 of its target, four at
+   most (RangeAttack's one-in-three never runs, its loopcount never raised; server.md corrected), the
+   level/10 floor last; the dive and the ball aim 50 over the feet, not 100; a worn raven is drawn at
+   0 life and while he lies dead (84147a4b). Then its look: the flight holds its pitch across the
+   250-350 band and climbs by its speed (Direction rotated by Angle); it swings in onto
+   hand_bofdgne01 at its speed's turn; the charge glides; the blue Spark03 off a bone each step it
+   flies; the dash's streaks off the bird its first two steps and MODEL_DARKLORD_SKILL's flash; the
+   charge's BITMAP_LIGHT on every other bone; the ball's fifteen spirits, pitched up and fanned
+   +-60, homing by MoveHumming with MU's rolled aim and kicked pitch (fx/raven.h). Waiting on a cook
+   (asked): MODEL_AIR_FORCE's puffs at its head as it dives (Skill/AirForce.bmd), and the level-40
+   chrome and pulsing glow on dkthreebody (ZzzObject.cpp:981-1001). The 350 over the Dark Horse is
+   MU's intent, dead code in both clients (Helper.Type holds a MODEL_), kept until the user says.

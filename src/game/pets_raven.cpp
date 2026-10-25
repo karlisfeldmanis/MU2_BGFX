@@ -10,6 +10,7 @@
 
 #include "content/placement.h"
 #include "core/maths.h"
+#include "game/fx/mu_angles.h"
 #include "game/pets.h"
 
 namespace mu::game {
@@ -61,6 +62,7 @@ void Pets::raven(float seconds, const Figure& hero, int level, bool safe, bool h
     // Moved and drawn with him whether he stands or lies dead, as MU's MoveCharacter and
     // RenderCharacter call its MovePet and RenderPet for every character (ZzzCharacter.cpp:5339,
     // :11401).
+    cueCount_ = 0;
     if (level <= 0 || !ravenBody_) {
         ravenUp_ = false;
         ravenLevel_ = 0;
@@ -68,11 +70,12 @@ void Pets::raven(float seconds, const Figure& hero, int level, bool safe, bool h
     }
     ravenLevel_ = level;
     if (hero.body() != heroBody_ || hand_ < 0) {
-        hand_ = -1;
+        hand_ = perch_ = -1;
         if (hero.body() && hero.body()->skeletonMesh) {
             const auto& bones = hero.body()->skeletonMesh->bones();
             for (size_t i = 0; i < bones.size(); ++i) {
                 if (bones[i].name == "Bip01 L Hand") hand_ = int(i);
+                if (bones[i].name == "hand_bofdgne01") perch_ = int(i);
             }
         }
     }
@@ -82,6 +85,15 @@ void Pets::raven(float seconds, const Figure& hero, int level, bool safe, bool h
     if (hand_ >= 0) hero.pointOn(hand_, kPerch, handWorld);
     float hand[3];
     toMu(handWorld, hand);
+    // It flies in at bone 42, hand_bofdgne01, and sits at Bip01 L Hand (:563-583, :554-562).
+    float perch[3];
+    std::memcpy(perch, hand, sizeof(perch));
+    if (perch_ >= 0) {
+        float perchWorld[3];
+        const float none[3] = {0.0f, 0.0f, 0.0f};
+        hero.pointOn(perch_, none, perchWorld);
+        toMu(perchWorld, perch);
+    }
     if (!ravenUp_) {
         // Over his tile, 300 up (:300); on his hand when he stands in town.
         std::memcpy(bat_, owner, sizeof(bat_));
@@ -104,15 +116,15 @@ void Pets::raven(float seconds, const Figure& hero, int level, bool safe, bool h
     batFrames_ = std::min(batFrames_ + seconds / kReference, 8.0f);
     while (batFrames_ >= 1.0f) {
         std::memcpy(batWas_, bat_, sizeof(batWas_));
-        stepRaven(owner, hand, safe, horse);
+        stepRaven(owner, hand, perch, safe, horse);
         batFrames_ -= 1.0f;
     }
     ravenIn_ += seconds;
-    // Its clip off what it does: the glide, the flap above a speed of 12, perched, the dive.
+    // Its clip off what it does: the glide, the flap above a speed of 12, perched, the dive; the
+    // charge, which MU's switch does not name, glides (:390-403).
     const int action = bird_ == Bird::Perched                             ? kSit
                        : bird_ == Bird::Dash || bird_ == Bird::Away       ? kDive
                        : bird_ == Bird::Flying || bird_ == Bird::Perching ? kFlap
-                       : bird_ == Bird::Charge                            ? kFlap
                                                                           : kGlide;
     if (action != clipShown_ && ravenBody_->library) {
         const int clip = ravenBody_->library->find(action);
@@ -135,7 +147,7 @@ void Pets::raven(float seconds, const Figure& hero, int level, bool safe, bool h
     raven_.update(seconds);
 }
 
-void Pets::stepRaven(const float owner[3], const float hand[3], bool safe, bool horse) {
+void Pets::stepRaven(const float owner[3], const float hand[3], const float perch[3], bool safe, bool horse) {
     // Into town it goes to his hand and sits; out of it, it flies off (:369-388).
     if (safe && bird_ != Bird::Perching && bird_ != Bird::Perched) {
         bird_ = Bird::Perching;
@@ -151,12 +163,13 @@ void Pets::stepRaven(const float owner[3], const float hand[3], bool safe, bool 
     };
     switch (bird_) {
         case Bird::Perching: {
-            // MoveHumming onto the hand, its turn its speed and its speed up one a frame (:563-583).
-            batYaw_ = turn(batYaw_, yawToward(bat_, hand), batSpeed_ * 4.0f);
-            batPitch_ = pitchToward(bat_, hand);
+            // On along its heading, then MoveHumming onto his hand: yaw and pitch each turned at
+            // most its speed, its speed up one a frame from 3, so it swings in wide (:563-583).
             forward(batSpeed_);
+            batYaw_ = turn(batYaw_, yawToward(bat_, perch), batSpeed_);
+            batPitch_ += std::clamp(pitchToward(bat_, perch) - batPitch_, -batSpeed_, batSpeed_);
             batSpeed_ += 1.0f;
-            const float d[3] = {hand[0] - bat_[0], hand[1] - bat_[1], hand[2] - bat_[2]};
+            const float d[3] = {perch[0] - bat_[0], perch[1] - bat_[1], perch[2] - bat_[2]};
             if (d[0] * d[0] + d[1] * d[1] + d[2] * d[2] < 50.0f * 50.0f) bird_ = Bird::Perched;
             return;
         }
@@ -165,6 +178,11 @@ void Pets::stepRaven(const float owner[3], const float hand[3], bool safe, bool 
             batPitch_ = 0.0f;
             return;
         case Bird::Dash: {
+            // Its streaks the first two steps and its flash the first: AttackTime 1 and 2, MovePet
+            // raising it before AttackEffect draws (:592-596, :729-745).
+            ++dashTime_;
+            if (dashTime_ <= 2) cue(RavenCue::Streaks);
+            if (dashTime_ == 1) cue(RavenCue::Flash);
             // At the target 50 up, turning by its speed, its speed up by its pull and the pull by
             // 0.2 a frame; off again within 20 or after 20 frames (:506-531).
             const float aim[3] = {batPrey_[0], batPrey_[1], batPrey_[2] + 50.0f};
@@ -193,6 +211,8 @@ void Pets::stepRaven(const float owner[3], const float hand[3], bool safe, bool 
         case Bird::Charge:
             // Hovering, turning on its target at 40 a frame, and let go after the charge (:543-553).
             batYaw_ = turn(batYaw_, yawToward(bat_, batPrey_), 40.0f);
+            // Lit on every other bone while it charges (:759-775).
+            cue(RavenCue::Glow);
             if (++batTicks_ >= kRavenCharge) {
                 letGo_ = true;
                 bird_ = Bird::Flying;
@@ -202,11 +222,14 @@ void Pets::stepRaven(const float owner[3], const float hand[3], bool safe, bool 
         case Bird::Flying:
             break;
     }
-    // Its flight about him (:421-505).
+    // Its flight about him (:421-505), a blue spark off one of its bones each step (:425-437).
+    cue(RavenCue::Spark);
     const float range[2] = {owner[0] - bat_[0], owner[1] - bat_[1]};
     const bool far = range[0] * range[0] + range[1] * range[1] >= kRavenFlyRange * kRavenFlyRange;
     if (far) batYaw_ = turn(batYaw_, yawToward(bat_, owner), float(dice(15) + 5));
     const float goal = owner[2] + (horse ? kRavenHighOnHorse : kRavenHigh);
+    // Its nose up below the goal and down 100 over it, held between: it climbs or sinks across
+    // the whole band, MU's slow metre's swell.
     int odds = 28;
     if (bat_[2] < goal) {
         batPitch_ = std::min(batPitch_ + 2.0f, 15.0f);
@@ -214,8 +237,6 @@ void Pets::stepRaven(const float owner[3], const float hand[3], bool safe, bool 
     } else if (bat_[2] > goal + 100.0f) {
         batPitch_ = std::max(batPitch_ - 2.0f, -15.0f);
         odds = 20;
-    } else {
-        batPitch_ *= 0.9f;
     }
     if (dice(odds) == 0) {
         float speed = far ? -(float(dice(64)) * 0.1f + 12.8f) : -(float(dice(8)) * 0.1f + 3.2f);
@@ -225,11 +246,12 @@ void Pets::stepRaven(const float owner[3], const float hand[3], bool safe, bool 
         batDir_[1] = speed;
         batDir_[2] = float(dice(64) - 32) * 0.1f;
     }
-    // Along -Y turned by its heading, and its climb (Direction rotated by Angle).
-    const float h = batYaw_ * kPi / 180.0f;
-    bat_[0] += -batDir_[1] * std::sin(h);
-    bat_[1] += batDir_[1] * std::cos(h);
-    bat_[2] += batDir_[2] + std::sin(batPitch_ * kPi / 180.0f) * 4.0f;
+    // Direction rotated by Angle (AngleMatrix, VectorRotate): along -Y turned by its heading and
+    // pitched, so it climbs by its speed -- MU's Angle[0] is ours negated.
+    const float angles[3] = {-batPitch_, 0.0f, batYaw_};
+    float m[3][3];
+    angleMatrix(angles, m);
+    for (int k = 0; k < 3; ++k) bat_[k] += m[k][0] * batDir_[0] + m[k][1] * batDir_[1] + m[k][2] * batDir_[2];
     bird_ = batDir_[1] < -12.0f ? Bird::Flying : Bird::Fly;
     // Fallen far behind: put back over him after 90 frames (:597-609).
     const float dx = bat_[0] - owner[0], dy = bat_[1] - owner[1];
@@ -254,14 +276,16 @@ void Pets::ravenStrike(bool ball, const float target[3]) {
     } else {
         // Velocity 20..29, Gravity 0.5 (SetAttack, :245-286).
         bird_ = Bird::Dash;
+        dashTime_ = 0;
         batSpeed_ = float(20 + dice(10));
         batPull_ = 0.5f;
     }
 }
 
-bool Pets::ravenLetGo(float from[3], float to[3]) {
+bool Pets::ravenLetGo(float from[3], float to[3], float& yaw) {
     if (!letGo_) return false;
     letGo_ = false;
+    yaw = batYaw_;
     fromMu(bat_, from);
     fromMu(batPrey_, to);
     return true;
@@ -271,6 +295,18 @@ bool Pets::ravenCry(float seconds) {
     if (!ravenUp_) return false;
     // rand_fps_check(100) && rand_fps_check(60): one in 6000 a reference frame.
     return roll() < seconds / kReference / 6000.0f;
+}
+
+int Pets::ravenBones() const {
+    if (!ravenUp_ || !ravenBody_ || !ravenBody_->skeletonMesh) return 0;
+    return int(ravenBody_->skeletonMesh->bones().size());
+}
+
+bool Pets::ravenBone(int bone, float out[3]) const {
+    if (bone < 0 || bone >= ravenBones()) return false;
+    const float none[3] = {0.0f, 0.0f, 0.0f};
+    raven_.pointOn(bone, none, out);
+    return true;
 }
 
 bool Pets::ravenAt(float out[3]) const {

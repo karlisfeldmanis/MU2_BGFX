@@ -95,15 +95,31 @@ public:
     // Its strike as the realm said it (What::Ravened, MU's C1 A8): the dash on `target`, or the
     // ball let go at it after its charge.
     void ravenStrike(bool ball, const float target[3]);
-    // Where the ball goes out from, once, the frame its charge ends: true with its head in `from`.
-    bool ravenLetGo(float from[3], float to[3]);
+    // Where the ball goes out from, once, the frame its charge ends: true with its head in `from`
+    // and its heading, MU's Angle[2] in degrees, in `yaw`.
+    bool ravenLetGo(float from[3], float to[3], float& yaw);
     // Where it is, for its sounds and a level's flares; false while none flies.
     bool ravenAt(float out[3]) const;
     // Its cry, one reference frame in 6000 (CSPetSystem.cpp:592): true the frame it calls.
     bool ravenCry(float seconds);
+    // What its steps this frame asked to be drawn about it (CSPetSystem's MovePet and
+    // AttackEffect), for fx/raven: a spark off a bone each step it flies (:425-437), the dash's
+    // streaks its first two steps and its flash the first (:729-745), the charge's light on every
+    // other bone each step of it (:759-775). Drained by Play::ravenFrame after `raven`.
+    enum class RavenCue : uint8_t { Spark, Streaks, Flash, Glow };
+    int ravenCues(const RavenCue** out) const {
+        *out = cues_;
+        return cueCount_;
+    }
+    // Its bones as drawn, for those: how many, and one's place in the world; its heading, MU's
+    // Angle[2]; and a roll of 0..n-1 off its own dice.
+    int ravenBones() const;
+    bool ravenBone(int bone, float out[3]) const;
+    float ravenYaw() const { return batYaw_; }
+    int ravenRoll(int n) { return dice(n); }
 
 private:
-    void stepRaven(const float owner[3], const float hand[3], bool safe, bool horse);
+    void stepRaven(const float owner[3], const float hand[3], const float perch[3], bool safe, bool horse);
     void drawRaven(gfx::Renderer& renderer, std::vector<float>& scratch,
                    std::vector<gfx::Drawable>& out, std::vector<gfx::Drawable>* casters);
     void spawnAngel(const float owner[3]);
@@ -154,6 +170,7 @@ private:
     int ravenLevel_ = 0;
     int ravenMaterials_[4] = {-1, -1, -1, -1};  // dkonebody, dkswing, dkthreebody, dksbody
     int hand_ = -1;                              // his Bip01 L Hand
+    int perch_ = -1;                             // and hand_bofdgne01, what it flies in at
     bool ravenUp_ = false;
     float ravenIn_ = 0.0f;
     Bird bird_ = Bird::Fly;
@@ -166,6 +183,13 @@ private:
     float batFrames_ = 0.0f;
     bool letGo_ = false;
     int clipShown_ = -1;
+    int dashTime_ = 0;  // the dash's AttackTime: steps since it was told
+    static constexpr int kRavenCues = 16;
+    RavenCue cues_[kRavenCues] = {};
+    int cueCount_ = 0;
+    void cue(RavenCue one) {
+        if (cueCount_ < kRavenCues) cues_[cueCount_++] = one;
+    }
 };
 
 }  // namespace mu::game
