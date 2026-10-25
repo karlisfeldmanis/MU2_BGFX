@@ -14982,6 +14982,21 @@ void testBoxes(const content::Tables& tables) {
         }
         return false;
     };
+    // Every class, the Dark Lord among them, has excellents to draw in every Kundun box.
+    for (int kin = 0; kin < sim::kKinCount; ++kin) {
+        std::printf("  class %d:", kin);
+        for (int tier = 1; tier <= sim::kKundunTiers; ++tier) {
+            std::vector<sim::BagRow> weapons, rest;
+            sim::kundunPools(tables, tier, sim::Kin(kin), true, &weapons, &rest);
+            std::printf("  +%d %zu weapons %zu sets [", tier, weapons.size(), rest.size());
+            for (const sim::BagRow& w : weapons) {
+                std::printf(" %s", tables.items[size_t(tables.itemAt(w.group, w.number))].label.c_str());
+            }
+            std::printf(" ]");
+            check(!weapons.empty() && !rest.empty(), "each class a weapon and a set piece to draw");
+        }
+        std::printf("\n");
+    }
     // tier 0 the Box of Luck, 1 to 4 the Kundun box at that plus.
     for (int tier = 0; tier <= sim::kKundunTiers; ++tier) {
         const int tries = 6000;
@@ -15007,9 +15022,9 @@ void testBoxes(const content::Tables& tables) {
             excellent += lying.what.excellent != 0;
             if (tier > 0) {
                 if (lying.what.excellent) {
-                    // A weapon may come from a band below, when its own has none for the class.
+                    // From another band only when its own has none of the kind for the class.
                     bool fits = false;
-                    for (int band = row.group < sim::kGroupShields ? 1 : tier; band <= tier; ++band) {
+                    for (int band = 1; band <= sim::kKundunTiers; ++band) {
                         fits = fits || sim::kundunFine(row, band, realm.hero().kin, realm.hero().second);
                     }
                     badFine += !fits;

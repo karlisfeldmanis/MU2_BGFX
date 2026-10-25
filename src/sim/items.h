@@ -1695,22 +1695,18 @@ constexpr int kKundunRaidTier = 3;
 // jewels evenly. MU's own (EledoradoBoxOpenEven, Event.cpp:603, docs/game/kundun-box.md §3) was an
 // item at 30/25/20/15 in a hundred, 5/4/3/2 of those excellent, else Zen, off eventitembag8..12.
 constexpr int kKundunExcellentIn100[kKundunTiers] = {40, 50, 60, 70};
-// The excellent is the opener's own class's (as the raid's hoardFine), any slot; a weapon at drop
-// levels kKundunFineLeast..kKundunFineMost (the user, "little bit to good tire for exc": a step
-// down from 50/80/105/125-147), the rest at kKundunSetLeast..kKundunSetMost. Never Kanturu's
-// gear (sim::kanturuGear).
-constexpr int kKundunFineLeast[kKundunTiers] = {40, 65, 90, 115};
-constexpr int kKundunFineMost[kKundunTiers] = {64, 89, 114, 135};
-// The armour and shields well below the weapons (the user, "little bit too good sets", "still
-// too good armors sets", "still too good"): +1 Bronze to Scale, +2 Wind to Spirit, +3 Plate to
-// Light Plate, +4 Storm Crow to Black Dragon.
-constexpr int kKundunSetLeast[kKundunTiers] = {15, 30, 45, 65};
-constexpr int kKundunSetMost[kKundunTiers] = {29, 44, 64, 89};
+// The excellent is the opener's own class's (as the raid's hoardFine), any slot, at drop levels
+// kKundunFineLeast..kKundunFineMost: +1 Bronze to Scale, +2 Wind to Spirit, +3 Plate to Light
+// Plate, +4 Storm Crow to Black Dragon, the weapons alike (the user, stepping it down from
+// 50/80/105/125-147: "little bit to good tire for exc", "too good sets", "and weapons?"). Never
+// Kanturu's gear (sim::kanturuGear).
+constexpr int kKundunFineLeast[kKundunTiers] = {15, 30, 45, 65};
+constexpr int kKundunFineMost[kKundunTiers] = {29, 44, 64, 89};
 bool kundunFine(const content::ItemRow& row, int tier, Kin kin, bool second);
 // Half the excellents a weapon (the user: "we need also weapons"), kKundunWeaponIn100; the
-// rest any other slot. A class with no weapon in the tier's band draws from its weapons of the
-// band below instead, down to the first band. Both pools as kundunFine admits, into `weapons`
-// and `rest`.
+// rest any other slot. A class with nothing of a kind in the tier's band (the Dark Lord, whose
+// only set is Light Plate) draws that kind from the nearest band, below first, then above. Both
+// pools as kundunFine admits, into `weapons` and `rest`.
 constexpr int kKundunWeaponIn100 = 50;
 void kundunPools(const content::Tables& tables, int tier, Kin kin, bool second, std::vector<BagRow>* weapons,
                  std::vector<BagRow>* rest);

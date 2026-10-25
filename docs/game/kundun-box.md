@@ -59,6 +59,13 @@ by order:
   +4's sets top out at Grand Soul, Divine, Dark Phoenix, Valiant, Thunder Hawk, Red Spirit.
 - **Sets another box lower** (the user: "still too good", picked "Sets still too high"): 15-29 /
   30-44 / 45-64 / 65-89; +4's sets top out at Storm Crow, Ashcrow, Eclipse, Iris, Black Dragon.
+- **Weapons the same bands, and every class something** (the user: "and weapons? and DL armor and
+  weapons?"): one band for both kinds (`kKundunFineLeast/Most`, the set bands above; the separate
+  set arrays go). A class with nothing of a kind in its band draws that kind from the nearest band,
+  below first, then above (`sim::kundunPools`). The Dark Lord has only Light Plate and the scepters
+  in our tables, so his boxes give Battle Scepter and Light Plate gloves at +1 and +2, Light Plate
+  and Battle Scepter at +3, Light Plate and Master or Great Scepter at +4. testBoxes prints every
+  class's pools and asks each for a weapon and a set piece.
 
 Sources, highest first: WebZen GameServer 1.00.93 (`WZ`, under `Source/Server Side/GameServer/`,
 0.97d base unless a flag is named), MuMain (`MM`, `src/source/`), OpenMU (`OM`). The repo's

@@ -978,29 +978,30 @@ bool kundunFine(const content::ItemRow& row, int tier, Kin kin, bool second) {
         kanturuGear(row)) {
         return false;
     }
-    const bool weapon = row.group < kGroupShields;
-    const int least = weapon ? kKundunFineLeast[t] : kKundunSetLeast[t];
-    const int most = weapon ? kKundunFineMost[t] : kKundunSetMost[t];
-    if (row.dropLevel < least || row.dropLevel > most) return false;
+    if (row.dropLevel < kKundunFineLeast[t] || row.dropLevel > kKundunFineMost[t]) return false;
     if (row.classes != 0 && (row.classes & (1 << int(kin))) == 0) return false;
     return !secondClassOnly(row) || second || kin == Kin::MagicGladiator;
 }
 
 void kundunPools(const content::Tables& tables, int tier, Kin kin, bool second, std::vector<BagRow>* weapons,
                  std::vector<BagRow>* rest) {
-    weapons->clear();
-    rest->clear();
-    for (const content::ItemRow& r : tables.items) {
-        if (!kundunFine(r, tier, kin, second)) continue;
-        (r.group < kGroupShields ? weapons : rest)->push_back({int8_t(r.group), int16_t(r.number)});
-    }
-    for (int below = tier - 1; weapons->empty() && below >= 1; --below) {
-        for (const content::ItemRow& r : tables.items) {
-            if (r.group < kGroupShields && kundunFine(r, below, kin, second)) {
-                weapons->push_back({int8_t(r.group), int16_t(r.number)});
+    const auto fill = [&](std::vector<BagRow>* into, bool weapon) {
+        into->clear();
+        // The tier's own band, then the bands below it nearest first, then those above.
+        int bands[kKundunTiers] = {};
+        int n = 0;
+        for (int b = tier; b >= 1; --b) bands[n++] = b;
+        for (int b = tier + 1; b <= kKundunTiers; ++b) bands[n++] = b;
+        for (int i = 0; i < n && into->empty(); ++i) {
+            for (const content::ItemRow& r : tables.items) {
+                if ((r.group < kGroupShields) == weapon && kundunFine(r, bands[i], kin, second)) {
+                    into->push_back({int8_t(r.group), int16_t(r.number)});
+                }
             }
         }
-    }
+    };
+    fill(weapons, true);
+    fill(rest, false);
 }
 
 bool scrollOfArchangel(const content::ItemRow& row) {
