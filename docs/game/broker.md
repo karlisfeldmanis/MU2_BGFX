@@ -17,7 +17,7 @@ own, as before.
 | who | players and bots alike; bots may price up to 5% under the cheapest |
 | fee | none: no commission, no deposit |
 | price | from the thing's NPC sale value up to 2,000,000,000 |
-| what | gear, jewels, runes, wings, pets, event tickets and parts; **not** potions, ammo, quest things, anything bound (`tradeable()`), anything not mended |
+| what | gear, jewels, runes, wings, pets, event tickets and parts; **not** potions, ammo, quest things, anything bound (`tradeable()`), anything not mended. The Gemstone, the Jewel of Harmony and the Refining Stones list under Jewels; an item with a Harmony option is bound, so never (docs/game/harmony.md) |
 | how long | 12, 24 or 48 hours, counted only while the server runs |
 | how many | 20 listings an account, shared by its characters (a bot: by its character) |
 | own | a character may not buy a listing of his own account's |

@@ -212,4 +212,6 @@ per chain (a piece or two a link).
    Aida's door asks 300 and the arch 320, so most heroes will have done Aida.
 2. **The set pieces' plus**: +7 like Aida's weapons, or +9 since they wait until 380.
 3. **A Relics quest** (Twin Tale and the Relics' breeds) when the Relics open, Elpis's second.
-4. **Elpis's refining** (Gemstone to Jewel of Harmony), MU's trade for her, not built.
+4. **Elpis's refining** (Gemstone to Jewel of Harmony): built at the Chaos Machine instead (the
+   user, 2026-10-25: "Everything at the Machine"); Elpis stays a quest giver. The Gemstone drops
+   one kill in 150 in the Ruins and the Relics. See docs/game/harmony.md.

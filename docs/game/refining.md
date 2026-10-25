@@ -193,6 +193,12 @@ an excellent hit is `DT_EXCELLENT` green `(0, 1, 0.6)` at the critical's size, a
 reflect is shown as a cue of its own and never starts a swing. The critical keeps the gold the
 user chose on 2026-09-23 over MuMain's blue.
 
+## The Jewel of Harmony
+
+A fourth refining, on an option of its own rather than the plus: the Gemstone from Kanturu, the
+Jewel of Harmony and the two Refining Stones, dragged onto an item as these jewels are, and the
+Chaos Machine's Refine Gemstone, Smelt and Remove Harmony. See docs/game/harmony.md (2026-10-25).
+
 ## Not built
 
 - **Stacks of jewels.** A jewel is one cell. `Realm::refine` spends one from a stack if it is

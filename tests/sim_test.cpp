@@ -9748,6 +9748,54 @@ void testCraftsFromTheBag() {
                   "and the realm refuses it as the page said");
         }
     }
+    // Harmony's two by-piece services over a seeded run (sim/harmony.h): each Gemstone a jewel at
+    // 80 in 100; each plain piece a Lower stone at 20, each excellent one a Higher at 50.
+    {
+        auto realm = std::make_unique<sim::Realm>();
+        if (realm->raise(&noria, 12, 182, 105, sim::Kin::DarkKnight, 50)) {
+            sim::Request talk;
+            talk.kind = sim::Request::Kind::Talk;
+            talk.target = uint32_t(goblin);
+            realm->ask(talk);
+            for (int tick = 0; tick < 400 && realm->mixing() < 0; ++tick) realm->step();
+            const int32_t lowerStone = noria.itemNamed("LowRefineStone"), higherStone = noria.itemNamed("HighRefineStone");
+            // Out of the box, the count of `item` it held.
+            const auto emptied = [&](int32_t item) {
+                int found = 0;
+                for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+                    const sim::Held& one = realm->machine()[cell];
+                    if (one.empty()) continue;
+                    if (one.item == item) found += one.durability;
+                    realm->takeOut(cell);
+                }
+                return found;
+            };
+            int jewels = 0;
+            for (int run = 0; run < 10; ++run) {
+                realm->putIn(realm->give(gemstone, -1, 0, 20));
+                if (realm->mix(sim::Service::RefineGemstone)) jewels += emptied(harmonyJewel);
+            }
+            std::printf("  Refine Gemstone: %d jewels of 200\n", jewels);
+            check(std::abs(jewels - 160) <= 20, "a Gemstone refines 80 in 100");
+            for (int excellent = 0; excellent <= 1; ++excellent) {
+                int stones = 0, others = 0, pieces = 0;
+                for (int run = 0; run < 30; ++run) {
+                    for (int i = 0; i < 10; ++i) realm->putIn(realm->give(sword, -1, 5, -1, false, 0, uint8_t(excellent)));
+                    int in = 0;
+                    for (int cell = 0; cell < sim::kMachineCells; ++cell) in += !realm->machine()[cell].empty();
+                    pieces += in;
+                    if (!realm->mix(sim::Service::Smelt)) break;
+                    stones += emptied(excellent ? higherStone : lowerStone);
+                    others += emptied(excellent ? lowerStone : higherStone);
+                }
+                std::printf("  Smelt, %s: %d stones of %d\n", excellent ? "excellent" : "plain", stones, pieces);
+                // About three deviations: 300 draws at 20 and 50 in 100 spread 7 and 9.
+                check(std::abs(stones - (excellent ? 150 : 60)) <= (excellent ? 26 : 21) && pieces == 300 && others == 0,
+                      excellent ? "an excellent piece smelts a Higher stone 50 in 100"
+                                : "a plain piece a Lower stone 20 in 100");
+            }
+        }
+    }
 }
 
 void testChaosMachine() {

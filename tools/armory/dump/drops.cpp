@@ -263,6 +263,11 @@ void leave(const Kill& k, Model& m) {
         m.add(first(t, [](const ItemRow& r) { return sim::scrollOfNova(r); }),
               Roll{Roll::Kind::Own, "nova_scroll", pass / sim::kNovaScrollOdds});
     }
+    // The Gemstone in the Ruins and the Relics, any monster's (sim::kGemstoneOdds).
+    if (sim::gemstoneMap(k.map)) {
+        m.add(first(t, [](const ItemRow& r) { return sim::gemstone(r); }),
+              Roll{Roll::Kind::Own, "gemstone", pass / sim::kGemstoneOdds});
+    }
     if (sim::rulesOf(k.map).firstWings) {
         for (sim::Kin kin : kKins) {
             const int32_t item = t.itemAt(12, sim::firstWingOf(kin));
