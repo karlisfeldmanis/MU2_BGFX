@@ -35,7 +35,8 @@ jewel flag, which would put it in MU's jewel drop group; `sim::harmonyMaterial` 
 - **Strength.** Every flat option is three times MU's (`kHarmonyStrength`); Damage taken keeps
   MU's 3-5% a piece. Defense counts half, as WebZen's server applies it.
 - A miss that takes a Strength or Agility requirement cut away from a worn piece he no longer
-  meets moves it into the bag, as a Soul's outgrown plus does.
+  meets moves it into the bag, as a Soul's outgrown plus does: a stone's miss, and a Soul's, whose
+  lower plus switches the option off.
 
 The options, by level 0 / 6 / 11 (MU's values; ours three times, but Damage taken):
 
@@ -64,7 +65,7 @@ The options, by level 0 / 6 / 11 (MU's values; ours three times, but Damage take
 | service | box | chance | Zen |
 |---|---|---|---|
 | Refine Gemstone | Gemstones, any number; Fill takes the stack | 80% each | none |
-| Smelt | weapons and armour with no option; the 84 cheapest (Kris, Bronze set...) at +4 or more | 50% an excellent piece (Higher), 20% any other (Lower), each piece eaten | none |
+| Smelt | weapons and armour with no option and no rune set in them; the 84 cheapest (Kris, Bronze set...) at +4 or more; stones from a bound piece come out free (stacks never bind) | 50% an excellent piece (Higher), 20% any other (Lower), each piece eaten | none |
 | Remove Harmony | one item with an option, a Jewel of Harmony and a Jewel of Chaos | 100%, it stays bound; the jewels are spent | 100,000 to 360,000 by level |
 
 MU takes one Gemstone or one piece a mix; ours a box of them, each rolled on its own. Fill from

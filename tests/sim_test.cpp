@@ -17532,6 +17532,36 @@ void testHarmony(const content::Tables& tables) {
             offHim &= realm.satchel()[sim::kWeaponRight].empty();
         }
         check(fell && offHim, "a miss he can no longer wear goes off him into the bag");
+
+        // A Soul's miss on the same sword, its option at its plus: the plus falls to +0, the cut
+        // goes out with it (harmonyActive), and he no longer meets it -- off him into the bag too.
+        sim::Held full{sword, 8, 40};  // a Soul goes on +8 at most
+        full.harmony = 4;  // Agility requirement
+        full.harmonyLevel = 8;  // 78 off
+        const int32_t soulJewel = tables.itemAt(14, 14);
+        sim::HeroRecord tight = rec;
+        const int agilityBase = realm.wearer().points.agility - rec.points.agility;
+        tight.points.agility = sim::asks(swordRow, 8).agility - 78 - agilityBase;
+        tight.slots[sim::kWeaponRight] = full;
+        tight.slots[jewelAt] = sim::Held{soulJewel, 0, 1};
+        check(sim::asks(swordRow, 0).agility > tight.points.agility + agilityBase,
+              "at +0 with no cut the sword asks more agility than he has");
+        bool missed = false, soulOff = false;
+        for (int i = 0; i < 40 && !missed; ++i) {
+            realm.restore(tight);
+            if (realm.satchel()[sim::kWeaponRight].empty() || !realm.refine(jewelAt, sim::kWeaponRight)) break;
+            if (!realm.satchel()[sim::kWeaponRight].empty() &&
+                realm.satchel()[sim::kWeaponRight].refinement == 9) {
+                continue;
+            }
+            missed = true;
+            for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+                const sim::Held& one = realm.satchel()[slot];
+                soulOff |= one.item == sword && one.refinement == 0 && one.harmony == 4;
+            }
+            soulOff &= realm.satchel()[sim::kWeaponRight].empty();
+        }
+        check(missed && soulOff, "a Soul's miss that turns the cut off moves the sword into the bag");
     }
 
     // The Chaos Machine's three, judged (sim/machine.h): a cheap piece smelts only at +4, a piece
@@ -17552,6 +17582,10 @@ void testHarmony(const content::Tables& tables) {
         held.harmonyLevel = 7;
         held.bound = true;
         check(judgeOf(sim::Service::Smelt, {held}).blocked, "a piece with an option does not smelt");
+        sim::Held runed{sword, 4, 20};
+        runed.sockets = 1;
+        runed.powers[0] = 1;
+        check(judgeOf(sim::Service::Smelt, {runed}).blocked, "nor one with a rune set in it");
         const int32_t chaosJewel = tables.itemAt(12, 15), harmonyJewel = tables.itemNamed("JewelOfHarmony");
         check(!judgeOf(sim::Service::RemoveHarmony, {held}).ready, "its option does not come off for Zen alone");
         const sim::Judged removal = judgeOf(sim::Service::RemoveHarmony,

@@ -683,6 +683,12 @@ void smelt(const content::Tables& tables, const Machine& box, const Sorted& s, J
         j.blocked = true;
         return;
     }
+    // A rune set in a piece would melt with it: Remove Rune first.
+    if (s.runed > 0) {
+        j.title = "Take the runes out of the " + labelAt(tables, box, s.runedCell) + " first";
+        j.blocked = true;
+        return;
+    }
     if (pieces == 0) {
         j.title = "Put in weapons or armour";
         return;

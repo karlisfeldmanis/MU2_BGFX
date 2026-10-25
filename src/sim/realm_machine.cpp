@@ -573,7 +573,12 @@ bool Realm::mix(Service service, int socket) {
     if (boundChaos && made && service != Service::RemoveRune && service != Service::AddSocket &&
         service != Service::FuseRunes) {
         for (int cell = 0; cell < kMachineCells; ++cell) {
-            if (me().machine[cell].empty()) continue;
+            // Never a stack -- the jewels, the Refining Stones (sim::bindable; the user, 2026-10-20:
+            // "i cant stack bound jewels"): a bound piece smelted still gives free stones.
+            if (me().machine[cell].empty() ||
+                !bindable(tables_->items[size_t(me().machine[cell].item)])) {
+                continue;
+            }
             Held thing = me().machine[cell];
             thing.bound = true;
             me().machine.put(cell, thing);

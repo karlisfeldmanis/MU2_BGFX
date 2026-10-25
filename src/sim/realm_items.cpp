@@ -1187,7 +1187,12 @@ bool Realm::refine(int jewelSlot, int targetSlot) {
     Held raised = thing;
     raised.refinement = int16_t(was + 1);
     const bool outgrows = wearable(targetSlot) && !fits(*tables_, wearer(), raised);
-    if (outgrows) {
+    // And a Soul's miss: the lower plus can switch off a Harmony option that cut a requirement
+    // (harmonyActive), and the cut comes back whole (sim/harmony.h). Off him the same way.
+    Held lowered = thing;
+    lowered.refinement = int16_t(was >= kSoulResetFrom ? 0 : std::max(0, was - 1));
+    const bool missOutgrows = soul && wearable(targetSlot) && !fits(*tables_, wearer(), lowered);
+    if (outgrows || missOutgrows) {
         Satchel after = me().bag;
         if (jewel.durability <= 1) after.lift(jewelSlot);
         if (after.free(*tables_, row.width, row.height) < 0) {
@@ -1218,7 +1223,7 @@ bool Realm::refine(int jewelSlot, int targetSlot) {
     }
     me().bag.put(targetSlot, thing);
     int landed = targetSlot;
-    if (took && outgrows) {
+    if ((took && outgrows) || (!took && missOutgrows)) {
         me().bag.lift(targetSlot);
         landed = me().bag.free(*tables_, row.width, row.height);
         me().bag.put(landed, thing);
@@ -2412,7 +2417,12 @@ bool Realm::refineAcross(Store jewelIn, int jewelAt, Store thingIn, int thingAt)
     Held raised = thing;
     raised.refinement = int16_t(thing.refinement + 1);
     if (harmonyMaterial(jewelRow)) raised = harmonyMissed(*tables_, jewel, thing);
-    const bool outgrows = wornThing && jewelOf(jewelRow) != Jewel::Life && !fits(*tables_, wearer(), raised);
+    // And a Soul's miss, whose lower plus can switch a requirement-cutting option off (refine).
+    Held lowered = thing;
+    lowered.refinement = int16_t(thing.refinement >= kSoulResetFrom ? 0 : std::max(0, thing.refinement - 1));
+    const bool outgrows = wornThing && jewelOf(jewelRow) != Jewel::Life &&
+                          (!fits(*tables_, wearer(), raised) ||
+                           (jewelOf(jewelRow) == Jewel::Soul && !fits(*tables_, wearer(), lowered)));
     if (outgrows && me().bag.free(*tables_, thingRow.width, thingRow.height) < 0) {
         refusal_ = "no room in the bag for what he could no longer wear";
         return false;
