@@ -1182,12 +1182,15 @@ void Play::update(double seconds) {
                     shock(*pushed, pushed->shockClip);
                 }
                 // A Whirlwind's pull: one crash a cast, timed to the farthest body's landing --
-                // it is still sliding here, so its ticks left say when.
+                // it is still sliding here, so its ticks left say when -- and a chain to each
+                // body, let go as that one lands (fx/chains.h).
                 const sim::Body* body = realm_.find(happening.who);
                 if (body != nullptr && body->whirledBy != 0) {
                     if (Drawn* knight = drawnOf(body->whirledBy)) {
                         const double lands = double(realm_.tick() + body->pushTicks);
                         knight->crashAt = std::max(knight->crashAt, lands - kWhirlCrashLead / kTickSeconds);
+                        const double drawn = double(realm_.tick()) - 1.0 + through_;
+                        chains_.cast(body->whirledBy, happening.who, float((lands - drawn) * kTickSeconds));
                     }
                 }
             }
@@ -2446,40 +2449,13 @@ void Play::update(double seconds) {
     steps();
     // The Whirlwind crashes that have come due, on the drawing's clock: a body is drawn a tick
     // behind the realm, so it is seen landing as through_ comes round on its landing tick.
-    // Ours, and faint: a pulled body kicks up the ground dust a galloping mount does, drifting
-    // back the way it came, and the crash puffs a ring of it out round the knight as they land
-    // (the user, 2026-10-25: "some subtle effect also for pulling which make sense").
+    // The Whirlwind crashes that have come due, on the drawing's clock: a body is drawn a tick
+    // behind the realm, so it is seen landing as through_ comes round on its landing tick.
     const double drawnTick = double(realm_.tick()) - 1.0 + through_;
     for (Drawn& one : drawn_) {
-        const sim::Body* body = realm_.find(one.id);
-        if (body != nullptr && body->whirledBy != 0 && body->pushTicks > 0 && one.placed && ground_) {
-            one.dragOwed += float(seconds) * 25.0f / 2.0f;
-            // Its way on the ground: a tile east is +x, a tile south is -z (Blinked, above).
-            const float yaw = std::atan2(body->pushX, -body->pushY);
-            // Half a metre behind it, where its feet have just been, twice a horse's puff.
-            const float* feet = one.figure.position();
-            while (one.dragOwed >= 1.0f) {
-                one.dragOwed -= 1.0f;
-                float at[3] = {feet[0] - std::sin(yaw) * 0.5f, 0.0f, feet[2] - std::cos(yaw) * 0.5f};
-                at[1] = ground_->heightAt(at[0], at[2]);
-                dust_.puff(at, yaw, snowy_, 2.0f);
-            }
-        } else {
-            one.dragOwed = 0.0f;
-        }
         if (one.crashAt == 0.0 || drawnTick < one.crashAt) continue;
         one.crashAt = 0.0;
-        if (!one.placed) continue;
-        if (heard_.whirlPull >= 0) emit(heard_.whirlPull, one.crown[0], one.crown[2], one.id);
-        // A ring of ten a metre and a half out, where they land, each drifting away from him
-        // (a puff drifts behind `yaw`).
-        const float* feet = one.figure.position();
-        for (int k = 0; k < 10 && ground_; ++k) {
-            const float out = float(k) * 0.628319f;
-            float at[3] = {feet[0] + std::sin(out) * 1.5f, 0.0f, feet[2] + std::cos(out) * 1.5f};
-            at[1] = ground_->heightAt(at[0], at[2]);
-            dust_.puff(at, out + 3.14159265f, snowy_, 1.8f);
-        }
+        if (one.placed && heard_.whirlPull >= 0) emit(heard_.whirlPull, one.crown[0], one.crown[2], one.id);
     }
     hammer();
     chatter(float(seconds));
@@ -2561,6 +2537,7 @@ void Play::update(double seconds) {
     };
     bolt_.update(float(seconds), standing, middle);
     drain_.update(float(seconds), middle);
+    chains_.update(float(seconds), middle);
     for (Volley& volley : volleys_) {
         volley.wait -= float(seconds);
         if (volley.wait <= 0.0f) volleyShot(volley.shooter, volley.target);

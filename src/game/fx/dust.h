@@ -39,9 +39,8 @@ public:
     void shutdown();
 
     // One puff at `at` (world metres, on the ground), drifting back from a mount facing `yaw`.
-    // `snow` draws it off smoke01, white: Devias's (see below). `size` times MU's scale: a
-    // Whirlwind's drag raises a giant's dust, not a horse's (Play::update).
-    void puff(const float at[3], float yaw, bool snow = false, float size = 1.0f);
+    // `snow` draws it off smoke01, white: Devias's (see below).
+    void puff(const float at[3], float yaw, bool snow = false);
 
     void update(float seconds);
     void gather(gfx::Effects& effects) const;

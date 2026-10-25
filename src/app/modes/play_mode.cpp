@@ -537,6 +537,8 @@ bool PlayMode::open(Context& ctx) {
                                                  &world_.ground());
                 world_.played().drain().open(assets, ctx.textures,
                                              world_.played().showing().table());
+                world_.played().chains().open(assets, ctx.textures,
+                                              world_.played().showing().table());
                 world_.played().stains().open(assets, ctx.textures,
                                               world_.played().showing().table());
                 world_.played().trapShow().open(assets, args.world, ctx.textures,
@@ -2018,6 +2020,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().weakness().gather(ctx.renderer.effects());
         world_.played().pollution().gather(ctx.renderer.effects());
         world_.played().drain().gather(ctx.renderer.effects());
+        world_.played().chains().gather(ctx.renderer.effects(), eye.position);
         world_.played().trapShow().gatherEffects(ctx.renderer.effects());
         world_.played().poison().gather(ctx.renderer.effects());
         world_.played().flame().gather(ctx.renderer.effects());

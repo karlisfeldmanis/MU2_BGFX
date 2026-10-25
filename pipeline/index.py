@@ -421,6 +421,10 @@ EFFECTS = {
     "drain_mote": "effects/drain/cra_04.png",
     "drain_ghost": "effects/drain/gostmark01.png",
 
+    # A Whirlwind rune's pull (game/fx/chains.h): not MU 0.75's -- Season 17's Object132/so_chain,
+    # a 128x64 strip of links that tiles end to end, the chain he hauls them in with.
+    "whirl_chain": "effects/chain/so_chain.png",
+
     # And what the wizard's Flame burns with. See client/core/Flame.cs.
     #
     # BITMAP_FLAME, which ZzzOpenData loads from Effect/Flame01.jpg with GL_CLAMP_TO_EDGE - a

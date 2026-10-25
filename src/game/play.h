@@ -46,6 +46,7 @@
 #include "game/fx/weakness.h"
 #include "game/fx/pollution.h"
 #include "game/fx/drain.h"
+#include "game/fx/chains.h"
 #include "game/fx/ice.h"
 #include "game/fx/stains.h"
 #include "game/world/trap_show.h"
@@ -1070,6 +1071,8 @@ public:
     Pollution& pollution() { return pollution_; }
     // And the Ancient rune Drain Life's motes, ghosts and strands. fx/drain.h.
     Drain& drain() { return drain_; }
+    // And a Whirlwind rune's pull, the chains he hauls them in by. fx/chains.h.
+    Chains& chains() { return chains_; }
     // What a death leaves by the head: MU's CreateBlood. fx/stains.h.
     Stains& stains() { return stains_; }
     void gatherStains(gfx::Effects& effects) const {
@@ -1504,8 +1507,6 @@ private:
         // drawing's clock (tick - 1 + through_), kWhirlCrashLead ahead of the farthest body he
         // pulled landing beside him. 0 for none.
         double crashAt = 0.0;
-        // Puffs owed to its drag while a Whirlwind hauls it in, at the mount's rate (fx/dust.h).
-        float dragOwed = 0.0f;
     };
 
     Drawn* drawnOf(uint32_t id);
@@ -1946,6 +1947,7 @@ private:
     Weakness weakness_;
     Pollution pollution_;
     Drain drain_;
+    Chains chains_;
     Stains stains_;
     TrapShow trapShow_;
     Poison poison_;
