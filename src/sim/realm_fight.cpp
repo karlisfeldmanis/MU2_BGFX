@@ -64,6 +64,14 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
         cutDown.defense -= cutDown.defense * target.defenseCut / 100;
         guard = &cutDown;
     }
+    // And Penetration's arrow passes a share of what is left (SkillRow::pierces).
+    if (row != nullptr && row->pierces > 0 && attacker.player && target.monster()) {
+        if (guard != &cutDown) {
+            cutDown = target.stats;
+            guard = &cutDown;
+        }
+        cutDown.defense -= cutDown.defense * row->pierces / 100;
+    }
     // A charge's stages ride on the skill's damage for its burst (Realm::burstCharge).
     Blow blow = row && row->wizardry ? cast(attacker.stats, *guard,
                                             row->damage + (attacker.player ? me().chargeDamage : 0), dice)

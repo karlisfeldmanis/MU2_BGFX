@@ -502,6 +502,12 @@ struct SkillRow {
     // **His party's most health raised** by sim::swellShare for this many ticks: on him and every
     // member of his party within kPartyReach (Realm::throwSkill, Body::swellUntil). 0 for none.
     int32_t swellTicks = 0;
+    // ---- Penetration's, appended after Swell Life's -------------------------------------------
+    // **Percent of the defence of what it strikes that the blow passes**, a hero's on a monster
+    // (Realm::strikeAt), after any Fire Slash cut. Penetration's 30 (the user, 2026-10-25: "lets
+    // boost some elf thingies"): defence comes off every hit, so her many arrows lost the most of
+    // it -- ~900 a hit on Aida where a knight lands ~2,400. 0 for none.
+    int32_t pierces = 0;
     // The Arc's half-angle this row is gathered with (Realm::gather).
     float arcHalfAngle() const;
     // **Whether a press aims it at the ground under the pointer** rather than at a body: the

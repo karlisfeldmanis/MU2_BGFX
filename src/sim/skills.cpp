@@ -508,14 +508,15 @@ constexpr SkillRow kRows[kSkills] = {
     // "need to nerft elf multishot", "elf multishot has to use 3 arrows"): each body is struck
     // once a cast already, so on a lone body the fan is now the weaker blow and her plain shot
     // the single-target one; on a crowd it is still every body in nine tiles of three lanes.
-    // Ours.
+    // Ours. **Past 30% of the defence** of what it strikes, as Penetration (2026-10-25): its
+    // three-quarter arrows lost the most to Aida's defence, ~5M an hour there; now ~9M.
     {.number = skill::kSkillshot, .name = "Multi-Shot", .mana = 5, .reach = 9.0f, .force = 0.75f,
      .spread = Spread::Fan,
      .tells = "Three arrows loosed in a fan at a body up to nine tiles off, each flying on "
-              "through everything in its way, at three quarters of a plain shot. Each body is "
-              "struck once. Three arrows are spent a cast.",
+              "through everything in its way, at three quarters of a plain shot, past 30% of "
+              "its defence. Each body is struck once. Three arrows are spent a cast.",
      .clip = 50, .sound = "player_bow", .built = true, .families = arms::kMissiles,
-     .needLevel = 0, .kin = Kin::FairyElf, .flies = 17.5f, .arrows = 3},
+     .needLevel = 0, .kin = Kin::FairyElf, .flies = 17.5f, .arrows = 3, .pierces = 30},
     // Heal 26: twenty mana, `5 + energy / 5` health at once (HealEffectInitializer). MU casts it
     // on a player, and so does she: on whoever she points at within kAidReach, else herself
     // (SkillRow::aids). `PLAYER_SKILL_ELF1` (151) and `SOUND_SKILL_DEFENSE`, as MuMain's ReceiveMagic opens
@@ -790,12 +791,15 @@ constexpr SkillRow kRows[kSkills] = {
     // bow's 50 or 51, as Skillshot's is; SOUND_PIERCING is MU's, at the draw (ZzzCharacter.cpp:
     // 2774-2779). Wind (realm_fight.cpp `skillElement`), so Tempest raises it.
     // Force 1.5 -> 1.275, -15% (the user's nerf of 2026-10-21: the strongest skill on Aida).
+    // And back up to 1.25 with `pierces` 30 (the user, 2026-10-25: "lets boost some elf
+    // thingies"): with Ascendance on, tests/kits/ascendance.json's Faela was 14.8M an hour on
+    // Icarus and 9.5M on Aida, every other kit 16.5-19.5M and 12.4-20.3M; now 16.4M and 13.4M.
     {.number = skill::kPenetration, .name = "Penetration", .mana = 7, .reach = 8.0f,
-     .force = 1.15f, .spread = Spread::Fan,  // and 1.275 -> 1.15, -10% more (the class balance)
+     .force = 1.25f, .spread = Spread::Fan,  // and 1.275 -> 1.15, -10% more (the class balance)
      .tells = "An arrow loosed at a body up to eight tiles off, flying on through everything in "
-              "its line. One arrow is spent for every body struck.",
+              "its line and past 30% of its defence. One arrow is spent for every body struck.",
      .clip = 50, .sound = "player_piercing", .built = true, .families = arms::kMissiles,
-     .needLevel = 130, .kin = Kin::FairyElf, .flies = 17.5f, .arrows = 1},
+     .needLevel = 130, .kin = Kin::FairyElf, .flies = 17.5f, .arrows = 1, .pierces = 30},
 
     // ---- Fire Breath 49, the Dinorant's, after Penetration so no save's learned bit moves -------
     //
