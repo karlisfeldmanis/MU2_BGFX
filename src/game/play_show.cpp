@@ -1137,6 +1137,7 @@ void Play::learned() {
 // fade a revive uses.
 void Play::warped() {
     warpOwed_ = true;
+    landingOwed_ = true;
     // INVENTION: MuMain lands a Town Portal in silence -- TryConsumeItem's scroll branch and
     // ReceiveTeleport's warp branch play nothing. What is borrowed is SOUND_MAGIC, sMagic.wav,
     // which CreateTeleportEnd plays as a wizard's Teleport puts him down (ZzzEffectMagicSkill.cpp:

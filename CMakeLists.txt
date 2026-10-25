@@ -117,6 +117,10 @@ foreach(t bx bimg bimg_decode bimg_encode bgfx shaderc)
     target_compile_options(${t} PRIVATE -w)   # third-party warnings are not ours to fix
   endif()
 endforeach()
+# 512 frame buffers, not bgfx's 128: the probe and the renderer hold some 87 for good, and each
+# item stage keeps up to four, so a few leaked buffers ran the pool out and a shop's pictures
+# went blank (bugs #56/#57, the vault's black panel of c2ce7d1d). A slot costs little memory.
+target_compile_definitions(bgfx PRIVATE BGFX_CONFIG_MAX_FRAME_BUFFERS=512)
 # Direct3D 11's shaders (docs/plans/low-end-windows.md, P7) made on this Mac: shaderc hands the
 # HLSL to Microsoft's own d3dcompiler_47.dll, run under Wine by bgfx's d3d4linux.exe (the copy
 # beside shaderc is in the shaders block below). bgfx's header turns this on for Linux only;

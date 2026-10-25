@@ -1036,6 +1036,12 @@ public:
         warpOwed_ = false;
         return was;
     }
+    // The same landing for the Helper, which a warp stops (app's PlayMode).
+    bool takeLanding() {
+        const bool was = landingOwed_;
+        landingOwed_ = false;
+        return was;
+    }
     // The guard: thrown when Defense lands, and kept on the body every frame after -- on
     // whichever player cast it, the hero or another. `skill` picks its look: the wizard's Magic
     // Shield is MU's blue, every other guard the knight's green.
@@ -1812,6 +1818,7 @@ private:
     uint32_t riteBody_ = 0;  // whose rite it is: the kneel and the facing are his
     int riteCount_ = 1;      // and his rebirths, for the message when it is the hero's
     bool warpOwed_ = false;
+    bool landingOwed_ = false;
     bool homeOwed_ = false;
     int portalFrom_[2] = {-1, -1};  // takePortalFrom's tile, -1 for none
     float portalFacing_ = 0.0f;

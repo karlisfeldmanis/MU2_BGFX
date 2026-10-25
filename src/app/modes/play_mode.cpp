@@ -1432,6 +1432,15 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                 world_.played().notice("Helper started.", false);
             }
         }
+        // A warp on the same map -- a floor's gate, a Tab trip to another floor, Go Back! -- stops
+        // it, as ReceiveTeleport's g_MuHelper.TriggerStop() does on every move (bug #51,
+        // 2026-10-21: "it remains active when switching maps"); its spot is on the floor left.
+        // Following a quest, the travel is its own.
+        if (world_.played().isOpen() && world_.played().takeLanding() && helper_.on() &&
+            !desk_.helperSettings().quest) {
+            helper_.stop("You left the map");
+            world_.played().notice("Helper stopped.", false);
+        }
         // A scripted press on the world (--ui-click) counts as his own click.
         if (helper_.on() && (ctx.autoQuest >= 0 || (!windowed && (mouseLeft || mouseRight || uiPress)))) {
             helper_.stop();
