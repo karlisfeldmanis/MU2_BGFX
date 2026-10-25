@@ -271,9 +271,11 @@ bool Realm::throughGate(Body& hero) {
         say(What::Barred, hero, gate->number, moveLevel(gate->level, hero.kin));
         return false;
     }
-    // And Icarus's: Barred with level -1 is the drawing's "wings or a Dinorant".
+    // And Icarus's: Barred with level -1 is the drawing's "wings or a Dinorant", -2 its "a
+    // Uniria cannot fly" (2026-10-25, dong on Discord, on a Uniria without wings: "Why I can't
+    // get in").
     if (gate->fly && !canFly(*tables_, me().bag)) {
-        say(What::Barred, hero, gate->number, -1);
+        say(What::Barred, hero, gate->number, ridesUniria(*tables_, me().bag) ? -2 : -1);
         return false;
     }
     return passGate(hero, *gate);

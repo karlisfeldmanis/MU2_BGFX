@@ -88,12 +88,19 @@ int defenseBonus(bool shield, int refinement) {
     return shield ? at(kShieldDefense, refinement) : at(kArmourDefense, refinement);
 }
 
+bool ridesUniria(const content::Tables& tables, const Satchel& bag) {
+    const Held& mount = bag[kMount];
+    if (mount.empty() || size_t(mount.item) >= tables.items.size()) return false;
+    const content::ItemRow& ridden = tables.items[size_t(mount.item)];
+    return ridden.group == kGroupPets && ridden.number == 2;
+}
+
 bool canFly(const content::Tables& tables, const Satchel& bag) {
     const Held& mount = bag[kMount];
     const content::ItemRow* ridden =
         !mount.empty() && size_t(mount.item) < tables.items.size() ? &tables.items[size_t(mount.item)]
                                                                      : nullptr;
-    if (ridden != nullptr && ridden->group == kGroupPets && ridden->number == 2) return false;
+    if (ridesUniria(tables, bag)) return false;
     if (!bag[kWings].empty()) return true;
     return ridden != nullptr && ridden->group == kGroupPets && ridden->number == 3 &&
            mount.durability > 0;

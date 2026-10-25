@@ -1495,6 +1495,8 @@ inline bool rideMap(uint32_t) { return true; }
 // NewUIMyInventory.cpp:351-354). Its manifest's `rules.flight`.
 constexpr uint32_t kIcarusMap = 10;
 bool canFly(const content::Tables& tables, const Satchel& bag);
+// The Horn of Uniria in the mount slot: the one thing that grounds him even with wings on.
+bool ridesUniria(const content::Tables& tables, const Satchel& bag);
 // **Blood Castle's ticket** (docs/worlds/blood-castle-port.md, Part A 2.2): the Scroll of Archangel
 // (13, 16) and the Blood Bone (13, 17) of one level make the Invisibility Cloak (13, 18) of that
 // level in the Chaos Machine. The level is the castle's, carried in the refinement.
