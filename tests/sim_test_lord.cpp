@@ -1,5 +1,6 @@
 // The Dark Lord (docs/plans/dark-lord.md): his fifth stat, Command, on the hero, through Spend,
 // a points reset and a character's bytes. Run from tests/sim_test.cpp's main.
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <string>
@@ -949,5 +950,28 @@ void testDarkLord(void (*check)(bool, const char*), void (*checkEqual)(long long
             }
         }
         checkEqual(upgraded, 0, "no quest pays a weapon, piece or shield above +0");
+    }
+    // **No class is paid the same weapon or piece twice** (the user, 2026-10-25: "check if there is
+    // no dublicated rewards for same class ... for weapons and armors"): over every quest's first
+    // clear, its own and every class's rows; Sevina's class change is one class's alone and apart.
+    {
+        int twice = 0;
+        for (int kin = 0; kin < sim::kKinCount; ++kin) {
+            std::vector<std::string> seen;
+            for (int q = 0; q < sim::kQuests; ++q) {
+                const sim::QuestRow& row = sim::questAt(q);
+                if (q == sim::kSevinaTrial || row.promotes) continue;
+                for (int p = 0; p < row.paidCount + row.choiceCount; ++p) {
+                    const sim::QuestItem& what = p < row.paidCount ? row.paid[p] : row.choices[p - row.paidCount];
+                    const int32_t at = what.item ? lorencia.itemNamed(what.item) : -1;
+                    if (at < 0 || lorencia.items[size_t(at)].group > 11 || !what.firstOnly) continue;
+                    if (what.kin != kin && what.kin >= 0) continue;
+                    const std::string name = what.item;
+                    twice += std::find(seen.begin(), seen.end(), name) != seen.end() ? 1 : 0;
+                    seen.push_back(name);
+                }
+            }
+        }
+        checkEqual(twice, 0, "no class is paid the same weapon or piece twice");
     }
 }

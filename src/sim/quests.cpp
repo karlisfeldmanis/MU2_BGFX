@@ -912,10 +912,10 @@ QuestRow tersiaFifth() {
                                  .firstOnly = true};  // Dragon Shield
     row.paid[row.paidCount++] = {.item = "Shield22", .kin = int8_t(Kin::DarkLord), .sockets = 1,
                                  .firstOnly = true};  // Cross Shield
-    // The wizard's Legendary Shield again, raised to +5 with two sockets over Devias's, as the
-    // weapons climb by their plus where no better one is built (2026-10-09).
-    row.paid[row.paidCount++] = {.item = "Shield15", .kin = wizard, .sockets = 2,
-                                 .firstOnly = true};  // Legendary Shield
+    // The wizard's Ring of Ice, as the elf's: he has no shield past Devin's Legendary Shield
+    // before Sevina's Grand Soul Shield. It was that Legendary Shield again at +5 until every
+    // reward came +0 (the user, 2026-10-25), which left it a second copy.
+    row.paid[row.paidCount++] = {.item = "Ring01", .kin = wizard, .sockets = 1, .firstOnly = true};
     row.paid[row.paidCount++] = {.item = "Ring01", .kin = elf, .sockets = 1, .firstOnly = true};
     row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Renewal),
                                  .firstOnly = true};
@@ -1192,8 +1192,8 @@ QuestRow tersiaPhoenix() {
                                  .firstOnly = true};  // Dark Breaker
     row.paid[row.paidCount++] = {.item = "Mace16", .kin = int8_t(Kin::DarkLord), .sockets = 3,
                                  .firstOnly = true};  // Shining Scepter
-    row.paid[row.paidCount++] = {.item = "Staff10", .kin = wizard, .sockets = 3,
-                                 .firstOnly = true};  // Dragon Soul Staff
+    row.paid[row.paidCount++] = {.item = "Staff32", .kin = wizard, .sockets = 3,
+                                 .firstOnly = true};  // Imperial Staff, past the Legion's Platina
     row.paid[row.paidCount++] = {.item = "Bow18", .kin = elf, .sockets = 3,
                                  .firstOnly = true};  // Celestial Bow
     row.paid[row.paidCount++] = {.item = "HelmMale18", .kin = knight, .sockets = 1,
@@ -1554,10 +1554,12 @@ QuestRow lirienHalls() {
                      .firstOnly = true};  // Crescent Axe
     row.paid[n++] = {.item = "Mace10", .kin = int8_t(Kin::DarkLord), .sockets = 2,
                      .firstOnly = true};  // Master Scepter
-    // The wizard's was the Staff of Resurrection until 2026-10-21, which Kantur's Legion pays at
-    // +7 (the user: "we are giving staff of resorection 2 times"): the Legendary Staff, one hand.
-    row.paid[n++] = {.item = "Staff06", .kin = wizard, .sockets = 2,
-                     .firstOnly = true};  // Legendary Staff
+    // The wizard's Staff of Resurrection, one hand, the step past Devin's Legendary Staff. It was
+    // the Legendary Staff again from 2026-10-21 (the user: "we are giving staff of resorection 2
+    // times"); since 2026-10-25 Kantur's Legion pays the Platina Staff instead (the user: "check
+    // if there is no dublicated rewards for same class").
+    row.paid[n++] = {.item = "Staff07", .kin = wizard, .sockets = 2,
+                     .firstOnly = true};  // Staff of Resurrection
     row.paid[n++] = {.item = "CrossBow07", .kin = elf, .sockets = 2,
                      .firstOnly = true};  // Aquagold Crossbow
     row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Twister),
@@ -1742,8 +1744,8 @@ QuestRow kantursLegion() {
                      .firstOnly = true, .rank = Rank::First};  // Crystal Sword
     row.paid[n++] = {.item = "Mace11", .kin = int8_t(Kin::DarkLord), .sockets = 3,
                      .firstOnly = true};  // Great Scepter
-    row.paid[n++] = {.item = "Staff07", .kin = wizard, .sockets = 3,
-                     .firstOnly = true, .rank = Rank::First};  // Staff of Resurrection
+    row.paid[n++] = {.item = "Staff09", .kin = wizard, .sockets = 3,
+                     .firstOnly = true, .rank = Rank::First};  // Staff of Destruction, past Lirien's Resurrection
     row.paid[n++] = {.item = "CrossBow17", .kin = elf, .sockets = 3,
                      .firstOnly = true, .rank = Rank::First};  // Saint Crossbow
     row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Burn),

@@ -15949,7 +15949,10 @@ void testQuestLadder(const content::Tables& tables) {
     }
     // The knight's and the wizard's weapons one-handed, so Defense and Magic Shield keep their
     // shield (the user, 2026-10-09): "only point to give good two-handers when chars has rune for
-    // using defense auras without shields" -- the Blade Knight's Dark Breaker, paid with Bulwark.
+    // using defense auras without shields" -- the Blade Knight's Dark Breaker, paid with Bulwark,
+    // and the wizard's Staff of Destruction at Kantur's Legion, after Lirien's Buckler: past the
+    // Staff of Resurrection a first-class wizard has no one-handed staff left (the user, 2026-10-25,
+    // picked it over a duplicate or jewels).
     int twoHanders = 0;
     for (int kin : {int(sim::Kin::DarkKnight), int(sim::Kin::DarkWizard)}) {
         for (int q = 0; q < sim::kQuests; ++q) {
@@ -15963,13 +15966,13 @@ void testQuestLadder(const content::Tables& tables) {
                 if (!one.weapon() || !one.twoHanded()) continue;
                 // The knight's two-handers come beside his one-hander (the user, 2026-10-22).
                 if (kin == int(sim::Kin::DarkKnight) && one.name != "Sword18") continue;
-                const bool allowed = one.name == "Sword18";
+                const bool allowed = one.name == "Sword18" || one.name == "Staff09";
                 check(allowed, "a wizard's quest weapon is one-handed");
                 ++twoHanders;
             }
         }
     }
-    checkEqual(twoHanders, 1, "the one unpaired two-hander is the Dark Breaker");
+    checkEqual(twoHanders, 2, "the unpaired two-handers are the Dark Breaker and the Staff of Destruction");
     // And the Dark Breaker comes with the rune that keeps his guard without a shield.
     bool bulwark = false;
     const sim::QuestRow& phoenix = sim::questAt(sim::kPhoenixContract);
