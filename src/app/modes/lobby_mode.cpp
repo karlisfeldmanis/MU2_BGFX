@@ -439,6 +439,10 @@ void LobbyMode::frame(Context& ctx, const Frame& at) {
         pointer.y = py = c.y * h;
         pointer.pressed = pointer.released = pointer.held = true;
     }
+    // And --ui-type F:enter, its Enter: the create window's Create, or Enter World (2026-10-25,
+    // a kit character made on a test server without a hand).
+    bool entered = ctx.window.entered();
+    for (const auto& [frame, text] : args.uiTyped) entered = entered || (at.index == frame && text == "enter");
     game::panel::setScreen(h);
 
     const auto play = [&](int handle) {
@@ -478,7 +482,7 @@ void LobbyMode::frame(Context& ctx, const Frame& at) {
     game::Lobby::Result asked;
     if (!menuWasUp && hands) {
         lobby_.update(seconds, w, h, pointer, ctx.window.typed(), ctx.window.backspaces(),
-                      ctx.window.entered(), ctx.window.escaped(), look, &asked);
+                      entered, ctx.window.escaped(), look, &asked);
     } else {
         lobby_.update(seconds, w, h, game::Pointer{}, "", 0, false, false, look, nullptr);
     }
