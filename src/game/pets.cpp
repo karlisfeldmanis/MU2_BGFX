@@ -190,6 +190,11 @@ void Pets::ride(float seconds, const Figure& hero, int worn, bool riding, int ac
     // four-action model lacks (ZzzAI.cpp:424).
     const int clip = mount->library ? mount->library->find(action) : -1;
     if (clip >= 0) horse_.play(clip, false, -1.0f);
+    // **The Dark Horse's gallop and idle on a curve through MU's keys** (Figure::smoothKeys; ours,
+    // 2026-10-25, the user: "mayeb we can even more better?"): seven keys a stride, and on
+    // straight lines between them the legs' speed jumps at every key. Its kick is held, and a
+    // held clip stays linear, so the blow keeps its snap. Uniria and the dragon as MU draws them.
+    horse_.smoothKeys(mounted_ == 4);
     horse_.update(seconds);
     // And in step with him. MU runs the two on two clocks at one rate, and its run ride and the
     // horse's leap are both 7 keys at 0.34, so they hold together there; drawn here they part
