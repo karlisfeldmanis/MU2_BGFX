@@ -34,6 +34,16 @@ float staffRise(int magicPower, int refinement) {
     return float(magicPower) / 2.0f + float(magicPower % 2 == 0 ? kRiseEven[at] : kRiseOdd[at]);
 }
 
+// Refine.ScepterRise: a scepter's own two tables (Weapons.cs:38-39), the Dark Raven's rise.
+constexpr int kScepterEven[] = {0, 1, 3, 4, 6, 7, 9, 10, 12, 13, 15, 18, 21, 24, 28, 33};
+constexpr int kScepterOdd[] = {0, 2, 3, 5, 6, 8, 9, 11, 12, 14, 16, 18, 21, 25, 29, 33};
+
+float scepterRise(int magicPower, int refinement) {
+    const int at = refinement < 0 ? 0 : (refinement > 15 ? 15 : refinement);
+    return float(magicPower) / 2.0f +
+           float(magicPower % 2 == 0 ? kScepterEven[at] : kScepterOdd[at]);
+}
+
 std::string label(const content::ItemRow& row, int refinement) {
     return refinement > 0 ? row.label + " +" + std::to_string(refinement) : row.label;
 }
@@ -93,7 +103,7 @@ std::string kindOf(const content::ItemRow& row) {
 float swingOf(const content::ItemRow& row, const sim::Held& held) {
     if (!row.weapon() || sim::ammunition(row) || row.maximumDamage <= 0) return 0.0f;
     int bonus = sim::damageBonus(held.refinement);
-    if (row.magicPower == 0) bonus += sim::optionValue(row, held.option);
+    if (!sim::staffPower(row)) bonus += sim::optionValue(row, held.option);
     if (held.excellent != 0) bonus += sim::excellentDamage(row);
     return float(row.minimumDamage + row.maximumDamage + 2 * bonus) / 2.0f;
 }
@@ -496,10 +506,14 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     // A staff's magic power, the one line MU prints for it, and the percentage it comes to --
     // MU2's addition, marked there as the project's, because it is what a wizard chooses on.
     float rise = 0.0f;
-    if (row.magicPower > 0) {
+    if (sim::staffPower(row)) {
         rise = staffRise(row.magicPower, plus);
         does.rows.push_back(stat("Magic power", std::to_string(row.magicPower), Tone::White));
         does.rows.push_back(stat("Wizardry damage", "+" + decimal(rise) + "%", lifted));
+    } else if (sim::scepter(row) && row.magicPower > 0) {
+        // A scepter's power is the raven's, in blue as MU prints it (ZzzInventory.cpp:5051-5056).
+        const float raven = scepterRise(row.magicPower, plus);
+        does.rows.push_back(stat("Dark Raven damage", "+" + decimal(raven) + "%", Tone::Blue));
     }
     // The row's own line: what the thing does, for the six rows no column speaks for -- the
     // Ale, the Antidote, the Town Portal Scroll, and the three jewels, whose sentences are
@@ -878,7 +892,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             } else if (sim::jewellery(row)) rolled("", "Automatic HP recovery +" + value + "%");
             else if (row.shield()) rolled("", "Additional defense rate +" + value);
             else if (row.armour()) rolled("", "Additional defense +" + value);
-            else if (row.magicPower > 0) rolled("", "Additional Wizardry Dmg +" + value);
+            else if (sim::staffPower(row)) rolled("", "Additional Wizardry Dmg +" + value);
             else rolled("", "Additional Dmg +" + value);
         }
         // A 2nd wing's extras in MuMain's words (GT 740-742, docs/reference/mu-tooltip-lines.md), its
@@ -1307,7 +1321,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         const content::ItemRow& theirs = tables.items[size_t(on.item)];
         const float mine = swingOf(row, what), hisDamage = swingOf(theirs, on);
         const float ours = float(armourOf(row, what)), hisDefense = float(armourOf(theirs, on));
-        const float hisRise = theirs.magicPower > 0 ? staffRise(theirs.magicPower, on.refinement)
+        const float hisRise = sim::staffPower(theirs) ? staffRise(theirs.magicPower, on.refinement)
                                                     : 0.0f;
         const auto by = [](float ours, float his, const char* unit, std::string& delta, int& way) {
             const float d = ours - his;

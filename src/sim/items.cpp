@@ -156,6 +156,8 @@ bool darkHorse(const content::ItemRow& row) {
     return row.group == kGroupPets && row.number == kDarkHorseNumber;
 }
 
+bool scepter(const content::ItemRow& row) { return row.group == 2 && row.skill == skill::kForceWave; }
+
 int horseDefense(int agility) { return 5 + agility / 20 + 2 * kHorseLevel; }
 
 bool timedPet(const content::ItemRow& row) {
@@ -440,8 +442,8 @@ std::string excellentLine(const content::ItemRow& row, int bit) {
         "Excellent damage chance +20%",
     };
     if (row.armour() || row.shield() || ring(row)) return kDefense[bit];
-    return row.magicPower > 0 || elementOf(row) == Element::Lightning ? kWizardry[bit]
-                                                                      : kAttack[bit];
+    return staffPower(row) || elementOf(row) == Element::Lightning ? kWizardry[bit]
+                                                                    : kAttack[bit];
 }
 
 bool firstWing(const content::ItemRow& row) { return row.group == 12 && row.number <= 2; }

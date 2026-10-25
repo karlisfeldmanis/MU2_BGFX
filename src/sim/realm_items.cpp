@@ -331,8 +331,9 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
     // A raider shoots without a quiver (realm_raid.cpp); the quiver read is the hero's bag.
     hero.quiverPlus = hero.raider >= 0 ? 0 : int8_t(quiverPlusOf(hero));
     // The additional option on the weapon adds to both ends of the band, as Stats.PhysicalBaseDmg
-    // does, and wears with it. A staff's is wizardry damage, which nothing here reckons yet.
-    if (weaponSlot >= 0 && rowAt(weaponSlot)->magicPower == 0) {
+    // does, and wears with it. A staff's is wizardry damage, which nothing here reckons yet; a
+    // scepter's is a mace's (sim::scepter).
+    if (weaponSlot >= 0 && !staffPower(*rowAt(weaponSlot))) {
         hero.weaponBonus += optionValue(*rowAt(weaponSlot), kit[weaponSlot].option);
     }
     // A staff's rise: half its magic power, and its plus off one of two tables by whether that
@@ -341,7 +342,7 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
     // it. Its additional option and its excellent 4 and 5 are wizardry damage too and are not
     // reckoned yet; the remarks below still say so.
     hero.staffRise = 0.0f;
-    if (weaponSlot >= 0 && rowAt(weaponSlot)->magicPower > 0) {
+    if (weaponSlot >= 0 && staffPower(*rowAt(weaponSlot))) {
         static const float kEven[16] = {0, 3, 7, 10, 14, 17, 21, 24, 28, 31, 35, 40, 45, 50, 56, 63};
         static const float kOdd[16] = {0, 4, 7, 11, 14, 18, 21, 25, 28, 32, 36, 40, 45, 51, 57, 63};
         const int power = rowAt(weaponSlot)->magicPower;
@@ -389,7 +390,7 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
             if (has(2)) e.speed += 14;
             // A staff's 4 and 5 are wizardry damage, which nothing here reckons yet, and the
             // Pendant of Lightning's are the staff's.
-            const bool wizardry = row->magicPower > 0 || elementOf(*row) == Element::Lightning;
+            const bool wizardry = staffPower(*row) || elementOf(*row) == Element::Lightning;
             if (has(3) && !wizardry) e.damageRate *= 1.04;
             if (has(4) && !wizardry) ++e.levelPieces;
             if (has(5)) e.excellentChance += 0.2;

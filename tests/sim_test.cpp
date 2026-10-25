@@ -12565,6 +12565,32 @@ void testDinorant(const content::Tables& tables) {
 
 // The Dark Horse (13/4, docs/game/mount.md): the Dark Lord's mount, at WebZen's rules and a
 // horse's level 1 (sim::kHorseLevel). Refused to the other classes and below 220.
+// A scepter is a mace, not a staff: its option and its excellent 4 and 5 are a mace's, and its
+// magic power is the Dark Raven's (OpenMU Weapons.cs:400-423, MuMain IsCepterItem).
+void testScepter(const content::Tables& tables) {
+    std::printf("the scepter\n");
+    const int battle = tables.itemAt(2, 8), frost = tables.itemAt(2, 16), life = tables.itemAt(14, 16);
+    check(battle >= 0 && frost >= 0 && life >= 0, "the Battle Scepter, the Frost Mace and a Life");
+    if (battle < 0 || frost < 0 || life < 0) return;
+    const content::ItemRow& row = tables.items[size_t(battle)];
+    check(row.magicPower > 0, "the Battle Scepter has magic power");
+    check(sim::scepter(row) && !sim::staffPower(row), "and is a scepter, not a staff");
+    check(!sim::scepter(tables.items[size_t(frost)]), "the Frost Mace is no scepter");
+    const int staff = tables.itemAt(5, 0);
+    if (staff >= 0) check(sim::staffPower(tables.items[size_t(staff)]), "a staff's power is a staff's");
+    check(sim::excellentLine(row, 3) == "Damage +4%", "its excellent 4 is a mace's");
+
+    sim::Realm armed;
+    check(armed.raise(&tables, 12, 138, 124, sim::Kin::DarkLord, 100), "a lord raises");
+    check(armed.equip(tables.armNamed("Mace09"), -1, true), "a Battle Scepter in his hand");
+    checkEqual(double(armed.hero().staffRise), 0.0, "it gives him no staff's rise");
+    const int bonusBefore = armed.hero().weaponBonus;
+    check(armed.refine(armed.give(life), sim::kWeaponRight), "a Life goes on it");
+    const int option = armed.satchel()[sim::kWeaponRight].option;
+    checkEqual(armed.hero().weaponBonus, bonusBefore + sim::optionValue(row, option),
+               "and its option is damage, as a mace's");
+}
+
 void testDarkHorse(const content::Tables& tables) {
     std::printf("the dark horse\n");
     const int horn = tables.itemAt(13, 4);
@@ -15942,6 +15968,7 @@ int main() {
     testMount(tables);
     testDinorant(tables);
     testDarkHorse(tables);
+    testScepter(tables);
     testFireBreath(tables);
     testPoisonOnce();
     testWishDropsOnWalk(tables);

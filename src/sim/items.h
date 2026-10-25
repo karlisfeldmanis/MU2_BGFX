@@ -146,6 +146,13 @@ PetPower petPower(const content::ItemRow& row);
 constexpr int kDarkHorseNumber = 4;
 constexpr int kHorseLevel = 1;
 bool darkHorse(const content::ItemRow& row);
+// **A scepter**: a mace carrying Force Wave, the Dark Lord's own (MU 2/8-2/15 and 2/17). Its magic
+// power is not a staff's: it takes the physical options as any mace, and its power is the Dark
+// Raven's rise (OpenMU Weapons.cs:400-423, `darkLordClass > 0`; WebZen DarkSpirit.cpp:1720-1745;
+// MuMain IsCepterItem, ZzzInfomation.cpp:457), which nothing reckons until the raven comes.
+bool scepter(const content::ItemRow& row);
+// A staff's magic power: what the wizardry band reads, nought on a scepter.
+inline bool staffPower(const content::ItemRow& row) { return row.magicPower > 0 && !scepter(row); }
 // What it adds to the rider's defence while it has life: 5 + Agility/20 + 2 a level, the whole
 // of his agility (WebZen ObjCalCharacter.cpp:1082-1090, `Dexterity` there).
 int horseDefense(int agility);
