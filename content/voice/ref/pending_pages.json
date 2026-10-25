@@ -18,5 +18,11 @@
     "again": [
       "Again the weight. Again the light. Kneel."
     ]
+  },
+  "elpis_relics": {
+    "trip": [
+      "You have walked the far road, and the door knows you now.",
+      "The old refiners' lift still answers me. I can send you down to the Relics, past the Ruins and their beasts. Shall I?"
+    ]
   }
 }

@@ -604,7 +604,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         // their page says, so theirs is the dialog's clip.
         const int page = questDialog_.page();
         std::string voiced;
-        if (gating || angeling) {
+        if (gating || angeling || !questDialog_.clip().empty()) {
             voiced = questDialog_.clip();
         } else if (page >= 0 && !reading) {
             static const char* const kPage[4] = {"offer", "underway", "handin", "resting"};

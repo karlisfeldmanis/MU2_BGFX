@@ -385,7 +385,10 @@ def main():
     from chatterbox.tts import ChatterboxTTS
 
     # A chain's links share their giver's voice: golden_archer_2 reads as golden_archer.
-    how = VOICES.get(args.voice) or VOICES[re.sub(r"_\d+$", "", args.voice)]
+    # A giver's own page set by his voice's name and what it is for, elpis_relics (her trip into
+    # the Relics, game/ui/quest_dialog.cpp), reads in his voice as elpis_1 does.
+    how = (VOICES.get(args.voice) or VOICES.get(re.sub(r"_\d+$", "", args.voice))
+           or VOICES[args.voice.split("_")[0]])
     model = ChatterboxTTS.from_pretrained(device=args.device)
     out = P.CONTENT / "voice" / args.voice
     out.mkdir(parents=True, exist_ok=True)

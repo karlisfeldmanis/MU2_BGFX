@@ -49,6 +49,15 @@ constexpr float kButtonW = 120.0f, kButtonWide = 180.0f;
 constexpr uint32_t kZenGold = gfx::rgba(1.0f, 0.8f, 0.102f);
 constexpr uint32_t kItemWhite = gfx::rgba(1.0f, 1.0f, 1.0f);
 
+// Elpis's words on her trip's page (Mode::Trip), as content/voice/ref/pending_pages.json reads
+// them aloud (elpis_relics): the Relics past the Ruins, for a hero who has walked the far road
+// (the user, 2026-10-25: "we need vocie also for Elpis which allow to go there to skip ruins").
+constexpr const char* kRelicsTrip[] = {
+    "\"You have walked the far road, and the door knows you now.\"",
+    "\"The old refiners' lift still answers me. I can send you down to the Relics, past the "
+    "Ruins and their beasts. Shall I?\"",
+};
+
 // A giver's list (kList): a row a quest, its mark at the left and its state ranged right.
 constexpr float kEntry = 34.0f;
 constexpr uint32_t kRepeatBlue = gfx::rgba(0.56f, 0.80f, 1.0f);  // beacon.cpp's kLitAgain
@@ -222,7 +231,7 @@ bool QuestDialog::Drawn::operator==(const Drawn& o) const {
         overThumb != o.overThumb || dragging != o.dragging || version != o.version ||
         minutesLeft != o.minutesLeft || picture != o.picture || reading != o.reading ||
         pageAt != o.pageAt || pages != o.pages || turn != o.turn || level != o.level ||
-        listed != o.listed) {
+        listed != o.listed || trip != o.trip) {
         return false;
     }
     for (int i = 0; i < 6; ++i) {
@@ -355,6 +364,14 @@ void QuestDialog::layout(const Play& play) {
             break;
         case Mode::List:
             break;  // the rows are the whole of it
+        case Mode::Trip:
+            // Elpis's, the one trip a giver keeps (sim::TravelRow::keeper), in her voice
+            // (content/voice/ref/pending_pages.json, elpis_relics).
+            if (trip_ >= 0 && sim::travelAt(trip_).keeper == sim::kElpisNumber) {
+                for (const char* one : kRelicsTrip) words(one);
+                clip_ = "voice/elpis_relics/elpis_relics_trip.wav";
+            }
+            break;
         case Mode::Gate: {
             const std::string said = charon_ ? squareWords(squareWhy_, castle_) : gateWords(why_, castle_);
             words(said.c_str());
@@ -619,6 +636,7 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
         chosen_ = -1;
         path_ = sim::QuestPath::Melee;
         over_ = pressing_ = -1;
+        trip_ = -1;
         scroll_ = 0.0f;
         lift_[0] = lift_[1] = lift_[2] = 0.0f;
     }
@@ -657,6 +675,7 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
                 }
             }
         }
+        if (trip_ >= 0) mode = Mode::Trip;
     } else if (angel) {
         mode = Mode::Angel;
         angel_ = realm.angelState();
@@ -750,7 +769,8 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
                             // nothing happened').
                             (mode_ == Mode::Angel && angel_ != sim::AngelState::Ready &&
                              angel_ != sim::AngelState::Done) ||
-                            (mode_ == Mode::Offer && underLevel_);
+                            (mode_ == Mode::Offer && underLevel_) ||
+                            (mode_ == Mode::Trip && realm.travelRefusal(trip_) != sim::TravelRefusal::None);
 
     int over = dragging_ ? -1 : buttonAt(ux, uy);
     if (over < 0 && !dragging_) {
@@ -760,7 +780,7 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
         // too (the user, 2026-10-07: 'dont allow to open quest and read text/listen which
         // character is under lvl').
         if (const int entry = entryAt(ux, uy);
-            entry >= 0 && !realm.questUnderLevel(entries_[size_t(entry)].quest)) {
+            entry >= 0 && (entries_[size_t(entry)].trip >= 0 || !realm.questUnderLevel(entries_[size_t(entry)].quest))) {
             over = 20 + entry;
         }
         if (const int path = pathAt(ux, uy); path >= 0 && !reading_) over = 30 + path;
@@ -774,15 +794,16 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
     if (pointer.pressed && !dragging_) pressing_ = over_;
     bool primary = enter && !primaryOff && !reading_ &&
                    (mode_ == Mode::Offer || mode_ == Mode::HandIn || mode_ == Mode::Gate ||
-                    mode_ == Mode::Angel);
+                    mode_ == Mode::Angel || mode_ == Mode::Trip);
     bool cancel = escape;
     bool chose = false;
     bool back = false;
-    int pick = -1, trip = -1;
+    int pick = -1;
     int turn = 0;
     if (pointer.released) {
         if (pressing_ >= 0 && pressing_ == over_) {
             if (pressing_ == 0 && !primaryOff && !reading_) primary = true;
+            else if (pressing_ == 1 && mode_ == Mode::Trip) trip_ = -1;  // Back, to her list
             else if (pressing_ == 1 && listed_) back = true;
             else if (pressing_ == 1 || pressing_ == 2) cancel = true;
             else if (pressing_ >= 30) {
@@ -791,8 +812,12 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
             }
             else if (pressing_ >= 20) {
                 const Entry& one = entries_[size_t(pressing_ - 20)];
-                if (one.trip >= 0) trip = one.trip;
-                else pick = one.quest;
+                if (one.trip >= 0) {
+                    trip_ = one.trip;  // its page, her words, then Go
+                    scroll_ = 0.0f;
+                } else {
+                    pick = one.quest;
+                }
             }
             else if (pressing_ == 3) turn = -1;
             else if (pressing_ == 4) turn = 1;
@@ -815,7 +840,6 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
         out->turn = turn;
         out->pick = pick;
         out->back = back;
-        out->trip = trip;
         if (cancel) out->close = true;
         else if (primary && mode_ == Mode::Angel) {
             if (angel_ == sim::AngelState::Done) out->claim = true;
@@ -825,6 +849,10 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
             out->enter = true;
             out->square = charon_;
             out->castle = castle_;
+        }
+        else if (primary && mode_ == Mode::Trip) {
+            out->trip = trip_;
+            trip_ = -1;
         }
         else if (primary && mode_ == Mode::Offer) out->accept = true;
         else if (primary && mode_ == Mode::HandIn) {
@@ -864,6 +892,7 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
     now.reading = reading_;
     now.level = realm.hero().level;
     now.listed = listed_;
+    now.trip = trip_;
     for (size_t i = 0; i < entries_.size() && i < size_t(sim::kQuests); ++i) {
         if (entries_[i].trip >= 0) {
             now.entries[i] = -1 - entries_[i].trip * 16 - int(realm.travelRefusal(entries_[i].trip));
@@ -1013,6 +1042,12 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
                              state(1, false), u);
             controls::button(canvas_, placed(x, y, buttons_[0], u), "Give", controls::Kind::Primary,
                              state(0, angel_ != sim::AngelState::Ready), u);
+            break;
+        case Mode::Trip:
+            controls::button(canvas_, placed(x, y, buttons_[1], u), "Back", controls::Kind::Secondary,
+                             state(1, false), u);
+            controls::button(canvas_, placed(x, y, buttons_[0], u), "Go", controls::Kind::Primary,
+                             state(0, realm.travelRefusal(trip_) != sim::TravelRefusal::None), u);
             break;
         case Mode::HandIn:
             controls::button(canvas_, placed(x, y, buttons_[0], u), "Complete quest",

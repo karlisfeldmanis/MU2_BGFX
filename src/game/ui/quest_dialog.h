@@ -99,7 +99,7 @@ public:
     // A stranger turned away is not voiced.
     int page() const {
         return quest_ >= 0 && mode_ != Mode::Stranger && mode_ != Mode::Gate &&
-                       mode_ != Mode::Angel && mode_ != Mode::List
+                       mode_ != Mode::Angel && mode_ != Mode::List && mode_ != Mode::Trip
                    ? int(mode_)
                    : -1;
     }
@@ -123,7 +123,8 @@ private:
     // Gate: the Messenger's page (kGate).
     // Angel: the Archangel's page (kArchangel).
     // List: a giver's quests (kList).
-    enum class Mode : uint8_t { Offer, Underway, HandIn, Resting, Stranger, Gate, Angel, List };
+    // Trip: a trip the giver keeps, opened from his list (Entry::trip): his words, Back and Go.
+    enum class Mode : uint8_t { Offer, Underway, HandIn, Resting, Stranger, Gate, Angel, List, Trip };
     static constexpr int kButtons = 5;
     struct Cell {
         int choice = -1;  // the row's choice index, or -1 for a paid item
@@ -194,6 +195,7 @@ private:
         int trip = -1;
     };
     std::vector<Entry> entries_;
+    int trip_ = -1;  // the trip's page up over the list (Mode::Trip), its travel row
     int32_t giver_ = -1;
     bool listed_ = false;
     bool underLevel_ = false;  // a quest's offer read below its QuestRow::minLevel: Accept dark
@@ -235,6 +237,7 @@ private:
         int entries[sim::kQuests] = {};
         int level = 0;
         bool listed = false;
+        int trip = -1;
         bool operator==(const Drawn& o) const;
     };
     Drawn drawn_;
