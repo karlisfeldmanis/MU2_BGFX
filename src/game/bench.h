@@ -111,6 +111,8 @@ public:
     int clipIndex() const;
     std::string clipName(size_t index) const;
     bool playClip(size_t index);
+    // And one by MU's own action number (--clip in the browser), false where it has none.
+    bool playAction(int action);
     // **After a cook** (the studio's swap, docs/plans/order-plan.md §9c F3; game/bench_reload.cpp):
     // the figure tables and the wardrobe read again from disk, the textures under them that
     // the cook rewrote forgotten first, the lists refilled, and the same tab, the same name

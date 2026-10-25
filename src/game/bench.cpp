@@ -575,6 +575,12 @@ bool ModelBench::playClip(size_t index) {
     return true;
 }
 
+bool ModelBench::playAction(int action) {
+    if (!haveFigure_ || !figure_.body() || !figure_.body()->library) return false;
+    const int index = figure_.body()->library->find(action);
+    return index >= 0 && playClip(size_t(index));
+}
+
 std::string ModelBench::browseName(size_t index) const {
     if (categories_.empty()) return std::string();
     const BrowseCategory& open = categories_[category_];

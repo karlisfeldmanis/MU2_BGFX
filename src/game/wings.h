@@ -78,6 +78,7 @@ private:
     // The Wings of Darkness's ten ribs: the bone a flare sits on and the one its bolt runs to.
     std::vector<std::pair<int, int>> ribs_;
     float clock_ = 0.0f;
+    float inward_ = 1.0f;  // how much of the 2nd wings' pull against the back: 0 in flight
     bool posed_ = false;
 };
 

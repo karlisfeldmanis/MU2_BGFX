@@ -107,6 +107,7 @@ bool BenchMode::open(Context& ctx) {
             bench_.showBearer(args.bearer);
             if (!args.category.empty()) bench_.openCategory(args.category, ctx.textures);
             if (!args.pick.empty()) bench_.pick(args.pick, ctx.textures);
+            if (args.clip >= 0) bench_.playAction(args.clip);
             core::logf("browser: %s", bench_.browseLine().c_str());
             core::Loading::stage("the shine", 0.96f, 1.0f);
         // The shine's sheets out of the showing, always: the Wings of Darkness draw their violet

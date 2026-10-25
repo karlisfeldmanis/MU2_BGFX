@@ -34,6 +34,12 @@ constexpr float kHeavenTone = 0.82f;
 // actual transparent so its very smooth'. Ours; MU's are opaque past the alpha.
 constexpr float kHeavenOpacity = 0.75f;
 constexpr WingInward kInward[] = {{"Wing04", 0.18f}, {"Wing05", 0.065f}, {"Wing06", 0.08f}};
+// And let go in flight: tuned on the stop fly, the pull rode Bone05 -- which hangs off Bip01
+// Spine, under the bend -- forward through the chest once PLAYER_FLY leans him over, the wing's
+// root in his shoulder and its membrane across his front (the user, 2026-10-25: 'when char moves
+// with 2nd wings, wings are very moved upfront almost broken'). MU's own (0, 0, 15) alone sits
+// on the back there. Eased over the body's crossfade, so the change of stance does not jump.
+constexpr float kInwardEase = 0.18f;  // seconds
 
 // The Wings of Darkness's sparks (ZzzObject.cpp:9981-10017). MuMain, every frame, for i 0-4: a
 // BITMAP_FLARE_BLUE at bone 22 - i and at bone 7 - i, Light (0.6, 0.3, 0.8), Scale/28 big, Scale
@@ -204,6 +210,7 @@ void WingLook::update(float seconds, bool flying, bool safe) {
         if (figure_.clip() != wanted) figure_.play(wanted, true, 0.2f);
     }
     figure_.update(seconds, flying ? kWingFlyRate : kWingRestRate);
+    inward_ += ((flying ? 0.0f : 1.0f) - inward_) * (1.0f - std::exp(-seconds / kInwardEase));
     clock_ += seconds;
 }
 
@@ -222,7 +229,7 @@ int WingLook::pose(const Figure& bearer, float* rows12) {
     // In the bone's own frame, moved along it by MU's offset, as the Imp is (game/pets.cpp).
     float offset[3] = {kWingOffset[0], kWingOffset[1], kWingOffset[2]};
     for (const WingInward& in : kInward) {
-        if (wing_->name == in.name) offset[2] += in.metres;
+        if (wing_->name == in.name) offset[2] += in.metres * inward_;
     }
     float local[16];
     content::placementTransform(0.0f, 0.0f, 0.0f, 1.0f, offset, local);
