@@ -1007,7 +1007,16 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     if (!does.rows.empty()) sheet.sections.push_back(does);
     // What the Jewel of Harmony can lay, by the kind of piece (the user, 2026-10-25: "can we show
     // what bonuses it will give also on tooltip?"): each option from its first level to the top,
-    // off the table the realm draws from (sim/harmony.h), and the plus it asks to be drawn.
+    // off the table the realm draws from (sim/harmony.h), and the plus it asks to be drawn. Only
+    // the kinds his class fights with ("we need that tooltips adapt to classes", then "By main
+    // weapon"): the wizard's staff, the elf's, knight's and lord's weapon, the gladiator's both;
+    // armour and shields for all. MU lets a wizard hold a Kris, which no wizard means to harmonise.
+    // The Armory's card (Wearer::anyClass) shows all three.
+    const auto wearsAny = [&](sim::HarmonyFamily family) {
+        if (who.anyClass || family == sim::HarmonyFamily::Defence) return true;
+        const bool wizard = who.kin == sim::Kin::DarkWizard, gladiator = who.kin == sim::Kin::MagicGladiator;
+        return family == sim::HarmonyFamily::Staff ? wizard || gladiator : !wizard;
+    };
     if (sim::jewelOfHarmony(row)) {
         constexpr struct {
             sim::HarmonyFamily family;
@@ -1016,6 +1025,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                          {sim::HarmonyFamily::Staff, "On a staff:"},
                          {sim::HarmonyFamily::Defence, "On armour or a shield:"}};
         for (const auto& family : kFamilies) {
+            if (!wearsAny(family.family)) continue;
             // An item card draws no kicker (tip.cpp), so the kind of piece is the block's first line.
             Section table;
             Row head;

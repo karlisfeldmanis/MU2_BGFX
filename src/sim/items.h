@@ -534,6 +534,9 @@ struct Wearer {
     bool inCastle = false;    // How many times he is reborn (Body::rebirths): once is enough to meet every rune's level
     // (runeLevelFor).
     int rebirths = 0;
+    // A card read for no one class: the Armory's. The Jewel of Harmony then lists every kind of
+    // piece's options, where a player's card lists those his class can wear.
+    bool anyClass = false;
 };
 // Whether this character may wear it at all: his class, and every requirement met.
 bool fits(const content::Tables& tables, const Wearer& who, const Held& what);

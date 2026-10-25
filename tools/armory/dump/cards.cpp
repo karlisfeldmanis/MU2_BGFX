@@ -248,7 +248,9 @@ J dumpCards(const Dump& d) {
         J card = J::obj();
         for (const State& s : states) {
             const sim::Wearer who = wearerFor(tables, s.held, s.met);
-            tip::Sheet sheet = describe(tables, s.held, who, bag);
+            sim::Wearer reader = who;
+            reader.anyClass = true;  // the Armory's card is every class's
+            tip::Sheet sheet = describe(tables, s.held, reader, bag);
             splitHint(tables, s.held, sheet);
             // The bag's "Sells for" strip (game/ui/bag.cpp): Realm::sellValue's sum.
             sim::Held sold = s.held;
