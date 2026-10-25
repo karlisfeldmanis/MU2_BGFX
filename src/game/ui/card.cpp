@@ -211,6 +211,22 @@ std::string tenths(double v) {
     return out;
 }
 
+// A figure to its tenth, unsigned: "3.5".
+std::string oneDecimal(double v) {
+    char out[24];
+    std::snprintf(out, sizeof out, "%.1f", v);
+    return out;
+}
+
+// His spells' speed as the realm casts them (Realm's clip for a spell, realm_skills.cpp):
+// MagicSpeed off agility, and the haste, Frenzy, the Ale and his casting talents on it. Printed
+// to a tenth so every point of agility shows (Bruno, Discord, 2026-10-25: "adding AGI is not
+// increasing Magic Speed"; a wizard's moved once in ten points).
+double spellSpeed(const sim::Body& hero, int agility, int64_t tick) {
+    return double(sim::magicSpeedStat(hero.kin, agility)) +
+           double(hero.castSpeed(tick) + int(hero.talentShare.castSpeed));
+}
+
 tip::Sheet statSheet(int stat, sim::Kin kin, const int totals[5]) {
     using sim::Kin;
     const bool knight = kin == Kin::DarkKnight, wizard = kin == Kin::DarkWizard;
@@ -373,10 +389,17 @@ Parts explain(const std::string& label, const sim::Body& hero, const sim::Realm*
         rest((long long)f.defenseRate - (long long)bare.defenseRate);
         p.note = "Against a monster's attack rate: how often its blows miss you.";
     } else if (label == "Attack speed" || label == "Magic speed") {
-        const int own = int(label == "Magic speed" ? sim::magicSpeedStat(kin, total.agility)
-                                                   : sim::attackSpeedStat(kin, total.agility, nullptr, nullptr));
-        add(agility, signedNumber(own));
-        if (realm) rest(realm->attackSpeed() - own);
+        if (label == "Magic speed") {
+            const double own = sim::magicSpeedStat(kin, total.agility);
+            add(agility, "+" + oneDecimal(own));
+            if (realm) rest(std::lround(spellSpeed(hero, total.agility, realm->tick()) - own));
+            p.note = "Casts your spells faster.";
+        } else {
+            const int own = int(sim::attackSpeedStat(kin, total.agility, nullptr, nullptr));
+            add(agility, signedNumber(own));
+            if (realm) rest(realm->attackSpeed() - own);
+            if (gladiator) p.note = "Your swings and knight skills faster.";
+        }
     } else if (label == "Life") {
         add(level + " and vitality", signedNumber(bareLife));
         rest(hero.maxHealth - bareLife);
@@ -472,8 +495,11 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
         const Line damage{"Damage", band(f.minimumDamage + f.offhandMinimumDamage,
                                          f.maximumDamage + f.offhandMaximumDamage)};
         const Line attackRate{"Attack rate", number((long long)f.attackRate)};
-        const Line speed{wizard ? "Magic speed" : "Attack speed",
-                         number(realm ? realm->attackSpeed() : 0)};
+        // A wizard's is his magic speed alone, as MuMain prints it; the Magic Gladiator has both,
+        // his sword and knight skills on the one and his spells on the other.
+        const Line speed{"Attack speed", number(realm ? realm->attackSpeed() : 0)};
+        const Line magicSpeed{"Magic speed",
+                              oneDecimal(spellSpeed(*hero, total.agility, realm ? realm->tick() : 0))};
         const Line defense{"Defense", number(f.defense)};
         const Line defenseRate{"Defense rate", number((long long)f.defenseRate)};
         const Line life{"Life", pair(hero->health, hero->maxHealth)};
@@ -492,7 +518,9 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
         // (CNewUICharacterInfoWindow::RenderTableTexts): damage and attack rate; defence, speed
         // and defence rate; life; mana and the class's own. The elf's blessings are ours.
         now_.lines[0] = {damage, attackRate};
-        now_.lines[1] = {defense, speed, defenseRate};
+        now_.lines[1] = wizard      ? std::vector<Line>{defense, magicSpeed, defenseRate}
+                        : gladiator ? std::vector<Line>{defense, speed, magicSpeed, defenseRate}
+                                    : std::vector<Line>{defense, speed, defenseRate};
         now_.lines[2] = {life, shield};
         if (wizard) now_.lines[3] = {wizardry, mana};
         if (knight) now_.lines[3] = {skill, mana};
@@ -520,7 +548,8 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
             const auto chance = [](std::vector<Line>& to, const char* label, double share) {
                 if (share > 0.0) to.push_back({label, percent(share)});
             };
-            Group attack{"Attack", {damage, attackRate, speed}};
+            Group attack{"Attack", {damage, attackRate, wizard ? magicSpeed : speed}};
+            if (gladiator) attack.lines.push_back(magicSpeed);
             if (wizard || gladiator) attack.lines.push_back(wizardry);
             if (knight || gladiator) attack.lines.push_back(skill);
             chance(attack.lines, "Critical chance", f.criticalChance);
@@ -833,6 +862,14 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
                     lightOne(line, f.defense, b.defense - a.defense, "");
                 } else if (l == "Defense rate") {
                     lightOne(line, (long long)f.defenseRate, (long long)b.defenseRate - (long long)a.defenseRate, "");
+                } else if (l == "Magic speed") {
+                    const double d = sim::magicSpeedStat(kin, p.totalsAfter.agility) -
+                                     sim::magicSpeedStat(kin, p.totalsBefore.agility);
+                    if (d > 0.0) {
+                        line.gain = "+" + oneDecimal(d);
+                        line.value = oneDecimal(spellSpeed(*hero, p.totalsAfter.agility, realm->tick()));
+                        line.lit = true;
+                    }
                 } else if (l == "Life") {
                     lightPool(line, hero->health, hero->maxHealth, p.lifeAfter - p.lifeBefore);
                 } else if (l == "Mana") {
