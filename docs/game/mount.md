@@ -228,3 +228,54 @@ Version075 stops at 13/2, and the Dinorant is 0.95d's. Every rule below is marke
   -- two nostril sprays, Fire03's blue-violet haze laid two a frame as it flies at the body at
   thirty units a frame, the ground lit cool blue, and DinoE's burst with SOUND_EXPLOTION01 where
   the blow lands. Icon off MuMain's sheet (cell 48). sim_test `testFireBreath`.
+
+# The third mount: the Dark Horse (13/4)
+
+Built 2026-10-25 on branch `darklord` (the user: "Build the horse"). **Not 0.75**: the Dark Lord's
+(0.99+). Rules from WebZen 1.00.93, the row from OpenMU's Season 6 initialiser, the drawing from
+MuMain. Earthshake (skill 62), which the horse carries, is not built yet
+(docs/plans/dark-lord-spells/earthshake.md).
+
+## What MU does
+
+- **Item** (OpenMU `VersionSeasonSix/Items/Pets.cs:66-73`): 13/4 "Dark Horse", slot 8, 1x1, Life
+  255, drop level 218, never dropped, the Dark Lord's alone (AllLords), levels 1-50. Bred at the
+  Pet Trainer from a Spirit (WebZen `MixSystem.cpp:3051-3245`), not built.
+- **Level asked**: 218 + 2 a horse level (WebZen `zzzitem.cpp:580-583`); born level 1 (:95).
+- **Defence** + 5 + Agility/20 + 2 a level while it has life, before the halving
+  (`ObjCalCharacter.cpp:1082-1090`, :1183).
+- **Each blow taken** costs the rider 1 life and is cut to `100 - (30 + level)/2` in a hundred:
+  85 at level 1, 60 at 50 (`ObjAttack.cpp:1345-1361`).
+- **Wear** (`user.cpp:10632-10650`): `damage x 2/10 / 10 + 1` a hit into a WORD tally, a point of
+  life each 1500. At 0 it is dead, kept for the Trainer to raise.
+- **Price** (`CItem::PetValue`): 2,000,000 a level, a third back.
+- **Speed**: MuMain 17 off a safe tile (`ZzzCharacter.cpp:6315-6318`), two over Uniria's 15.
+- **Drawn** (MuMain): `Skill/DarkHorse.bmd`, MODEL_DARK_HORSE, 13 meshes, 60 bones, 7 clips, the
+  13 dk* sheets; scale 1.0; it copies the rider's spot and angles (`GOBoid.cpp:323-336`). Its clip
+  off his (:338-428): 1 under PLAYER_RUN_RIDE_HORSE, 2 under the ride strikes 82-86, 3 under
+  Earthshake, 5/6 under the horse idles, else 0. Mesh 12 (dkneck2) again RENDER_CHROME |
+  RENDER_BRIGHT in gold (1, 0.8, 0.3), its own sheet (`ZzzObject.cpp:783-790`). Dust under the run
+  (rand_fps_check(2), white in Devias), its breath every third frame off bone 27 at (50, -4, 0),
+  a bubble in Atlans (:381-447); pHorseStep1-3 under the run (`ZzzCharacter.cpp:764-767`).
+  The horn, `Item/DarkHorseHorn.bmd`, is drawn again RENDER_BRIGHT | RENDER_CHROME in orange
+  (0.8, 0.4, 0.1) (`ZzzObject.cpp:7130-7135`).
+- **The rider** (player.muc's numbers, one under actions.json's labels): 78 stand, 79 run, armed or
+  not; 84 every swing; 82 Force, Force Wave, Fire Burst, Fire Scream; 83 Summon; 85 Electric
+  Spike; 86 Critical Damage; 87 Earthshake (WSclient.cpp, ClassAttack.cpp).
+
+## Done
+
+- **Models** `content/items/pets/DarkHorse` (the ridden figure, monster profile, baked so its gold
+  neck plate takes MU's chrome pass) and `DarkHorseHorn` (the bag item, the row). `chrome`'s new
+  `own` image: the slot's own sheet, for MU's passes with no image bound (pipeline/chrome_sheets.py).
+- **Sim**: `sim::darkHorse`, `placeOf` the mount's slot, `petPower` (the ride, x0.85 taken,
+  `takenToll` 1, `wearTally` 1500, `keeps`), `asks` 220, `horseDefense`, the price. The toll never
+  takes his last point (ours, as the Imp's). sim_test `testDarkHorse`.
+- **Ridden**: `game/pets.cpp` draws it as Uniria's horse; the rider's 78/79/84 and the lord's skill
+  clips (`lordHorseClip`); its breath (`Pets::breathe`, fx/snort.h, the world's bubbles in Atlans);
+  dust and hooves as Uniria's. Buff cell `buff_darkhorse`.
+- **Ours**: speed 16, Uniria's (kRideFactor), not MU's 17 -- the user found 17 too fast on Uniria.
+  Icarus still asks wings (0.97d's gObjMoveGate; the 2008 fix lets the horse in). Its level is 1
+  everywhere a level is read (`sim::kHorseLevel`), until pet levels are built.
+
+Test: `out/build/mu2 --arena "Giant" --class 4 --level 250 --spend-even --give DarkHorseHorn::W --mute`.

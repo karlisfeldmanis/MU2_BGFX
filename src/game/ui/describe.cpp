@@ -669,6 +669,21 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                 "% of Damage");
         }
         if (power.health > 0) say("Max HP +" + std::to_string(power.health) + " increased");
+        // The Dark Horse's: its level and its defence (MuMain GIPetManager.cpp:697-698; WebZen
+        // ObjCalCharacter.cpp:1082-1090, sim::horseDefense), off the reader's own agility and
+        // halved with the armour's as the character window shows it (:1183), and the life its
+        // cut asks of him (ObjAttack.cpp:1345-1361).
+        if (sim::darkHorse(row)) {
+            say("Level " + std::to_string(sim::kHorseLevel));
+            say("Defense +" + std::to_string(sim::horseDefense(who.totals.agility) / 2) + ", rising with Agility");
+        }
+        if (power.takenToll > 0) {
+            Row line;
+            line.free = "Life -" + std::to_string(power.takenToll) + " for each blow it absorbs";
+            line.freeTone = Tone::Red;
+            line.mark = tip::Mark::Diamond;
+            does.rows.push_back(line);
+        }
         // The Horn of Uniria. MuMain's card has only its Life; "Moving speed" is GT 68, the line
         // later mounts print (ZzzInventory.cpp:4081). Ours, so the card says what the horn is for.
         if (power.mount) {

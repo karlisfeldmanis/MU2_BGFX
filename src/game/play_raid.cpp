@@ -436,6 +436,23 @@ int Play::petNumber(const sim::Held& worn) const {
     return row.group == sim::kGroupPets ? row.number : -1;
 }
 
+bool Play::onDarkHorse(uint32_t id) const {
+    const sim::Body* body = realm_.find(id);
+    if (body == nullptr || !body->player || !body->riding) return false;
+    const sim::Satchel* bag = id == realm_.hero().id ? &realm_.satchel() : realm_.satchelOf(id);
+    return bag != nullptr && petNumber((*bag)[sim::kMount]) == sim::kDarkHorseNumber;
+}
+
+void Play::horseBreath(Pets& pets, float seconds) {
+    float at[3];
+    if (!pets.breathe(seconds, at)) return;
+    if (underwater_) {
+        if (breathBubbles_.size() < 64) breathBubbles_.push_back({at[0], at[1], at[2]});
+        return;
+    }
+    snort_.puff(at);
+}
+
 int Play::horseAction(const Drawn& rider, int mount) const {
     // A weapon's ride swing is 3, the run ride 2, anything else 0 -- a spell's PLAYER_RIDE_SKILL
     // included. And the dragon's own 6 under PLAYER_SKILL_RIDER, a knight's skill on it -- Fire
@@ -445,7 +462,8 @@ int Play::horseAction(const Drawn& rider, int mount) const {
     // Over Tarkan and Icarus he sits still on the flying dragon (Play::follow), so its flying on is
     // his going, not his clip.
     const sim::Body* body = realm_.find(rider.id);
-    const bool galloping = (look && clip >= 0 && (clip == look->rideRunClip || clip == look->rideRunArmedClip)) ||
+    const bool galloping = (look && clip >= 0 && (clip == look->rideRunClip || clip == look->rideRunArmedClip ||
+                                                   clip == look->horseRunClip)) ||
                            (flying_ && mount == 3 && body && body->walking);
     const sim::SkillRow* swung = rider.swingSkill != 0 ? sim::skillNumbered(rider.swingSkill) : nullptr;
     const bool riderSkill = mount == 3 && rider.swinging > 0.0f && swung != nullptr && !swung->wizardry &&
@@ -482,6 +500,7 @@ void Play::otherPets(float seconds) {
         Drawn& rider = drawn_[i];
         otherPets_[i].update(seconds, rider.figure, pet, body.alive());
         otherPets_[i].ride(seconds, rider.figure, mount, body.riding && body.alive(), horseAction(rider, mount));
+        horseBreath(otherPets_[i], seconds);
     }
 }
 

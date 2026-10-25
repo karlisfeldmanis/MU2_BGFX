@@ -971,12 +971,16 @@ void Play::update(double seconds) {
                         // solution to cast defense aura on DW while on mount').
                         // A spell, the wizard's row: the Magic Gladiator casts it as he does.
                         const bool wizard = row->kin == sim::Kin::DarkWizard;
+                        // On the Dark Horse every one of his has its own seated clip, his buffs
+                        // too (lordHorseClip).
+                        const bool horse = row->kin == sim::Kin::DarkLord && onDarkHorse(heroId);
                         if (happening.who == heroId && realm_.hero().riding && !row->arrows &&
-                            (!row->onSelf() || wizard)) {
+                            (!row->onSelf() || wizard || horse)) {
                             // The Dark Lord's strike skills have MU's own ride strike,
                             // PLAYER_ATTACK_RIDE_STRIKE (82; WSclient.cpp:4245-4248).
                             const int ridden = caster->figure.body()->library->find(
-                                wizard ? 155 : row->kin == sim::Kin::DarkLord ? 82 : 68);
+                                wizard ? 155 : horse ? lordHorseClip(row->number)
+                                       : row->kin == sim::Kin::DarkLord ? 82 : 68);
                             if (ridden >= 0) caster->castClip = ridden;
                         }
                     }
@@ -1775,9 +1779,12 @@ void Play::update(double seconds) {
                                 if (happening.who == realm_.hero().id && realm_.hero().riding &&
                                     row->arrows == 0) {
                                     // Impale has MU's own ride thrust, 70 (sim/skills.cpp).
+                                    const bool horse =
+                                        row->kin == sim::Kin::DarkLord && onDarkHorse(realm_.hero().id);
                                     const int ridden = swinger->figure.body()->library->find(
                                         row->kin == sim::Kin::DarkWizard     ? 155
                                         : row->number == sim::skill::kImpale ? 70
+                                        : horse                              ? lordHorseClip(row->number)
                                         : row->kin == sim::Kin::DarkLord     ? 82
                                                                              : 68);
                                     if (ridden >= 0) swinger->castClip = ridden;
@@ -1843,7 +1850,11 @@ void Play::update(double seconds) {
                         swinger->figure.body() && swinger->figure.body()->library &&
                         !twoHandedStance(swinger->figure.body()->stance)) {
                         const FigureBody* look = swinger->figure.body();
-                        const int ridden = look->library->find(rideSlotFor(look->stance));
+                        // On the Dark Horse, PLAYER_ATTACK_RIDE_HORSE_SWORD whatever he holds
+                        // (ZzzCharacter.cpp:1108-1111).
+                        const int ridden = onDarkHorse(happening.who) && look->horseSwingClip >= 0
+                                               ? look->horseSwingClip
+                                               : look->library->find(rideSlotFor(look->stance));
                         if (ridden >= 0) swing = ridden;
                     }
                     // On wings, a bow or crossbow shoots MU's fly shot: PLAYER_ATTACK_FLY_BOW 52
@@ -3449,6 +3460,7 @@ void Play::update(double seconds) {
             const bool galloping = action == 2;
             pets_.ride(float(seconds), hero->figure, mount,
                        realm_.hero().riding && realm_.hero().alive(), action);
+            horseBreath(pets_, float(seconds));
             if (pinning_ && pinned_.gallop >= 0.0f && realm_.hero().riding) {
                 pets_.setGallop(pinned_.gallop);
             }

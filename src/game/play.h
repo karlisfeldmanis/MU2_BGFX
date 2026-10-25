@@ -12,6 +12,7 @@
 // two are different jobs and the second one is the game.
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <deque>
 #include <string>
@@ -1882,6 +1883,25 @@ private:
     // The horse's clip off its rider's, as GOBoid picks it: 6 the dragon under a knight's skill,
     // 3 a swing, 2 riding on, else 0 (GOBoid.cpp:525-595).
     int horseAction(const Drawn& rider, int mount) const;
+    // Whether the body `id` rides the Dark Horse now (13/4 with life, off a safe tile): its rider
+    // plays MU's horse clips, 78/79 and 82-86 (FigureBody::horseIdleClip, lordHorseClip).
+    bool onDarkHorse(uint32_t id) const;
+    // The Dark Horse's breath off `pets` this frame (Pets::breathe): MU's BITMAP_SMOKE, the
+    // Bull Fighter's snort (fx/snort.h), and in Atlans a bubble instead (GOBoid.cpp:438-445),
+    // which the world's bubbles take (takeBreathBubbles).
+    void horseBreath(Pets& pets, float seconds);
+    std::vector<std::array<float, 3>> breathBubbles_;
+
+public:
+    // The bubbles the Dark Horse breathed under the sea since last asked, for the world's
+    // Bubbles (play_mode); emptied by the asking.
+    std::vector<std::array<float, 3>> takeBreathBubbles() {
+        std::vector<std::array<float, 3>> out;
+        out.swap(breathBubbles_);
+        return out;
+    }
+
+private:
     void gatherOtherWings(gfx::Renderer& renderer, std::vector<gfx::Drawable>& out,
                           std::vector<gfx::Drawable>* casters);
     // What the realm said of the raid this tick: tells, strikes, the stages, aloft.

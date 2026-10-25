@@ -306,9 +306,26 @@ inline bool twoHandedStance(const std::string& stance) {
 // MU's own ride clips, which seat themselves: the stop and run rides, the ride swings, the rider
 // skill, Impale's ride thrust (70) and the ride cast. Anything else played on a horse is a
 // standing clip and is seated.
+// And the Dark Horse's: its stop and run rides, 78 and 79, the ride strike, teleport, sword,
+// flash and magic, 82-86, Earthshake 87 and the two horse idles, 88 and 89 (player.muc's
+// numbers; the Dark Lord's standing Force and Summon, 80 and 81, are not).
 inline bool rideAction(int slot) {
     return slot == 13 || slot == 14 || slot == 36 || slot == 37 || (slot >= 54 && slot <= 59) ||
-           slot == 68 || slot == 69 || slot == 70 || slot == 155;
+           slot == 68 || slot == 69 || slot == 70 || slot == 155 || slot == 78 || slot == 79 ||
+           (slot >= 82 && slot <= 89);
+}
+
+// What a Dark Lord's skill plays on the Dark Horse (13/4): PLAYER_ATTACK_RIDE_TELEPORT 83 for
+// Summon (WSclient.cpp:4702-4706), _ATTACK_FLASH 85 for Electric Spike (ClassAttack.cpp:933-937),
+// _ATTACK_MAGIC 86 for Critical Damage (WSclient.cpp:4685-4691), and PLAYER_ATTACK_RIDE_STRIKE 82
+// for the rest -- Force, Force Wave, Fire Burst, Fire Scream (:4243-4248). player.muc's numbers.
+inline int lordHorseClip(int skill) {
+    switch (skill) {
+        case sim::skill::kSummon: return 83;
+        case sim::skill::kElectricSpike: return 85;
+        case sim::skill::kCriticalDamage: return 86;
+        default: return 82;
+    }
 }
 
 // An angle folded into a half turn either side of nothing, so that a body a few degrees the

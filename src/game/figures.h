@@ -327,6 +327,10 @@ struct FigureBody {
     // the run ride is his only gait. Bare while the weapon is slung, armed while it is drawn.
     int rideIdleClip = -1, rideIdleArmedClip = -1;
     int rideRunClip = -1, rideRunArmedClip = -1;
+    // And on the Dark Horse (13/4): MU's PLAYER_STOP_RIDE_HORSE 78 and PLAYER_RUN_RIDE_HORSE 79,
+    // armed or not (ZzzCharacter.cpp:271-276, 559-562), and PLAYER_ATTACK_RIDE_HORSE_SWORD 84 for
+    // every swing (:1108-1111). player.muc's numbers, one under actions.json's labels.
+    int horseIdleClip = -1, horseRunClip = -1, horseSwingClip = -1;
     // And on wings, off a safe zone (docs/game/wings.md): MU's PLAYER_STOP_FLY 11 where he stands
     // (PLAYER_STOP_FLY_CROSSBOW 12 with a crossbow) and PLAYER_FLY 34 where he goes
     // (PLAYER_FLY_CROSSBOW 35), ZzzCharacter.cpp:298-326, 615-621. Played at MU's 0.34, the

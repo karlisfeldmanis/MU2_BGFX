@@ -1595,7 +1595,10 @@ void Play::follow(float seconds) {
             // A buff on a horse moves his arms alone (Drawn::selfClip).
             if (one.selfClip >= 0 && now != one.selfClip) one.selfClip = -1;
             const bool hands = body->riding && one.selfClip >= 0;
-            one.figure.seat(body->riding && standing ? seatLook->rideIdleArmedClip : -1, hands);
+            // On the Dark Horse, on its own stop ride, 78 (FigureBody::horseIdleClip).
+            const int seatOn = onDarkHorse(body->id) && seatLook->horseIdleClip >= 0 ? seatLook->horseIdleClip
+                                                                                   : seatLook ? seatLook->rideIdleArmedClip : -1;
+            one.figure.seat(body->riding && standing ? seatOn : -1, hands);
             // And a two-handed weapon drawn on a horse holds its own standing grip over the
             // ride's seat (Figure::upper), the user: "we need also two hand weapon stance on
             // mount" -- MU's one armed ride stance, 14 and 37, is a one-handed one. Not while
@@ -1738,16 +1741,22 @@ void Play::follow(float seconds) {
                                                                    : look->flyClip;
         const int flyIdle = crossbow && look->flyIdleCrossbowClip >= 0 ? look->flyIdleCrossbowClip
                                                                        : look->flyIdleClip;
-        const int rideRun = safe || look->rideRunArmedClip < 0 ? look->rideRunClip
-                                                               : look->rideRunArmedClip;
-        int rideIdle = safe || look->rideIdleArmedClip < 0 ? look->rideIdleClip
-                                                           : look->rideIdleArmedClip;
+        // On the Dark Horse its own pair, armed or not: PLAYER_STOP_RIDE_HORSE 78 and
+        // PLAYER_RUN_RIDE_HORSE 79 (ZzzCharacter.cpp:271-276, 559-562).
+        const bool darkHorse = riding && look->horseRunClip >= 0 && look->horseIdleClip >= 0 &&
+                               onDarkHorse(body->id);
+        const int rideRun = darkHorse ? look->horseRunClip
+                            : safe || look->rideRunArmedClip < 0 ? look->rideRunClip
+                                                                 : look->rideRunArmedClip;
+        int rideIdle = darkHorse ? look->horseIdleClip
+                       : safe || look->rideIdleArmedClip < 0 ? look->rideIdleClip
+                                                             : look->rideIdleArmedClip;
         // A bow drawn on a horse: MU's stop ride weapon is a blade's pose, the right hand
         // forward, and the bow in her left lay flat through her thigh (the user: "bow holding
         // looks incorrect"). MU has no ride stance for a bow, so **ours**: she holds the first
         // key of her ride shot, 58 or 59, the bow raised at the ready.
         const bool archer = look->stance == "bow" || look->stance == "crossbow";
-        const int readyBow = riding && archer && !safe && look->library
+        const int readyBow = riding && !darkHorse && archer && !safe && look->library
                                  ? look->library->find(rideSlotFor(look->stance))
                                  : -1;
         if (readyBow >= 0) rideIdle = readyBow;
@@ -1772,7 +1781,7 @@ void Play::follow(float seconds) {
         // run ride's own 0.34 (ZzzOpenData.cpp:511-516), slowed with the ground he covers.
         const auto isRide = [&](int c) {
             return c >= 0 && (c == look->rideRunClip || c == look->rideRunArmedClip ||
-                              c == look->flyClip || c == look->flyCrossbowClip);
+                              c == look->horseRunClip || c == look->flyClip || c == look->flyCrossbowClip);
         };
         const auto isSwim = [&](int c) {
             return c >= 0 && (c == look->swimWalkClip || c == look->swimRunClip);

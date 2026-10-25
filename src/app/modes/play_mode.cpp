@@ -1857,6 +1857,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     // And its sandstorm, MU's two screen layers (game/world/sand_haze.h).
     world_.sandHaze().update(float(deltaSeconds));
     world_.sandHaze().gather(ctx.renderer.effects(), eye);
+    // And what the Dark Horse breathed under the sea (Play::horseBreath).
+    for (const auto& at : world_.played().takeBreathBubbles()) world_.bubbles().throwOne(at.data());
     world_.bubbles().update(float(deltaSeconds), eye.target);
     world_.bubbles().gather(ctx.renderer.effects());
     world_.portal().update(float(deltaSeconds));

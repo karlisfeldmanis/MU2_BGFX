@@ -55,8 +55,10 @@ void Play::steps() {
     const FigureBody* look = hero ? hero->figure.body() : nullptr;
     const int clip = hero ? hero->figure.clip() : -1;
     // And the run ride: the horse's hooves where his feet would be (mount_hoof, ours).
+    // On the Dark Horse its own run ride, 79, under MU's own pHorseStep1-3 (ZzzCharacter.cpp:764-767).
     const bool riding = look && clip >= 0 &&
-                        (clip == look->rideRunClip || clip == look->rideRunArmedClip);
+                        (clip == look->rideRunClip || clip == look->rideRunArmedClip ||
+                         clip == look->horseRunClip);
     // And the swim: pSwim on the walk's own two keys (PlayWalkSound, ZzzCharacter.cpp:5368-5371).
     const bool swimming = look && clip >= 0 &&
                           (clip == look->swimWalkClip || clip == look->swimRunClip);

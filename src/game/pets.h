@@ -16,7 +16,8 @@
 // own rotation, at the character's scale, PlaySpeed 0.5 (ZzzCharacter.cpp:15433-15466).
 //
 // **The Horn of Uniria is ridden** (docs/game/mount.md): its horse, Rider01, stands on his spot
-// facing his way, under his ride clips, and is hidden in town where he walks.
+// facing his way, under his ride clips, and is hidden in town where he walks. The Dinorant's
+// dragon, Rider02, and the Dark Lord's Dark Horse, DarkHorse, the same way.
 //
 // Not yet here: the Angel's four grey sparks a frame and green BITMAP_LIGHT, and the Imp's red
 // one (docs/game/pets.md).
@@ -72,10 +73,14 @@ public:
     // `hero` is his drawn figure, `alive` whether he stands.
     void update(float seconds, const Figure& hero, int pet, bool alive);
     // And the horse, after `update`: `mount` is the mount slot's row number in group 13 -- 2 the
-    // Horn of Uniria, 3 Dinorant -- or -1. Drawn under him while `riding` (sim::Body::riding),
-    // gone in town; `action` is its own clip as GOBoid picks it off his -- 2 riding on, 3 a
-    // swing, 0.
+    // Horn of Uniria, 3 Dinorant, 4 the Dark Horse -- or -1. Drawn under him while `riding`
+    // (sim::Body::riding), gone in town; `action` is its own clip as GOBoid picks it off his --
+    // 2 riding on, 3 a swing, 0.
     void ride(float seconds, const Figure& hero, int mount, bool riding, int action);
+    // The Dark Horse's breath, after `ride`: GOBoid's rand_fps_check(3) on every reference frame,
+    // a BITMAP_SMOKE at (50, -4, 0) in bone 27's frame, Bone03, its head (GOBoid.cpp:432-447) --
+    // whatever it is doing. True, with the world point in `at`, when one is due this frame.
+    bool breathe(float seconds, float at[3]);
     // The mount's gallop, for a recording's cut (Play::Stride).
     float gallop() const { return horse_.clock(); }
     void setGallop(float clock) { horse_.setClock(clock); }
@@ -93,6 +98,9 @@ private:
     const FigureBody* impBody_ = nullptr;
     const FigureBody* horseBody_ = nullptr;
     const FigureBody* dragonBody_ = nullptr;
+    const FigureBody* darkHorseBody_ = nullptr;
+    int breathBone_ = -1;      // the Dark Horse's Bone03, by name
+    float breathOwed_ = 0.0f;  // reference frames toward the next roll
     const FigureBody* horseOf_ = nullptr;  // which of the two `horse_` stands as
     Figure angel_, imp_, horse_;
     bool horseUp_ = false;

@@ -63,6 +63,15 @@ void Pets::open(const Figures& figures) {
     impBody_ = figures.body("Helper02");
     horseBody_ = figures.body("Rider01");
     dragonBody_ = figures.body("Rider02");
+    // The Dark Horse, MODEL_DARK_HORSE (docs/game/mount.md), and its head bone for its breath.
+    darkHorseBody_ = figures.body("DarkHorse");
+    breathBone_ = -1;
+    if (darkHorseBody_ && darkHorseBody_->skeletonMesh) {
+        const auto& bones = darkHorseBody_->skeletonMesh->bones();
+        for (size_t i = 0; i < bones.size(); ++i) {
+            if (bones[i].name == "Bone03") breathBone_ = int(i);
+        }
+    }
 }
 
 float Pets::roll() {
@@ -129,7 +138,10 @@ void Pets::ride(float seconds, const Figure& hero, int worn, bool riding, int ac
     // The Horn of Uniria's horse: GOBoid.cpp's MODEL_UNICON, on the rider's own spot and facing
     // (:515, :524) at scale 1.0 (:684-691). No bone joins them; the seat is in his ride clips.
     // The Dinorant's dragon, Rider02, MODEL_PEGASUS, by the same code (docs/game/mount.md).
-    const FigureBody* mount = mounted_ == 2 ? horseBody_ : mounted_ == 3 ? dragonBody_ : nullptr;
+    const FigureBody* mount = mounted_ == 2   ? horseBody_
+                              : mounted_ == 3 ? dragonBody_
+                              : mounted_ == 4 ? darkHorseBody_
+                                              : nullptr;
     if (!mount) {
         horseIn_ = 0.0f;
         horseUp_ = false;
@@ -139,11 +151,15 @@ void Pets::ride(float seconds, const Figure& hero, int worn, bool riding, int ac
         horseOf_ = mount;
         horseUp_ = false;
     }
-    // The dragon's attack is its 4, Uniria's 3 (GOBoid.cpp:566-578); 0 and 2 are both's.
-    if (mounted_ == 3 && action == 3) action = 4;
     // Uniria's swing runs on its own clock, and the dragon's flight: he sits still on it then, and
     // its wingbeat is its own (MU runs the two on two clocks). Everything else is held to his.
     const bool ownClock = action == 3 || (mounted_ == 3 && flying_);
+    // The dragon's attack is its 4, Uniria's 3 (GOBoid.cpp:566-578); 0 and 2 are both's.
+    if (mounted_ == 3 && action == 3) action = 4;
+    // The Dark Horse's own numbers (GOBoid.cpp:338-428): 1 under its rider's run ride, 2 under
+    // his ride strikes and swings, 0 under the rest. Its 3 is Earthshake's, its 5 and 6 the two
+    // horse idles, which nothing here plays.
+    if (mounted_ == 4) action = action == 2 ? 1 : action == 3 ? 2 : 0;
     // He sits 30 over the ground on the dragon (Play's kDinorantLift) and it stands on it.
     float ground[3] = {hero.position()[0], hero.position()[1], hero.position()[2]};
     if (mounted_ == 3) {
@@ -175,6 +191,23 @@ void Pets::ride(float seconds, const Figure& hero, int worn, bool riding, int ac
     // beat. So the leap and the stand take his clip's own place, as a fraction: one bound of
     // the horse is one bounce of the rider, whatever the frame did. **ours**.
     if (!ownClock) horse_.setClock(hero.through() * horse_.length());
+}
+
+bool Pets::breathe(float seconds, float at[3]) {
+    if (mounted_ != 4 || !horseUp_ || horseIn_ < 1.0f || breathBone_ < 0) {
+        breathOwed_ = 0.0f;
+        return false;
+    }
+    // One roll a reference frame, one puff at most a frame drawn.
+    breathOwed_ = std::min(breathOwed_ + seconds / kReference, 4.0f);
+    bool due = false;
+    while (breathOwed_ >= 1.0f) {
+        breathOwed_ -= 1.0f;
+        if (dice(3) == 0) due = true;
+    }
+    // MU's (50, -4, 0) in the bone's own frame, in metres.
+    static constexpr float kNostril[3] = {50.0f / kUnits, -4.0f / kUnits, 0.0f};
+    return due && horse_.pointOn(breathBone_, kNostril, at);
 }
 
 void Pets::update(float seconds, const Figure& hero, int pet, bool alive) {
@@ -255,7 +288,7 @@ void Pets::gather(gfx::Renderer& renderer, const Figure& hero, std::vector<float
     } else if (shown_ == 0 && angelUp_) {
         draw(angel_, std::clamp(angelIn_ / kAngelFadeIn, 0.0f, 1.0f));
     }
-    if ((mounted_ == 2 || mounted_ == 3) && horseUp_ && horseIn_ > 0.0f) draw(horse_, horseIn_);
+    if ((mounted_ == 2 || mounted_ == 3 || mounted_ == 4) && horseUp_ && horseIn_ > 0.0f) draw(horse_, horseIn_);
 }
 
 }  // namespace mu::game

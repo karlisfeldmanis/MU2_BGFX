@@ -45,6 +45,8 @@ public:
 
     // One frame round `hero`, his feet, in metres.
     void update(float seconds, const float hero[3]);
+    // One bubble born at `at` (metres): a vent's, his head's, the Dark Horse's breath.
+    void throwOne(const float at[3]);
     void gather(gfx::Effects& effects) const;
 
 private:
@@ -60,7 +62,6 @@ private:
         float owed = 0.0f;   // seconds towards the next bubble while it is on
         bool on = false;     // on last frame, so its coming on is heard once
     };
-    void throwOne(const float at[3]);
     float unit();
 
     bool open_ = false;

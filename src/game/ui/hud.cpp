@@ -165,7 +165,11 @@ const char* summonArt(int32_t skill) {
 
 // The pets' cells, ours: each rendered from the pet's own model by pipeline/model_icons.py.
 const char* petArt(int pet) {
-    return pet == 0 ? "buff_angel" : pet == 1 ? "buff_imp" : pet == 2 ? "buff_uniria" : "buff_dinorant";
+    return pet == 0   ? "buff_angel"
+           : pet == 1 ? "buff_imp"
+           : pet == 2 ? "buff_uniria"
+           : pet == 4 ? "buff_darkhorse"
+                      : "buff_dinorant";
 }
 
 // The painted key labels: a dark cell on rows 164 to 177 under every box, the figure centred on
@@ -821,6 +825,7 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
         sheet.name = one.pet == 0   ? "Guardian Angel"
                      : one.pet == 1 ? "Imp"
                      : one.pet == 2 ? "Horn of Uniria"
+                     : one.pet == 4 ? "Dark Horse"
                                     : "Horn of Dinorant";
         sheet.nameTone = tip::Tone::White;
         sheet.base = "PET";
@@ -874,9 +879,15 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
         if (lifted) what.rows.push_back(prose("its price lifted by your Kinship rune"));
         // A timed pet keeps time, not Life (sim::timedPet): `life` is its minutes left.
         const bool day = sim::timedPet(row);
+        // The Dark Horse is kept at none, dead (sim::PetPower::keeps).
+        if (power.takenToll > 0) {
+            what.rows.push_back(said("Life", "-" + std::to_string(power.takenToll), tip::Tone::Red));
+            what.rows.push_back(prose("for every blow it absorbs"));
+        }
         what.rows.push_back(prose(day ? "gone " + std::to_string(sim::petSeconds(row) / 3600) +
                                             " hours after it is first worn"
-                                      : std::string("loses Life as you take damage, and is gone at none")));
+                                      : power.keeps ? std::string("loses Life as you take damage, and is dead at none")
+                                                    : std::string("loses Life as you take damage, and is gone at none")));
         sheet.sections.push_back(what);
         sheet.wear = day ? "Time left " + std::to_string(one.life / 60) + "h " + std::to_string(one.life % 60) + "m"
                          : "Life " + std::to_string(one.life) + " / " + std::to_string(one.lifeMost);
