@@ -146,6 +146,12 @@ constexpr int32_t kSummon = 63;
 // (WebZen ObjUseSkill.cpp:5530-5629), said as Loosed so the drawing sets its bombs off.
 constexpr int32_t kFireScream = 78;
 constexpr int32_t kExplosion = 79;
+// `AT_SKILL_DARKHORSE_ATTACK`, Earthshake: the Dark Horse's round stomp, every monster within
+// whole-tile distance under five of him struck as the first ring of rock spikes rises and pushed
+// two tiles straight away (WebZen ObjUseSkill.cpp:3779-3890, user.cpp:7663-7837; MuMain
+// GOBoid.cpp:727-769; docs/plans/dark-lord-spells/earthshake.md). The horn's, as Fire Breath is
+// the Dinorant's.
+constexpr int32_t kEarthshake = 62;
 // `AT_SKILL_PENETRATION`, off the Orb of Penetration (group 12 number 17): 0.95d's and not
 // 0.75's (Version095d is where OpenMU first has it; VersionSeasonSix/SkillsInitializer.cs:171
 // carries the row). An arrow that flies on through everything in its line.
@@ -476,6 +482,11 @@ struct SkillRow {
     // **A party pulled to him**: each member on a free tile within kRecallReach of where he
     // stands, kRecallTicks after the cast, unless he walks first (Realm::recall).
     bool recalls = false;
+    // ---- Earthshake's, appended after Summon's -------------------------------------------------
+    // **Which mount's horn carries a `mounted` row**: its pet number in group 13 -- 3 the Horn of
+    // Dinorant (Fire Breath), 4 the Dark Horse (Earthshake), as CItem::Convert puts each on its
+    // item (WebZen zzzitem.cpp:1018-1031). Realm::mountWorn.
+    int32_t horn = 3;
     // **Whether a press aims it at the ground under the pointer** rather than at a body: the
     // shapes that have a direction -- Aqua Beam's beam, Power Wave's line, the knight's arcs and
     // Twister's walking storm. Thrown from the keys or the right button, he turns to where the
@@ -484,8 +495,10 @@ struct SkillRow {
     // hovered"), as MU's client casts them at its own angle into empty air. The rings round him
     // have no direction and the single throws need a body to fly at.
     bool aimsAtPointer() const {
+        // And Earthshake, round him but turned to the pointer: MU's 0x1E turns him to the point
+        // and lays the crater ahead (earthshake.md decision 9).
         return spread == Spread::Beam || spread == Spread::Line || spread == Spread::Arc ||
-               walks > 0.0f || showers();
+               walks > 0.0f || showers() || number == skill::kEarthshake;
     }
     // **A shower**: rocks out of the sky on random ground within `splash` of where it is called
     // -- Meteorite's since 2026-10-04 (the user: "click on any spot on ground and on that area
@@ -502,7 +515,8 @@ struct SkillRow {
     // whirl is a ring round him and has no direction to aim, so it spins where he stands.
     bool castsBare() const {
         return number == skill::kEvilSpirit || number == skill::kTwister ||
-               number == skill::kHellfire || number == skill::kTwistingSlash;
+               number == skill::kHellfire || number == skill::kTwistingSlash ||
+               number == skill::kEarthshake;  // MU's stomp needs no target (earthshake.md 9)
     }
     // Whether it is cast on the caster and takes no target.
     bool onSelf() const { return boonTicks > 0 || mends || mightTicks > 0 || summons > 0 || sharpens || recalls; }
@@ -542,9 +556,9 @@ struct SkillRow {
 // again, which the static_assert below says. Also the width of a body's cooldown array -- and
 // the learned mask is by INDEX, so a new row goes on the END of the table or an old save
 // gives a knight somebody else's skill. The Dark Lord's Force past the Alquamos (41), his Fire
-// Burst (42), Electric Spike (43), Critical Damage (44), Summon (45) and Fire Scream (46); a kept
-// layout before 15 carries 40 cools, net/wire.cpp.
-constexpr int kSkills = 46;
+// Burst (42), Electric Spike (43), Critical Damage (44), Summon (45), Fire Scream (46) and
+// Earthshake (47); a kept layout before 15 carries 40 cools, net/wire.cpp.
+constexpr int kSkills = 47;
 
 // What each of Nova's stages adds to its blow: OpenMU's NovaDamageTable (NovaSkillStartPlugin.cs:30),
 // stage 0 to 12, with the strength's half beside it (SkillsInitializer.cs:610-611).
@@ -864,6 +878,19 @@ constexpr int kScreamFrames = 19;
 // blow 100 ms on, on every monster within whole-tile distance 1 of the body struck, that one too
 // (SkillAdditionInfo.cpp:81-82, ObjUseSkill.cpp:5530-5629).
 constexpr int kExplosionRate = 301, kExplosionOf = 10000, kExplosionReach = 1, kExplosionTicks = 2;
+// Earthshake: every monster with whole-tile dx^2 + dy^2 under 25 of his tile -- `gObjCalDistance <
+// 5`, 69 tiles, behind him as in front (WebZen ObjUseSkill.cpp:3850, user.cpp:7042-7053); pushed
+// two tiles straight away, hit or missed (ObjBaseAttack.cpp:594-599, user.cpp:7805-7817).
+// **Ours, and marked**: struck as the first ring of spikes rises, MU's 25th frame of the stomp
+// (1.03.35 GOBoid.cpp:871-886: the horse's frame 8 at 0.34) -- of the rider's 11 keys at 0.3, its
+// 36.7 frames, 0.68 -- where WebZen strikes 500 ms after the cast, half a second before anything
+// breaks. The look's spikes are drawn off the `Loosed` that names this tick.
+constexpr int kQuakeReach = 5;
+constexpr float kQuakeStrikes = 25.0f / (11.0f / 0.3f);
+constexpr int kQuakePush = 2;
+// MU's horse at birth, level 1 (WebZen zzzitem.cpp:94-96): 10 a level on the band (ObjAttack.cpp:
+// 3228-3245) until pet levels come (phase 5).
+constexpr int kQuakePerHorseLevel = 10;
 
 // Whichever of the two a self-cast row is, so the realm, the card, the scroll and the strip ask
 // one question and cannot say different numbers for the same buff.

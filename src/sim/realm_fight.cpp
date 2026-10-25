@@ -56,8 +56,12 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
         const HeroPoints p = attacker.totalPoints();
         // Electric Spike's is Command/10 and fifty a party member near him, in place of it
         // (WebZen ObjAttack.cpp:3210-3220, the head of the same else-if).
+        // Earthshake's is Str/10 + Command/5 + 10 a horse level, the next of the chain
+        // (ObjAttack.cpp:3221-3245).
         const int flat = row->number == skill::kElectricSpike
                              ? p.command / 10 + 50 * partyNear(attacker)
+                         : row->number == skill::kEarthshake
+                             ? p.strength / 10 + p.command / 5 + kQuakePerHorseLevel * kHorseLevel
                              : p.strength / 25 + p.energy / 50;
         // Force from a scepter is Force Wave's fifty, rolled to 75 (WebZen ObjAttack.cpp:3144-3148).
         const int32_t skillDamage =
@@ -1332,6 +1336,11 @@ void Realm::release(Body& hero, uint32_t at, float force, int32_t skill, const f
         fireScream(hero, *row, at, force);
         return;
     }
+    // Earthshake: the disc round him, struck as the spikes rise.
+    if (row && row->number == skill::kEarthshake) {
+        earthshake(hero, *row, at, force);
+        return;
+    }
     // A line is let go along where he aimed, whether or not what he aimed at still stands, and
     // flies to every body in it.
     if (row && row->spread == Spread::Line) {
@@ -1754,6 +1763,9 @@ void Realm::arrive() {
         if (!hero.alive()) continue;
         // A knight's Fireburst hop and a Meteor's rock land as his rune's blow; every other
         // flight as its own.
+        // Earthshake's push, hit or missed: WebZen's ResistanceCheck backsprings it before the miss
+        // is asked (ObjAttack.cpp:578, ObjBaseAttack.cpp:594-599). Bosses and fixed bodies stand.
+        if (flight.skill == skill::kEarthshake) push(*target, hero.x, hero.y, kQuakePush);
         if (flight.swung) {
             runeStrike(hero, *target, flight.force);
         } else {
@@ -2211,6 +2223,43 @@ void Realm::fireScream(Body& hero, const SkillRow& row, uint32_t aimedAt, float 
         const int32_t wait = std::max<int32_t>(1, int32_t(std::lround(float(frames[i]) * kTicksPerSecond / 25.0f)));
         loose(hero, row, victims[i], force, false, victims[i] == aimedAt, wait);
     }
+}
+
+void Realm::earthshake(Body& hero, const SkillRow& row, uint32_t aimedAt, float force) {
+    // The first spike ring's tick, off the clip he plays as the let-go is (Realm::begin): the
+    // wait from here to it. Ours (kQuakeStrikes), so the numbers come as the ground breaks.
+    const int32_t clip = clipTicksOf(hero, row);
+    const int32_t letGo = int32_t(std::lround(float(clip) * row.release));
+    const int32_t wait = std::max<int32_t>(1, int32_t(std::lround(float(clip) * kQuakeStrikes)) - letGo);
+    // Said once, `b` the wait and `c` his aim, so the ring, the spikes and the crater are drawn on
+    // the tick the blows land.
+    say(What::Loosed, hero, row.number, wait, int32_t(std::lround(hero.aim * 1000.0f)), aimedAt);
+    // WebZen's SkillDarkHorseAttack (ObjUseSkill.cpp:3798-3888): every monster with
+    // `gObjCalDistance < 5` of his tile, all round him -- nothing asks his facing -- no wall, no
+    // cap (HitCount never moves). The list is fixed now, at the cast's let-go. Nearest first and
+    // then by id, so the log is fixed; only the aimed body pays back.
+    uint32_t victims[kVictims];
+    int32_t off[kVictims] = {};
+    int found = 0;
+    const int hx = hero.column(), hy = hero.row();
+    for (const Body& one : bodies_) {
+        if (!one.monster() || !one.alive() || found >= kVictims) continue;
+        if (tables_->grid.safe(one.column(), one.row())) continue;
+        const int dx = one.column() - hx, dy = one.row() - hy;
+        const int gap = dx * dx + dy * dy;
+        if (gap >= kQuakeReach * kQuakeReach) continue;
+        int at = found;
+        while (at > 0 && (off[at - 1] > gap || (off[at - 1] == gap && victims[at - 1] > one.id))) {
+            off[at] = off[at - 1];
+            victims[at] = victims[at - 1];
+            --at;
+        }
+        off[at] = gap;
+        victims[at] = one.id;
+        ++found;
+    }
+    // All on the one tick, each pushed as it is struck (Realm::arrive).
+    for (int i = 0; i < found; ++i) loose(hero, row, victims[i], force, false, victims[i] == aimedAt, wait);
 }
 
 void Realm::explode(Body& hero, const Body& struck, int32_t damage) {

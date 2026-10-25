@@ -80,18 +80,18 @@ bool Realm::knows(int32_t skill) const {
     // A mount's skill is the horn's, as 0.75's skills were the weapon's: known while it is worn
     // and not saved -- for his class alone, as MuMain marks it the knight's on the horn.
     const SkillRow& row = skillAt(index);
-    if (row.mounted) return skillFor(row, mine().kin) && dinorantWorn();
+    if (row.mounted) return skillFor(row, mine().kin) && mountWorn(row.horn);
     return (mine().learned & (uint64_t(1) << index)) != 0;
 }
 
-bool Realm::dinorantWorn() const {
+bool Realm::mountWorn(int32_t number) const {
     const Held& horn = me().bag[kMount];
     if (horn.empty() || horn.durability <= 0 || tables_ == nullptr ||
         size_t(horn.item) >= tables_->items.size()) {
         return false;
     }
     const content::ItemRow& row = tables_->items[size_t(horn.item)];
-    return row.group == kGroupPets && row.number == 3;
+    return row.group == kGroupPets && row.number == number;
 }
 
 int64_t Realm::cooling(int32_t skill) const {
@@ -1146,7 +1146,7 @@ void Realm::recall(Body& hero) {
 // ticks the worst tick was 0.42 of a tile; at six it is 0.35.
 constexpr int32_t kPushTicks = 6;
 
-void Realm::push(Body& target, float fromX, float fromY) {
+void Realm::push(Body& target, float fromX, float fromY, int tiles) {
     if (fixed(target) || shrugs(target)) return;  // nor the raid's dragon (Realm::shove)
     // Not again while it is still sliding: a push restarted mid-slide begins off the tile's
     // centre and can go two tiles in five ticks. The next strike finds it landed.
@@ -1158,13 +1158,22 @@ void Realm::push(Body& target, float fromX, float fromY) {
     if (far < 1e-3f) return;
     const int stepX = int(std::lround(dx / far)), stepY = int(std::lround(dy / far));
     if (stepX == 0 && stepY == 0) return;
-    const int column = target.column() + stepX;
-    const int row = target.row() + stepY;
-    if (!tables_->grid.open(column, row, content::kWallCharacter)) return;
-    if (tables_->grid.safe(column, row)) return;
-    target.pushX = (float(column) - target.x) / float(kPushTicks);
-    target.pushY = (float(row) - target.y) / float(kPushTicks);
-    target.pushTicks = kPushTicks;
+    // Step by step: a wall or a safe tile stops it where it got to (Earthshake's second step as
+    // OpenMU's EarthShakeSkillPlugIn stops; WebZen's BackSpringCheck turns it back toward him).
+    int column = target.column(), row = target.row(), went = 0;
+    for (; went < tiles; ++went) {
+        const int nextColumn = column + stepX, nextRow = row + stepY;
+        if (!tables_->grid.open(nextColumn, nextRow, content::kWallCharacter)) break;
+        if (tables_->grid.safe(nextColumn, nextRow)) break;
+        column = nextColumn;
+        row = nextRow;
+    }
+    if (went == 0) return;
+    // At the one tile's pace, a tile each kPushTicks.
+    const int32_t ticks = kPushTicks * went;
+    target.pushX = (float(column) - target.x) / float(ticks);
+    target.pushY = (float(row) - target.y) / float(ticks);
+    target.pushTicks = ticks;
     // The walk it was on is void, and it is not reaching anybody while it slides.
     target.walking = false;
     route(target).clear();

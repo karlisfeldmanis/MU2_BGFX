@@ -2320,11 +2320,14 @@ def cook_tables(world, out_dir):
     # let every one go a tick after it began (docs/plans/dark-lord.md). And 81,
     # `PLAYER_ATTACK_TELEPORT`, Summon's (WSclient.cpp:4702-4719), 8 keys at 0.28 (ZzzCharacter.cpp:1011)
     # -- actions.json's 82, one high, as Electric Spike's 152 (docs/plans/dark-lord-spells/summon.md).
+    # And 87, `PLAYER_ATTACK_DARKHORSE`, Earthshake's on the Dark Horse (ClassAttack.cpp:948-952),
+    # 11 keys at 0.3 (ZzzCharacter.cpp:1013) -- actions.json's 88, one high
+    # (docs/plans/dark-lord-spells/earthshake.md).
     keys = index.get("action_keys", {})
     speeds = index.get("action_speeds", {})
     unassigned = {"183": 0.25}
     actions = []
-    for action in list(range(38, 52)) + [60, 61, 62, 63, 64, 65, 66, 71, 80, 81, 82, 147, 148, 152, 153, 154, 183, 187]:
+    for action in list(range(38, 52)) + [60, 61, 62, 63, 64, 65, 66, 71, 80, 81, 82, 87, 147, 148, 152, 153, 154, 183, 187]:
         name = str(action)
         speed = speeds.get(name, unassigned.get(name))
         if name not in keys or speed is None:

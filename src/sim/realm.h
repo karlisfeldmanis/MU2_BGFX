@@ -942,8 +942,10 @@ public:
     // Whether the hand he fights with holds a scepter that makes Force Force Wave, worn as it
     // may be (docs/plans/dark-lord-spells/force-wave.md section 8).
     bool forceWaveHeld() const;
-    // A Horn of Dinorant in the mount's slot with life left: Fire Breath is known while it is.
-    bool dinorantWorn() const;
+    // The mount numbered `number` in group 13 in the mount's slot with life left: the Horn of
+    // Dinorant's 3 carries Fire Breath, the Dark Horse's 4 Earthshake (SkillRow::horn), each known
+    // while it is worn -- MuMain refuses Earthshake at no horse life (ClassAttack.cpp:536-563).
+    bool mountWorn(int32_t number) const;
     // Ticks left on a skill's cooldown, and the whole cooldown it was set to, which is what the
     // frame needs to draw a sweep. Zero and zero when it is ready.
     int64_t cooling(int32_t skill) const;
@@ -1852,6 +1854,10 @@ private:
     // facing, each body loosed the ticks its nearest lane's head takes to reach it; and its
     // Explosion, rolled on a landed blow and burst kExplosionTicks on (landBlasts).
     void fireScream(Body& hero, const SkillRow& row, uint32_t aimedAt, float force);
+    // Earthshake (docs/plans/dark-lord-spells/earthshake.md): every monster within whole-tile
+    // distance under kQuakeReach of his tile, all round him, loosed to land on the tick the first
+    // spike ring rises (kQuakeStrikes of his clip), said once with that wait for the look.
+    void earthshake(Body& hero, const SkillRow& row, uint32_t aimedAt, float force);
     void explode(Body& hero, const Body& struck, int32_t damage);
     void landBlasts();
     // A shower (SkillRow::showers): `kShowerRocks` rocks at random within the splash of `spot`
@@ -1983,7 +1989,9 @@ private:
     // The Lightning push: one tile straight away from `from`, slid over `kPushTicks`, onto
     // something standable or not at all.
     void push(Body& target, const Body& from) { push(target, from.x, from.y); }
-    void push(Body& target, float fromX, float fromY);
+    // `tiles` straight away from (fromX, fromY), one step at a time: the first step onto a wall or
+    // a safe tile ends it there (Earthshake's two; everything else one).
+    void push(Body& target, float fromX, float fromY, int tiles = 1);
     // A knight's Whirlwind on a Twisting Slash (sim/items.h): the force the slash strikes with,
     // and on its chance the monsters beyond the slash pulled in and struck.
     float whirl(Body& hero, const SkillRow& row, float force);

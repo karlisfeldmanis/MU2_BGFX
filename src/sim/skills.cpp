@@ -989,6 +989,25 @@ constexpr SkillRow kRows[kSkills] = {
               "Now and then a blow bursts on what stands round it.",
      .clip = 80, .sound = "", .built = true, .families = arms::kNone, .needLevel = 102,
      .kin = Kin::DarkLord, .damage = 130, .flies = 40.0f, .anyHand = true, .release = 5.0f / 7.0f},
+    // Earthshake 62 (docs/plans/dark-lord-spells/earthshake.md): MU's row, WebZen skill.txt:67 --
+    // level 0, 150 damage (rolled to 225), no mana (MODIFY_BUGFIX_20081119, ObjUseSkill.cpp:692-697),
+    // ten tiles of aim, ten seconds' delay (MuMain SkillManager.cpp:140-172) -- the Dark Horse's,
+    // carried by its horn and not learned (zzzitem.cpp:1025-1031), cast only while it is ridden and
+    // has life (ClassAttack.cpp:536-563, 907-913). On PLAYER_ATTACK_DARKHORSE (player.muc's 87, 11
+    // keys at 0.3), let go at key 5 (ZzzCharacter.cpp:2896-2903). Every monster within whole-tile
+    // distance under five, all round him, struck as the spikes rise and pushed two tiles away
+    // (Realm::earthshake); Str/10 + Command/5 + 10 a horse level on the band in place of Str/25 +
+    // Ene/50 (ObjAttack.cpp:3221-3245), x(200 + Ene/20)%.
+    // **Ours**: MU's ten seconds as its cooldown, hastened by agility as every cooldown here; no AG
+    // (MU spends 50, which this game has not); struck on the spikes' tick, where WebZen strikes
+    // 500 ms after the cast.
+    {.number = skill::kEarthshake, .name = "Earthshake", .reach = 10.0f, .force = 2.0f,
+     .coolTicks = 10 * 20, .spread = Spread::Ring,
+     .tells = "The Dark Horse stamps the ground: rock spikes burst up all round him, striking "
+              "everything within five tiles and throwing it two tiles back. Only while he rides it.",
+     .clip = 87, .sound = "", .built = true, .families = arms::kNone,
+     .kin = Kin::DarkLord, .damage = 150, .anyHand = true, .release = 5.0f / 11.0f, .mounted = true,
+     .horn = 4},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy

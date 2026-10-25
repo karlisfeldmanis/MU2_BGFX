@@ -632,4 +632,138 @@ void testDarkLord(void (*check)(bool, const char*), void (*checkEqual)(long long
         check(sim::kExplosionRate == 301 && sim::kExplosionReach == 1 && sim::kExplosionTicks == 2,
               "WebZen's 301 in 10,000, one tile round, 100 ms on");
     }
+
+    // **Earthshake** (62, docs/plans/dark-lord-spells/earthshake.md): the Dark Horse's, known while it
+    // is worn with life; every monster within whole-tile distance under five, behind him too, struck
+    // on the tick the first spike ring rises and pushed two tiles away; ten seconds' cooldown.
+    {
+        const sim::SkillRow* quake = sim::skillNumbered(sim::skill::kEarthshake);
+        check(quake != nullptr && quake->mounted && quake->horn == 4 && quake->kin == sim::Kin::DarkLord &&
+                  quake->mana == 0 && quake->damage == 150 && quake->coolTicks == 200 && quake->clip == 87 &&
+                  quake->castsBare() && !quake->primary(),
+              "Earthshake: the Dark Horse's, no mana, 150 damage, ten seconds, on 87, cast on air");
+        const int32_t clip = sim::castTicks(lorencia, sim::Kin::DarkLord, 0, nullptr, nullptr, *quake, 0);
+        check(clip >= 25 && clip <= 32, "PLAYER_ATTACK_DARKHORSE is in the tables, 11 keys at 0.3");
+        const int horn = lorencia.itemAt(13, 4);
+        check(horn >= 0, "the Dark Horse is in Lorencia's tables");
+
+        sim::Realm lordRealm;
+        check(lordRealm.raise(&lorencia, 9, 160, 60, sim::Kin::DarkLord, 250), "a level-250 Dark Lord raises");
+        check(lordRealm.spend(lordRealm.hero().pointsInHand / 2, 0, 0, 0, lordRealm.hero().pointsInHand / 4),
+              "into strength and Command");
+        lordRealm.unseen(true);
+        lordRealm.benchUndying(true);
+        const auto loosedIn = [&](int ticks) {
+            int loosed = 0;
+            for (int tick = 0; tick < ticks; ++tick) {
+                lordRealm.step();
+                for (const sim::Happening& one : lordRealm.happenings()) {
+                    if (one.who == lordRealm.hero().id && one.what == sim::What::Loosed &&
+                        one.a == sim::skill::kEarthshake) {
+                        ++loosed;
+                    }
+                }
+            }
+            return loosed;
+        };
+        const int hx = lordRealm.hero().column(), hy = lordRealm.hero().row();
+        check(!lordRealm.knows(sim::skill::kEarthshake), "on foot he does not know it");
+        lordRealm.invokeAt(sim::skill::kEarthshake, hx + 6, hy);
+        checkEqual(loosedIn(40), 0, "and cannot cast it");
+        check(lordRealm.give(horn, sim::kMount) == sim::kMount, "he wears the horse");
+        lordRealm.step();
+        check(lordRealm.hero().riding && lordRealm.knows(sim::skill::kEarthshake), "and rides it, and knows it");
+        checkEqual(lordRealm.record().learned & (uint64_t(1) << sim::skillIndexOf(sim::skill::kEarthshake)),
+                   uint64_t(0), "none of it in the save");
+        auto& horse = const_cast<sim::Held&>(lordRealm.satchel()[sim::kMount]);
+        const int life = horse.durability;
+        horse.durability = 0;
+        check(!lordRealm.knows(sim::skill::kEarthshake), "at no horse life he does not know it");
+        lordRealm.invokeAt(sim::skill::kEarthshake, hx + 6, hy);
+        checkEqual(loosedIn(40), 0, "and cannot cast it");
+        horse.durability = life;
+        lordRealm.step();
+
+        // Cast east: ahead, behind, to the side, (3, 3) whose 18 is under 25 -- all struck; (4, 3)
+        // and (5, 0), distance five, are not.
+        const int offsets[6][2] = {{3, 0}, {-3, 0}, {0, -4}, {3, 3}, {4, 3}, {5, 0}};
+        uint32_t ids[6] = {};
+        int found = 0;
+        for (const sim::Body& one : lordRealm.bodies()) {
+            if (found == 6) break;
+            if (one.monster() && one.alive()) ids[found++] = one.id;
+        }
+        check(found == 6, "six monsters to shake");
+        const auto hold = [&] {
+            for (int i = 0; i < 6; ++i) {
+                auto* held = const_cast<sim::Body*>(lordRealm.find(ids[i]));
+                held->x = float(hx + offsets[i][0]);
+                held->y = float(hy + offsets[i][1]);
+                held->walking = false;
+            }
+        };
+        const sim::Body& me = lordRealm.hero();
+        const sim::HeroPoints p = me.totalPoints();
+        const int flat = p.strength / 10 + p.command / 5 + 10;
+        const int low = me.stats.minimumDamage + 150 + flat, high = me.stats.maximumDamage + 225 + flat;
+        hold();
+        lordRealm.invokeAt(sim::skill::kEarthshake, hx + 6, hy);
+        int64_t letGo = -1, wait = -1;
+        int64_t struck[6] = {-1, -1, -1, -1, -1, -1};
+        int shoved[6][2] = {};
+        bool pushed[6] = {};
+        int loosed = 0, banded = 0, hits = 0;
+        for (int tick = 0; tick < 60; ++tick) {
+            if (letGo < 0 || tick < letGo + wait) hold();
+            lordRealm.step();
+            for (const sim::Happening& one : lordRealm.happenings()) {
+                if (one.what == sim::What::Shoved) {
+                    for (int i = 0; i < 6; ++i) {
+                        if (one.who != ids[i]) continue;
+                        pushed[i] = true;
+                        shoved[i][0] = one.a - hx;
+                        shoved[i][1] = one.b - hy;
+                    }
+                }
+                if (one.who != lordRealm.hero().id) continue;
+                if (one.what == sim::What::Loosed && one.a == sim::skill::kEarthshake) {
+                    ++loosed, letGo = tick, wait = one.b;
+                }
+                if (one.what != sim::What::Hit && one.what != sim::What::Missed) continue;
+                if (one.what == sim::What::Hit && !one.critical && !one.excellent) {
+                    ++hits;
+                    banded += one.b >= low && one.b <= high;
+                }
+                for (int i = 0; i < 6; ++i) {
+                    if (one.whom == ids[i] && struck[i] < 0) struck[i] = tick;
+                }
+            }
+        }
+        std::printf("  earthshake: let go %lld, wait %lld, struck %lld %lld %lld %lld %lld %lld; pushed to "
+                    "(%d,%d) (%d,%d) (%d,%d) (%d,%d); %d of %d hits in %d..%d\n",
+                    (long long)letGo, (long long)wait, (long long)struck[0], (long long)struck[1],
+                    (long long)struck[2], (long long)struck[3], (long long)struck[4], (long long)struck[5],
+                    shoved[0][0], shoved[0][1], shoved[1][0], shoved[1][1], shoved[2][0], shoved[2][1],
+                    shoved[3][0], shoved[3][1], banded, hits, low, high);
+        checkEqual(loosed, 1, "the stomp is said once");
+        // Pressed on tick 0; the first spike ring at MU's frame 25, a second after the press.
+        check(letGo >= 11 && letGo <= 15, "let go at key 5 of 11, two thirds of a second in");
+        check(letGo + wait >= 18 && letGo + wait <= 22, "the spikes rise about twenty ticks after the press");
+        for (int i = 0; i < 4; ++i) {
+            checkEqual(struck[i], letGo + wait, "within five, all round him, struck as the spikes rise");
+        }
+        check(struck[4] < 0 && struck[5] < 0, "at whole-tile distance five, nothing");
+        check(pushed[0] && shoved[0][0] == 5 && shoved[0][1] == 0, "the one ahead pushed two tiles on");
+        check(pushed[1] && shoved[1][0] == -5 && shoved[1][1] == 0, "the one behind two tiles back");
+        check(pushed[3] && shoved[3][0] == 5 && shoved[3][1] == 5, "and (3, 3) two tiles out on its diagonal");
+        check(!pushed[4] && !pushed[5], "nothing outside pushed");
+        check(hits > 0 && banded == hits,
+              "150..225 + Str/10 + Command/5 + 10 a horse level on his swing, in place of Str/25 + Ene/50");
+        // Cooling: a second press inside its ten seconds does nothing.
+        check(lordRealm.cooling(sim::skill::kEarthshake) > 100, "it cools");
+        check(lordRealm.coolsFor(sim::skill::kEarthshake) <= 200 && lordRealm.coolsFor(sim::skill::kEarthshake) > clip,
+              "for MU's ten seconds, before his agility's haste");
+        lordRealm.invokeAt(sim::skill::kEarthshake, hx + 6, hy);
+        checkEqual(loosedIn(40), 0, "pressed again while it cools, nothing");
+    }
 }
