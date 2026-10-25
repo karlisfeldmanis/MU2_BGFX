@@ -199,6 +199,10 @@ public:
     void setWindowSize(int width, int height);
     // The primary display's own mode, in screen points: the largest a window can be.
     void displaySize(int* width, int* height) const;
+    // The backbuffer's pixels hidden at the top of a fullscreen window: a MacBook's camera
+    // housing, which the borderless window runs under (the user, 2026-10-25: the herald's
+    // "GOLDEN I..." cut off behind it). 0 in a window and wherever there is no notch.
+    float topInset() const;
     bool vsync() const { return (reset_ & BGFX_RESET_VSYNC) != 0; }
     void setVsync(bool on);
 
@@ -240,6 +244,8 @@ private:
     // Fullscreen hides the menu bar and the Dock outright rather than letting them slide in
     // at an edge, which brought the system's arrow with them. window_mac.mm.
     static void setPresentation(bool fullscreen);
+    // The primary display's top safe-area inset, in screen points. window_mac.mm; 0 elsewhere.
+    static float notchPoints();
     // Arms and disarms whileHeld's timer and filter on the window. window_win.cpp; nothing on the Mac.
     void armHeld(bool on);
 

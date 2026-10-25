@@ -35,6 +35,7 @@ public:
                 const Pointer& pointer, int width, int height, float plateTop);
     bool covers(float x, float y) const { return alpha_ > 0.0f && box_.has(x, y); }
     bool showing() const { return alpha_ > 0.0f; }
+    float top() const { return box_.y; }  // what stands over it (game/ui/herald.h)
     const gfx::Canvas& canvas() const { return canvas_; }
 
 private:

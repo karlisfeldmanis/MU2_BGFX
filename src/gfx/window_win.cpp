@@ -14,6 +14,7 @@
 namespace mu::gfx {
 
 void Window::setPresentation(bool) {}
+float Window::notchPoints() { return 0.0f; }
 
 namespace {
 

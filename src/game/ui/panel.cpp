@@ -82,6 +82,7 @@ float s_scale = 2.0f;
 float s_unit = 2.0f;
 float s_floor = 0.0f;
 float s_lines = 1080.0f;
+float s_topInset = 0.0f;
 }
 
 void setScreen(float height) {
@@ -92,6 +93,8 @@ void setScreen(float height) {
     s_floor = 0.0f;
 }
 void setFloor(float y) { s_floor = y; }
+void setTopInset(float pixels) { s_topInset = std::round(pixels); }
+float topInset() { return s_topInset; }
 float sideMargin() { return std::round(kSideShare * s_lines); }
 float scale() { return s_scale; }
 float unit() { return s_unit; }

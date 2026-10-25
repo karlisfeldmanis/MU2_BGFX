@@ -2,16 +2,19 @@
 // coming, and where to go for it -- "BLOOD CASTLE 2  4:32 | Devias · Messenger".
 //
 // The proposal of 2026-10-05 (claude.ai/artifact/Wj1TFKh7Df8VgD1sMg8K2M) as the user tuned it:
-// option C, the ledger, turned into a slider at the top centre. A soft black band, darkest in its
-// middle and gone at both ends, a gold hairline over it and a fainter one under; the name in
+// option C, the ledger, turned into a slider -- at the top centre until 2026-10-25, when a
+// MacBook's camera housing hid its middle; now just over the HUD (the user: "can we show it
+// above hud maybe and add some more styling to be more premium?"), over the target frame or the
+// Go Back! plate when either stands there. A band darkest in its middle and gone at both ends,
+// raised ash over a soft shadow, an engraved gold hairline over it and a fainter one under; the name in
 // Cinzel, the clock, a thin upright rule and the place. Nothing more ("UX has to be cleaner with
 // less text ... its informative"); not even a missing ticket ("dont show that character dont
 // have ticket, stick on what we designed").
 //
 // It is not always up. It speaks when an event first comes within half an hour, briefly; then for
 // the last six seconds before its gate, counting down, and on into the gate's opening under the
-// green dot, held three seconds under a peek of its music, then goes. Several at once take four seconds each. It drops in from the top and leaves
-// upward; a second event slides in from the right. While a gate is open a green dot breathes
+// green dot, held three seconds under a peek of its music, then goes. Several at once take four seconds each. It rises into place and sinks
+// away; a second event slides in from the right. While a gate is open a green dot breathes
 // before the name; nothing marks an event that is only coming. The cross puts it away at once;
 // the next moment still raises it.
 //
@@ -41,10 +44,13 @@ class Herald {
 public:
     void open(const gfx::Interface& interface) { interface.adopt(canvas_); }
     void close();
-    // One frame. Returns true on the frame its cross was clicked, for the desk's click.
-    bool update(float seconds, const Play& play, const Pointer& pointer, int width, int height);
+    // One frame. Returns true on the frame its cross was clicked, for the desk's click. `floor`
+    // is the y its band stands on: the HUD plate's top, or what stands over the plate.
+    bool update(float seconds, const Play& play, const Pointer& pointer, int width, float floor);
     bool covers(float x, float y) const { return alpha_ > 0.0f && close_.has(x, y); }
     bool showing() const { return !canvas_.empty(); }
+    // The band's top edge as last drawn: a fight's Zen, said over the HUD, stands over it.
+    float top() const { return top_; }
     // A gate the countdown just saw open (0 Blood Castle, 1 Devil Square), handed on once, or
     // -1: its music is peeked for as long as the open line stays and fades as it goes (the
     // user, 2026-10-21: "when BC and DS gates are opened, we need to play little sneak peak music
@@ -95,6 +101,8 @@ private:
     float leaving_ = -1.0f; // seconds into the band's going, or -1
     float pulse_ = 0.0f;
     float alpha_ = 0.0f;
+    float floor_ = 0.0f;
+    float top_ = 0.0f;
     bool hover_ = false;
     int peek_ = -1;
     gfx::Box close_;

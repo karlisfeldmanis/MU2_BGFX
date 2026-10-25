@@ -80,6 +80,10 @@ Screen screenOf(float width, float height);
 // The pointer, the tips and the fight's figures are measured in it, so shrinking the windows
 // leaves the cursor and the damage numbers where they were.
 void setScreen(float height);
+// The pixels a notch hides at the screen's top (gfx::Window::topInset): what stands at the top
+// centre -- the herald, the boss bar under it -- comes down past it.
+void setTopInset(float pixels);
+float topInset();
 float scale();
 float unit();
 constexpr float kWidth = 190.0f;

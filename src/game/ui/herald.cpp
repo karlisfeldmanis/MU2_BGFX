@@ -24,8 +24,8 @@ using gfx::Box;
 // size, so each of its pixels is two here), all drawn at kScale: at 1:1 it was too large on the
 // screen (the user, 2026-10-05), then 0.65 ('scale little bit more down').
 constexpr float kScale = 0.65f;
-constexpr float kWide = 880.0f, kTall = 52.0f;
-constexpr float kTop = 12.0f;
+// A little taller than the proposal's 52, for the raised body and its engraved edges.
+constexpr float kWide = 880.0f, kTall = 58.0f;
 constexpr float kGap = 18.0f;        // between the line's items
 constexpr float kNameSize = 20.0f, kNameTrack = 0.14f;
 constexpr float kClockSize = 22.0f;
@@ -35,8 +35,9 @@ constexpr float kDot = 12.0f;        // the live dot's width
 constexpr float kRuleTall = 18.0f;   // the upright rule between the clock and the place
 constexpr float kCloseRight = 92.0f; // the cross's box, in from the band's right end
 constexpr float kCloseBox = 28.0f, kCloseArm = 18.0f;
-constexpr float kDropFrom = 80.0f;   // how far above its place the band comes from
-constexpr float kRise = 20.0f;       // and how far it rises as it goes
+constexpr float kDropFrom = 36.0f;   // how far below its place the band rises from
+constexpr float kRise = 24.0f;       // and how far it sinks as it goes
+constexpr float kShadowDown = 10.0f; // the shadow's reach under the band
 constexpr float kSlideFrom = 52.0f;  // a second event's line, from the right
 
 // The moments, in seconds.
@@ -75,9 +76,10 @@ const Gate kGates[] = {
 };
 
 // Black under the line, across its width: clear at the ends, 78% in the middle (60% was tried
-// and was too light: 'darkens was better before', 2026-10-05).
-constexpr float kBandAt[5] = {0.0f, 0.22f, 0.5f, 0.78f, 1.0f};
-constexpr float kBandAlpha[5] = {0.0f, 0.55f, 0.78f, 0.55f, 0.0f};
+// and was too light: 'darkens was better before', 2026-10-05). Over the HUD it is raised ash
+// rather than a bare scrim, a shade fuller (2026-10-25, 'more premium').
+constexpr float kBandAt[5] = {0.0f, 0.18f, 0.5f, 0.82f, 1.0f};
+constexpr float kBandAlpha[5] = {0.0f, 0.72f, 0.90f, 0.72f, 0.0f};
 // The travel list's gold (game/ui/travel.cpp): the hairline's middle, the clock that is near.
 constexpr uint32_t kGoldHi = gfx::rgba(0.886f, 0.776f, 0.541f);
 // The live dot (style.h).
@@ -253,8 +255,8 @@ void Herald::close() {
 }
 
 bool Herald::update(float seconds, const Play& play, const Pointer& pointer, int width,
-                    int height) {
-    (void)height;
+                    float floor) {
+    floor_ = floor;
     const sim::Realm& realm = play.realm();
     const int64_t wall = realm.wallClock();
     const int day = dayOf(wall);
@@ -404,20 +406,35 @@ void Herald::rebuild(int width) {
     const float u = tip::unit() * kScale;
     const float a = alpha_;
     const float dy = leaving_ >= 0.0f
-                         ? -kRise * u * (leaving_ / kLeaveSeconds) * (leaving_ / kLeaveSeconds)
-                         : -kDropFrom * u * (1.0f - settle(age_ / kDropSeconds));
-    const Box band{std::round((float(width) - kWide * u) * 0.5f), std::round(kTop * u + dy),
-                   std::round(kWide * u), std::round(kTall * u)};
+                         ? kRise * u * (leaving_ / kLeaveSeconds) * (leaving_ / kLeaveSeconds)
+                         : kDropFrom * u * (1.0f - settle(age_ / kDropSeconds));
+    const float tall = std::round(kTall * u);
+    const Box band{std::round((float(width) - kWide * u) * 0.5f), std::round(floor_ - tall + dy),
+                   std::round(kWide * u), tall};
+    top_ = band.y;
 
-    // The band: black across, clear at both ends; then the two hairlines.
-    for (int i = 0; i + 1 < 5; ++i) {
-        const float x0 = band.x + band.w * kBandAt[i], x1 = band.x + band.w * kBandAt[i + 1];
-        const uint32_t l = faded(style::kSeam, kBandAlpha[i] * a);
-        const uint32_t r = faded(style::kSeam, kBandAlpha[i + 1] * a);
-        canvas_.shade({x0, band.y, x1 - x0, band.h}, l, r, r, l);
-    }
+    // Across the band in kBandAt's stops, clear at both ends: `top` and `foot` the inks down it.
+    const auto across = [&](float y, float h, uint32_t top, uint32_t foot, float strength) {
+        for (int i = 0; i + 1 < 5; ++i) {
+            const float x0 = band.x + band.w * kBandAt[i], x1 = band.x + band.w * kBandAt[i + 1];
+            const float l = kBandAlpha[i] * strength, r = kBandAlpha[i + 1] * strength;
+            canvas_.shade({x0, y, x1 - x0, h}, faded(top, l), faded(top, r), faded(foot, r),
+                          faded(foot, l));
+        }
+    };
+    // A soft shadow out under it, so it stands off the ground and the plate.
+    const float shadow = std::round(kShadowDown * u);
+    across(band.bottom(), shadow, style::kSeam, faded(style::kSeam, 0.0f), 0.45f * a);
+    // The body: ash lifted at its top to the void at its foot, and a faint sheen over its upper
+    // third, as the windows' sheets are lit.
+    across(band.y, band.h, style::kAsh3, style::kVoid, a);
+    across(band.y, std::round(band.h * 0.38f), gfx::rgba(1.0f, 1.0f, 1.0f, 0.06f),
+           gfx::rgba(1.0f, 1.0f, 1.0f, 0.0f), a);
+    // Engraved edges: each hairline over a seam of black, the top one in gold, the foot fainter.
     const float hair = std::max(1.0f, std::round(u));
+    across(band.y + hair, hair, style::kSeam, style::kSeam, 0.8f * a);
     hairline(canvas_, band, band.y, hair, a);
+    across(band.bottom() - hair * 2.0f, hair, style::kSeam, style::kSeam, 0.6f * a);
     hairline(canvas_, band, band.bottom() - hair, hair, a * 0.55f);
 
     // The line up, sliding in from the right when it took over from another.

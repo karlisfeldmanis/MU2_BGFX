@@ -45,6 +45,7 @@ public:
     void update(float seconds, Play& play, const Pointer& pointer, panel::Arts& arts, float width,
                 float bottom, const gfx::Art& face, bool faceTaken);
     bool showing() const { return showing_; }
+    float top() const { return box_.y; }  // what stands over it (game/ui/herald.h)
     // The frame takes the pointer: a click on it walks no one.
     bool covers(float x, float y) const { return showing_ && (took_ || box_.has(x, y)); }
     // A press on its menu button this frame asked for his menu, beside the button. Taken once.

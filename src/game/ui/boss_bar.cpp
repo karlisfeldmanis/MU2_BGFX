@@ -22,7 +22,7 @@ using gfx::Box;
 // the life red for the bar, iron for the notches and the rule, a danger word for a move told --
 // and no gold, which is loot's. In tip::unit() at the herald's kScale.
 constexpr float kScale = 0.65f;
-constexpr float kTop = 70.0f;       // under the herald's band (12 + 52) and a breath of air
+constexpr float kTop = 70.0f;       // where the herald stood over it until 2026-10-25 (12 + 52), and a breath of air
 constexpr float kWide = 880.0f, kTall = 96.0f;
 constexpr float kBarWide = 560.0f, kBarTall = 16.0f;
 constexpr float kNameSize = 20.0f, kNameTrack = 0.14f;
@@ -135,7 +135,7 @@ void BossBar::update(float seconds, const Play& play, const float* viewProj, int
     lag_ = share > lag_ ? share : std::max(share, lag_ - kDrain * seconds);
 
     // The band and its hairlines.
-    const Box band{std::round((float(width) - kWide * u) * 0.5f), std::round(kTop * u), std::round(kWide * u),
+    const Box band{std::round((float(width) - kWide * u) * 0.5f), std::round(kTop * u + panel::topInset()), std::round(kWide * u),
                    std::round(kTall * u)};
     for (int i = 0; i + 1 < 5; ++i) {
         const float x0 = band.x + band.w * kBandAt[i], x1 = band.x + band.w * kBandAt[i + 1];

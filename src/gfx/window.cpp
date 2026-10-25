@@ -613,6 +613,16 @@ void Window::displaySize(int* width, int* height) const {
     *height = mode ? mode->height : 0;
 }
 
+float Window::topInset() const {
+    // MU2_NOTCH=<pixels> stands one in, in a window or offscreen too: a review shot on a Mac
+    // without a notch.
+    if (const char* faked = std::getenv("MU2_NOTCH")) return float(std::atof(faked));
+    if (!fullscreen()) return 0.0f;
+    int points = 0, ignored = 0;
+    glfwGetWindowSize(handle_, &ignored, &points);
+    return points > 0 ? notchPoints() * float(height_) / float(points) : 0.0f;
+}
+
 void Window::setVsync(bool on) {
     reset_ = on ? (reset_ | BGFX_RESET_VSYNC) : (reset_ & ~uint32_t(BGFX_RESET_VSYNC));
     bgfx::reset(reset_, swapChain());

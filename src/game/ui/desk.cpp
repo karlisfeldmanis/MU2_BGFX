@@ -299,6 +299,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
 
     panel::setScreen(float(window.height()));
     panel::setFloor(hud_.plateTop());
+    panel::setTopInset(window.topInset());
     // Asked before any window answers the press, while what the player clicked on is still up.
     const bool pressedOnWindow = pointer.pressed && overWindows(pointer.x, pointer.y);
     arrival_.update(seconds, float(window.width()), float(window.height()));
@@ -1048,8 +1049,13 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         }
     }
     // The herald: the event coming for his level, at its three moments. Its cross clicks.
+    // Over the plate, or over the target frame or the Go Back! plate standing on it.
+    const float heraldGap = 8.0f * tip::unit();
+    float heraldFloor = hud_.plateTop() - heraldGap;
+    if (targetFrame_.showing()) heraldFloor = std::min(heraldFloor, targetFrame_.top() - heraldGap);
+    if (goBack_.showing() && !watching_) heraldFloor = std::min(heraldFloor, goBack_.top() - heraldGap);
     if (herald_.update(seconds, play, amount_.up() || report_.up() || whatsNew_.up() || menu_.up() ? Pointer{} : pointer,
-                       window.width(), window.height())) {
+                       window.width(), heraldFloor)) {
         click();
     }
     if (const int peek = herald_.takePeek(); peek >= 0 && play.isOpen()) {
@@ -2875,7 +2881,9 @@ void Desk::overhead(float seconds, const Play& play, const float* viewProj, int 
                     viewProj, width, height);
     // The blows' own figures and the gain lane, on the same frame's camera: the figures hang
     // on world points and the lane on the HUD's top edge.
-    tally_.update(seconds, play, viewProj, width, height, hud_.plateTop());
+    // A fight's Zen is said over the HUD, and over the herald while it stands there.
+    const float zenFloor = herald_.showing() ? std::min(hud_.plateTop(), herald_.top()) : hud_.plateTop();
+    tally_.update(seconds, play, viewProj, width, height, zenFloor);
 }
 
 void Desk::photograph(gfx::Renderer& renderer, double seconds) {

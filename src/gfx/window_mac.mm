@@ -20,6 +20,12 @@ void Window::setPresentation(bool fullscreen) {
     if ([NSApp presentationOptions] != options) [NSApp setPresentationOptions:options];
 }
 
+// Fullscreen goes over the primary display (displayArea in window.cpp), the first of NSScreen's.
+float Window::notchPoints() {
+    NSScreen* primary = [[NSScreen screens] firstObject];
+    return primary ? float(primary.safeAreaInsets.top) : 0.0f;
+}
+
 void Window::armHeld(bool) {}
 
 }  // namespace mu::gfx
