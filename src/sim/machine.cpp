@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include "sim/harmony.h"
 #include "sim/lord_pets.h"
 #include "sim/market.h"
 #include "sim/wear.h"
@@ -70,6 +71,10 @@ struct Sorted {
     int luckless = 0, lucklessCell = -1;  // things that take Luck and have none
     int lucky = 0, luckyCell = -1;        // and that have it
     int spirits[2] = {};                  // the Trainer's: Spirits +0 (the horse's) and +1 (the raven's)
+    int gemstones = 0;                    // Harmony's: Gemstones to refine
+    int smeltLower = 0, smeltHigher = 0, smeltCell = -1;  // pieces a smelt takes: plain, excellent
+    int smeltShort = 0, smeltShortCell = -1;  // one of the cheap ones under +4 (sim::smeltsCheap)
+    int harmonized = 0, harmonizedCell = -1;  // pieces carrying a Harmony option
     int runeCells[kMostSockets + 1] = {-1, -1, -1, -1};
     int things = 0;     // everything that is not one of the three jewels
     int others = 0;     // everything that is neither a jewel nor a rune
@@ -107,6 +112,22 @@ Sorted sort(const content::Tables& tables, const Machine& box) {
                 continue;
             }
             s.others += n;
+            if (gemstone(*row)) {
+                s.gemstones += n;
+                continue;
+            }
+            if (harmonyFamily(*row) != HarmonyFamily::None) {
+                if (what.harmony != 0) {
+                    ++s.harmonized;
+                    s.harmonizedCell = cell;
+                } else if (!smeltable(*row, what)) {
+                    ++s.smeltShort;
+                    s.smeltShortCell = cell;
+                } else {
+                    ++(what.excellent != 0 ? s.smeltHigher : s.smeltLower);
+                    s.smeltCell = cell;
+                }
+            }
             if (spirit(*row)) {
                 s.spirits[std::clamp<int>(what.refinement, 0, 1)] += n;
                 continue;
@@ -623,6 +644,66 @@ void addLuck(const content::Tables& tables, const Machine& box, const Sorted& s,
               s.soul == kAddLuckJewels && s.life == kAddLuckJewels;
 }
 
+// ---- the Jewel of Harmony's three (sim/harmony.h) -----------------------------------------------
+
+void refineGemstone(const Sorted& s, Judged& j) {
+    need(j, "Gemstones", s.gemstones, 1, true);
+    j.needs[j.needCount - 1].more = true;
+    j.rate = kGemstoneRefineChance;
+    if (s.gemstones == 0) {
+        j.title = "Put in Gemstones";
+        return;
+    }
+    j.title = s.gemstones == 1 ? "Refine a Gemstone" : "Refine " + std::to_string(s.gemstones) + " Gemstones";
+    j.success = "A Jewel of Harmony for each that takes";
+    j.failure = "A Gemstone that fails is lost";
+    j.ready = s.things == s.gemstones && s.chaos == 0 && s.bless == 0 && s.soul == 0;
+}
+
+void smelt(const content::Tables& tables, const Machine& box, const Sorted& s, Judged& j) {
+    const int pieces = s.smeltLower + s.smeltHigher;
+    need(j, "Weapons or armour", pieces, 1, true);
+    j.rate = s.smeltLower == 0 && s.smeltHigher > 0 ? kSmeltExcellentChance : kSmeltChance;
+    j.success = "Higher stones from excellent pieces at " + std::to_string(kSmeltExcellentChance) +
+                "%, Lower from the rest at " + std::to_string(kSmeltChance) + "%";
+    j.failure = "Every piece is eaten, made or not";
+    if (s.smeltShort > 0) {
+        j.title = "The " + labelAt(tables, box, s.smeltShortCell) + " must be +" +
+                  std::to_string(kSmeltCheapFrom) + " or more";
+        j.blocked = true;
+        return;
+    }
+    if (s.harmonized > 0) {
+        j.title = "The " + labelAt(tables, box, s.harmonizedCell) + " has a Harmony option";
+        j.blocked = true;
+        return;
+    }
+    if (pieces == 0) {
+        j.title = "Put in weapons or armour";
+        return;
+    }
+    j.title = pieces == 1 ? "Smelt the " + labelAt(tables, box, s.smeltCell)
+                          : "Smelt " + std::to_string(pieces) + " pieces";
+    j.ready = s.things == pieces && s.chaos == 0 && s.bless == 0 && s.soul == 0;
+}
+
+void removeHarmony(const content::Tables& tables, const Machine& box, const Sorted& s, Judged& j) {
+    need(j, "Item with a Harmony option", s.harmonized, 1);
+    j.rate = 100;
+    if (s.harmonized != 1) {
+        j.title = s.harmonized == 0 ? "Put in an item with a Harmony option" : "One item at a time";
+        return;
+    }
+    j.target = s.harmonizedCell;
+    const Held& thing = box[j.target];
+    const HarmonyOption* option = harmonyOf(tables.items[size_t(thing.item)], thing);
+    j.zen = kHarmonyRemoveZen[std::clamp<int>(thing.harmonyLevel, 0, kHarmonyTop)];
+    const std::string name = labelAt(tables, box, j.target);
+    j.title = std::string("Remove ") + (option ? option->name : "Harmony");
+    j.success = name + " with no Harmony option, still bound";
+    j.ready = s.things == 1 && s.chaos == 0 && s.bless == 0 && s.soul == 0;
+}
+
 void fuseRunes(const content::Tables& tables, const Machine& box, const Sorted& s, Judged& j) {
     need(j, "Runes of one rarity", s.runes, kFuseCount);
     need(j, "Jewel of Chaos", s.chaos, 1);
@@ -766,6 +847,9 @@ Judged judge(const content::Tables& tables, const Machine& box, Service service,
         case Service::AddSocket: addSocket(tables, box, s, j); break;
         case Service::AddLuck: addLuck(tables, box, s, j); break;
         case Service::FuseRunes: fuseRunes(tables, box, s, j); break;
+        case Service::RefineGemstone: refineGemstone(s, j); break;
+        case Service::Smelt: smelt(tables, box, s, j); break;
+        case Service::RemoveHarmony: removeHarmony(tables, box, s, j); break;
         case Service::FirstWings:
         case Service::SecondWings:
         case Service::ChaosWeapon:
@@ -795,6 +879,10 @@ int nearness(const Judged& j) {
     for (int i = 0; i < j.needCount; ++i) {
         const Need& n = j.needs[i];
         if (n.remove) points -= 8 * n.have;
+        if (n.more) {
+            points += 4 * n.have;
+            continue;
+        }
         if (n.need <= 0) continue;
         points += 4 * std::min(n.have, n.need) - 8 * std::max(0, n.have - n.need);
     }
@@ -973,6 +1061,9 @@ const char* serviceName(Service service) {
         case Service::AddSocket: return "Add Socket";
         case Service::AddLuck: return "Add Luck";
         case Service::FuseRunes: return "Fuse Runes";
+        case Service::RefineGemstone: return "Refine Gemstone";
+        case Service::Smelt: return "Smelt";
+        case Service::RemoveHarmony: return "Remove Harmony";
         case Service::FirstWings: return "1st Wings";
         case Service::SecondWings: return "2nd Wings";
         case Service::ChaosWeapon: return "Chaos Weapon";
@@ -994,6 +1085,9 @@ const char* serviceVerb(Service service) {
         case Service::AddSocket: return "Add Socket";
         case Service::AddLuck: return "Add Luck";
         case Service::FuseRunes: return "Fuse";
+        case Service::RefineGemstone: return "Refine";
+        case Service::Smelt: return "Smelt";
+        case Service::RemoveHarmony: return "Remove";
         case Service::FirstWings:
         case Service::SecondWings: return "Create Wings";
         case Service::ChaosWeapon: return "Create";

@@ -9514,6 +9514,9 @@ void testCraftsFromTheBag() {
               wing >= 0 && sword >= 0 && rare != 0 && epic != 0 && legendary != 0,
           "every craft's things are in Noria's tables");
     if (sword < 0 || eye < 0 || key < 0 || feather < 0 || rune < 0 || wing < 0 || rare == 0) return;
+    const int32_t gemstone = noria.itemNamed("Gemstone"), harmonyJewel = noria.itemNamed("JewelOfHarmony");
+    check(gemstone >= 0 && harmonyJewel >= 0, "the Gemstone and the Jewel of Harmony are in Noria's tables");
+    if (gemstone < 0 || harmonyJewel < 0) return;
     const int16_t whole = int16_t(sim::maximumDurability(noria.items[size_t(uniria)], sim::Held{uniria, 0, 0}));
 
     struct Craft {
@@ -9522,9 +9525,10 @@ void testCraftsFromTheBag() {
         int count;  // what Fill from bag puts in
     };
     // The rows, in an array the craft's filler reads: 0 chaos, 1 bless, 2 soul, 3 life, 4 sword,
-    // 5 axe, 6 uniria, 7 scroll, 8 bone, 9 eye, 10 key, 11 feather, 12 rune, 13 wing.
-    const int32_t rows[14] = {chaos, bless, soul, life, sword, axe, uniria, scroll, bone, eye, key,
-                              feather, rune, wing};
+    // 5 axe, 6 uniria, 7 scroll, 8 bone, 9 eye, 10 key, 11 feather, 12 rune, 13 wing, 14 gemstone,
+    // 15 the Jewel of Harmony.
+    const int32_t rows[16] = {chaos, bless, soul, life, sword, axe, uniria, scroll, bone, eye, key,
+                              feather, rune, wing, gemstone, harmonyJewel};
     const uint8_t powers[3] = {rare, legendary, epic};
     const Craft crafts[] = {
         {sim::Service::Upgrade,
@@ -9589,6 +9593,17 @@ void testCraftsFromTheBag() {
                  r.give(k[12], -1, 0, -1, false, 0, 0, 0, set);
              }
          }, 4 + 4 * sim::kAddLuckJewels},
+        // The Jewel of Harmony's three: a stack of Gemstones, all of it taken; one piece to smelt;
+        // a sword the jewel took on, whose option comes off.
+        {sim::Service::RefineGemstone,
+         [](sim::Realm& r, const int32_t* k, const uint8_t*, int16_t) { r.give(k[14], -1, 0, 3); }, 3},
+        {sim::Service::Smelt,
+         [](sim::Realm& r, const int32_t* k, const uint8_t*, int16_t) { r.give(k[4], -1, 5); }, 1},
+        {sim::Service::RemoveHarmony,
+         [](sim::Realm& r, const int32_t* k, const uint8_t*, int16_t) {
+             const int at = r.give(k[4], -1, 5);
+             for (int i = 0; i < 40 && r.satchel()[at].harmony == 0; ++i) r.refine(r.give(k[15]), at);
+         }, 1},
     };
     check(int(sizeof(crafts) / sizeof(crafts[0])) == sim::kRowCount, "a craft for every service on the list");
 
@@ -9596,7 +9611,7 @@ void testCraftsFromTheBag() {
     const auto sign = [](const sim::Held& h) {
         return std::to_string(h.item) + "/" + std::to_string(h.refinement) + "/" +
                std::to_string(h.sockets) + "/" + std::to_string(h.powers[0]) + "/" +
-               std::to_string(h.powers[1]) + (h.luck ? "/L" : "");
+               std::to_string(h.powers[1]) + (h.luck ? "/L" : "") + "/H" + std::to_string(h.harmony);
     };
     for (const Craft& craft : crafts) {
         const std::string name = sim::serviceName(craft.service);
@@ -10319,7 +10334,7 @@ void testChaosMachine() {
             // Every mix a page of its own, and no plain Combine on the row (the user, 2026-10-05).
             bool combineShown = false;
             for (sim::Service one : sim::kRowServices) combineShown |= one == sim::Service::Combine;
-            check(!combineShown && sim::kRowCount == 11, "eleven pages, Combine on none");
+            check(!combineShown && sim::kRowCount == 14, "fourteen pages, Combine on none");
             check(sim::judge(noria, weapon, sim::Service::ChaosWeapon).recipe ==
                       sim::Recipe::ChaosWeapon,
                   "the Chaos Weapon page makes the Chaos weapon");
@@ -17417,6 +17432,31 @@ void testHarmony(const content::Tables& tables) {
             offHim &= realm.satchel()[sim::kWeaponRight].empty();
         }
         check(fell && offHim, "a miss he can no longer wear goes off him into the bag");
+    }
+
+    // The Chaos Machine's three, judged (sim/machine.h): a cheap piece smelts only at +4, a piece
+    // with an option never; the removal's price by the option's level, the piece kept bound.
+    {
+        const auto judgeOf = [&](sim::Service service, std::initializer_list<sim::Held> things) {
+            sim::Machine box;
+            int cell = 0;
+            for (const sim::Held& one : things) box.put(cell++, one);
+            return sim::judge(tables, box, service);
+        };
+        check(kris >= 0 && sim::smeltsCheap(tables.items[size_t(kris)]), "the Kris is one of the cheap ones");
+        check(judgeOf(sim::Service::Smelt, {sim::Held{kris, 3, 20}}).blocked, "a +3 Kris does not smelt");
+        check(judgeOf(sim::Service::Smelt, {sim::Held{kris, 4, 20}}).ready, "a +4 one does");
+        check(judgeOf(sim::Service::Smelt, {sim::Held{sword, 0, 20}}).ready, "a dearer sword at +0 does");
+        sim::Held held{sword, 9, 20};
+        held.harmony = 1;
+        held.harmonyLevel = 7;
+        held.bound = true;
+        check(judgeOf(sim::Service::Smelt, {held}).blocked, "a piece with an option does not smelt");
+        const sim::Judged removal = judgeOf(sim::Service::RemoveHarmony, {held});
+        check(removal.ready && removal.rate == 100 && removal.zen == 220000,
+              "its option comes off always, for level 7's 220,000");
+        check(judgeOf(sim::Service::RefineGemstone, {sim::Held{tables.itemNamed("Gemstone"), 0, 5}}).ready,
+              "a stack of Gemstones refines");
     }
 
     // The Gemstone: one in 150 kills in the Ruins and the Relics, any monster's, on its own roll;

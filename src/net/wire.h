@@ -197,7 +197,9 @@ namespace mu::net {
 //     and the Relics' door, open with it, and their 19th travel row (sim::kTravels 19).
 // 58: the Jewel of Harmony and the Refining Stones dragged onto a thing (docs/plans/jewel-of-harmony.md
 //     step 5), and their happening, What::Harmonized.
-constexpr uint32_t kVersion = 58;
+// 59: the Chaos Machine's Harmony services (sim::Service 15-17): Refine Gemstone, Smelt and Remove
+//     Harmony (docs/plans/jewel-of-harmony.md step 6).
+constexpr uint32_t kVersion = 59;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box,
 // by its name, so the game talks to mu-classic.com as the launcher does, not to a bare address.
 constexpr const char* kDefaultHost = "mu-classic.com";

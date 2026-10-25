@@ -96,4 +96,25 @@ bool harmonizes(const content::Tables& tables, const Held& jewel, const Held& ta
 // What a miss leaves `target` as: the jewel's untouched, a stone's at its option's least level.
 Held harmonyMissed(const content::Tables& tables, const Held& jewel, Held target);
 
+// **The Chaos Machine's three** (step 6; the user, 2026-10-25: everything at the Machine, where MU
+// has Elpis, Osbourne and Jerridon). Refine Gemstone: each Gemstone in the box a Jewel of Harmony at
+// 80 in 100, the lost ones gone (mix.bmd, OpenMU's GemstoneRefinery; ours a stack at a time, MU's
+// one). Smelt: each weapon, staff, shield or armour piece in the box with no Harmony option a
+// Refining Stone, the Higher at 50 in 100 for an excellent piece, the Lower at 20 for any other,
+// the piece eaten either way (OpenMU's RefineStoneCrafting, up to 32 at once; WebZen's one). No Zen
+// for either (OpenMU's; WebZen's are cfg keys). Remove Harmony: the option off, always, for its
+// level's price (OpenMU's RestoreItemCrafting, levels 0-11 of its 0-13); the piece stays bound.
+inline constexpr int kGemstoneRefineChance = 80;
+inline constexpr int kSmeltChance = 20;
+inline constexpr int kSmeltExcellentChance = 50;
+inline constexpr int64_t kHarmonyRemoveZen[kHarmonyTop + 1] = {
+    100000, 110000, 120000, 130000, 140000, 150000, 200000, 220000, 240000, 280000, 320000, 360000};
+// The 84 cheapest pieces -- the Kris, the Small Axe, the Bronze set and their like -- smelt only at
+// +4 or more (OpenMU's RefineStoneCrafting list, WebZen's JewelOfHarmonySmelt.txt's level).
+inline constexpr int kSmeltCheapFrom = 4;
+bool smeltsCheap(const content::ItemRow& row);
+// Whether a smelt takes `what`: a piece that could carry an option, with none, at kSmeltCheapFrom
+// or more when it is one of the cheap ones.
+bool smeltable(const content::ItemRow& row, const Held& what);
+
 }  // namespace mu::sim

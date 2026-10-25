@@ -82,6 +82,20 @@ The services (`sim::Service`, `sim::judge(tables, box, service, socket, kin)`):
 
 All three rune services are invention, and their numbers are the proposal's first guesses.
 
+The Jewel of Harmony's three (docs/plans/jewel-of-harmony.md step 6, protocol 59; the user,
+2026-10-25: everything at the Machine, where MU has Elpis, Osbourne and Jerridon):
+
+| service | box | chance | Zen | answer |
+|---|---|---|---|---|
+| Refine Gemstone | Gemstones, any number (Fill takes them all) | 80% each | none | a Jewel of Harmony for each that takes; the rest are lost |
+| Smelt | weapons, staffs, shields or armour with no Harmony option; the 84 cheapest (the Kris, the Bronze set...) at +4 or more | 50% each excellent piece, 20% each other | none | a Higher Refining Stone from an excellent piece, a Lower from any other; every piece eaten |
+| Remove Harmony | one piece with a Harmony option | 100% | 100,000 to 360,000 by the option's level | the option off; the piece stays bound |
+
+The rates and the cheap list are OpenMU's (mix.bmd agrees on 80, 20 and 50; WebZen's are
+commonserver.cfg keys and its list a JewelOfHarmonySmelt.txt we do not have). MU takes one
+Gemstone or one piece a mix; ours a box of them, each rolled on its own (sim::byPiece). Fill from
+bag never puts gear in to smelt: the pieces are the player's to pick.
+
 ## Phase three: every service on the window (2026-10-20)
 
 The user asked for every craft option on screen as buttons ("craft options all visible with
@@ -91,8 +105,8 @@ matched to Sanctuary. Phase two's service row and its page turn are gone.
 - The window is the Broker's width, 618 units, three columns at the vault's place
   (`Mixer::kWide`, `panel::columnX(width, 4)`), the bag beside it.
 - **The list**, on the left: the services under MIXES (Upgrade, Chaos Weapon, 1st Wings,
-  2nd Wings, Dinorant), TICKETS (Invisibility Cloak, Devil's Invitation) and RUNES (Remove Rune,
-  Add Socket, Add Luck, Fuse Runes). Each one is a bordered iron row, and the picked one is in the travel
+  2nd Wings, Dinorant), TICKETS (Invisibility Cloak, Devil's Invitation), RUNES (Remove Rune,
+  Add Socket, Add Luck, Fuse Runes) and HARMONY (Refine Gemstone, Smelt, Remove Harmony). Each one is a bordered iron row, and the picked one is in the travel
   list's gold. At its right is **Ready** in green when the bag and the box hold everything it
   needs, else **N missing**. A press picks the service and plays `quest_page_turn`.
 - **The page**, on the right: the service's name in Cinzel and what the box is to it, then the

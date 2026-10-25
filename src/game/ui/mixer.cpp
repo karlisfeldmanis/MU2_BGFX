@@ -22,9 +22,9 @@ constexpr float kWide = Mixer::kWide;
 constexpr float kListX = panel::kEdge, kListW = 172.0f;
 constexpr float kListTop = 44.0f;
 constexpr float kGroupHead = 13.0f, kRowH = 19.0f, kRowGap = 2.0f, kGroupGap = 6.0f;
-constexpr const char* kGroups[3] = {"MIXES", "TICKETS", "RUNES"};
+constexpr const char* kGroups[4] = {"MIXES", "TICKETS", "RUNES", "HARMONY"};
 // The Pet Trainer's two: MU's Restore life and Resurrect spirit.
-constexpr const char* kTrainerGroups[3] = {"RESTORE", "RESURRECT", ""};
+constexpr const char* kTrainerGroups[4] = {"RESTORE", "RESURRECT", "", ""};
 // The fading rule between the list and the page.
 constexpr float kDivideX = 193.0f;
 
@@ -99,6 +99,9 @@ int groupOf(const sim::Service* rows, int row) {
         case sim::Service::AddSocket:
         case sim::Service::AddLuck:
         case sim::Service::FuseRunes: return 2;
+        case sim::Service::RefineGemstone:
+        case sim::Service::Smelt:
+        case sim::Service::RemoveHarmony: return 3;
         default: return 0;
     }
 }
@@ -251,6 +254,9 @@ std::string question(sim::Service service, const sim::Judged& j) {
         case sim::Service::RemoveRune: return j.title + "?";
         case sim::Service::AddSocket: return "Add the socket?";
         case sim::Service::AddLuck: return "Add Luck?";
+        case sim::Service::RefineGemstone: return "Refine the Gemstones?";
+        case sim::Service::Smelt: return "Smelt them? Every piece is eaten.";
+        case sim::Service::RemoveHarmony: return j.title + " for " + std::to_string(j.zen) + " Zen?";
         case sim::Service::FuseRunes: return "Fuse the three runes?";
         case sim::Service::FirstWings:
         case sim::Service::SecondWings: return "Do you want to create the wings?";
@@ -273,6 +279,9 @@ const char* madeHead(sim::Service service) {
         case sim::Service::RemoveRune: return "Rune removed";
         case sim::Service::AddSocket: return "Socket added";
         case sim::Service::AddLuck: return "Luck added";
+        case sim::Service::RefineGemstone: return "Jewels of Harmony refined";
+        case sim::Service::Smelt: return "Refining Stones smelted";
+        case sim::Service::RemoveHarmony: return "Harmony removed";
         case sim::Service::FuseRunes: return "Runes fused";
         case sim::Service::FirstWings:
         case sim::Service::SecondWings: return "Wings created";
@@ -614,7 +623,7 @@ void Mixer::rebuild(const sim::Realm& realm, Stage* stage) {
                     panel::kHeadBand * k);
 
     // ---- the list ----------------------------------------------------------------------------
-    for (int g = 0; g < 3; ++g) {
+    for (int g = 0; g < 4; ++g) {
         int first = -1;
         for (int i = 0; i < rowCount() && first < 0; ++i) {
             if (groupOf(rows(), i) == g) first = i;

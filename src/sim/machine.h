@@ -169,13 +169,19 @@ enum class Service : uint8_t {
     DarkRaven = 12,
     MendPets = 13,
     AddLuck = 14,
+    // The Jewel of Harmony's three (sim/harmony.h): Gemstones into jewels, gear into Refining
+    // Stones, and the option taken off.
+    RefineGemstone = 15,
+    Smelt = 16,
+    RemoveHarmony = 17,
 };
-constexpr int kServices = 15;
+constexpr int kServices = 18;
 // The window's service row, in its order: a page a mix, then the rune services.
 constexpr Service kRowServices[] = {
     Service::Upgrade,  Service::ChaosWeapon, Service::FirstWings, Service::SecondWings,
     Service::Dinorant, Service::Cloak,       Service::Invitation, Service::RemoveRune, Service::AddSocket,
-    Service::AddLuck,  Service::FuseRunes};
+    Service::AddLuck,  Service::FuseRunes, Service::RefineGemstone, Service::Smelt,
+    Service::RemoveHarmony};
 constexpr int kRowCount = int(sizeof(kRowServices) / sizeof(kRowServices[0]));
 // The Pet Trainer's row, in its order (MU's menu: Restore life, then Resurrect spirit).
 constexpr Service kTrainerServices[] = {Service::MendPets, Service::DarkHorse, Service::DarkRaven};
@@ -221,11 +227,19 @@ struct Need {
     bool atLeast = false;
     // A thing the mix has no line for, which spoils the box: `have` of it, and none is wanted.
     bool remove = false;
+    // Each one past `need` is wanted too, and Fill from bag takes them all: Refine Gemstone's
+    // Gemstones. Never a thing a mix would eat that he might keep (Smelt's pieces are his to pick).
+    bool more = false;
     bool met() const {
         return remove ? have == 0 : need == 0 ? true : atLeast ? have >= need : have == need;
     }
 };
 constexpr int kMostNeeds = 8;  // Add Luck's eight
+// Whether a service rolls each thing in the box on its own (Refine Gemstone, Smelt): its `rate` is
+// each one's, and it is made when one is.
+constexpr bool byPiece(Service service) {
+    return service == Service::RefineGemstone || service == Service::Smelt;
+}
 
 struct Judged {
     Service service = Service::Combine;

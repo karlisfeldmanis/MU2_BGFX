@@ -10,6 +10,7 @@
 #include <algorithm>
 
 #include "core/log.h"
+#include "sim/harmony.h"
 #include "sim/wear.h"
 
 namespace mu::sim {
@@ -290,6 +291,14 @@ bool Realm::mix(Service service, int socket) {
                    " is in this world's tables";
         return false;
     }
+    const int32_t harmonyJewel = tables_->itemAt(kGroupPotions, 42);
+    const int32_t lowerStone = tables_->itemAt(kGroupPotions, 43), higherStone = tables_->itemAt(kGroupPotions, 44);
+    if ((service == Service::RefineGemstone && harmonyJewel < 0) ||
+        (service == Service::Smelt && (lowerStone < 0 || higherStone < 0))) {
+        refusal_ = service == Service::Smelt ? "no Refining Stone is in this world's tables"
+                                             : "no Jewel of Harmony is in this world's tables";
+        return false;
+    }
     const int32_t rune = tables_->itemAt(kGroupPotions, 22);
     if ((service == Service::RemoveRune || service == Service::FuseRunes) && rune < 0) {
         refusal_ = "no Rune of Creation is in this world's tables";
@@ -305,8 +314,21 @@ bool Realm::mix(Service service, int socket) {
     // bound as it was.
     bool boundChaos = false;
     for (int cell = 0; cell < kMachineCells; ++cell) boundChaos = boundChaos || me().machine[cell].bound;
-    // Rand.NextRandomBool(successRate). A sure thing draws nothing.
-    const bool made = j.rate >= 100 || mixDice_.nextInt(0, 100) < j.rate;
+    // Rand.NextRandomBool(successRate). A sure thing draws nothing, nor a mix that rolls each piece
+    // (byPiece), which is made when one is.
+    bool made = j.rate >= 100 || (!byPiece(service) && mixDice_.nextInt(0, 100) < j.rate);
+    // What a by-piece mix leaves: `count` of `item` in stacks, into the emptied box.
+    const auto putStacks = [&](int32_t item, int count) {
+        const content::ItemRow& row = tables_->items[size_t(item)];
+        const int most = std::max(1, stackMost(row));
+        while (count > 0) {
+            const int cell = me().machine.free(*tables_, row.width, row.height);
+            if (cell < 0) break;
+            const int here = std::min(count, most);
+            me().machine.put(cell, Held{item, 0, int16_t(here)});
+            count -= here;
+        }
+    };
     // Takes everything but the thing at `keep` out of the box: the jewels and the runes spent.
     const auto spendAllBut = [&](int keep) {
         for (int cell = 0; cell < kMachineCells; ++cell) {
@@ -502,6 +524,45 @@ bool Realm::mix(Service service, int socket) {
             for (int cell = 0; cell < kMachineCells; ++cell) fused.bound = fused.bound || me().machine[cell].bound;
             me().machine.clear();
             me().machine.put(0, fused);
+            break;
+        }
+        case Service::RefineGemstone: {
+            // Each Gemstone its own roll (kGemstoneRefineChance); the lost ones are gone.
+            int jewels = 0;
+            for (int cell = 0; cell < kMachineCells; ++cell) {
+                const Held& one = me().machine[cell];
+                if (one.empty() || !gemstone(tables_->items[size_t(one.item)])) continue;
+                for (int i = 0; i < std::max<int>(1, one.durability); ++i) {
+                    jewels += mixDice_.nextInt(0, 100) < kGemstoneRefineChance;
+                }
+            }
+            me().machine.clear();
+            putStacks(harmonyJewel, jewels);
+            made = jewels > 0;
+            break;
+        }
+        case Service::Smelt: {
+            // Each piece its own roll: an excellent one the Higher stone, any other the Lower; the
+            // piece eaten either way.
+            int lower = 0, higher = 0;
+            for (int cell = 0; cell < kMachineCells; ++cell) {
+                const Held& one = me().machine[cell];
+                if (one.empty() || !smeltable(tables_->items[size_t(one.item)], one)) continue;
+                if (one.excellent != 0) higher += mixDice_.nextInt(0, 100) < kSmeltExcellentChance;
+                else lower += mixDice_.nextInt(0, 100) < kSmeltChance;
+            }
+            me().machine.clear();
+            putStacks(higherStone, higher);
+            putStacks(lowerStone, lower);
+            made = lower + higher > 0;
+            break;
+        }
+        case Service::RemoveHarmony: {
+            // The option off; the bind stays (the user's decision: removing does not unbind).
+            Held thing = me().machine[j.target];
+            thing.harmony = 0;
+            thing.harmonyLevel = 0;
+            me().machine.put(j.target, thing);
             break;
         }
         case Service::MendPets:
