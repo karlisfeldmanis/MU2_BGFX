@@ -3092,6 +3092,31 @@
       ],
       "from": "SOUND_SUMMON_REQUIEM, which ZzzOpenData loads from Data\\\\Sound\\\\SE_Ch_summoner_skill06_requiem02.wav with one voice (:4912). Move_MODEL_SUMMONER_SUMMON_NEIL plays it past Neil key 10 as the burning ground comes up under the thorns, the client calling it the thorns sound (MoveHandlers.cpp:1281-1297).",
       "note": "The Ancient rune Requiem (sim/items.h kRequiem...), played where its thorns come out (game/fx/requiem takeThorns)."
+    },
+    "persona_move": {
+      "files": [
+        "perso_idle-01.wav",
+        "perso_idle-02.wav"
+      ],
+      "from": "SOUND_KANTURU_2ND_PERSO_MOVE1 + rand() % 2, one frame in fifteen while it walks (GM_Kanturu_2nd.cpp:765-771); MapManager.cpp:443-444 loads w38/perso_idle-01.wav and -02.wav."
+    },
+    "persona_attack": {
+      "files": [
+        "perso_attack-01.wav"
+      ],
+      "from": "SOUND_KANTURU_2ND_PERSO_ATTACK1 once on Attack 1, its storm (GM_Kanturu_2nd.cpp:772-779); w38/perso_attack-01.wav (MapManager.cpp:445)."
+    },
+    "persona_attack2": {
+      "files": [
+        "perso_attack-02.wav"
+      ],
+      "from": "SOUND_KANTURU_2ND_PERSO_ATTACK2 once on Attack 2, its spirits (GM_Kanturu_2nd.cpp:780-787); w38/perso_attack-02.wav (MapManager.cpp:446)."
+    },
+    "persona_die": {
+      "files": [
+        "perso_death.wav"
+      ],
+      "from": "SOUND_KANTURU_2ND_PERSO_DIE as it dies (GM_Kanturu_2nd.cpp:788-792); w38/perso_death.wav (MapManager.cpp:447)."
     }
   },
   "not_built_yet": "Built: a monster's Sounds[0]/[1] while it walks (SetPlayerWalk's rand_fps_check(16), every frame it moves, ZzzCharacter.cpp:788-804) and once as its walk ends (SetPlayerStop's, one in sixteen, :429-443) -- game/play_show.cpp. MuMain has no cry on an idle loop: PlayMonsterSound (:216-237) is map-specific and handles no 0.75 monster. Not built: SetPlayerStop's other callers (a refused path, a server stand), which the realm has no counterpart for."

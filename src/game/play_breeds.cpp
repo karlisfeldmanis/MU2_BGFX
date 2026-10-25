@@ -5,7 +5,8 @@
 // (fx/iron_rider.h), a Blade Hunter's swirl, blasts and walking dust (fx/blade_hunter.h) and a
 // Kentauros's bow smoke, arrows and death smoke (fx/kentauros.h), a Berserker's breath
 // (fx/berserker.h), the dust and stones a Genocider's weapon drags, and a Relics Twin Tale's hair
-// marks, beams and water (fx/twin_tale.h), each by its recipe's show tag.
+// marks, beams and water (fx/twin_tale.h) and a Persona's light, smoke, drips, storm and spirits
+// (fx/persona.h), each by its recipe's show tag.
 // Out of play_show.cpp, which is at its size.
 #include "game/play.h"
 
@@ -31,7 +32,8 @@ void Play::breedShows(Drawn& one, float fade, float seconds) {
     }
     if (!look->has("blue_golem") && !look->has("witch_queen") && !look->has("hell_maine") &&
         !look->has("iron_rider") && !look->has("blade_hunter") && !look->has("kentauros") &&
-        !look->has("berserker") && !look->has("genocider") && !look->has("twin_tale"))
+        !look->has("berserker") && !look->has("genocider") && !look->has("twin_tale") &&
+        !look->has("persona"))
         return;
     // What it hunts: its quarry, or its blow's target; that one's feet, or null.
     const sim::Body* self = realm_.find(one.id);
@@ -114,6 +116,23 @@ void Play::breedShows(Drawn& one, float fade, float seconds) {
         shadowStars_.twinTale().watch(one.id, one.figure, slotOf(one.figure) == kMonsterWalkSlot,
                                       one.figure.clip() == one.attackClip2, key, aim ? target : nullptr,
                                       one.deadFor >= 0.0f, key, feet, fade, seconds);
+        return;
+    }
+    // A Persona's brow light, smoke and drips; its swing's storm, walking at what it attacks (or
+    // the way it faces), or its spirits round itself.
+    if (look->has("persona")) {
+        const float feet[3] = {one.crown[0], ground_ ? ground_->heightAt(one.crown[0], one.crown[2]) : 0.0f,
+                               one.crown[2]};
+        const int attack = one.figure.clip() == one.attackClip ? 1 : one.figure.clip() == one.attackClip2 ? 2 : 0;
+        const Persona::Asks asks = shadowStars_.persona().watch(one.id, one.figure, attack, keyOf(one.figure),
+                                                                one.deadFor >= 0.0f, feet, fade, seconds);
+        if (asks.storm) {
+            float way[2] = {std::sin(one.yaw), std::cos(one.yaw)};
+            const float dx = target[0] - feet[0], dz = target[2] - feet[2], far = std::sqrt(dx * dx + dz * dz);
+            if (aim && far > 0.1f) way[0] = dx / far, way[1] = dz / far;
+            storm_.cast(feet, way[0], way[1]);
+        }
+        if (asks.spirits) spirits_.release(one.id, feet);
         return;
     }
     // A Berserker's green breath, while it neither swings nor has fallen.

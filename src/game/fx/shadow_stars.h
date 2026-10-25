@@ -43,6 +43,7 @@
 #include "game/fx/kentauros.h"
 #include "game/fx/berserker.h"
 #include "game/fx/twin_tale.h"
+#include "game/fx/persona.h"
 #include "game/fx/tree_roots.h"
 #include "gfx/effects.h"
 #include "gfx/renderer.h"
@@ -62,6 +63,7 @@ public:
     Kentauros& kentauros() { return kentauros_; }
     Berserker& berserker() { return berserker_; }
     TwinTale& twinTale() { return twinTale_; }
+    Persona& persona() { return persona_; }
     bool open(const std::string& assetDir, content::Textures& textures,
               const content::Showing& table);
     void shutdown();
@@ -203,6 +205,7 @@ private:
     Kentauros kentauros_;     // a Kanturu Kentauros's bow smoke, arrows and death smoke (fx/kentauros.h)
     Berserker berserker_;     // a Kanturu Berserker's green breath (fx/berserker.h)
     TwinTale twinTale_;       // a Relics Twin Tale's hair marks, beams and water (fx/twin_tale.h)
+    Persona persona_;         // a Relics Persona's brow light, smoke and drips (fx/persona.h)
     static constexpr int kRibbonTails = 15;
     struct Ribbon {
         float points[kRibbonTails][3];
