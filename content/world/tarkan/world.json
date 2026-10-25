@@ -172,6 +172,18 @@
         "level": 70,
         "target": 56,
         "note": "Tarkan to Atlans"
+      },
+      {
+        "number": 125,
+        "box": [
+          6,
+          199,
+          6,
+          201
+        ],
+        "level": 320,
+        "target": 126,
+        "note": "Tarkan to Kanturu, through the arch on the west edge (Object86-88 at 4.5,199.6). OpenMU VersionSeasonSix Gates.cs:537; MU asks 150, ours 320, just above Aida's 300 (docs/worlds/kanturu-port.md decision 4; the user, 2026-10-22: next)."
       }
     ],
     "spawn": {
