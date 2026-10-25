@@ -398,11 +398,11 @@ public:
     // fountain's spout, the trees, the signs and the curtains disappeared out of Lorencia the
     // moment the cook started writing them as skinned.
     static constexpr int kBindRow = 0;
-    // 128 and not 64: Storage01, which stands in the town, has 69 bones, and the lobby's
-    // faces have 100 to 115. A rig that does not fit is clamped and says so, and a figure
-    // with half a palette is a figure with a hand left in the bind pose -- visible, where a
-    // silent refusal would have looked like a missing clip.
-    static constexpr int kMaxBones = 128;
+    // 160 and not 64: Storage01, which stands in the town, has 69 bones, and the lobby's
+    // faces have 100 to 137 (the Dark Lord's NewFace05 the most). A rig that does not fit is
+    // clamped and says so, and a figure with half a palette is a figure with a hand left in the
+    // bind pose -- visible, where a silent refusal would have looked like a missing clip.
+    static constexpr int kMaxBones = 160;
     // The stage the palette is bound on, shaders/skin.sh's b_bones. Not one any fragment shader
     // paired with a skinned vertex shader reads: on Vulkan a stage is one binding for both.
     static constexpr uint8_t kPaletteStage = 5;
@@ -929,7 +929,7 @@ private:
     std::vector<float> paletteCpu_;  // kPaletteVec4s x 4
     int paletteWritten_ = 0;         // vec4s
     int paletteFigures_ = 0;         // poses, the bind pose included
-    // The buffer's size: what the 512 rows of 128 bones held as a texture.
+    // The buffer's size: 512 rows of kMaxBones bones, what the texture once held.
     static constexpr int kPaletteVec4s = kMaxPaletteRows * kMaxBones * 3;
     bgfx::VertexLayout paletteLayout_;
     int paletteRefused_ = 0;

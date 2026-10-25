@@ -31,9 +31,8 @@ Pose poseOf(sim::Kin kin) {
         case sim::Kin::DarkKnight: return {"NewFace02", -12.0f, 6.05f, 0.0f};
         // CLASS_DARK's, and its lift (CharMakeWin.cpp:107).
         case sim::Kin::MagicGladiator: return {"NewFace04", -13.0f, 6.0f, 0.0f, 1.8f};
-        // The Dark Lord's (content/lobby/NewFace05), on the Magic Gladiator's pose until the
-        // creation window is judged (docs/plans/dark-lord.md phase 2).
-        case sim::Kin::DarkLord: return {"NewFace05", -13.0f, 6.0f, 0.0f, 1.8f};
+        // CLASS_DARK_LORD's (CharMakeWin.cpp:109), on content/lobby/NewFace05.
+        case sim::Kin::DarkLord: return {"NewFace05", -18.0f, 6.0f, 0.0f, 0.0f};
     }
     return {"NewFace02", -12.0f, 6.05f, 0.0f};
 }
