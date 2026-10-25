@@ -1117,8 +1117,10 @@ bool Realm::refine(int jewelSlot, int targetSlot) {
             }
         }
         bool took = false;
+        // A lucky thing always takes, and draws nothing, as the Soul and the Life (the user,
+        // 2026-10-25: "Luck = always succeeds").
         if (jewelOfHarmony(jewelRow)) {
-            took = dice_.nextInt(0, 100) < kHarmonyJewelChance;
+            took = thing.luck || dice_.nextInt(0, 100) < kHarmonyJewelChance;
             if (took) {
                 const int number = drawHarmony(row, thing, dice_);
                 const HarmonyOption* option = harmonyOption(harmonyFamily(row), number);
@@ -1128,7 +1130,7 @@ bool Realm::refine(int jewelSlot, int targetSlot) {
             }
         } else {
             const int chance = higherRefiningStone(jewelRow) ? kHigherStoneChance : kLowerStoneChance;
-            took = dice_.nextInt(0, 100) < chance;
+            took = thing.luck || dice_.nextInt(0, 100) < chance;
             thing = took ? thing : missed;
             if (took) thing.harmonyLevel = uint8_t(thing.harmonyLevel + 1);
         }
@@ -1377,7 +1379,8 @@ int Realm::autoDrinkSlot(bool mana) const {
 // No skill roll on a dropped piece. Its plus is `(monster level - drop level) / 3`, held to
 // the cap of nine and to the breed's MaxItemLevel.
 void Realm::leaveGemstone(const Body& dead) {
-    if (!gemstoneMap(tables_->map) || gemstoneDice_.nextInt(0, kGemstoneOdds) != 0) return;
+    const int odds = dead.elite ? kEliteGemstoneOdds : kGemstoneOdds;
+    if (!gemstoneMap(tables_->map) || gemstoneDice_.nextInt(0, odds) != 0) return;
     for (size_t i = 0; i < tables_->items.size(); ++i) {
         if (!gemstone(tables_->items[i])) continue;
         Lying stone;
@@ -1394,13 +1397,16 @@ void Realm::leaveGemstone(const Body& dead) {
 
 void Realm::leave(const Body& dead, const Body& killer) {
     // An Elite leaves its own spoils, and nothing of this roll: no rune (realm_elite.cpp). But
-    // the Gemstone, on its own dice as any kill's (the user, 2026-10-25: "i think elites should
-    // drop Gemstones").
+    // the Gemstone, on its own dice, one in kEliteGemstoneOdds (the user, 2026-10-25: "i think
+    // elites should drop Gemstones", then "1 in 10").
     if (dead.elite) {
         eliteSpoils(dead, killer);
         leaveGemstone(dead);
         return;
     }
+    // The Gemstone first, so a kill that leaves a Blood Castle or Devil Square piece below, and
+    // returns, still rolls it (the user, 2026-10-25: "Always roll the Gemstone").
+    leaveGemstone(dead);
     // What a kill leaves: a jewel, then an item, then Zen, then nothing.
     //
     // **The item chance is ours, not MU2's 0.3.** A nest of spiders dropped a weapon or a piece
@@ -1533,8 +1539,6 @@ void Realm::leave(const Body& dead, const Body& killer) {
             break;
         }
     }
-    // The Gemstone in the Ruins and the Relics, any kill's, the same way (sim::kGemstoneOdds).
-    leaveGemstone(dead);
     // The first wings in Icarus, the hero's class's, the same way (sim::kIcarusWingOdds).
     if (rulesOf(tables_->map).firstWings &&
         (wingDice_.nextInt(0, kIcarusWingOdds) == 0 || wingDemo_)) {

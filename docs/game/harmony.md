@@ -7,7 +7,7 @@ full tables and the user's decisions). This page is how it works here.
 
 | item | MU's row | where from | stacks |
 |---|---|---|---|
-| Gemstone | 14, 41 | a kill in the Ruins or the Relics, an Elite's too, 1 in 150, beside the kill's own drop | 20 |
+| Gemstone | 14, 41 | a kill in the Ruins or the Relics, 1 in 150, an Elite's 1 in 10, always beside the kill's own drop (a ticket piece included) | 20 |
 | Jewel of Harmony | 14, 42 | the Chaos Machine's Refine Gemstone | 20 |
 | Lower Refining Stone | 14, 43 | the Machine's Smelt, from a plain piece | 20 |
 | Higher Refining Stone | 14, 44 | the Machine's Smelt, from an excellent piece | 20 |
@@ -29,7 +29,9 @@ jewel flag, which would put it in MU's jewel drop group; `sim::harmonyMaterial` 
   least level. A miss spends the jewel alone. The item **binds** when it takes (the user's), and a
   bound thing sells for a hundredth (2026-10-22's rule).
 - **The stones**, dragged on the same way: the option a level up, never past the item's plus or 11.
-  Lower 20%, Higher 80%; a miss takes the option back to its least level. Luck adds nothing.
+  Lower 20%, Higher 80%; a miss takes the option back to its least level.
+- **Luck**: a lucky item always takes the jewel and every stone, as it does the Soul and the Life
+  (the user, 2026-10-25). The cards say so.
 - **Active** only while the item's plus is at least the option's level: a failed Soul greys it
   out (the card says "(at +N)") until the plus is back.
 - **Strength.** Every flat option is three times MU's (`kHarmonyStrength`); Damage taken keeps

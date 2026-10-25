@@ -3,7 +3,7 @@
   "mu_name": "Gemstone",
   "mu_name_from": "OpenMU VersionSeasonSix openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Jewels.cs CreateGemstone: group 14, number 41. The model is Data/Item/rs.bmd, which MuMain loads for MODEL_POTION + 41 (ZzzOpenData.cpp:922; _enum.h:2107).",
   "why_this_one": "docs/plans/jewel-of-harmony.md (the user, 2026-10-25: \"step 1\"): the four items of the Jewel of Harmony, Kanturu's own. Built dormant -- no drop, no recipe, no use yet: the Gemstone falls in the Ruins and Relics (step 4), the Chaos Machine refines and smelts (step 6), the jewel and stones go onto an item (step 5).",
-  "tells": "The raw stone the Chaos Machine refines into a Jewel of Harmony (80%). MU's falls from any monster in Kanturu's three maps; ours 1 in 150 kills in the Ruins and Relics (the plan, decided).",
+  "tells": "Refined into a Jewel of Harmony at the Chaos Machine",
   "profile": "weapon",
   "stats": {
     "note": "Group, number, drop level, footprint and value are OpenMU's Season 6 row; it drops from nothing on its own (a map rule drops the Gemstone).",

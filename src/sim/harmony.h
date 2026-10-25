@@ -85,7 +85,7 @@ int drawHarmony(const content::ItemRow& row, const Held& what, Random& dice);
 // (WebZen's are commonserver.cfg keys we do not have; docs/plans/jewel-of-harmony.md): the Jewel
 // of Harmony takes 60 in 100 and binds the piece (the user, 2026-10-25), a miss spending only the
 // jewel; a Refining Stone raises the option a level, the Lower 20 in 100 and the Higher 80, a
-// miss taking it back to the level it started at. Luck adds nothing, as in MU.
+// miss taking it back to the level it started at. A lucky item always takes them (ours: the user, 2026-10-25).
 inline constexpr int kHarmonyJewelChance = 60;
 inline constexpr int kLowerStoneChance = 20;
 inline constexpr int kHigherStoneChance = 80;

@@ -1087,6 +1087,8 @@ bool harmonyMaterial(const content::ItemRow& row);
 // kGemstoneOdds, its own roll beside the kill's drop (the user: 1 in 150). MU's comes off
 // Kanturu's monsters as their ordinary drop.
 constexpr int kGemstoneOdds = 150;
+// An Elite's, one in kEliteGemstoneOdds (the user, 2026-10-25: "1 in 10").
+constexpr int kEliteGemstoneOdds = 10;
 inline bool gemstoneMap(uint32_t map) { return rulesOf(map).gemstone; }
 // The name a thing is shown by: its row's, but a Rune of Creation that carries a power is the
 // rune of that power, "Rune of Stormcall" (the user, 2026-10-18: 'we need to show Rune of "rune

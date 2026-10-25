@@ -17502,6 +17502,18 @@ void testHarmony(const content::Tables& tables) {
                   stone == lower ? "the Lower stone raises it 20 in 100, else back to its least"
                                  : "the Higher stone 80 in 100, else back to its least");
         }
+        // A lucky piece always takes the jewel and every stone (the user, 2026-10-25: "Luck =
+        // always succeeds").
+        int luckyMisses = 0;
+        for (int i = 0; i < 50; ++i) {
+            sim::Held lucky{kris, 9, 40};
+            lucky.luck = true;
+            luckyMisses += tryOn(lucky, jewel).second.harmony == 0;
+            sim::Held luckyOption = option;
+            luckyOption.luck = true;
+            luckyMisses += tryOn(luckyOption, lower).second.harmonyLevel != 5;
+        }
+        checkEqual(luckyMisses, 0, "a lucky piece never misses the jewel or a Lower stone");
         // Refused, whole: a stone on an option at its plus, or on a piece with none; the jewel on a
         // piece that has one, or on a wing.
         sim::Held top = option;
@@ -17630,12 +17642,13 @@ void testHarmony(const content::Tables& tables) {
                 sim::kGemstoneOdds);
     const double want = double(kills) / sim::kGemstoneOdds;
     check(std::abs(fallen - want) < want * 0.15, "a Ruins kill leaves one one time in 150");
-    // An Elite's too, beside its own spoils (the user, 2026-10-25: "i think elites should drop
-    // Gemstones").
+    // An Elite's too, beside its own spoils, one in kEliteGemstoneOdds (the user, 2026-10-25: "i
+    // think elites should drop Gemstones", then "1 in 10").
     int eliteGems = 0;
+    const int eliteKills = 5000;
     {
         auto at = std::make_unique<sim::Realm>();
-        for (int i = 0; i < kills; ++i) {
+        for (int i = 0; i < eliteKills; ++i) {
             if (i % 500 == 0) {
                 at = std::make_unique<sim::Realm>();
                 at->raise(&ruins, uint32_t(313 + i), 20, 218, sim::Kin::DarkKnight, 50);
@@ -17644,8 +17657,9 @@ void testHarmony(const content::Tables& tables) {
             for (const sim::Lying& one : at->lying()) eliteGems += sim::gemstone(ruins.items[size_t(one.what.item)]);
         }
     }
-    std::printf("  the Ruins' Elites: %d Gemstones off %d kills\n", eliteGems, kills);
-    check(std::abs(eliteGems - want) < want * 0.15, "and an Elite's one time in 150 too");
+    std::printf("  the Ruins' Elites: %d Gemstones off %d kills\n", eliteGems, eliteKills);
+    const double eliteWant = double(eliteKills) / sim::kEliteGemstoneOdds;
+    check(std::abs(eliteGems - eliteWant) < eliteWant * 0.15, "and an Elite's one time in 10");
 }
 
 // The Ruins road's two halves: a hard-half kill (sim::kKanturuHardLevel and over) leaves more of

@@ -656,7 +656,18 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             odds("Success rate " + std::to_string(sim::kLifeChance) + "%, 100% with Luck");
             odds("A failure takes the item's option back to none");
             break;
-        default: break;
+        default:
+            // The Jewel of Harmony's and the Refining Stones' (sim/harmony.h).
+            if (sim::jewelOfHarmony(row)) {
+                odds("Success rate " + std::to_string(sim::kHarmonyJewelChance) + "%, 100% with Luck");
+                odds("A failure loses the jewel, never the item");
+            } else if (sim::refiningStone(row)) {
+                odds("Success rate " +
+                     std::to_string(sim::higherRefiningStone(row) ? sim::kHigherStoneChance : sim::kLowerStoneChance) +
+                     "%, 100% with Luck");
+                odds("A failure takes the option back to its least level");
+            }
+            break;
     }
     // A pet's powers in MU's own words, which ZzzInventory prints for ITEM_GUARDIAN_ANGEL and
     // ITEM_IMP (ZzzInventory.cpp:4258-4268; Game.en.resx "Absorb %d%% of Damage", "Max HP +%d
@@ -1040,7 +1051,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         // A scepter's Force Wave, first, as MU prints a weapon's skill above the options.
         if (waves) rolled("Skill", "Force Wave");
         // One line (the tooltip audit, 2026-10-05), where MU prints two.
-        if (what.luck) rolled("Luck", "+5% critical, Jewel of Soul always succeeds");
+        if (what.luck) rolled("Luck", "+5% critical, Soul and Harmony always succeed");
         if (what.option > 0) {
             const std::string value = std::to_string(sim::optionValue(row, what.option));
             // A ring's and a pendant's is AT_LIFE_REGENERATION, MuMain's "Automatic HP recovery".
