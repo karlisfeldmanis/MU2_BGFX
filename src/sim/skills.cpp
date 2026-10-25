@@ -1156,7 +1156,12 @@ int32_t castTicks(const content::Tables& tables, Kin kin, int agility, const con
     // A spell reads MagicSpeed, which is the wizard's agility over ten (ClassDarkWizard.cs:59)
     // and nothing from the weapon: `PLAYER_SKILL_HAND1..` play at `0.29 + MagicSpeed * 0.004`
     // (ZzzCharacter.cpp:939, the RGZ_FIX arm under 509).
-    const float bonus = row.onSelf()     ? 0.0f
+    // And Earthshake's 87, which MU plays at a constant 0.3 with no attack speed in it
+    // (`Actions[PLAYER_ATTACK_DARKHORSE].PlaySpeed = 0.3f`, ZzzCharacter.cpp:1013, beside Fury
+    // Strike's and Summon's), and under it the horse's 3 at its own 0.34 (GOBoid.cpp:338-342):
+    // quickened, his clip ran away from the horse's stomp and struck half a second after the
+    // press where MU's rock rises at a second (earthshake.md decision 10, "clip 87 at 0.3").
+    const float bonus = row.onSelf() || row.number == skill::kEarthshake ? 0.0f
                         : row.wizardry ? (magicSpeedStat(kin, agility) + float(extra)) * 0.004f
                                        : (attackSpeedStat(kin, agility, right, left) + float(extra)) * 0.004f *
                                              (row.primary() ? 1.0f : kCooldownSkillHaste);

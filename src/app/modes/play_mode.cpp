@@ -2044,7 +2044,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().criticalDamage().gatherEffects(ctx.renderer.effects());
         world_.played().recall().gatherEffects(ctx.renderer.effects());
         world_.played().fireScream().gatherEffects(ctx.renderer.effects());
-        world_.played().earthshake().gatherEffects(ctx.renderer.effects(), daylightOf(ctx.lighting));
+        world_.played().earthshake().gatherEffects(ctx.renderer.effects(), daylightOf(ctx.lighting),
+                                                   eye.position);
         world_.played().fireBreath().gatherEffects(ctx.renderer.effects(), eye.position,
                                                    eye.target, daylightOf(ctx.lighting));
         // And what is lying on the grass: MU2's Drops, tossed up out of the corpse and

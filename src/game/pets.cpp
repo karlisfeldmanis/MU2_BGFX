@@ -235,7 +235,15 @@ void Pets::ride(float seconds, const Figure& hero, int worn, bool riding, int ac
     // crossfade, a hitch or a resumed walk phase, and the rider bounces off the saddle's beat.
     // So the leap (and Uniria's stand) takes his clip's own place, as a fraction: one bound of
     // the horse is one bounce of the rider, whatever the frame did. **ours**.
-    if (slaved) {
+    // **But Earthshake's stomp on his clock, not his fraction**: MU sets the horse's 3 at 0.34 under
+    // his 87 at 0.3 (GOBoid.cpp:338-342, ZzzCharacter.cpp:1013) and runs both, so the horse's ten
+    // keys are down in 29 frames of his 37 -- its frame 8, where the spikes rise
+    // (GOBoid.cpp:744-763), 23.5 frames in, as sim::kQuakeStrikes strikes. Held to his fraction
+    // its kick was stretched over his whole clip and its hooves came down after the rock. Held on
+    // its last key while he finishes, as a clip that does not loop ends.
+    if (slaved && mounted_ == 4 && action == 3) {
+        horse_.setClock(std::min(hero.clock(), horse_.length() * 0.999f));
+    } else if (slaved) {
         const float cycle = stride ? float(horse_.cycleKeys() - 1) / float(horse_.cycleKeys()) : 1.0f;
         horse_.setClock(hero.through() * cycle * horse_.length());
     }

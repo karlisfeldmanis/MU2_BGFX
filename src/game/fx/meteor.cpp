@@ -447,7 +447,7 @@ void Meteor::smokeAt(float x, float floor, float z, float weight, bool shower) {
     }
 }
 
-void Meteor::stonesAt(float x, float z, float floor, int count, float scale) {
+void Meteor::stonesAt(float x, float z, float floor, int count, float scale, bool chip) {
     // Each rolls its own size, its own gravity and its own scatter; none of them takes the
     // rock's roll, which would put a field of boulders on the grass.
     for (int s = 0; s < count; ++s) {
@@ -461,13 +461,14 @@ void Meteor::stonesAt(float x, float z, float floor, int count, float scale) {
         slot->fade = 0.0f;
         slot->which = int(roll() & 1u);  // MODEL_STONE1 + rand() % 2
         slot->left = kStoneLeastFrames + float(roll() % uint32_t(kStoneMoreFrames));
-        slot->size = between(kSmallestStone, kLargestStone) * scale;
+        slot->size = (chip ? between(kChipSmallest, kChipLargest) : between(kSmallestStone, kLargestStone)) * scale;
         // An ACCELERATION: units a frame SQUARED, so two factors of 25 and not one. Read as a
         // velocity it comes out twenty-five times too small and the debris drifts in slow
         // motion, weightless.
-        slot->gravity = (kLeastGravity + float(roll() % uint32_t(kMoreGravity))) * 0.1f * kUnit *
+        slot->gravity = ((chip ? kChipLeastGravity : kLeastGravity) + float(roll() % uint32_t(kMoreGravity))) * 0.1f * kUnit *
                         kReferenceFps * kReferenceFps;
         const float scatter = (kLeastScatter + float(roll() % uint32_t(kMoreScatter))) * 0.1f *
+                              (chip ? kChipScatterTimes : 1.0f) *
                               kUnit * kReferenceFps;
         const float yaw = unit() * kTwoPi;
         slot->position[0] = x;

@@ -2954,8 +2954,8 @@ void Play::update(double seconds) {
         },
         [&](const float* at) { meteor_.stones(at[0], at[2], at[1], 1); },
         [&](const float* at) { meteor_.blast(at, 0.5f); });
-    // Earthshake's rings and spikes, a meteor stone off each spike (fx/earthshake.h).
-    earthshake_.update(float(seconds), [&](const float* at) { meteor_.stones(at[0], at[2], at[1], 1); });
+    // Earthshake's rings and spikes, and the sub-10 chips each spike throws (fx/earthshake.h).
+    earthshake_.update(float(seconds), [&](const float* at) { meteor_.chips(at[0], at[2], at[1], 1); });
     // The Dinorant's breath, and SOUND_EXPLOTION01 as its DinoE burst is born (fx/firebreath.h).
     fireBreath_.update(float(seconds), [&](const float* at) {
         if (heard_.explosion >= 0) emit(heard_.explosion, at[0], at[2]);

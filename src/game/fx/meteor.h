@@ -101,6 +101,11 @@ public:
     // `count` of the rock's stones thrown up off the ground at `x, z` -- a Flame's kicked-up
     // debris, MU's `MODEL_STONE1 + rand() % 2` off the same ballistic arm (fx/flame.h).
     void stones(float x, float z, float floor, int count) { stonesAt(x, z, floor, count); }
+    // `count` chips thrown off a rock spike at `x, z`, `floor` up: MU's MODEL_STONE1/2 sub-type 10,
+    // Earthshake's (MoveHandlers.cpp:5694-5699; created ZzzEffect.cpp:2677-2686) -- life rand()%16+32,
+    // scale (rand()%4+15)*0.05, a scatter of (rand()%256+64)*0.2 and gravity rand()%16+28: smaller,
+    // faster and heavier than the rock's own.
+    void chips(float x, float z, float floor, int count) { stonesAt(x, z, floor, count, 1.0f, true); }
     // The blast alone at `at`, `share` of its size: Rageful Blow's BITMAP_EXPLOTION at half,
     // where its weapon comes down (fx/fury.h).
     void blast(const float at[3], float share) { blastAt(at[0], at[1], at[2], share); }
@@ -320,6 +325,9 @@ private:
     static constexpr float kSmallestStone = 0.8f, kLargestStone = 1.1f;
     static constexpr float kLeastGravity = 8.0f, kMoreGravity = 16.0f;
     static constexpr float kLeastScatter = 64.0f, kMoreScatter = 256.0f;
+    // Sub-type 10's, the spikes' chips (chips()): twice the scatter, gravity 28 up, scale 0.75-0.9.
+    static constexpr float kChipSmallest = 0.75f, kChipLargest = 0.9f;
+    static constexpr float kChipLeastGravity = 28.0f, kChipScatterTimes = 2.0f;
     static constexpr float kStoneBounceDrag = 0.6f;   // horizontal, a frame, once landed
     static constexpr float kStoneRestUnder = 0.5f;    // units a frame, under which it lies still
     static constexpr float kStoneFade = 0.1f;         // a frame, once landed
@@ -525,7 +533,7 @@ private:
     Mote* emberAt(const float at[3], const float heading[3], float light, bool fireball = false);
     void trailSmokeAt(const Live& rock);
     void gatherShowerRock(gfx::Effects& effects, const Live& rock, const float* eye) const;
-    void stonesAt(float x, float z, float floor, int count, float scale = 1.0f);
+    void stonesAt(float x, float z, float floor, int count, float scale = 1.0f, bool chip = false);
     void blastAt(float x, float y, float z, float share, bool shower = false);
     void smokeAt(float x, float floor, float z, float weight = 1.0f, bool shower = false);
     void land(const Live& rock);
