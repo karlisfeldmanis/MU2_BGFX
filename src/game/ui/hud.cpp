@@ -874,7 +874,7 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
             what.rows.push_back(prose("of every blow that reaches you"));
         }
         if (power.health > 0) {
-            what.rows.push_back(said("Max HP", "+" + std::to_string(power.health), tip::Tone::Green));
+            what.rows.push_back(said("Max life", "+" + std::to_string(power.health), tip::Tone::Green));
         }
         if (power.dealt > 1.0) {
             what.rows.push_back(said("Damage", "+" + percent(power.dealt - 1.0), tip::Tone::Green));
@@ -1068,7 +1068,7 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
         const int now = sim::mightOf(has);
         tip::Section what;
         what.rows.push_back(said("Damage", "+" + std::to_string(held), tip::Tone::Green));
-        what.rows.push_back(prose("on every blow, after the defence; arrows and spells too"));
+        what.rows.push_back(prose("on every blow, after the defense; arrows and spells too"));
         sheet.sections.push_back(what);
         tip::Section sum;
         sum.kicker = "Bonus";

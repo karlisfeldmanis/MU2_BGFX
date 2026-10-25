@@ -20,10 +20,12 @@
 
 namespace mu::game {
 
-// What a line on the Attributes page is the sum of, for its card (card.cpp, explain): his points
-// alone, then his gear and bonuses.
+// What a figure on the character sheet is the sum of, for its card (card.cpp, explain): his
+// points alone, then his gear and bonuses. `x y w h` the figure's row in window units, the card's
+// anchor; `up` while there is one.
 struct LineParts {
-    int well = -1, line = -1;
+    bool up = false;
+    float x = 0, y = 0, w = 0, h = 0;
     std::string name, note;
     std::vector<std::pair<std::string, std::string>> rows;
     bool operator==(const LineParts&) const = default;
@@ -103,7 +105,7 @@ private:
         // its card is up. `totals` is what it reads, his points with the runes in.
         int overStat = -1;
         int totals[5] = {};
-        // The line under a well the pointer is on (Attributes page): its card. `well` -1 for none.
+        // The figure the pointer is on, any page or the three at the top: its card.
         LineParts parts;
         bool closing = false, overClose = false;
         int step = 1;          // 1, 10 or 0 for all, as a press now spends (10 is All under ten)
@@ -130,6 +132,13 @@ private:
     bool closing_ = false;
     bool overClose_ = false;
     uint64_t rebuilds_ = 0;
+    // The Combat page's rows as last drawn, in window units, for the pointer's next frame: their
+    // height follows the face, so only the drawing knows them. {group, line} with each.
+    struct Drawn {
+        gfx::Box box;
+        int group = 0, line = 0;
+    };
+    std::vector<Drawn> rows_;
     std::string guild_;
 };
 

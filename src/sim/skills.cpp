@@ -514,7 +514,7 @@ constexpr SkillRow kRows[kSkills] = {
      .spread = Spread::Fan,
      .tells = "Three arrows loosed in a fan at a body up to nine tiles off, each flying on "
               "through everything in its way, at three quarters of a plain shot, past 30% of "
-              "its defence. Each body is struck once. Three arrows are spent a cast.",
+              "its defense. Each body is struck once. Three arrows are spent a cast.",
      .clip = 50, .sound = "player_bow", .built = true, .families = arms::kMissiles,
      .needLevel = 0, .kin = Kin::FairyElf, .flies = 17.5f, .arrows = 3, .pierces = 30},
     // Heal 26: twenty mana, `5 + energy / 5` health at once (HealEffectInitializer). MU casts it
@@ -797,7 +797,7 @@ constexpr SkillRow kRows[kSkills] = {
     {.number = skill::kPenetration, .name = "Penetration", .mana = 7, .reach = 8.0f,
      .force = 1.25f, .spread = Spread::Fan,  // and 1.275 -> 1.15, -10% more (the class balance)
      .tells = "An arrow loosed at a body up to eight tiles off, flying on through everything in "
-              "its line and past 30% of its defence. One arrow is spent for every body struck.",
+              "its line and past 30% of its defense. One arrow is spent for every body struck.",
      .clip = 50, .sound = "player_piercing", .built = true, .families = arms::kMissiles,
      .needLevel = 130, .kin = Kin::FairyElf, .flies = 17.5f, .arrows = 1, .pierces = 30},
 
@@ -926,7 +926,7 @@ constexpr SkillRow kRows[kSkills] = {
     {.number = skill::kFireSlash, .name = "Fire Slash", .mana = 15, .reach = 2.5f, .force = 2.3f,
      .forcePerStrength = 1.0f / 1400.0f, .coolTicks = 40, .spread = Spread::Arc,
      .tells = "A ribbon of fire swept round the half in front of him within two and a half "
-              "tiles. What it burns may lose a tenth of its defence for ten seconds.",
+              "tiles. What it burns may lose a tenth of its defense for ten seconds.",
      .clip = 65, .sound = "player_skill_sword3", .built = true, .families = arms::kEvery,
      .needLevel = 120, .kin = Kin::MagicGladiator, .release = 0.43f,
      .arcHalf = 1.57079633f, .paceAfter = 0.54f, .paceKey = 3, .cutTicks = 200,

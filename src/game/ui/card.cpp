@@ -404,6 +404,16 @@ Parts explain(const std::string& label, const sim::Body& hero, const sim::Realm*
             p.note = "Your staff raises every spell by +" + std::to_string(int(std::lround((f.wizardryRate - 1.0) * 100.0))) +
                      "% on top.";
         }
+    } else if (label == "Critical chance") {
+        p.note = "A blow deals the top of your damage band. Luck gives 5% a piece.";
+    } else if (label == "Excellent chance") {
+        p.note = "A blow deals 1.2 times the top of your damage band. It wins over a critical.";
+    } else if (label == "Ignore defense") {
+        p.note = "A blow skips the monster's defense.";
+    } else if (label == "Damage decrease") {
+        p.note = "This share is taken off every blow that reaches you.";
+    } else if (label == "Block chance") {
+        p.note = "A blow that lands on you is stopped whole.";
     } else {
         p.name.clear();
     }
@@ -419,7 +429,7 @@ tip::Sheet partsSheet(const Parts& p) {
     for (const auto& [what, value] : p.rows) {
         rows.rows.push_back(tip::Row{what, {tip::Value{value, tip::Tone::White}}, "", tip::Tone::White});
     }
-    sheet.sections.push_back(rows);
+    if (!rows.rows.empty()) sheet.sections.push_back(rows);
     if (!p.note.empty()) {
         tip::Section notes;
         notes.rows.push_back(tip::Row{"", {}, p.note, tip::Tone::Gray});
@@ -706,20 +716,40 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
         };
         over_ = controlUnder();
         const int overTab = tabUnder();
+        // A figure off any control: what it is the sum of.
+        const auto explainAt = [&](const Line& line, const Box& at) {
+            if (now_.parts.up) return;
+            LineParts p = explain(line.label, *hero, realm);
+            if (p.name.empty()) return;
+            p.up = true;
+            p.x = at.x, p.y = at.y, p.w = at.w, p.h = at.h;
+            now_.parts = std::move(p);
+        };
+        if (over_ < 0) {
+            const float keyW = kWellW / 3.0f;
+            for (int i = 0; i < 3; ++i) {
+                const Box at{kWellX + keyW * float(i), kKeysTop, keyW, kKeysTall};
+                if (under(at)) explainAt(now_.keys[i], at);
+            }
+            if (tab_ == 1) {
+                for (const Drawn& row : rows_) {
+                    if (size_t(row.group) < now_.groups.size() &&
+                        size_t(row.line) < now_.groups[size_t(row.group)].lines.size() && under(row.box)) {
+                        explainAt(now_.groups[size_t(row.group)].lines[size_t(row.line)], row.box);
+                    }
+                }
+            }
+        }
         // A stat's well, off its plus: its card.
         if (tab_ == 0 && (over_ < 0 || over_ >= wells)) {
             for (int i = 0; i < wells; ++i)
                 if (under({kWellX, tops[i], kWellW, kAttrTall})) now_.overStat = i;
             // A line under a well: what its figure is the sum of.
             const float lineStep = attrTops(wells, counts, tops, drop);
-            for (int i = 0; i < wells && now_.overStat < 0 && now_.parts.well < 0; ++i) {
+            for (int i = 0; i < wells && now_.overStat < 0; ++i) {
                 for (size_t l = 0; l < counts[i]; ++l) {
-                    if (!under({kWellX, tops[i] + kAttrTall + kLineTop + lineStep * float(l), kWellW, lineStep})) continue;
-                    now_.parts = explain(now_.lines[i][l].label, *hero, realm);
-                    if (now_.parts.name.empty()) break;
-                    now_.parts.well = i;
-                    now_.parts.line = int(l);
-                    break;
+                    const Box at{kWellX, tops[i] + kAttrTall + kLineTop + lineStep * float(l), kWellW, lineStep};
+                    if (under(at)) explainAt(now_.lines[i][l], at);
                 }
             }
         }
@@ -1130,7 +1160,10 @@ void Card::rebuild() {
         const float pad = rows > 0.0f ? std::clamp(room / (2.0f * rows), kRowPadLeast, kRowPad) : kRowPad;
         const float stroke = std::max(1.0f, std::round(0.5f * k));
         float uy = kBodyTop + drop;
+        rows_.clear();
+        int groupAt = -1;
         for (const Group& group : now_.groups) {
+            ++groupAt;
             smallCaps(kWellX + 2.0f, at(uy + 1.0f, kSmallCaps), kDim, group.name);
             if (empty(group)) {
                 const float base = at(uy + 1.0f, kSmallCaps);
@@ -1170,6 +1203,7 @@ void Card::rebuild() {
                     const float under = ly + pad + nameCap + kNoteGap + noteCap + kNoteStep * float(n);
                     controls::label(canvas_, x + kRowLeft * k, std::round(y + under * k), kNoteSize * k, kQuiet, said[n]);
                 }
+                rows_.push_back({{kWellX, ly, kWellW, words(line) + 2.0f * pad}, groupAt, int(l)});
                 ly += words(line) + 2.0f * pad;
             }
             uy += tall + kGroupGap;
@@ -1244,14 +1278,9 @@ void Card::rebuild() {
         tip::draw(tip_, sheet, panel::scaled(x, y, {kWellX, tops[now_.overStat], kWellW, kAttrTall}),
                   now_.width, now_.height);
     }
-    if (now_.tab == 0 && now_.parts.well >= 0) {
-        const size_t counts[5] = {now_.lines[0].size(), now_.lines[1].size(), now_.lines[2].size(),
-                                  now_.lines[3].size(), now_.lines[4].size()};
-        float tops[5];
-        const float lineStep = attrTops(now_.wells, counts, tops, drop);
-        const float top = tops[now_.parts.well] + kAttrTall + kLineTop + lineStep * float(now_.parts.line);
-        tip::draw(tip_, partsSheet(now_.parts), panel::scaled(x, y, {kWellX, top, kWellW, lineStep}),
-                  now_.width, now_.height);
+    if (now_.parts.up) {
+        const LineParts& p = now_.parts;
+        tip::draw(tip_, partsSheet(p), panel::scaled(x, y, {p.x, p.y, p.w, p.h}), now_.width, now_.height);
     }
 }
 
