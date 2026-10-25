@@ -3,7 +3,7 @@
 # rings of rock spikes all round him as the numbers come, everything within five tiles pushed two back,
 # Rageful Blow's crater a tile ahead. Battle Scepter in hand, nothing else taught.
 # ./mu record earthshake --fps 30
-args --arena "Giant" --arena-count 10 --arena-left --arena-undying --class 4 --level 250 --spend-even --give "DarkHorseHorn::W,Mace09::W" --teach 62
+args --arena "Giant" --arena-count 10 --arena-left --arena-undying --class 4 --level 250 --spend-even --weapon Mace09 --give "DarkHorseHorn::W" --teach 62
 end 34
 
 0.0  move 0.5 0.5
