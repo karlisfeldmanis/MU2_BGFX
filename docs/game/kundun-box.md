@@ -55,6 +55,8 @@ by order:
 - **Sets half a step lower** (the user: "little bit too good sets"): armour and shields at
   35-59 / 60-84 / 85-104 / 105-124 (`kKundunSetLeast/Most`), weapons keep theirs; +4's sets top
   out at Valiant, Thunder Hawk, Red Spirit, Dark Soul and Faith.
+- **Sets a box lower** (the user: "still too good armors sets"): 25-44 / 45-64 / 65-89 / 90-109;
+  +4's sets top out at Grand Soul, Divine, Dark Phoenix, Valiant, Thunder Hawk, Red Spirit.
 
 Sources, highest first: WebZen GameServer 1.00.93 (`WZ`, under `Source/Server Side/GameServer/`,
 0.97d base unless a flag is named), MuMain (`MM`, `src/source/`), OpenMU (`OM`). The repo's
