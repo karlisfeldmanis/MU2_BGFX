@@ -194,7 +194,9 @@ namespace mu::net {
 //     two happenings, and a pet's level and exp in the bytes it left nought.
 // 57: Kanturu in two halves, The Road to the Relics (sim::kQuests 31, kKeptLayout 21, 2026-10-25):
 //     a quest more in a character's bytes, and the hard half's 380 roll a 56 client does not know.
-constexpr uint32_t kVersion = 57;
+// 58: the Jewel of Harmony and the Refining Stones dragged onto a thing (docs/plans/jewel-of-harmony.md
+//     step 5), and their happening, What::Harmonized.
+constexpr uint32_t kVersion = 58;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box,
 // by its name, so the game talks to mu-classic.com as the launcher does, not to a bare address.
 constexpr const char* kDefaultHost = "mu-classic.com";

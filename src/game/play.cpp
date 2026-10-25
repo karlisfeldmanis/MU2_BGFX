@@ -603,7 +603,10 @@ void Play::update(double seconds) {
                 // A rune set in a socket says Set, not Refined, and rings the same jewel from the
                 // vault or the box (the user, 2026-10-21: "there was not jewel sound when i draged
                 // rune from warehouse to item in inventory").
-                if (happening.what == sim::What::Refined || happening.what == sim::What::Set) lastRefined_ = &happening;
+                if (happening.what == sim::What::Refined || happening.what == sim::What::Set ||
+                    happening.what == sim::What::Harmonized) {
+                    lastRefined_ = &happening;
+                }
             }
             if (happening.what == sim::What::Answered) answered(happening);
             // A Dark Raven's strike, his or another's in view (game/pets_raven.cpp).

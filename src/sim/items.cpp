@@ -526,6 +526,8 @@ bool refinable(const content::Tables& tables, const Held& jewel, const Held& tar
         return !h.empty() && size_t(h.item) < tables.items.size();
     };
     if (!known(jewel) || !known(target)) return false;
+    // The Jewel of Harmony and the Refining Stones by their own rule (sim/harmony.h).
+    if (harmonyMaterial(tables.items[size_t(jewel.item)])) return harmonizes(tables, jewel, target);
     const Jewel kind = jewelOf(tables.items[size_t(jewel.item)]);
     if (kind == Jewel::None) return false;
     const content::ItemRow& row = tables.items[size_t(target.item)];

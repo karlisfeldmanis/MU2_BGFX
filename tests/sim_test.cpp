@@ -17323,6 +17323,87 @@ void testHarmony(const content::Tables& tables) {
     const sim::HarmonyOption* taken = sim::harmonyOption(sim::HarmonyFamily::Defence, 7);
     check(taken != nullptr && sim::harmonyAt(*taken, 11) == 5, "and Damage taken keeps MU's percent");
 
+    // Laid and raised, dragged on in the bag (Realm::refine, step 5): the jewel takes 60 in 100 on a
+    // bare +9 Kris and binds it, a miss spending the jewel alone; a stone raises the option a level,
+    // the Lower 20 in 100 and the Higher 80, and a miss takes it back to its least.
+    const int32_t lower = tables.itemNamed("LowRefineStone"), higher = tables.itemNamed("HighRefineStone");
+    check(lower >= 0 && higher >= 0, "the Refining Stones are cooked");
+    if (lower >= 0 && higher >= 0) {
+        const int at = sim::kWorn, jewelAt = sim::kWorn + 2;
+        rec.slots[sim::kWeaponRight] = sim::Held{};
+        rec.slots[sim::kArmour] = sim::Held{};
+        const auto tryOn = [&](sim::Held thing, int32_t stone) {
+            sim::HeroRecord trial = rec;
+            trial.slots[at] = thing;
+            trial.slots[jewelAt] = sim::Held{stone, 0, 1};
+            realm.restore(trial);
+            const bool done = realm.refine(jewelAt, at);
+            return std::make_pair(done, realm.satchel()[at]);
+        };
+        int laid = 0, boundAll = 0, jewelGone = 0;
+        const int tries = 2000;
+        for (int i = 0; i < tries; ++i) {
+            const auto [done, after] = tryOn(sim::Held{kris, 9, 40}, jewel);
+            jewelGone += done && realm.satchel()[jewelAt].empty();
+            if (after.harmony == 0) continue;
+            ++laid;
+            const sim::HarmonyOption* option = sim::harmonyOf(tables.items[size_t(kris)], after);
+            boundAll += after.bound && option && after.harmonyLevel == option->least;
+        }
+        std::printf("  the jewel: %d of %d took\n", laid, tries);
+        checkEqual(jewelGone, tries, "the jewel is spent either way");
+        check(std::abs(laid - tries * 0.6) < tries * 0.05, "the jewel takes 60 in 100");
+        checkEqual(boundAll, laid, "and what takes it is bound, its option at its least level");
+        sim::Held option{kris, 9, 40};
+        option.harmony = 1;  // Minimum damage, least 0
+        option.harmonyLevel = 4;
+        for (const auto& [stone, rate] : {std::make_pair(lower, 0.2), std::make_pair(higher, 0.8)}) {
+            int up = 0, back = 0;
+            for (int i = 0; i < tries; ++i) {
+                const sim::Held after = tryOn(option, stone).second;
+                up += after.harmonyLevel == 5;
+                back += after.harmonyLevel == 0 && after.harmony == 1;
+            }
+            std::printf("  a %s stone: %d of %d up a level, %d back to the least\n",
+                        stone == lower ? "Lower" : "Higher", up, tries, back);
+            check(std::abs(up - tries * rate) < tries * 0.05 && up + back == tries,
+                  stone == lower ? "the Lower stone raises it 20 in 100, else back to its least"
+                                 : "the Higher stone 80 in 100, else back to its least");
+        }
+        // Refused, whole: a stone on an option at its plus, or on a piece with none; the jewel on a
+        // piece that has one, or on a wing.
+        sim::Held top = option;
+        top.harmonyLevel = 9;
+        check(!tryOn(top, higher).first, "no stone past the piece's plus");
+        check(!tryOn(sim::Held{kris, 9, 40}, higher).first, "no stone on a piece with no option");
+        check(!tryOn(option, jewel).first, "no jewel on a piece that has an option");
+        check(!tryOn(sim::Held{wing, 0, 40}, jewel).first, "no jewel on a wing");
+        // A miss that takes a Strength requirement cut away from a worn sword he wears only by
+        // that cut: off him and into the bag, as a Soul's outgrown plus goes.
+        sim::Held cut{sword, 9, 40};
+        cut.harmony = 3;  // Strength requirement, least 0
+        cut.harmonyLevel = 8;  // three times MU's 26 off
+        realm.restore(rec);
+        const int base = realm.wearer().points.strength - rec.points.strength;
+        sim::HeroRecord thin = rec;
+        thin.points.strength = sim::asks(swordRow, 9).strength - 40 - base;
+        thin.slots[sim::kWeaponRight] = cut;
+        thin.slots[jewelAt] = sim::Held{lower, 0, 1};
+        bool fell = false, offHim = false;
+        for (int i = 0; i < 40 && !fell; ++i) {
+            realm.restore(thin);
+            if (realm.satchel()[sim::kWeaponRight].empty() || !realm.refine(jewelAt, sim::kWeaponRight)) break;
+            if (realm.satchel()[sim::kWeaponRight].harmonyLevel == 9) continue;
+            fell = true;
+            for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+                const sim::Held& one = realm.satchel()[slot];
+                offHim |= one.item == sword && one.harmony == 3 && one.harmonyLevel == 0;
+            }
+            offHim &= realm.satchel()[sim::kWeaponRight].empty();
+        }
+        check(fell && offHim, "a miss he can no longer wear goes off him into the bag");
+    }
+
     // The Gemstone: one in 150 kills in the Ruins and the Relics, any monster's, on its own roll;
     // never elsewhere.
     check(sim::gemstoneMap(37) && sim::gemstoneMap(38) && !sim::gemstoneMap(8) && !sim::gemstoneMap(0),

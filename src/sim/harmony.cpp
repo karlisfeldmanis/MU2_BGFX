@@ -123,4 +123,35 @@ int drawHarmony(const content::ItemRow& row, const Held& what, Random& dice) {
     return 0;
 }
 
+bool harmonizes(const content::Tables& tables, const Held& jewel, const Held& target) {
+    if (jewel.empty() || target.empty() || size_t(jewel.item) >= tables.items.size() ||
+        size_t(target.item) >= tables.items.size()) {
+        return false;
+    }
+    const content::ItemRow& jewelRow = tables.items[size_t(jewel.item)];
+    const content::ItemRow& row = tables.items[size_t(target.item)];
+    if (jewelOfHarmony(jewelRow)) {
+        if (target.harmony != 0) return false;
+        const Table table = tableOf(harmonyFamily(row));
+        for (int i = 0; i < table.count; ++i) {
+            if (table.first[i].least <= target.refinement && !idle(table.first[i], row)) return true;
+        }
+        return false;
+    }
+    if (!refiningStone(jewelRow) || !harmonyOf(row, target)) return false;
+    return target.harmonyLevel < kHarmonyTop && target.harmonyLevel < target.refinement;
+}
+
+Held harmonyMissed(const content::Tables& tables, const Held& jewel, Held target) {
+    if (jewel.empty() || target.empty() || size_t(jewel.item) >= tables.items.size() ||
+        size_t(target.item) >= tables.items.size()) {
+        return target;
+    }
+    if (!refiningStone(tables.items[size_t(jewel.item)])) return target;
+    if (const HarmonyOption* option = harmonyOf(tables.items[size_t(target.item)], target)) {
+        target.harmonyLevel = option->least;
+    }
+    return target;
+}
+
 }  // namespace mu::sim

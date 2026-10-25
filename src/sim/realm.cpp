@@ -270,7 +270,7 @@ void Realm::say(What what, const Body& who, int32_t a, int32_t b, int32_t c, uin
             case What::Refined: case What::Enlivened: case What::Set: case What::Offered:
             case What::QuestTaken: case What::QuestStep: case What::QuestReady:
             case What::QuestDone: case What::Arrowless: case What::Mixed: case What::Answered:
-            case What::PetLost: case What::Barred: case What::RavenSet:
+            case What::PetLost: case What::Barred: case What::RavenSet: case What::Harmonized:
                 happening.audience = who.id;
                 break;
             default:
@@ -1909,6 +1909,10 @@ std::string describe(const Happening& happening, const Realm& realm) {
             break;
         case What::Enlivened:
             std::snprintf(line, sizeof(line), "%6u %s put a Life on slot %d: option %d to %d",
+                          happening.tick, who, happening.a, happening.b, happening.c);
+            break;
+        case What::Harmonized:
+            std::snprintf(line, sizeof(line), "%6u %s put Harmony on slot %d: level %d to %d",
                           happening.tick, who, happening.a, happening.b, happening.c);
             break;
         case What::Invasion:

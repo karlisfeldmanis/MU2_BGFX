@@ -81,4 +81,19 @@ Needs harmonyEased(const content::ItemRow& row, const Held& what, Needs asked);
 // level it starts at is the option's least.
 int drawHarmony(const content::ItemRow& row, const Held& what, Random& dice);
 
+// Laying and raising it (Realm::refine, step 5), dragged on as a Bless is, at OpenMU's rates
+// (WebZen's are commonserver.cfg keys we do not have; docs/plans/jewel-of-harmony.md): the Jewel
+// of Harmony takes 60 in 100 and binds the piece (the user, 2026-10-25), a miss spending only the
+// jewel; a Refining Stone raises the option a level, the Lower 20 in 100 and the Higher 80, a
+// miss taking it back to the level it started at. Luck adds nothing, as in MU.
+inline constexpr int kHarmonyJewelChance = 60;
+inline constexpr int kLowerStoneChance = 20;
+inline constexpr int kHigherStoneChance = 80;
+// Whether `jewel` goes on `target`: a Jewel of Harmony on a piece of a family with no option yet
+// that can roll one; a Refining Stone on a piece whose option's level is under both its plus
+// (MU's: no higher than the item's level) and kHarmonyTop.
+bool harmonizes(const content::Tables& tables, const Held& jewel, const Held& target);
+// What a miss leaves `target` as: the jewel's untouched, a stone's at its option's least level.
+Held harmonyMissed(const content::Tables& tables, const Held& jewel, Held target);
+
 }  // namespace mu::sim

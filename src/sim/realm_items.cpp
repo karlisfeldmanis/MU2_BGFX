@@ -1098,6 +1098,58 @@ bool Realm::refine(int jewelSlot, int targetSlot) {
     }
     if (!refinable(*tables_, jewel, thing)) return false;
     const content::ItemRow& row = tables_->items[size_t(thing.item)];
+    // The Jewel of Harmony and the Refining Stones (sim/harmony.h, kHarmonyJewelChance): the
+    // jewel lays a drawn option at its least level and binds the piece; a stone raises the option
+    // a level, and its miss takes it back to its least. Off `dice_`, as the Soul's roll is.
+    if (harmonyMaterial(tables_->items[size_t(jewel.item)])) {
+        const content::ItemRow& jewelRow = tables_->items[size_t(jewel.item)];
+        const int was = thing.harmony != 0 ? thing.harmonyLevel : -1;
+        // A miss can lift a requirement a cut option held down, so a worn piece may outgrow him:
+        // off into the bag, as a Soul's plus does, room asked before anything is rolled or spent.
+        const Held missed = harmonyMissed(*tables_, jewel, thing);
+        const bool outgrows = wearable(targetSlot) && !fits(*tables_, wearer(), missed);
+        if (outgrows) {
+            Satchel after = me().bag;
+            if (jewel.durability <= 1) after.lift(jewelSlot);
+            if (after.free(*tables_, row.width, row.height) < 0) {
+                refusal_ = "no room in the bag for what he could no longer wear";
+                return false;
+            }
+        }
+        bool took = false;
+        if (jewelOfHarmony(jewelRow)) {
+            took = dice_.nextInt(0, 100) < kHarmonyJewelChance;
+            if (took) {
+                const int number = drawHarmony(row, thing, dice_);
+                const HarmonyOption* option = harmonyOption(harmonyFamily(row), number);
+                thing.harmony = uint8_t(number);
+                thing.harmonyLevel = option ? option->least : 0;
+                thing.bound = true;
+            }
+        } else {
+            const int chance = higherRefiningStone(jewelRow) ? kHigherStoneChance : kLowerStoneChance;
+            took = dice_.nextInt(0, 100) < chance;
+            thing = took ? thing : missed;
+            if (took) thing.harmonyLevel = uint8_t(thing.harmonyLevel + 1);
+        }
+        if (jewel.durability > 1) {
+            Held left = jewel;
+            left.durability = int16_t(jewel.durability - 1);
+            me().bag.put(jewelSlot, left);
+        } else {
+            me().bag.lift(jewelSlot);
+        }
+        me().bag.put(targetSlot, thing);
+        int landed = targetSlot;
+        if (!took && outgrows) {
+            me().bag.lift(targetSlot);
+            landed = me().bag.free(*tables_, row.width, row.height);
+            me().bag.put(landed, thing);
+        }
+        if (wearable(targetSlot)) rearm(hero);
+        say(What::Harmonized, hero, landed, was, thing.harmony != 0 ? thing.harmonyLevel : -1);
+        return true;
+    }
     const Jewel kind = jewelOf(tables_->items[size_t(jewel.item)]);
     const bool soul = kind == Jewel::Soul;
     // The Life works the option and not the plus (kLifeChance), so nothing it does can make a
@@ -2356,8 +2408,10 @@ bool Realm::refineAcross(Store jewelIn, int jewelAt, Store thingIn, int thingAt)
     // A worn thing a plus could outgrow comes off into the bag: room for it there, asked first --
     // and only then, as `refine` asks it, so a full bag still takes a vault's jewel onto what he
     // wears (the user, 2026-10-19). A Life works the option, never the plus.
+    // A Harmony stone's miss can outgrow him too (Realm::refine); its jewel never.
     Held raised = thing;
     raised.refinement = int16_t(thing.refinement + 1);
+    if (harmonyMaterial(jewelRow)) raised = harmonyMissed(*tables_, jewel, thing);
     const bool outgrows = wornThing && jewelOf(jewelRow) != Jewel::Life && !fits(*tables_, wearer(), raised);
     if (outgrows && me().bag.free(*tables_, thingRow.width, thingRow.height) < 0) {
         refusal_ = "no room in the bag for what he could no longer wear";

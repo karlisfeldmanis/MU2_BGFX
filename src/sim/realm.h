@@ -170,6 +170,8 @@ enum class What : uint8_t {
     Ravened,   // his Dark Raven let a strike go (Realm::raven): a: 0 the dash, 1 the ball (C1 A8's
                // SkillType), whom: its target. Its numbers come 600 ms on. Said to everyone.
     RavenSet,  // his raven's mode (sim::RavenMode): a: the mode, whom: Target's pick. His alone.
+    Harmonized,  // a Jewel of Harmony or a Refining Stone spent on a thing (sim/harmony.h): a: its
+                 // slot, b: its option's level before, c: after, -1 for no option. His alone.
 };
 
 // What a Summon did (What::Recall). MU's notices 1243-1254 (WebZen user.cpp:25460-25510).
