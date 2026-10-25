@@ -509,9 +509,8 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
         now_.top = y_;
         now_.level = hero->level;
         now_.points = hero->pointsInHand;
-        // No resets and no guilds in the realm yet: the head says 0 and shows no
-        // brackets until there are, and then these two read them.
-        now_.resets = 0;
+        // His rebirths (sim/rebirth.h) are the head's resets.
+        now_.resets = hero->rebirths;
         now_.guild = guild_;
         now_.experience = hero->experience;
         // The points he spent, without the stat runes (the user, 2026-10-19: "dont show extra

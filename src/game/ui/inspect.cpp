@@ -181,6 +181,7 @@ void Inspect::update(float width, float height, int column, const sim::Realm& re
     now_.figure = figure && figure->valid() ? figure->handle.idx : 0xFFFF;
     now_.items = stage && stage->picture().valid() ? stage->picture().handle.idx : 0xFFFF;
     now_.level = who.level;
+    now_.resets = who.rebirths;
     now_.kin = int(who.kin);
     now_.second = who.second;
     if (realm.tables()) now_.score = sim::gearScore(*realm.tables(), bag);
@@ -244,7 +245,7 @@ void Inspect::rebuild(const sim::Realm& realm, const sim::Body& who, const sim::
         bits.push_back({"LEVEL", true, wide});
         bits.push_back({std::to_string(now_.level), false, gap});
         // And his resets after it (the user, 2026-10-16), as the character window prints his own:
-        // the realm keeps none yet, so 0 until it does (Card says the same).
+        // his rebirths (sim/rebirth.h).
         bits.push_back({"RESETS", true, wide});
         bits.push_back({std::to_string(now_.resets), false, gap});
         if (!now_.guild.empty()) bits.push_back({"[" + now_.guild + "]", true, wide});
