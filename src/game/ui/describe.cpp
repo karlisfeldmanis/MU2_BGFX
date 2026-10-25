@@ -832,8 +832,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             std::string say;
             Tone tone = Tone::White;
             if (level < band[0]) {
-                say = "needs level " + std::to_string(band[0]);
-                tone = Tone::Red;
+                tone = Tone::Red;  // its floor says it, in red
             } else if (tier < own - 1) {
                 say = "Easy";
                 tone = Tone::Green;
@@ -846,7 +845,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             Row line;
             line.mark = tip::Mark::Diamond;
             line.free = std::string(place) + " " + std::to_string(tier) + ", from level " +
-                        std::to_string(band[0]) + ": " + say;
+                        std::to_string(band[0]) + (say.empty() ? "" : ": " + say);
             line.freeTone = tone;
             does.rows.push_back(line);
         }
