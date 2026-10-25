@@ -642,7 +642,9 @@ def run(this, previous=None, say=print):
     R0 = Release(prev_dir) if prev else None
     stamp = {"commit": commit, "protocol": meta["protocol"]}
     base = {"commit": commit, "protocol": meta["protocol"], "date": release_date(commit, meta)}
-    things = {"new": [], "changed": [], "removed": []}
+    # Built but not in the game (live false: a map nobody can get to, a rune nothing drops): not
+    # news while it stays so; it is listed apart, as coming.
+    things = {"new": [], "changed": [], "removed": [], "coming": []}
     real_changes = []
     shifts = 0
     for (kind, slug), e in R1.ents.items():
@@ -653,9 +655,13 @@ def run(this, previous=None, say=print):
                 before = [r for r in load(h).get("releases") or [] if r.get("commit") != commit]
         entry = None
         name = e.get("name") or e.get("title") or e.get("class") or slug
-        if prev and (kind, slug) not in R0.ents:
+        if prev and (kind, slug) not in R0.ents and e.get("live") is False:
+            things["coming"].append({"kind": kind, "slug": slug, "name": name, "summary": []})
+        elif prev and (kind, slug) not in R0.ents:
             entry = dict(base, added=True, changes=[])
             things["new"].append({"kind": kind, "slug": slug, "name": name, "summary": []})
+        elif prev and e.get("live") is False and R0.ents[(kind, slug)].get("live") is False:
+            pass  # still not in the game: what changed in it is not news yet
         elif prev:
             ch = changes_of(kind, R0.ents[(kind, slug)], e, R0, R1)
             if ch:

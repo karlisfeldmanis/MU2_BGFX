@@ -17,6 +17,7 @@ add_executable(armory_dump EXCLUDE_FROM_ALL
   ${MU_ARMORY_DUMP}/odds.cpp
   ${MU_ARMORY_DUMP}/look.cpp
   ${MU_ARMORY_DUMP}/spawn.cpp
+  ${MU_ARMORY_DUMP}/reach.cpp
   # The card builder is the game's, and reads nothing above sim and bgfx's headers.
   ${CMAKE_SOURCE_DIR}/src/game/ui/describe.cpp
 )
@@ -52,3 +53,7 @@ armory_probe(ARMORY_HOARD_PER_CLASS "
 #include \"content/tables.h\"
 using Fine = decltype(mu::sim::hoardFine(mu::content::ItemRow{}, mu::sim::Kin::DarkKnight, true));
 int main() { return Fine{} && mu::sim::kHoardLives > 0 ? 0 : 0; }")
+# The rune level requirements (after 2eec46a1): sim::kRuneHeroLevel.
+armory_probe(ARMORY_RUNE_HERO_LEVEL "
+#include \"sim/items.h\"
+int main() { return mu::sim::kRuneHeroLevel[0] > 0 ? 0 : 0; }")

@@ -8,8 +8,10 @@
 #include <tuple>
 #include <type_traits>
 
+#include "compat.h"
 #include "dump.h"
 #include "sim/broker.h"
+#include "sim/config.h"
 #include "sim/elite.h"
 #include "sim/event.h"
 #include "sim/items.h"
@@ -144,7 +146,9 @@ J runes() {
                         .set("second", row.second).set("once", row.once)
                         .set("element", int(elementOf(row.power)))
                         .set("stacking", stackingJson(row.power))
+#ifdef ARMORY_RUNE_HERO_LEVEL
                         .set("hero_level", kRuneHeroLevel[int(row.rarity)])
+#endif
                         .set("from_level", kRuneRarityLevel[int(row.rarity)])
                         .set("sale", J(kRuneSale[int(row.rarity)]))
                         .set("live", row.rarity != Rarity::Ancient || ancientsDrop)
@@ -161,7 +165,9 @@ void runeConstants(J& c) {
         rarities.push(rarityKey(Rarity(r)));
         share.push(J(kRuneRarityShare[r]));
         from.push(kRuneRarityLevel[r]);
+#ifdef ARMORY_RUNE_HERO_LEVEL
         hero.push(kRuneHeroLevel[r]);
+#endif
         sale.push(J(kRuneSale[r]));
     }
     c.set("rarities", rarities).set("kRuneRarityShare", share).set("kRuneRarityLevel", from).set("kRuneHeroLevel", hero)
@@ -175,10 +181,15 @@ J questItem(const QuestItem& q) {
     o.set("item", q.item ? q.item : "").set("count", q.count).set("plus", q.plus)
         .set("class", q.kin >= 0 ? J(kinName(Kin(q.kin))) : J())
         .set("sockets", int(q.sockets)).set("power", int(q.power)).set("first_only", q.firstOnly)
-        .set("rank", q.rank == QuestItem::Rank::First ? "first" : q.rank == QuestItem::Rank::Second ? "second" : "any");
+        .set("rank", compat::rankOf(q));
+    // A Rune of Creation's power, and a powered piece's powers, by the game's own names.
+    if (q.power) {
+        const PowerRow* p = powerOf(q.power);
+        o.set("power_name", p ? J(p->name) : J()).set("power_key", "rune-" + std::to_string(int(q.power)));
+    }
     J aff = J::arr();
     for (uint8_t a : q.affixes) {
-        if (a) aff.push(int(a));
+        if (a) aff.push(J::obj().set("affix", int(a)).set("name", affixName(Affix(a))));
     }
     if (aff.size()) o.set("affixes", aff);
     return o;
@@ -214,7 +225,8 @@ J quests() {
         bool demo = false;
         for (int d : kDemoQuests) demo |= d == i;
         J o = J::obj();
-        o.set("index", i).set("key", r.key).set("demo", demo).set("giver", r.giver).set("giverName", r.giverName)
+        // The demo quest is given only under --quest-demo (RealmConfig::questDemo, off in the game).
+        o.set("index", i).set("key", r.key).set("demo", demo).set("live", !demo || RealmConfig{}.questDemo).set("giver", r.giver).set("giverName", r.giverName)
             .set("place", r.place).set("receiver", questReceiver(r)).set("receiverName", questReceiverName(r))
             .set("receiverPlace", r.receiverPlace).set("title", r.title).set("offer", offer).set("underway", r.underway)
             .set("handIn", handIn).set("resting", r.resting).set("next", r.next).set("voice", r.voice)
@@ -294,11 +306,17 @@ J npcs(const Dump& d) {
                     o.set("shelf", shelf);
                 }
             }
-            o["where"].push(J::obj().set("world", w.name).set("map", w.tables->map).set("x", one.x).set("y", one.y));
+            o["where"].push(J::obj().set("world", w.name).set("map", w.tables->map).set("x", one.x).set("y", one.y)
+                                .set("live", live(d, w)));
         }
     }
     J list = J::arr();
-    for (auto& [k, o] : placed) list.push(std::move(o));
+    for (auto& [k, o] : placed) {
+        bool any = false;
+        for (const J& at : o["where"].items()) any = any || at.find("live")->boolean();
+        o.set("live", any);
+        list.push(std::move(o));
+    }
     return list;
 }
 
@@ -318,7 +336,7 @@ J elites(const Dump& d) {
         list.push(J::obj()
                       .set("key", world.empty() ? "map-" + std::to_string(row.map) : world)
                       .set("name", "Elites of " + (world.empty() ? "map " + std::to_string(row.map) : world))
-                      .set("world", world).set("map", row.map).set("count", row.count).set("live", !world.empty() && r)
+                      .set("world", world).set("map", row.map).set("count", row.count).set("live", !world.empty() && r && reachable(row.map))
                       .set("life", J(double(row.life))).set("damage", J(double(kEliteDamage)))
                       .set("defense", J(double(kEliteDefense))).set("swing", J(double(kEliteSwing)))
                       .set("stride", J(double(kEliteStride))).set("experience", kEliteExperience)
@@ -422,7 +440,7 @@ J maps(const Dump& d) {
         const MapRow& r = rulesOf(w.tables->map);
         const MapRow* row = mapOf(w.name);
         out[w.name] = J::obj()
-                          .set("live", d.packs).set("in_packs", d.packs)
+                          .set("live", live(d, w)).set("in_packs", d.packs).set("reachable", reachable(w.tables->map))
                           .set("map", w.tables->map).set("in_table", row != nullptr)
                           .set("event", r.event).set("floors", r.floors).set("summons", r.summons).set("feather", r.feather)
                           .set("nova_scroll", r.novaScroll).set("invasion", r.invasion).set("firecracker", r.firecracker)
@@ -442,6 +460,7 @@ J dumpRules(const Dump& d) {
     int hardest = 0;
     std::string where;
     for (const World& w : d.worlds) {
+        if (!live(d, w)) continue;  // a map nobody can get to drops nothing anybody gets
         for (const content::MonsterNest& nest : w.tables->nests) {
             if (nest.kind < w.tables->kinds.size() && w.tables->kinds[nest.kind].level > hardest) {
                 hardest = w.tables->kinds[nest.kind].level;

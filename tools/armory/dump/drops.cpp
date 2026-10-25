@@ -33,6 +33,21 @@ namespace {
 using content::ItemRow;
 using content::Tables;
 
+// The game's local literals, named once here. Realm::leave, eliteSpoils, crack and openBox keep
+// them inside the functions (src/sim/realm_items.cpp, realm_elite.cpp), out of any header, so the
+// dump mirrors them; --check-odds holds every one to the real roll, and fails when one moves.
+constexpr int kGap = 15;               // leave's and eliteSpoils' kGap: the drop level band
+constexpr int kPotionGap = 8;          // leave's kPotionGap: a potion's band
+constexpr int kBaseMoney = 7;          // leave's kBaseMoney (Loot.BaseMoney), and eliteSpoils' + 7
+constexpr double kItemChance = 0.1;    // leave's itemChance (and excellentItemChance's) at no item find
+constexpr int kAleNumber = 9;          // leave's jewelGroup: the Ale, potion 9
+constexpr int kTownPortalNumber = 10;  // and the Town Portal Scroll, potion 10
+constexpr int kOptionDraws = 3;        // rollOptions' nextInt(0, 3): one of three option levels
+constexpr int kBoxTopOptionIn = 5;     // crack/openBox/excellentOf: nextInt(0, 5) < 1, the +12
+constexpr int kBoxOptionDraws = 3;     // and nextInt(0, 3) otherwise: +0, +4 or +8
+constexpr int kZenUnder = 10;          // leave's nextInt(0, moneyRate) < 10: Zen
+constexpr double kHalf = 0.5;          // crack's and openBox's nextInt(0, 2): the skill, a Firecracker's luck
+
 // One way an item comes off a kill.
 struct Roll {
     enum class Kind : uint8_t { Ticket, Main, Own } kind = Kind::Own;
@@ -82,7 +97,7 @@ void dropOptions(Roll& r, int luckIn100) {
     r.luck = luckIn100 / 100.0;
     r.option[0] = 1.0;
     for (int which = 0; which < 3; ++which) {
-        const double p = (1.0 / 3.0) * sim::kOptionUnder[which] / 100.0;
+        const double p = (1.0 / kOptionDraws) * sim::kOptionUnder[which] / 100.0;
         r.option[sim::kMostOptionDropped - which] += p;
         r.option[0] -= p;
     }
@@ -105,11 +120,12 @@ void eliteOptions(Roll& r) {
 // luck missed.
 void boxOptions(Roll& r, double luck, bool skill) {
     r.luck = luck;
-    const double drawn = skill ? 1.0 - luck * 0.5 : 1.0 - luck;
-    r.option[0] = 1.0 - drawn + drawn * (4.0 / 5.0) / 3.0;
-    r.option[1] = drawn * (4.0 / 5.0) / 3.0;
-    r.option[2] = drawn * (4.0 / 5.0) / 3.0;
-    r.option[3] = drawn * (1.0 / 5.0);
+    const double drawn = skill ? 1.0 - luck * kHalf : 1.0 - luck;
+    const double low = drawn * (1.0 - 1.0 / kBoxTopOptionIn) / kBoxOptionDraws;
+    r.option[0] = 1.0 - drawn + low;
+    r.option[1] = low;
+    r.option[2] = low;
+    r.option[3] = drawn / kBoxTopOptionIn;
 }
 
 // NewOptionRand's second option, as leave, eliteSpoils and excellentOf roll it.
@@ -151,7 +167,7 @@ std::vector<int32_t> pool(const Tables& t, F&& admits) {
 
 // leave's `jewelGroup`.
 bool jewelGroup(const ItemRow& r) {
-    return (r.jewel() || (r.group == sim::kGroupPotions && (r.number == 9 || r.number == 10))) &&
+    return (r.jewel() || (r.group == sim::kGroupPotions && (r.number == kAleNumber || r.number == kTownPortalNumber))) &&
            !sim::refiningJewel(r);
 }
 
@@ -164,6 +180,8 @@ struct Kill {
     int level = 0;
     int32_t number = 0;
     sim::DropRate rate{};
+    const World* w = nullptr;
+    uint32_t kind = 0;
 };
 
 // Realm::treasure: a Find's thing, while its quest is active, beside all else.
@@ -172,6 +190,9 @@ void treasure(const Kill& k, Model& m) {
     const bool strong = event && k.level >= sim::kTreasureLevel;
     const sim::Treasure ground = sim::rulesOf(k.map).treasure;
     if (!strong && ground == sim::Treasure::None) return;
+    // Where its nests are on the treasure's ground, as Realm::treasureGround reads a tile (the
+    // Lost Tower's last floor alone): asked of a raised realm (spawn.cpp).
+    if (!strong && (k.w == nullptr || !onTreasureGround(*k.w, k.kind))) return;
     for (int index = 0; index < sim::kQuests; ++index) {
         const sim::QuestRow& row = sim::questAt(index);
         for (int step = 0; step < row.stepCount; ++step) {
@@ -284,8 +305,8 @@ void leave(const Kill& k, Model& m) {
                (secondGearHere || !sim::secondClassOnly(row));
     };
     const double creationChance = level >= sim::kRuneRarityLevel[int(sim::Rarity::Common)] ? sim::kCreationChance : 0.0;
-    const double itemChance = 0.1;
-    const double excellentItemChance = 0.1 * sim::kExcellentShareOfItem;
+    const double itemChance = kItemChance;
+    const double excellentItemChance = kItemChance * sim::kExcellentShareOfItem;
     double spent = 0.0;
     {
         const auto runes = pool(t, [](const ItemRow& r) { return sim::creation(r); });
@@ -312,7 +333,6 @@ void leave(const Kill& k, Model& m) {
     }
     {
         const int lower = level - sim::kExcellentLevelDelta;
-        constexpr int kGap = 15;  // leave's own kGap
         if (lower >= 0) {
             const auto fine = pool(t, [&](const ItemRow& r) {
                 return r.dropsFromMonsters() && sim::excellentable(r) && r.dropLevel <= lower &&
@@ -332,7 +352,6 @@ void leave(const Kill& k, Model& m) {
         spent += excellentItemChance;
     }
     {
-        constexpr int kGap = 15, kPotionGap = 8;  // leave's kGap and kPotionGap
         // leave's `plusOf`.
         const auto plusOf = [&](const ItemRow& r) {
             const bool refinable = r.group <= sim::kGroupBoots && !sim::ammunition(r);
@@ -364,7 +383,7 @@ void leave(const Kill& k, Model& m) {
         }
         spent += itemChance;
     }
-    m.zen = pass * (1.0 - spent) * std::min(1.0, 10.0 / double(std::max(1, k.rate.moneyRate)));
+    m.zen = pass * (1.0 - spent) * std::min(1.0, double(kZenUnder) / double(std::max(1, k.rate.moneyRate)));
 }
 
 // Realm::eliteSpoils: four to seven pieces of gear, one or two of them excellent, and a jewel or
@@ -372,7 +391,6 @@ void leave(const Kill& k, Model& m) {
 void eliteSpoils(const Kill& k, Model& m) {
     const Tables& t = *k.t;
     const int level = k.level + sim::kEliteLevelsUp;
-    constexpr int kGap = 15;  // eliteSpoils' own
     const bool secondGearHere = sim::rulesOf(k.map).secondClass;
     // eliteSpoils' `gear`.
     const auto gear = [&](const ItemRow& r) {
@@ -575,6 +593,8 @@ Kill killOf(const World& w, uint32_t kind, int castle) {
     k.level = mk.level;
     k.number = mk.number;
     k.rate = sim::dropRateOf(mk.number);
+    k.w = &w;
+    k.kind = kind;
     return k;
 }
 
@@ -600,8 +620,16 @@ J monsterJson(const Ground& g) {
     o.set("max_plus", rate.maxPlus).set("money_rate", rate.moneyRate);
     if (g.elite) o.set("spoils_level", mk.level + sim::kEliteLevelsUp);
     if (!g.elite) o.set("zen", J::p(m.zen)).set("no_ticket", J::p(m.pass));
+    // The Zen it pays, for a killer of its own level: the kill's experience + 7 (leave's
+    // kBaseMoney), an Elite's that times kEliteZen (eliteSpoils); an Elite always pays it.
+    {
+        const int64_t base = int64_t(sim::killExperience(mk.level, mk.level)) + kBaseMoney;
+        o.set("zen_amount", J((long long)(g.elite ? base * sim::kEliteZen : base)))
+            .set("zen_amount_note", "for a killer of its own level: the kill's experience + 7" +
+                                        std::string(g.elite ? ", times kEliteZen" : ""));
+    }
     // What it is there: the body the realm stands up (spawn.cpp), Elites and raid included.
-    if (const J* body = spawned(*g.world, g.castle, mk.number, g.elite)) o.set("spawned", *body);
+    if (const J* body = spawned(*g.world, g.square > 0 ? -g.square : g.castle, mk.number, g.elite)) o.set("spawned", *body);
     o.set("items", modelJson(*g.world->tables, m));
     if (m.whileQuest.size()) o.set("while_quest", m.whileQuest);
     if (m.notes.size()) o.set("notes", m.notes);
@@ -653,6 +681,8 @@ J monsters(std::vector<Ground> grounds) {
 // random, of those whose kind has a figure cooked, at kCastleStatueHealth for its castle; broken,
 // it lays the Archangel weapon it held (CastleInstance::kill, kArchangelWeapons) and pays
 // kCastleStatueExps. One entity, its three kinds its `looks`; its numbers read off raised castles.
+const Dump* g_dump = nullptr;  // dumpDrops' own, for statueOf's places
+
 J statueOf(const World& w) {
     const Tables& t = *w.tables;
     J looks = J::arr();
@@ -692,6 +722,7 @@ J statueOf(const World& w) {
         }
         J pl = J::obj();
         pl.set("place", "bloodcastle-" + std::to_string(c)).set("world", w.name).set("map", t.map).set("kind", "castle")
+            .set("live", live(*g_dump, w))
             .set("castle", c).set("elite", false).set("name", t.kinds[size_t(firstKind)].label)
             .set("level", t.kinds[size_t(firstKind)].level).set("items", items)
             .set("breaking", J::obj().set("experience", J((long long)sim::kCastleStatueExps[c - 1]))
@@ -728,7 +759,7 @@ J dumpBoxes(const Dump& d) {
             if (sim::takesOptions(t.items[size_t(item)])) {
                 r.plusLow = std::min(sim::kFirecrackerPlus, sim::kRefineCap);
                 r.plusHigh = std::min(sim::kFirecrackerPlus + sim::kFirecrackerPluses - 1, sim::kRefineCap);
-                boxOptions(r, 0.5, true);
+                boxOptions(r, kHalf, true);
             }
             entry(items, item, p / double(rows.size()), r);
         }
@@ -831,6 +862,7 @@ std::vector<double> perKill(const Dump&, const Ground& g, sim::Kin kin) {
 }
 
 J dumpDrops(const Dump& d) {
+    g_dump = &d;
     J out = d.stamped();
     out.set("baseline", "one kill, the killer alone: no item find, no Fortune talents, no party or raider credit");
     J places = J::obj();
@@ -853,7 +885,7 @@ J dumpDrops(const Dump& d) {
                     if (kind >= 0) grounds.push_back(Ground{&w, uint32_t(kind), c});
                 }
                 J place = J::obj();
-                place.set("world", w.name).set("map", t.map).set("kind", "castle").set("castle", c)
+                place.set("world", w.name).set("map", t.map).set("live", live(d, w)).set("kind", "castle").set("castle", c)
                     .set("built", c <= sim::kCastlesBuilt).set("rules", rules).set("monsters", monsters(grounds));
                 places["bloodcastle-" + std::to_string(c)] = place;
             }
@@ -875,7 +907,7 @@ J dumpDrops(const Dump& d) {
                     if (kind >= 0) grounds.push_back(Ground{&w, uint32_t(kind), 0, s});
                 }
                 J place = J::obj();
-                place.set("world", w.name).set("map", t.map).set("kind", "square").set("square", s)
+                place.set("world", w.name).set("map", t.map).set("live", live(d, w)).set("kind", "square").set("square", s)
                     .set("built", s <= sim::kSquaresBuilt).set("rules", rules).set("monsters", monsters(grounds));
                 places["devilsquare-" + std::to_string(s)] = place;
             }
@@ -900,7 +932,7 @@ J dumpDrops(const Dump& d) {
             }
         }
         J place = J::obj();
-        place.set("world", w.name).set("map", t.map).set("kind", "map").set("rules", rules).set("monsters", monsters(grounds));
+        place.set("world", w.name).set("map", t.map).set("live", live(d, w)).set("kind", "map").set("rules", rules).set("monsters", monsters(grounds));
         if (sim::elitesOn(t.map) > 0) {
             place.set("elites", J::obj().set("count", sim::elitesOn(t.map)).set("breeds", elites)
                                     .set("life", J(double(sim::eliteLifeOn(t.map)))));
@@ -918,7 +950,7 @@ J dumpDrops(const Dump& d) {
                 raid.push_back(g);
             }
             J rp = J::obj();
-            rp.set("world", w.name).set("map", t.map).set("kind", "raid").set("rules", rules).set("monsters", monsters(raid));
+            rp.set("world", w.name).set("map", t.map).set("live", live(d, w)).set("kind", "raid").set("rules", rules).set("monsters", monsters(raid));
             places[w.name + "-raid"] = rp;
         }
     }
@@ -932,7 +964,7 @@ J dumpDrops(const Dump& d) {
             J& entry = byNumber[number];
             if (entry.null()) entry = J::obj().set("number", number).set("name", *m.find("name")).set("places", J::arr());
             m.set("place", id);
-            for (const char* f : {"world", "map", "kind", "castle", "square"}) {
+            for (const char* f : {"world", "map", "kind", "castle", "square", "live"}) {
                 if (const J* v = place.find(f)) m.set(f, *v);
             }
             met.push(J::obj().set("number", number).set("elite", *m.find("elite")));
@@ -944,7 +976,13 @@ J dumpDrops(const Dump& d) {
         if (!one.null()) byNumber[int(one.find("number")->real())] = std::move(one);
     }
     J list = J::arr();
-    for (auto& [number, entry] : byNumber) list.push(std::move(entry));
+    for (auto& [number, entry] : byNumber) {
+        // Live where any place it is met in is one a player can get to (reach.cpp).
+        bool any = false;
+        for (const J& pl : entry["places"].items()) any = any || (pl.find("live") && pl.find("live")->boolean());
+        entry.set("live", any);
+        list.push(std::move(entry));
+    }
     out.set("places", places).set("monsters", list);
     J notes = J::arr();
     notes.push("chance: the odds one kill leaves at least one; rolls: each way it comes, per kill");

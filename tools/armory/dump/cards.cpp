@@ -4,10 +4,12 @@
 
 #include <algorithm>
 
+#include "compat.h"
 #include "dump.h"
 #include "game/ui/describe.h"
 #include "game/ui/tip.h"
 #include "sim/broker.h"
+#include "sim/machine.h"
 #include "sim/items.h"
 #include "sim/wear.h"
 
@@ -170,12 +172,13 @@ J dumpCards(const Dump& d) {
         const bool wing = sim::anyWing(r);
         const bool jewel = sim::jewellery(r);
         if (wing) {
-            for (int plus : {9, 13}) {
+            // +9, and the most the Chaos Machine refines anything to (sim::kMachineCap).
+            for (int plus : {9, sim::kMachineCap}) {
                 sim::Held h = base;
                 h.refinement = int16_t(plus);
                 h.luck = true;
                 h.option = int8_t(plus == 9 ? 3 : 4);
-                if (plus == 13 && sim::secondWing(r)) h.wing = sim::kWingMaxLife;
+                if (plus == sim::kMachineCap && sim::secondWing(r)) h.wing = sim::kWingMaxLife;
                 h.durability = int16_t(sim::maximumDurability(r, h));
                 states.push_back({"+" + std::to_string(plus) + " luck +" + std::to_string(h.option * 4) +
                                       (h.wing ? " life" : ""),
@@ -249,10 +252,12 @@ J dumpCards(const Dump& d) {
             splitHint(tables, s.held, sheet);
             // The bag's "Sells for" strip (game/ui/bag.cpp): Realm::sellValue's sum.
             sim::Held sold = s.held;
-            if (const int pieces = sim::piecesSold(tables, sold); pieces > 0) sold.durability = int16_t(pieces);
+            if (const int pieces = compat::piecesSold(tables, sold); pieces > 0) sold.durability = int16_t(pieces);
             const int64_t fetches = sim::npcValue(tables, sold);
             if (fetches > 0) sheet.sell = grouped(fetches);
-            const sim::Needs needs = sim::asks(r, s.held.refinement, s.held.excellent != 0);
+            sim::Needs needs = sim::asks(r, s.held.refinement, s.held.excellent != 0);
+            // The level as the card asks it (describe): its own, a scroll's skill's, a rune's.
+            needs.level = std::max({needs.level, r.teaches > 0 ? r.teachesLevel : 0, compat::runeLevel(tables, s.held)});
             J state = J::obj();
             state.set("reader", J::obj().set("class", kinName(who.kin)).set("level", who.level))
                 .set("sheet", sheetJson(sheet))

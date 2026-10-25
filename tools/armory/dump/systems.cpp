@@ -3,6 +3,7 @@
 
 #include "dump.h"
 #include "sim/items.h"
+#include "sim/machine.h"
 #include "sim/rules.h"
 #include "sim/skills.h"
 #include "sim/talents.h"
@@ -103,6 +104,9 @@ J dumpSkills(const Dump& d) {
     return out;
 }
 
+// The game has no most rebirths; the table goes this far.
+constexpr int kTalentRebirthsShown = 10;
+
 J dumpTalents(const Dump& d) {
     using namespace sim;
     J trees = J::obj();
@@ -138,6 +142,14 @@ J dumpTalents(const Dump& d) {
             byLevel[std::to_string(level)] = a;
         }
         trees[kinName(k)].set("points", byLevel);
+        // Every level and rebirth (sim::talentPoints): [rebirths][level - 1].
+        J all = J::arr();
+        for (int resets = 0; resets <= kTalentRebirthsShown; ++resets) {
+            J one = J::arr();
+            for (int level = 1; level <= kMaximumLevel; ++level) one.push(talentPoints(k, level, resets));
+            all.push(one);
+        }
+        trees[kinName(k)].set("points_by_level", all);
     }
     J c = J::obj();
     c.set("kMaximumLevel", kMaximumLevel).set("kStatPointsPerTalent", kStatPointsPerTalent)
@@ -145,7 +157,7 @@ J dumpTalents(const Dump& d) {
         .set("pointsPerLevel", kinMap([](Kin k) { return pointsPerLevel(k); }));
     J out = d.stamped();
     out.set("constants", c).set("classes", trees)
-        .set("points_note", "talent points by level, at 0, 1 and 2 rebirths (sim::talentPoints)");
+        .set("points_note", "points: by level at 0, 1 and 2 rebirths; points_by_level: [rebirths 0..10][level 1..400], both sim::talentPoints");
     return out;
 }
 
@@ -168,7 +180,7 @@ J dumpGearPowers(const Dump& d) {
                              .set("timed", timedPet(row)).set("seconds", J((long long)petSeconds(row))));
             if (anyWing(row)) {
                 J byPlus = J::arr();
-                for (int plus = 0; plus <= 15; ++plus) {
+                for (int plus = 0; plus <= kMachineCap; ++plus) {
                     const PetPower w = wingPower(row, plus);
                     byPlus.push(J::obj().set("plus", plus).set("dealt", J(double(w.dealt))).set("taken", J(double(w.taken)))
                                     .set("defense", wingDefense(row, plus)).set("lifeCost", w.lifeCost)

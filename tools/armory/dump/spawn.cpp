@@ -5,11 +5,13 @@
 // raises them -- and every monster body's numbers are read back.
 
 #include <map>
+#include <memory>
 #include <tuple>
 
 #include "dump.h"
 #include "sim/elite.h"
 #include "sim/maps.h"
+#include "sim/square.h"
 #include "sim/realm.h"
 
 namespace armory {
@@ -39,6 +41,9 @@ void raiseOnce(const World& w, int castle, uint64_t seed, int* elitesSeen) {
     std::map<Key, int> counted;
     for (const sim::Body& b : realm.bodies()) {
         if (!b.monster() || b.kind < 0 || size_t(b.kind) >= t.kinds.size()) continue;
+        // Devil Square's arenas share one map: a square's own bodies are those whose home is in
+        // its arena (sim::inSquareArena), asked as `castle` -square.
+        if (castle < 0 && !sim::inSquareArena(-castle, b.homeColumn, b.homeRow)) continue;
         const Key key{w.name, castle, t.kinds[size_t(b.kind)].number, b.elite};
         ++counted[key];
         J& slot = g_spawned[key];
@@ -52,7 +57,27 @@ void raiseOnce(const World& w, int castle, uint64_t seed, int* elitesSeen) {
     }
 }
 
+std::map<std::string, std::unique_ptr<sim::Realm>> g_realms;
+
 }  // namespace
+
+bool onTreasureGround(const World& w, uint32_t kind) {
+    auto& realm = g_realms[w.name];
+    if (!realm) {
+        realm = std::make_unique<sim::Realm>();
+        const sim::MapRow* row = sim::mapOf(w.name);
+        if (!realm->raise(w.tables.get(), 20261024, row ? row->arrive[0] : 128, row ? row->arrive[1] : 128)) return false;
+    }
+    for (const content::MonsterNest& nest : w.tables->nests) {
+        if (nest.kind != kind) continue;
+        for (int r = nest.y1; r <= nest.y2; ++r) {
+            for (int c = nest.x1; c <= nest.x2; ++c) {
+                if (realm->treasureGround(c, r)) return true;
+            }
+        }
+    }
+    return false;
+}
 
 const J* spawned(const World& w, int castle, int32_t number, bool elite) {
     const std::pair<std::string, int> place{w.name, castle};

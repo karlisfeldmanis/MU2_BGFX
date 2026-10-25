@@ -436,6 +436,8 @@ def build(commit=None, out=None, thumbs=True, say=print):
                     continue
                 row = {**it, "item": ik, "slug": item_slug[ik], "n": I[ik]["name"]}
                 rows.append(row)
+                if pl.get("live") is False:
+                    continue  # a place nobody can get to (the dump's reach): its monster's page alone
                 # An item's page shows who drops it, where and how often: the place's own details
                 # (its rules, notes, money, quest treasure) are the monster's and the event's page's.
                 drops_by_item[ik].append({**{k: it[k] for k in DROP_ROW if k in it},
@@ -443,7 +445,7 @@ def build(commit=None, out=None, thumbs=True, say=print):
                                           **{k: place[k] for k in DROP_PLACE if k in place}})
             # A quest's treasure drops only while the quest asks for it: on the item's page too, as such.
             for wq in pl.get("while_quest") or []:
-                if isinstance(wq, dict) and wq.get("item") in I:
+                if isinstance(wq, dict) and wq.get("item") in I and pl.get("live") is not False:
                     drops_by_item[wq["item"]].append({"chance": wq.get("chance"), "rolls": [{"roll": "while_quest", "chance": wq.get("chance")}],
                                                       "classes": wq.get("classes"), "quest": wq.get("quest"),
                                                       "monster_slug": mon_slug[mk], "monster_name": M[mk]["name"],
@@ -586,7 +588,8 @@ def build(commit=None, out=None, thumbs=True, say=print):
         c = m["combat"]
         where = [dict(n, world_slug=world_slug[n["world"]], live=is_live(n["world"])) for n in nests.get(m["number"], [])]
         live = None if live_worlds is None and "drops" in missing else (
-            any(w["live"] for w in where) or bool(drops_by_mon.get(k)) or bool(summoned_by.get(k)))
+            any(w["live"] for w in where) or any(d.get("live") is not False for d in drops_by_mon.get(k, []))
+            or bool(summoned_by.get(k)))
         p = pics(f"monster:{k}")
         row = {"k": k, "slug": s, "n": m["name"], "num": m["number"], "lv": c.get("level"), "hp": c.get("health"),
                "dmg": [c.get("minimum_damage"), c.get("maximum_damage")], "def": c.get("defense"),

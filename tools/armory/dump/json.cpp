@@ -1,6 +1,7 @@
 #include "json.h"
 
 #include <cmath>
+#include <cstdlib>
 #include <cstring>
 
 namespace armory {
@@ -41,7 +42,6 @@ void quote(std::string& out, const std::string& s) {
 
 bool J::flat() const {
     if (t_ == T::Arr) {
-        if (a_.size() > 24) return false;
         for (const J& one : a_) {
             if (one.t_ == T::Arr || one.t_ == T::Obj) return false;
         }
@@ -62,6 +62,11 @@ void J::write(std::string& out, int depth) const {
             }
             char b[40];
             std::snprintf(b, sizeof b, "%.*g", digits_, d_);
+            // A float's widening noise (1.149999976 for 1.15): the short form when it is the same
+            // number to a float's precision.
+            char shortForm[40];
+            std::snprintf(shortForm, sizeof shortForm, "%.6g", d_);
+            if (std::fabs(std::strtod(shortForm, nullptr) - d_) <= std::fabs(d_) * 2e-7) std::strcpy(b, shortForm);
             // -0 and 1e-05 read the same to JSON; plain is kinder to a diff.
             if (std::strcmp(b, "-0") == 0) std::strcpy(b, "0");
             out += b;
