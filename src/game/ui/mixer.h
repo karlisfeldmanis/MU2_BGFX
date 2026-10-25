@@ -68,8 +68,11 @@ public:
     void spark() { sparks_ = kSparkSeconds; }
 
     // What a run asks of the realm: the picked service and Remove Rune's socket.
-    // `service_` is a place in the list (sim::kRowServices), not the enum.
-    sim::Service service() const { return sim::kRowServices[service_]; }
+    // `service_` is a place in the list (sim::kRowServices, or the Pet Trainer's
+    // sim::kTrainerServices), not the enum.
+    const sim::Service* rows() const { return trainer_ ? sim::kTrainerServices : sim::kRowServices; }
+    int rowCount() const { return trainer_ ? sim::kTrainerCount : sim::kRowCount; }
+    sim::Service service() const { return rows()[service_]; }
     int socket() const { return socket_; }
 
     bool covers(float x, float y) const;
@@ -162,6 +165,8 @@ private:
     bool closing_ = false;
     bool overClose_ = false;
     int service_ = 0;
+    // The box is the Pet Trainer's (sim/lord_pets.h): his row and his name on the frame.
+    bool trainer_ = false;
     int socket_ = -1;
     // The list's place of the service last run: its answer is shown on its own page only.
     int ranService_ = -1;

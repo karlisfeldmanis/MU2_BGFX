@@ -142,8 +142,62 @@ void levelGate(Judged& j, int level) {
 }
 }  // namespace
 
+Judged Realm::mendJudged() const {
+    Judged j;
+    j.service = Service::MendPets;
+    j.rate = 100;
+    if (!tables_) return j;
+    bool hurt = false, worn = false;
+    for (int slot : {kMount, kWeaponLeft}) {
+        const Held& pet = me().bag[slot];
+        if (pet.empty() || !levelledPet(tables_->items[size_t(pet.item)]) || j.needCount >= kMostNeeds) continue;
+        const content::ItemRow& row = tables_->items[size_t(pet.item)];
+        worn = true;
+        hurt = hurt || pet.durability < 255;
+        // A line a pet: its life against the whole 255, met when it is whole.
+        Need& line = j.needs[j.needCount++];
+        line.name = row.label + " life";
+        line.have = pet.durability;
+        line.need = 255;
+        j.zen += mendPrice(petValue(row, pet), pet.durability);
+    }
+    j.empty = !worn;
+    j.ready = hurt;
+    j.title = !worn ? "Wear the Dark Horse or the Dark Raven" : hurt ? "Restore Life" : "Life is whole";
+    j.success = "Life restored to 255";
+    return j;
+}
+
+bool Realm::mendPets(Body& hero) {
+    const Judged j = mendJudged();
+    if (!j.ready) {
+        refusal_ = "nothing to mend";
+        return false;
+    }
+    if (me().money < j.zen) {
+        refusal_ = "not the Zen for it";
+        return false;
+    }
+    me().money -= j.zen;
+    int mended = 0;
+    for (int slot : {kMount, kWeaponLeft}) {
+        Held pet = me().bag[slot];
+        if (pet.empty() || !levelledPet(tables_->items[size_t(pet.item)]) || pet.durability >= 255) continue;
+        pet.durability = 255;
+        me().bag.put(slot, pet);
+        ++mended;
+    }
+    // A dead one lives again: its powers come back (rearm skips a pet at nought).
+    rearm(hero);
+    say(What::Repaired, hero, -1, int32_t(j.zen), mended);
+    // And the window's answer, as any service's (Play::mixAnswer).
+    say(What::Mixed, hero, 100 + int(Service::MendPets), 1, 100);
+    return true;
+}
+
 Judged Realm::judged(Service service, int socket) const {
     if (!tables_) return Judged{};
+    if (service == Service::MendPets) return mendJudged();
     Judged j = judge(*tables_, me().machine, service, socket, mine().kin);
     levelGate(j, mine().level);
     return j;
@@ -151,6 +205,11 @@ Judged Realm::judged(Service service, int socket) const {
 
 Planned Realm::planned(Service service, int socket, bool anyTarget) const {
     if (!tables_) return Planned{};
+    if (service == Service::MendPets) {
+        Planned p;
+        p.judged = mendJudged();
+        return p;
+    }
     Planned p = plan(*tables_, me().machine, me().bag, service, socket, mine().kin, anyTarget);
     levelGate(p.judged, mine().level);
     return p;
@@ -160,6 +219,12 @@ bool Realm::mix(Service service, int socket) {
     if (!tables_ || !atMachine() || me().mixed) return false;
     Body& hero = mine();
     if (!hero.alive()) return false;
+    // The Trainer's row at the Trainer, the Goblin's at the Goblin.
+    if (trainerService(service) != atTrainer()) {
+        refusal_ = std::string(serviceName(service)) + " is not served here";
+        return false;
+    }
+    if (service == Service::MendPets) return mendPets(hero);
     const Judged j = judge(*tables_, me().machine, service, socket, hero.kin);
     if (!j.ready) {
         refusal_ = "the box is not ready for " + std::string(serviceName(service));
@@ -217,6 +282,14 @@ bool Realm::mix(Service service, int socket) {
         refusal_ = "no Horn of Dinorant is in this world's tables";
         return false;
     }
+    const int32_t bred = j.recipe == Recipe::DarkHorse   ? tables_->itemAt(kGroupPets, kDarkHorseNumber)
+                         : j.recipe == Recipe::DarkRaven ? tables_->itemAt(kGroupPets, kDarkRavenNumber)
+                                                         : -1;
+    if ((j.recipe == Recipe::DarkHorse || j.recipe == Recipe::DarkRaven) && bred < 0) {
+        refusal_ = std::string("no ") + (j.recipe == Recipe::DarkHorse ? "Dark Horse" : "Dark Raven") +
+                   " is in this world's tables";
+        return false;
+    }
     const int32_t rune = tables_->itemAt(kGroupPotions, 22);
     if ((service == Service::RemoveRune || service == Service::FuseRunes) && rune < 0) {
         refusal_ = "no Rune of Creation is in this world's tables";
@@ -251,7 +324,14 @@ bool Realm::mix(Service service, int socket) {
         case Service::Dinorant:
         case Service::Cloak:
         case Service::Invitation:
-            if (j.recipe == Recipe::PlusTen || j.recipe == Recipe::PlusEleven) {
+        case Service::DarkHorse:
+        case Service::DarkRaven:
+            if (j.recipe == Recipe::DarkHorse || j.recipe == Recipe::DarkRaven) {
+                // The Trainer's Resurrection (WebZen MixSystem.cpp:3051-3245): the box goes either
+                // way, and a success is a newborn pet, level 1, at its whole 255.
+                me().machine.clear();
+                if (made) me().machine.put(0, Held{bred, 0, 255});
+            } else if (j.recipe == Recipe::PlusTen || j.recipe == Recipe::PlusEleven) {
                 // The thing is Reference 1: StaysAsIs and up one on success, Disappear on
                 // failure. The jewels Disappear either way.
                 const Held thing = me().machine[j.target];
@@ -379,6 +459,14 @@ bool Realm::mix(Service service, int socket) {
             me().machine.put(j.target, thing);
             break;
         }
+        case Service::AddLuck: {
+            // A quest's bound rune spent on it binds the thing, as any mix with one (below).
+            Held thing = me().machine[j.target];
+            spendAllBut(j.target);
+            if (made) thing.luck = true;
+            me().machine.put(j.target, thing);
+            break;
+        }
         case Service::FuseRunes: {
             // The next rarity's runes his class may set, as a drop draws them (Realm::leave),
             // and any of that rarity should his class have none.
@@ -416,6 +504,8 @@ bool Realm::mix(Service service, int socket) {
             me().machine.put(0, fused);
             break;
         }
+        case Service::MendPets:
+            break;  // mendPets, above
     }
     if (boundChaos && made && service != Service::RemoveRune && service != Service::AddSocket &&
         service != Service::FuseRunes) {

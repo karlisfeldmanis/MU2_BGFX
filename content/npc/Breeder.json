@@ -1,0 +1,498 @@
+{
+  "item": "Breeder",
+  "mu_name": "Pet Trainer",
+  "mu_name_from": "NPC/Breeder.bmd, its sheets out of NPC\\ (ZzzOpenData.cpp:1940-1942), MuMain's MONSTER_PET_TRAINER, type 226 (_enum.h:4585), created at ZzzCharacter.cpp:14296-14299 with no scale, effect or sound of its own. OpenMU's Season Six stands him at Lorencia 122,110 facing SouthEast (VersionSeasonSix/Maps/Lorencia.cs:36).",
+  "world": "lorencia",
+  "object_type": -1,
+  "why_this_one": "The Dark Lord's Pet Trainer (docs/plans/dark-lord-pets/README.md): he mends the Dark Horse and the Dark Raven and breeds them from a Spirit. A blonde woman in green with a raven on her arm: 6 meshes, 36 bones, 2 actions.",
+  "profile": "npc",
+  "sheets": {
+    "birdnpc": "npc_breeder_birdnpc.png",
+    "bnpc01": "npc_breeder_bnpc01.png",
+    "bnpc02": "npc_breeder_bnpc02.png",
+    "dksbody": "npc_breeder_dksbody.png",
+    "dkswing": "npc_breeder_dkswing.png",
+    "foot": "npc_breeder_foot.png"
+  },
+  "sheet_from": "Out of Data/NPC, beside the model, decoded under an npc_breeder_ prefix: her own birdnpc.OZJ, the plume bnpc01/02.OZT, and the raven's dksbody, dkswing and foot, NPC's own copies of the Skill sheets.",
+  "sheet_materials": {
+    "birdnpc": "skin",
+    "bnpc01": "feather",
+    "bnpc02": "feather",
+    "dksbody": "feather",
+    "dkswing": "painted_steel",
+    "foot": "skin"
+  },
+  "sheet_materials_from": "Her face is on her clothes' page, so the page takes skin, as every townsperson's; the plume and the raven's feathers feather, its barding painted_steel, its claws skin.",
+  "cutout": [
+    "bnpc01",
+    "bnpc02",
+    "dksbody"
+  ],
+  "cutout_from": "The three .OZT carry their alpha: the plume's and the feathers' edges.",
+  "actions_from": "Two actions exported (export-rig --actions=all), 9 and 7 keys; MU plays a townsperson's idles (ZzzCharacter.cpp:5620-5627).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 492,
+      "area": 13260.7,
+      "along": [
+        -14.0,
+        74.0
+      ],
+      "mu_uv": [
+        0.009,
+        0.012,
+        0.963,
+        0.913
+      ],
+      "bake_uv": [
+        0.069,
+        0.014,
+        0.982,
+        0.988
+      ]
+    },
+    {
+      "island": 1,
+      "material": "skin",
+      "triangles": 30,
+      "area": 2182.4,
+      "along": [
+        -4.8,
+        17.9
+      ],
+      "mu_uv": [
+        0.753,
+        0.795,
+        0.992,
+        1.0
+      ],
+      "bake_uv": [
+        0.882,
+        0.262,
+        0.948,
+        0.976
+      ]
+    },
+    {
+      "island": 2,
+      "material": "skin",
+      "triangles": 54,
+      "area": 2421.4,
+      "along": [
+        -0.5,
+        28.6
+      ],
+      "mu_uv": [
+        0.012,
+        0.003,
+        0.973,
+        0.833
+      ],
+      "bake_uv": [
+        0.222,
+        0.067,
+        0.973,
+        0.526
+      ]
+    },
+    {
+      "island": 3,
+      "material": "skin",
+      "triangles": 36,
+      "area": 251.4,
+      "along": [
+        -2.8,
+        9.4
+      ],
+      "mu_uv": [
+        0.711,
+        0.01,
+        0.993,
+        0.283
+      ],
+      "bake_uv": [
+        0.159,
+        0.865,
+        0.211,
+        0.915
+      ]
+    },
+    {
+      "island": 4,
+      "material": "skin",
+      "triangles": 30,
+      "area": 2177.6,
+      "along": [
+        -7.8,
+        15.0
+      ],
+      "mu_uv": [
+        0.753,
+        0.795,
+        0.992,
+        1.0
+      ],
+      "bake_uv": [
+        0.608,
+        0.914,
+        0.856,
+        0.985
+      ]
+    },
+    {
+      "island": 5,
+      "material": "skin",
+      "triangles": 54,
+      "area": 2385.2,
+      "along": [
+        -16.4,
+        13.3
+      ],
+      "mu_uv": [
+        0.012,
+        0.003,
+        0.973,
+        0.833
+      ],
+      "bake_uv": [
+        0.064,
+        0.013,
+        0.962,
+        0.979
+      ]
+    },
+    {
+      "island": 6,
+      "material": "skin",
+      "triangles": 36,
+      "area": 252.0,
+      "along": [
+        -2.8,
+        9.4
+      ],
+      "mu_uv": [
+        0.711,
+        0.01,
+        0.993,
+        0.283
+      ],
+      "bake_uv": [
+        0.613,
+        0.871,
+        0.665,
+        0.921
+      ]
+    },
+    {
+      "island": 7,
+      "material": "feather",
+      "triangles": 12,
+      "area": 1610.9,
+      "along": [
+        -14.8,
+        15.8
+      ],
+      "mu_uv": [
+        0.006,
+        -0.084,
+        0.979,
+        0.986
+      ],
+      "bake_uv": [
+        0.012,
+        0.013,
+        0.359,
+        0.361
+      ]
+    },
+    {
+      "island": 8,
+      "material": "feather",
+      "triangles": 6,
+      "area": 990.2,
+      "along": [
+        -15.0,
+        15.8
+      ],
+      "mu_uv": [
+        0.006,
+        -0.084,
+        0.955,
+        0.625
+      ],
+      "bake_uv": [
+        0.567,
+        0.013,
+        0.806,
+        0.768
+      ]
+    },
+    {
+      "island": 9,
+      "material": "feather",
+      "triangles": 10,
+      "area": 1305.6,
+      "along": [
+        -7.9,
+        26.6
+      ],
+      "mu_uv": [
+        0.006,
+        0.014,
+        0.979,
+        0.986
+      ],
+      "bake_uv": [
+        0.336,
+        0.012,
+        0.542,
+        0.516
+      ]
+    },
+    {
+      "island": 10,
+      "material": "feather",
+      "triangles": 10,
+      "area": 1317.8,
+      "along": [
+        -11.9,
+        22.3
+      ],
+      "mu_uv": [
+        0.006,
+        0.014,
+        0.979,
+        0.986
+      ],
+      "bake_uv": [
+        0.012,
+        0.384,
+        0.671,
+        0.671
+      ]
+    },
+    {
+      "island": 11,
+      "material": "feather",
+      "triangles": 2,
+      "area": 514.0,
+      "along": [
+        -29.6,
+        4.6
+      ],
+      "mu_uv": [
+        0.001,
+        0.066,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.538,
+        0.19,
+        0.723,
+        0.362
+      ]
+    },
+    {
+      "island": 12,
+      "material": "feather",
+      "triangles": 2,
+      "area": 348.9,
+      "along": [
+        -25.2,
+        0.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.066,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.219,
+        0.523,
+        0.403,
+        0.695
+      ]
+    },
+    {
+      "island": 13,
+      "material": "feather",
+      "triangles": 64,
+      "area": 1046.4,
+      "along": [
+        39.6,
+        58.7
+      ],
+      "mu_uv": [
+        0.013,
+        0.004,
+        0.774,
+        0.424
+      ],
+      "bake_uv": [
+        0.215,
+        0.013,
+        0.803,
+        0.8
+      ]
+    },
+    {
+      "island": 14,
+      "material": "feather",
+      "triangles": 224,
+      "area": 5570.2,
+      "along": [
+        38.5,
+        88.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.179,
+        0.989,
+        0.992
+      ],
+      "bake_uv": [
+        0.013,
+        0.013,
+        0.963,
+        0.967
+      ]
+    },
+    {
+      "island": 15,
+      "material": "painted_steel",
+      "triangles": 34,
+      "area": 1015.3,
+      "along": [
+        36.9,
+        73.0
+      ],
+      "mu_uv": [
+        0.004,
+        0.009,
+        0.941,
+        0.995
+      ],
+      "bake_uv": [
+        0.012,
+        0.013,
+        0.603,
+        0.982
+      ]
+    },
+    {
+      "island": 16,
+      "material": "painted_steel",
+      "triangles": 3,
+      "area": 71.1,
+      "along": [
+        50.2,
+        56.4
+      ],
+      "mu_uv": [
+        0.28,
+        0.512,
+        0.907,
+        0.937
+      ],
+      "bake_uv": [
+        0.384,
+        0.217,
+        0.5,
+        0.295
+      ]
+    },
+    {
+      "island": 17,
+      "material": "painted_steel",
+      "triangles": 2,
+      "area": 180.5,
+      "along": [
+        60.3,
+        74.5
+      ],
+      "mu_uv": [
+        0.566,
+        0.651,
+        0.882,
+        0.855
+      ],
+      "bake_uv": [
+        0.095,
+        0.108,
+        0.273,
+        0.276
+      ]
+    },
+    {
+      "island": 18,
+      "material": "painted_steel",
+      "triangles": 3,
+      "area": 72.2,
+      "along": [
+        59.2,
+        69.7
+      ],
+      "mu_uv": [
+        0.28,
+        0.512,
+        0.907,
+        0.937
+      ],
+      "bake_uv": [
+        0.539,
+        0.388,
+        0.654,
+        0.467
+      ]
+    },
+    {
+      "island": 19,
+      "material": "skin",
+      "triangles": 82,
+      "area": 632.4,
+      "along": [
+        34.7,
+        50.8
+      ],
+      "mu_uv": [
+        0.009,
+        0.024,
+        0.977,
+        0.975
+      ],
+      "bake_uv": [
+        0.013,
+        0.027,
+        0.979,
+        0.857
+      ]
+    },
+    {
+      "island": 20,
+      "material": "skin",
+      "triangles": 82,
+      "area": 632.4,
+      "along": [
+        51.9,
+        64.7
+      ],
+      "mu_uv": [
+        0.009,
+        0.024,
+        0.977,
+        0.975
+      ],
+      "bake_uv": [
+        0.053,
+        0.057,
+        0.985,
+        0.988
+      ]
+    }
+  ]
+}

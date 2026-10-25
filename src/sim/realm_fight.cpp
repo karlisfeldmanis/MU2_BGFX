@@ -387,6 +387,8 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     if (attacker.player && blow.critical) {
         core::logf("critical: tick %lld, %d on #%u", (long long)tick_, blow.damage, target.id);
     }
+    // What his Dark Raven's With owner strikes (gObjAttack's m_iTargetIndex, ObjAttack.cpp:430).
+    if (attacker.player) attacker.ravenLast = target.id;
     say(What::Hit, attacker, blow.damage, blow.rolled, target.health, target.id);
     happenings_.back().critical = blow.critical;
     happenings_.back().excellent = blow.excellent;

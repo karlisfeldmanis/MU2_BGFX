@@ -1,0 +1,94 @@
+{
+  "item": "DarkRaven",
+  "mu_name": "Dark Raven",
+  "mu_name_from": "MODEL_DARK_RAVEN_ITEM, MODEL_HELPER+5: Item/spiritbill.bmd (ZzzOpenData.cpp), its sheets from Skill\\: dksbody (the feathers) and dkshelmet (the helm plate). ITEM_DARK_RAVEN_ITEM, group 13 number 5, named \"Dark Raven\" (OpenMU VersionSeasonSix/Items/Pets.cs:75). The bag icon and the drop; the flying bird is DarkRavenFly (docs/plans/dark-lord-pets/client.md section 1).",
+  "profile": "weapon",
+  "profile_note": "A small held object seen in the bag, as the horn.",
+  "sheets": {
+    "dksbody": "raven_dksbody.png",
+    "dkshelmet": "raven_dkshelmet.png"
+  },
+  "sheet_from": "Data/Skill/dksbody.OZT (128x128, black feathers on an alpha that cuts the magenta away) and dkshelmet.OZJ (128x32, blue-steel plate with gold), from MuMain's own bin/Data, under a raven_ prefix as the Trainer's bird carries sheets of the same names.",
+  "sheet_materials": {
+    "dksbody": "feather",
+    "dkshelmet": "painted_steel"
+  },
+  "sheet_materials_from": "Judged from the sheets: black feathers, and the helm the horse's enamelled plate with gold trim.",
+  "cutout": [
+    "dksbody"
+  ],
+  "cutout_from": "dksbody.OZT's alpha cuts the feathers' edges.",
+  "stats": {
+    "note": "The item's own row, from OpenMU's Season 6 initialiser: the Dark Lord's (0.99+), not 0.75's. **After 0.75**, marked.",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Pets.cs:75-79 and CreatePet (:227-266).",
+    "call": "this.CreatePet(5, 0, 1, 1, \"Dark Raven\", 0, false, false); ItemSlot 1 (the left hand); PetExperienceFormula; QualifiedCharacters AllLords; MaximumItemLevel 50",
+    "group": 13,
+    "number": 5,
+    "drop_level": 0,
+    "drops_from_monsters": false,
+    "width": 1,
+    "height": 1,
+    "durability": 255,
+    "slot": 1,
+    "requires": {
+      "level": 0,
+      "strength": 0,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "requires_note": "No level: it asks Command 185 + 15 a level to be worn and to act (WebZen zzzitem.cpp:506-524, sim::ravenCommand).",
+    "classes": [
+      "lord"
+    ],
+    "classes_note": "The Dark Lord's alone (CreatePet's AllLords).",
+    "power_note": "Worn in the left hand, no shield beside it. Strikes on its own: 180 + 15L + Cmd/8 to 200 + 15L + Cmd/4 (WebZen DarkSpirit.cpp:640-689); docs/plans/dark-lord-pets/README.md.",
+    "price_note": "1,000,000 a level, a third back (WebZen CItem::PetValue, sim::petValue). Bred at the Pet Trainer from a Spirit +1."
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "feather",
+      "triangles": 74,
+      "area": 537.4,
+      "along": [
+        -8.4,
+        15.5
+      ],
+      "mu_uv": [
+        0.004,
+        0.004,
+        0.773,
+        0.424
+      ],
+      "bake_uv": [
+        0.005,
+        0.004,
+        0.475,
+        0.664
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 32,
+      "area": 354.5,
+      "along": [
+        -15.5,
+        9.6
+      ],
+      "mu_uv": [
+        0.008,
+        0.027,
+        0.972,
+        0.998
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.997,
+        0.529
+      ]
+    }
+  ]
+}

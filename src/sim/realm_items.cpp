@@ -1535,6 +1535,7 @@ void Realm::leave(const Body& dead, const Body& killer) {
             break;
         }
     }
+    dropSpirit(dead, level);
     Lying one;
     std::tie(one.column, one.row) = clearing(dead.column(), dead.row());
     one.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
@@ -1946,6 +1947,22 @@ void Realm::wearOnTaken(int took) {
         lostOne = true;
     }
     if (lostOne) rearm(mine());
+}
+
+void Realm::dropSpirit(const Body& dead, int level) {
+    if (level < kRavenSpiritFrom || spiritDice_.nextInt(0, kSpiritDropOdds) != 0) return;
+    const int32_t item = tables_->itemAt(kGroupPets, kSpiritNumber);
+    if (item < 0) return;
+    // The Raven's from 96, the Horse's from 102: past 102 either, one drawn.
+    const int plus = level < kHorseSpiritFrom ? 1 : spiritDice_.nextInt(0, 2);
+    Lying one;
+    one.what = Held{item, int16_t(plus), 1};
+    std::tie(one.column, one.row) = clearing(dead.column(), dead.row());
+    one.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
+    one.owner = mine().id;
+    one.id = nextId_++;
+    lying_.push_back(one);
+    say(What::Dropped, dead, int32_t(one.id), item, plus);
 }
 
 void Realm::feedPets(Body& hero, int32_t award) {

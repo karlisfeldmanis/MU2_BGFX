@@ -987,6 +987,8 @@ void Play::answered(const sim::Happening& said) {
         case Kind::GoBack:
         // Set and nothing to show; the realm's drinks are heard off its Drank (Play::step).
         case Kind::AutoDrink:
+        // The raven's mode is heard off its RavenSet.
+        case Kind::RavenMode:
         // The server's, never a client's: the world's door, the party's count and the Broker's
         // moves (sim/command.h), none of them a ticket of his.
         case Kind::Join:

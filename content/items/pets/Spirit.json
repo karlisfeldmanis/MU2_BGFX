@@ -1,0 +1,66 @@
+{
+  "item": "Spirit",
+  "mu_name": "Spirit",
+  "mu_name_from": "Item/DarkHorseSoul.bmd, one mesh on Item/change.OZJ, for group 13 number 31 (OpenMU VersionSeasonSix/Items/Pets.cs:196-204, \"Spirit\"). Its plus names it: +0 \"Spirit of Dark Horse\", +1 \"Spirit of Dark Raven\" (MuMain ZzzInventory.cpp:2513-2519).",
+  "profile": "weapon",
+  "profile_note": "A small held thing seen in the bag.",
+  "sheets": {
+    "change": "spirit_change.png"
+  },
+  "sheet_from": "Data/Item/change.OZJ (32x64, a violet casket in gold), from MuMain's own bin/Data.",
+  "sheet_materials": {
+    "change": "painted_steel"
+  },
+  "sheet_materials_from": "Judged from the sheet: enamel in gold.",
+  "additive": [
+    "change"
+  ],
+  "additive_from": "ZzzObject.cpp:9760-9775: mesh 0 drawn RENDER_BRIGHT, at +1 tinted (0.3, 0.8, 1.0).",
+  "tiled": true,
+  "tiled_why": "Its one sheet is drawn bright: tiled keeps it its own material, which tiled_maps turns emissive, as the Angel's wings.",
+  "stats": {
+    "note": "OpenMU's Season 6 row: the Dark Lord's (0.99+). **After 0.75**, marked.",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Pets.cs:196-220.",
+    "group": 13,
+    "number": 31,
+    "drop_level": 0,
+    "drops_from_monsters": false,
+    "width": 1,
+    "height": 1,
+    "durability": 1,
+    "requires": {
+      "level": 0,
+      "strength": 0,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [],
+    "drop_note": "Dropped by its own roll (sim/lord_pets.h kSpiritOdds): 0.1% a kill, +0 from monster level 102, +1 from 96 (Pets.cs:206-220). WebZen's C++ drops none.",
+    "price_note": "30,000,000 at +0, 15,000,000 at +1, a third back (WebZen zzzitem.cpp)."
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 46,
+      "area": 2518.4,
+      "along": [
+        -12.0,
+        12.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.998,
+        0.994
+      ]
+    }
+  ]
+}

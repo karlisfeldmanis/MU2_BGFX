@@ -319,6 +319,10 @@ void Realm::talk(Body& hero) {
     } else if (one.number == kJeweler) {
         me().jeweling = int(me().order.target);
         say(What::Served, hero, me().jeweling, one.number);
+    } else if (one.number == kPetTrainer) {
+        // The Pet Trainer's window is the machine's with his own row (sim/lord_pets.h).
+        me().mixing = int(me().order.target);
+        say(What::Served, hero, me().mixing, one.number);
     } else if (one.number == kLugard) {
         // The rite's keeper (sim/rebirth.h): his window opens whatever the hero's level, and says
         // what the rite asks.

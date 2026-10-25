@@ -23,6 +23,8 @@ constexpr float kListX = panel::kEdge, kListW = 172.0f;
 constexpr float kListTop = 44.0f;
 constexpr float kGroupHead = 13.0f, kRowH = 19.0f, kRowGap = 2.0f, kGroupGap = 6.0f;
 constexpr const char* kGroups[3] = {"MIXES", "TICKETS", "RUNES"};
+// The Pet Trainer's two: MU's Restore life and Resurrect spirit.
+constexpr const char* kTrainerGroups[3] = {"RESTORE", "RESURRECT", ""};
 // The fading rule between the list and the page.
 constexpr float kDivideX = 193.0f;
 
@@ -87,19 +89,22 @@ uint32_t rarityInk(sim::Rarity rarity) {
 }
 
 // Which of the list's three groups a service is under.
-int groupOf(int row) {
-    switch (sim::kRowServices[row]) {
+int groupOf(const sim::Service* rows, int row) {
+    switch (rows[row]) {
+        case sim::Service::DarkHorse:
+        case sim::Service::DarkRaven: return 1;
         case sim::Service::Cloak:
         case sim::Service::Invitation: return 1;
         case sim::Service::RemoveRune:
         case sim::Service::AddSocket:
+        case sim::Service::AddLuck:
         case sim::Service::FuseRunes: return 2;
         default: return 0;
     }
 }
 
-Box rowBox(int row) {
-    const int g = groupOf(row);
+Box rowBox(const sim::Service* rows, int row) {
+    const int g = groupOf(rows, row);
     const float y = kListTop + float(g + 1) * kGroupHead + float(g) * kGroupGap +
                     float(row) * kRowH + float(row - g) * kRowGap;
     return {kListX, y, kListW, kRowH};
@@ -245,6 +250,7 @@ std::string question(sim::Service service, const sim::Judged& j) {
         case sim::Service::Combine: return "Do you want to combine your items?";
         case sim::Service::RemoveRune: return j.title + "?";
         case sim::Service::AddSocket: return "Add the socket?";
+        case sim::Service::AddLuck: return "Add Luck?";
         case sim::Service::FuseRunes: return "Fuse the three runes?";
         case sim::Service::FirstWings:
         case sim::Service::SecondWings: return "Do you want to create the wings?";
@@ -253,6 +259,9 @@ std::string question(sim::Service service, const sim::Judged& j) {
         case sim::Service::Dinorant: return "Do you want to create the Dinorant?";
         case sim::Service::Cloak: return "Do you want to create the cloak?";
         case sim::Service::Invitation: return "Do you want to create the invitation?";
+        case sim::Service::DarkHorse: return "Do you want to resurrect the Dark Horse?";
+        case sim::Service::DarkRaven: return "Do you want to resurrect the Dark Raven?";
+        case sim::Service::MendPets: return "Restore their life for " + std::to_string(j.zen) + " Zen?";
     }
     return "";
 }
@@ -263,6 +272,7 @@ const char* madeHead(sim::Service service) {
         case sim::Service::Combine: return "Combined";
         case sim::Service::RemoveRune: return "Rune removed";
         case sim::Service::AddSocket: return "Socket added";
+        case sim::Service::AddLuck: return "Luck added";
         case sim::Service::FuseRunes: return "Runes fused";
         case sim::Service::FirstWings:
         case sim::Service::SecondWings: return "Wings created";
@@ -271,6 +281,9 @@ const char* madeHead(sim::Service service) {
         case sim::Service::Dinorant: return "Dinorant created";
         case sim::Service::Cloak: return "Cloak created";
         case sim::Service::Invitation: return "Invitation created";
+        case sim::Service::DarkHorse:
+        case sim::Service::DarkRaven: return "Resurrection successful";
+        case sim::Service::MendPets: return "Life has been recovered";
     }
     return "";
 }
@@ -320,8 +333,8 @@ void Mixer::plans(const sim::Realm& realm) {
         return;
     }
     if (box != plannedBox_ || bag != plannedBag_) {
-        for (int i = 0; i < sim::kRowCount; ++i) {
-            rowPlans_[i] = realm.planned(sim::kRowServices[i], -1, true);
+        for (int i = 0; i < rowCount(); ++i) {
+            rowPlans_[i] = realm.planned(rows()[i], -1, true);
         }
     }
     readyPlan_ = realm.planned(service(), socket_, true);
@@ -342,8 +355,8 @@ int Mixer::hitAt(float ux, float uy, const sim::Realm& realm) const {
         if (!takeOut && kFillBox.has(ux, uy)) return kFill;
         if (!takeOut && kTakeBox.has(ux, uy)) return kTake;
     }
-    for (int i = 0; i < sim::kRowCount; ++i) {
-        if (rowBox(i).has(ux, uy)) return kRow0 + i;
+    for (int i = 0; i < rowCount(); ++i) {
+        if (rowBox(rows(), i).has(ux, uy)) return kRow0 + i;
     }
     if (service() == sim::Service::RemoveRune && (answer_ < 0 || service_ != ranService_)) {
         const sim::Judged j = realm.judged(sim::Service::RemoveRune, socket_);
@@ -370,6 +383,16 @@ void Mixer::update(float seconds, float width, float height, int column, const s
     }
     const content::Tables& tables = *realm.tables();
     const sim::Machine& box = realm.machine();
+    // Whose box: the Pet Trainer's row is his alone; a change of counter starts on its first page.
+    const bool trainer = size_t(realm.mixing()) < tables.folk.size() &&
+                         tables.folk[size_t(realm.mixing())].number == sim::kPetTrainer;
+    if (trainer != trainer_) {
+        trainer_ = trainer;
+        service_ = 0;
+        socket_ = -1;
+        ranService_ = -1;
+        plannedBox_ = ~0u;
+    }
     screenW_ = width;
     screenH_ = height;
     x_ = panel::columnX(width, column);
@@ -586,22 +609,26 @@ void Mixer::rebuild(const sim::Realm& realm, Stage* stage) {
     // The answer stands on the page of the service that gave it, not on every page picked after.
     const int answer = service_ == ranService_ ? answer_ : -1;
 
-    controls::frame(canvas_, P({0.0f, 0.0f, kWide, panel::kHeight}), u, "Chaos Machine", nullptr,
+    controls::frame(canvas_, P({0.0f, 0.0f, kWide, panel::kHeight}), u,
+                    trainer_ ? "Pet Trainer" : "Chaos Machine", nullptr,
                     panel::kHeadBand * k);
 
     // ---- the list ----------------------------------------------------------------------------
     for (int g = 0; g < 3; ++g) {
         int first = -1;
-        for (int i = 0; i < sim::kRowCount && first < 0; ++i) {
-            if (groupOf(i) == g) first = i;
+        for (int i = 0; i < rowCount() && first < 0; ++i) {
+            if (groupOf(rows(), i) == g) first = i;
         }
-        if (first >= 0) kicker(kListX + 2.0f, rowBox(first).y - kGroupHead + 1.0f, kGroups[g]);
+        if (first >= 0) {
+            kicker(kListX + 2.0f, rowBox(rows(), first).y - kGroupHead + 1.0f,
+                   trainer_ ? kTrainerGroups[g] : kGroups[g]);
+        }
     }
     const float r = style::kRadiusSmall * u;
-    for (int i = 0; i < sim::kRowCount; ++i) {
+    for (int i = 0; i < rowCount(); ++i) {
         const bool here = i == service_;
         const bool over = !here && over_ == kRow0 + i;
-        Box b = P(rowBox(i));
+        Box b = P(rowBox(rows(), i));
         b = {std::round(b.x), std::round(b.y), std::round(b.w), std::round(b.h)};
         if (over) b.y -= line;
         tip::shadowUnder(canvas_, b, u * (over ? 0.7f : 0.45f), r);
@@ -619,7 +646,7 @@ void Mixer::rebuild(const sim::Realm& realm, Stage* stage) {
         const float nameSize = 8.4f * k * 1.1f;
         const float mid = controls::middle(b.y, b.h, nameSize);
         controls::label(canvas_, b.x + 8.0f * k, mid, nameSize, here ? kGoldHi : style::kBoneHi,
-                        sim::serviceName(sim::kRowServices[i]));
+                        sim::serviceName(rows()[i]));
         const sim::Planned& p = rowPlans_[i];
         const std::string word = standing(p);
         if (!word.empty()) {
@@ -727,6 +754,9 @@ void Mixer::rebuild(const sim::Realm& realm, Stage* stage) {
             std::string bag;
             if (n.remove) {
                 ink = style::kDanger;
+            } else if (service == sim::Service::MendPets) {
+                // A pet's life: whole is met, short is what Restore puts right, not a want.
+                ink = n.have >= n.need ? style::kFits : style::kBoneHi;
             } else if (n.need == 0) {
                 ink = n.have > 0 ? style::kBone : style::kAshInk;
             } else if (n.have == n.need || (n.atLeast && n.have > n.need)) {

@@ -41,6 +41,7 @@
 #include "sim/travel.h"
 #include "sim/vault.h"
 #include "sim/machine.h"
+#include "sim/lord_pets.h"
 #include "sim/gates.h"
 #include "sim/command.h"
 #include "sim/config.h"
@@ -166,6 +167,9 @@ enum class What : uint8_t {
     PetLevelled,  // his Dark Horse's or Dark Raven's level changed (sim/lord_pets.h): a: its slot,
                // b: the level it is now, c: 1 up, 0 down (MU's flares round it; A9's 254 and 255).
                // Said to everyone, as the flares are seen.
+    Ravened,   // his Dark Raven let a strike go (Realm::raven): a: 0 the dash, 1 the ball (C1 A8's
+               // SkillType), whom: its target. Its numbers come 600 ms on. Said to everyone.
+    RavenSet,  // his raven's mode (sim::RavenMode): a: the mode, whom: Target's pick. His alone.
 };
 
 // What a Summon did (What::Recall). MU's notices 1243-1254 (WebZen user.cpp:25460-25510).
@@ -688,6 +692,13 @@ struct Body {
     // until the first blow that lands on it. Not Temper::Asleep (nobody near) nor wakesAt (a
     // risen beast's standing seconds). 0 for never.
     int64_t sleepUntil = 0;
+    // **His Dark Raven** (sim/lord_pets.h, Realm::raven): its mode (sim::RavenMode), Target's pick,
+    // what he last struck (With owner's), the strike in flight -- whom, dash or ball, at the top of
+    // its band -- the tick it lands and the tick the next may start.
+    uint8_t ravenMode = 0;
+    bool ravenDash = false, ravenTop = false;
+    uint32_t ravenTarget = 0, ravenLast = 0, ravenAimed = 0;
+    int64_t ravenLands = 0, ravenNext = 0;
     // Poisoned (`SkillRow::poisonTicks`): until this tick, its next pulse, how much a pulse takes,
     // and who poisoned it. 0 for never.
     int64_t poisonUntil = 0, poisonNext = 0;
@@ -2071,6 +2082,12 @@ private:
     // His Dark Horse's and Dark Raven's share of `award` (sim::feedPet), each put back and its
     // level said when it changes.
     void feedPets(Body& hero, int32_t award);
+    // **His Dark Raven's turn** (sim/lord_pets.h; WebZen CDarkSpirit::Run, DarkSpirit.cpp): on the
+    // 500 ms timer, a strike let go by its mode; and the one in flight landed. realm_raven.cpp.
+    void raven(Body& hero);
+    void ravenLand(Body& hero);
+    // Its mode set, as C1 A7 asks: 0-3, Target's at `target` (Command::Kind::RavenMode).
+    int setRavenMode(int mode, uint32_t target);
     // **A kill paid to a party** (realm_party.cpp, docs/game/party.md): `earner` is whom the kill is
     // paid to by Realm::kill's rules; with no party, or none of it in view, it is his alone, as
     // it was. In view: the members alive on this map within kPartyReach of the dead.
@@ -2385,6 +2402,10 @@ private:
     Random orbDice_{0};
     // The Jewel of Life's own roll on every kill (sim::kLifeOdds), so the rest draw as they did.
     Random lifeDice_{0};
+    // The Spirits' own roll on every kill (sim::kSpiritDropOdds), so the rest draw as they did.
+    Random spiritDice_{0};
+    // The Dark Raven's draws (Realm::raven): its picks, its rolls, its misses.
+    Random ravenDice_{0};
     // Where a Meteorite's rocks fall (Realm::shower), so a wizard's showers move no other roll.
     Random showerDice_{0};
     std::vector<Trap> traps_;
@@ -2570,6 +2591,16 @@ private:
     void countKill(const Body& dead);
     bool banked() const { return me().banking >= 0 && serving(me().banking); }
     bool atMachine() const { return me().mixing >= 0 && serving(me().mixing); }
+    // The box is the Pet Trainer's (sim/lord_pets.h): his row, and only his.
+    bool atTrainer() const {
+        return atMachine() && tables_->folk[size_t(me().mixing)].number == kPetTrainer;
+    }
+    // Restore Life (Service::MendPets): what mending the Dark Horse and the Dark Raven he wears
+    // asks, a line a pet, and mending them.
+    Judged mendJudged() const;
+    bool mendPets(Body& hero);
+    // A Spirit's own roll on a kill (sim::kSpiritDropOdds), off spiritDice_.
+    void dropSpirit(const Body& dead, int level);
     std::vector<Lying> lying_;
     // A potion's worth arrives in three instalments, 20% 60% 20% at 200, 600 and 200 ms
     // (MU2's Realm.Consume, off OpenMU's handler). A fixed ring: a potion every half second

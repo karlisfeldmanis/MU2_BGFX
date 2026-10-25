@@ -63,10 +63,45 @@ constexpr int kDarkRavenNumber = 5;
 bool darkRaven(const content::ItemRow& row);
 // The Command it asks to be worn and to act: 185 + 15 a level (zzzitem.cpp:506-524).
 inline int ravenCommand(int level) { return 185 + 15 * level; }
+// **Its four modes** (ePetItem_Mode, DarkSpirit.h:20-26; docs/plans/dark-lord-pets/README.md 6).
+enum class RavenMode : uint8_t { Normal = 0, Random = 1, WithOwner = 2, Target = 3 };
+constexpr int kRavenModes = 4;
+// Its numbers (CDarkSpirit::Set, DarkSpirit.cpp:640-689): the band, its speed, its attack rate.
+inline int ravenLeast(int level, int command) { return 180 + 15 * level + command / 8; }
+inline int ravenMost(int level, int command) { return 200 + 15 * level + command / 4; }
+inline int ravenSpeed(int level, int command) { return 20 + level * 4 / 5 + command / 50; }
+inline int ravenAttackRate(int level) { return 1000 + level + level / 15; }
+// Its strike every 1500 - 10 x speed ms, on WebZen's 500 ms timer (MonsterAndMsgProc), landing
+// 600 ms after the swoop (gObjAddAttackProcMsgSendDelay); in ticks of 50 ms.
+constexpr int kRavenTimerTicks = 10, kRavenLandTicks = 12;
+// Random's reach from him, With owner's and Target's (MAX_DARKSPIRIT_ATTACK_RANGE 5, and 7), the
+// ball's from its target, its four more at most, and the one in ten that is Random's dash.
+constexpr int kRavenRandomReach = 5, kRavenReach = 7, kRavenSplashReach = 4, kRavenSplashMost = 4;
+constexpr int kRavenDashIn10 = 3;
+// Its life: its own landed hits of 50 or more, damage x 2/100 into a tally of 800 a point.
+constexpr int kRavenWearFrom = 50, kRavenWearTally = 800;
 
 // Its whole value, by its level (CItem::PetValue, zzzitem.cpp:3452-3479): the horse 2,000,000 a
 // level, the raven 1,000,000. A merchant pays a third.
 int64_t petValue(const content::ItemRow& row, const Held& what);
+
+// **The Pet Trainer**, MU's NPC 226 (MONSTER_PET_TRAINER), Lorencia 122,110: his window is the Chaos
+// Machine's with his own row (sim::kTrainerServices) -- Restore Life, and the two mixes MU calls
+// Resurrection (mix.bmd's TRAINER recipes 13 and 14, WebZen MixSystem.cpp:3051-3245): a Spirit,
+// Bless, Soul, a Chaos and the Jewel of Life where MU asks Creation (docs/plans/dark-lord.md
+// decision 3), 60%, everything lost on a failure, a level-1 pet out.
+constexpr int kPetTrainer = 226;
+constexpr int kSpiritNumber = 31;
+// A Spirit, 13/31: +0 the Dark Horse's, +1 the Dark Raven's.
+bool spirit(const content::ItemRow& row);
+constexpr int kBreedRate = 60;
+constexpr int kHorseBless = 5, kHorseSoul = 5, kRavenBless = 2, kRavenSoul = 2;
+constexpr int64_t kHorseBreedZen = 5000000, kRavenBreedZen = 1000000;
+// **The Spirits' drops** (OpenMU Pets.cs:206-220; WebZen's C++ drops none): one roll a kill of its own,
+// one in kSpiritDropOdds, the Horse's from monster level 102, the Raven's from 96 -- both open past 102,
+// one drawn.
+constexpr int kSpiritDropOdds = 1000;
+constexpr int kHorseSpiritFrom = 102, kRavenSpiritFrom = 96;
 
 // What MU asks to mend it at the Trainer (1.03.35's ConvertRepairGold over the pet's whole value):
 // 3 x sqrt(V) x V^(1/4) x (1 - life/255) + 1, twice that at nought, nought when whole.

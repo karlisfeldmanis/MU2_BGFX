@@ -122,6 +122,9 @@ struct Command {
         // **Rebirth** (sim/rebirth.h; Realm::rebirth), at Lugard's: answered with how many
         // rebirths he has made now, or -1 refused.
         Rebirth,
+        // **His Dark Raven's mode** (Realm::setRavenMode, sim/lord_pets.h), MU's C1 A7: a the mode
+        // 0-3, target Target's pick. Answered with the mode set, or -1.
+        RavenMode,
     };
     // The last kind there is: what a wire reads past it is None (net::takeCommand). Moved with
     // every kind added at the end.

@@ -31,6 +31,10 @@ bool darkRaven(const content::ItemRow& row) {
     return row.group == kGroupPets && row.number == kDarkRavenNumber;
 }
 
+bool spirit(const content::ItemRow& row) {
+    return row.group == kGroupPets && row.number == kSpiritNumber;
+}
+
 bool levelledPet(const content::ItemRow& row) { return darkHorse(row) || darkRaven(row); }
 
 Needs asks(const content::ItemRow& row, const Held& what) {

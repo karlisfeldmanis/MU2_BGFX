@@ -1097,6 +1097,8 @@ int placeOf(const content::ItemRow& row) {
     if (row.group == kGroupPets && (row.number == 2 || row.number == 3)) return kMount;
     // And the Dark Horse, a helper in MU's slot 8 too (CreatePet; gObjIsItemPut), here the mount's.
     if (darkHorse(row)) return kMount;
+    // The Dark Raven in the left hand, where a shield goes (OpenMU Pets.cs:76, ItemSlot 1).
+    if (darkRaven(row)) return kWeaponLeft;
     if (row.group == kGroupPets && row.number <= 1) return kPet;
     // The 1st level wings, EQUIPMENT_WING (OpenMU Version075 Wings.cs, ItemSlot 7).
     if (anyWing(row)) return kWings;
@@ -1343,6 +1345,8 @@ bool fits(const content::Tables& tables, const Wearer& who, const Held& what) {
     // Less a Harmony option's cut (sim::harmonyEased).
     Needs asked = harmonyEased(*row, what, asks(*row, what));
     asked.level = std::max(asked.level, runeLevelFor(tables, who, what));
+    // The Dark Raven asks his Command, 185 + 15 a level (gObjIsItemPut, user.cpp:15953).
+    if (darkRaven(*row) && who.points.command < ravenCommand(petLevel(what))) return false;
     return shortOf(asked, who.level, who.points).none();
 }
 

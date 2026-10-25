@@ -189,7 +189,10 @@ namespace mu::net {
 //     reading the record short.
 // 55: the Jewel of Harmony's option on an item (docs/plans/jewel-of-harmony.md; sim::Held::harmony
 //     and harmonyLevel, kKeptLayout 20, 2026-10-25): two more bytes in every item a frame carries.
-constexpr uint32_t kVersion = 55;
+// 56: the Dark Lord's pets (docs/plans/dark-lord-pets/README.md, 2026-10-25): the Pet Trainer's
+//     services (sim::Service 11-13), the Dark Raven's mode command (Command::Kind::RavenMode) and its
+//     two happenings, and a pet's level and exp in the bytes it left nought.
+constexpr uint32_t kVersion = 56;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box,
 // by its name, so the game talks to mu-classic.com as the launcher does, not to a bare address.
 constexpr const char* kDefaultHost = "mu-classic.com";

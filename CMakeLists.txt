@@ -337,6 +337,7 @@ add_library(mu_sim STATIC
   src/sim/realm.cpp
   src/sim/realm_items.cpp
   src/sim/realm_jeweler.cpp
+  src/sim/realm_raven.cpp
   src/sim/realm_elite.cpp
   src/sim/realm_machine.cpp
   src/sim/realm_deal.cpp

@@ -49,7 +49,13 @@ with pets for DL"). The two research files beside this one are the sources, ever
 
 1. **Levels** (sim): lord_pets.h/.cpp, the horse by its level everywhere `kHorseLevel` was, exp share,
    death penalty, the cards' level and exp line. sim_test.
+   **Done 2026-10-25** (56cc0bc0).
 2. **The Trainer**: NPC, figure, his window (Restore life, the two mixes), the Spirits' rows, drops,
    quest pay. The horse becomes obtainable.
+   **Done 2026-10-25** but the quest pay: NPC/Breeder.bmd cooked and stood at Lorencia 122,110; his
+   window the Chaos Machine's with his own row (sim::kTrainerServices: Restore Life, Dark Horse, Dark
+   Raven); the Spirit (13/31) and its own drop roll.
 3. **The raven, sim**: the row, the left hand, its strikes and modes, the mode command (protocol).
+   **Done 2026-10-25**: realm_raven.cpp; Command::Kind::RavenMode, What::Ravened / RavenSet; protocol
+   56, snapshot shape 26. Monsters only: the PvP of With owner and Target waits for the duel rules.
 4. **The raven, look**: model, flight, perch, dash and ball, sounds, the pet window, HUD frame.

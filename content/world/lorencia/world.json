@@ -207,6 +207,17 @@
       ],
       "look": 3,
       "note": "Ours: the Broker (sim::kBroker, docs/game/broker.md), the market Lorencia, Devias and Noria share, three tiles east of Baz so the vault and the market stand together (the user, 2026-10-11). Moved to 140,139, on the street by the fenced garden (the user, 2026-10-12: 'move broker here in lorencia'). Look 4 to 3, facing up the street toward one who comes to him from the garden's corner ('rotate broker so he is facing character'). Not a MU NPC; he wears MuMain's Mirage (Npc/mirazu.bmd, scale 0.95), the user's pick, the same figure in all three towns."
+    },
+    {
+      "npc": 226,
+      "name": "Pet Trainer",
+      "figure": "Breeder",
+      "at": [
+        122,
+        110
+      ],
+      "look": 4,
+      "note": "The Dark Lord's Pet Trainer (docs/plans/dark-lord-pets/README.md): mends the Dark Horse and the Dark Raven, breeds them from a Spirit. OpenMU VersionSeasonSix/Maps/Lorencia.cs:36, 122,110 facing SouthEast; MuMain MONSTER_PET_TRAINER, NPC/Breeder.bmd."
     }
   ],
   "gates": {

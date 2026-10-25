@@ -1078,6 +1078,10 @@ bool harmonyMaterial(const content::ItemRow& row);
 // rune of that power, "Rune of Stormcall" (the user, 2026-10-18: 'we need to show Rune of "rune
 // name" not jewel of creation'). No plus: each caller adds its own.
 inline std::string itemLabel(const content::ItemRow& row, const Held& held) {
+    // The Spirit, 13/31, named by its plus (MuMain ZzzInventory.cpp:2513-2519; sim/lord_pets.h).
+    if (row.group == kGroupPets && row.number == 31) {
+        return held.refinement == 0 ? "Spirit of Dark Horse" : "Spirit of Dark Raven";
+    }
     if (creation(row)) {
         if (const PowerRow* power = powerOf(held.powers[0])) {
             // Where the power's own name reads badly after "Rune of" (the user, 2026-10-18).

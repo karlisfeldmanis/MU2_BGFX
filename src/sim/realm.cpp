@@ -270,7 +270,7 @@ void Realm::say(What what, const Body& who, int32_t a, int32_t b, int32_t c, uin
             case What::Refined: case What::Enlivened: case What::Set: case What::Offered:
             case What::QuestTaken: case What::QuestStep: case What::QuestReady:
             case What::QuestDone: case What::Arrowless: case What::Mixed: case What::Answered:
-            case What::PetLost: case What::Barred:
+            case What::PetLost: case What::Barred: case What::RavenSet:
                 happening.audience = who.id;
                 break;
             default:
@@ -325,6 +325,8 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     treasureDice_.seed(seed ^ 0x3c6ef372fe94f82bull);
     orbDice_.seed(seed ^ 0x4cf5ad432745937full);
     lifeDice_.seed(seed ^ 0x9b05688c2b3e6c1full);
+    spiritDice_.seed(seed ^ 0x2b3e6c1f9b05688cull);
+    ravenDice_.seed(seed ^ 0x5be0cd192b3e6c1full);
     showerDice_.seed(seed ^ 0x6a09e667bb67ae85ull);
     invasionDice_.seed(seed ^ 0x510e527f9b05688cull);
     raidDice_.seed(seed ^ 0x1f83d9ab5be0cd19ull);
@@ -1574,6 +1576,7 @@ void Realm::heroAfter() {
         // And whatever he let go earlier and has now arrived, and the fires on the ground.
         arrive();
         landBlasts();
+        raven(hero);
         flyVolleys();
         burn();
         channel(hero);
@@ -1876,6 +1879,14 @@ std::string describe(const Happening& happening, const Realm& realm) {
         case What::PetLost:
             std::snprintf(line, sizeof(line), "%6u %s lost his pet, row %d", happening.tick, who,
                           happening.a);
+            break;
+        case What::Ravened:
+            std::snprintf(line, sizeof(line), "%6u %s's raven %s at #%u", happening.tick, who,
+                          happening.a == 0 ? "dashes" : "throws its ball", happening.whom);
+            break;
+        case What::RavenSet:
+            std::snprintf(line, sizeof(line), "%6u %s's raven to mode %d (#%u)", happening.tick, who,
+                          happening.a, happening.whom);
             break;
         case What::PetLevelled:
             std::snprintf(line, sizeof(line), "%6u %s's pet in slot %d went %s to level %d",

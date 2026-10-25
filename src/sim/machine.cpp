@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include "sim/lord_pets.h"
 #include "sim/market.h"
 #include "sim/wear.h"
 
@@ -65,6 +66,9 @@ struct Sorted {
     int eyes = 0, keys = 0;               // the invitation's: Devil's Eyes and Keys
     int eyeLevel = 0, keyLevel = 0;
     int runes = 0;                        // Runes of Creation carrying a power
+    int tiers[kRarities] = {};            // and of them, by their rarity (Add Luck's three)
+    int luckless = 0, lucklessCell = -1;  // things that take Luck and have none
+    int spirits[2] = {};                  // the Trainer's: Spirits +0 (the horse's) and +1 (the raven's)
     int runeCells[kMostSockets + 1] = {-1, -1, -1, -1};
     int things = 0;     // everything that is not one of the three jewels
     int others = 0;     // everything that is neither a jewel nor a rune
@@ -98,9 +102,14 @@ Sorted sort(const content::Tables& tables, const Machine& box) {
             if (creation(*row) && what.powers[0] != 0) {
                 if (s.runes < kMostSockets + 1) s.runeCells[s.runes] = cell;
                 ++s.runes;
+                if (const PowerRow* power = powerOf(what.powers[0])) ++s.tiers[int(power->rarity)];
                 continue;
             }
             s.others += n;
+            if (spirit(*row)) {
+                s.spirits[std::clamp<int>(what.refinement, 0, 1)] += n;
+                continue;
+            }
             if (devilsEye(*row) || devilsKey(*row)) {
                 (devilsEye(*row) ? s.eyes : s.keys) += n;
                 (devilsEye(*row) ? s.eyeLevel : s.keyLevel) = what.refinement;
@@ -157,6 +166,11 @@ Sorted sort(const content::Tables& tables, const Machine& box) {
                 ++s.socketable;
                 s.socketCell = cell;
             }
+            // What rolls Luck as a drop: the option-bearing set and the wings.
+            if ((takesOptions(*row) || anyWing(*row)) && !what.luck) {
+                ++s.luckless;
+                s.lucklessCell = cell;
+            }
         }
     }
     return s;
@@ -198,6 +212,13 @@ bool exactly(Recipe recipe, const Sorted& s, bool loose = false) {
             return s.eyes == 1 && s.keys == 1 && s.things == 2 && s.chaos == 1 && s.bless == 0 &&
                    s.soul == 0 && s.eyeLevel == s.keyLevel && s.eyeLevel >= 0 &&
                    s.eyeLevel <= kInvitationMostLevel;
+        // The Trainer's: the Spirit, the jewels and a Life, nothing else (MixMgr's CheckRecipeSub).
+        case Recipe::DarkHorse:
+            return s.spirits[0] == 1 && s.spirits[1] == 0 && s.life == 1 && s.things == 2 &&
+                   s.chaos == 1 && s.bless == kHorseBless && s.soul == kHorseSoul;
+        case Recipe::DarkRaven:
+            return s.spirits[1] == 1 && s.spirits[0] == 0 && s.life == 1 && s.things == 2 &&
+                   s.chaos == 1 && s.bless == kRavenBless && s.soul == kRavenSoul;
         case Recipe::None:
             break;
     }
@@ -256,6 +277,16 @@ int likeness(Recipe recipe, const Sorted& s) {
             if (s.eyes > 0) points += 10;
             if (s.keys > 0) points += 5;
             break;
+        case Recipe::DarkHorse:
+        case Recipe::DarkRaven: {
+            const int mine = s.spirits[recipe == Recipe::DarkHorse ? 0 : 1];
+            if (s.things != mine + s.life) return 0;
+            if (mine > 0) points += 10;
+            if (s.bless > 0) points += 3;
+            if (s.soul > 0) points += 3;
+            if (s.life > 0) points += 3;
+            break;
+        }
         case Recipe::None:
             return 0;
     }
@@ -266,7 +297,7 @@ int likeness(Recipe recipe, const Sorted& s) {
 // The wings before the Chaos Weapon: a box that is both is WebZen's `MixResult2`, a wing.
 constexpr Recipe kOrder[] = {Recipe::PlusTen, Recipe::PlusEleven, Recipe::Dinorant,
                              Recipe::Cloak, Recipe::Invitation, Recipe::SecondWings, Recipe::Wings,
-                             Recipe::ChaosWeapon};
+                             Recipe::ChaosWeapon, Recipe::DarkHorse, Recipe::DarkRaven};
 
 void need(Judged& j, std::string name, int have, int want, bool atLeast = false) {
     if (j.needCount >= kMostNeeds) return;
@@ -301,7 +332,10 @@ void combine(const content::Tables& tables, const Machine& box, const Sorted& s,
             case Service::Dinorant: return one == Recipe::Dinorant;
             case Service::Cloak: return one == Recipe::Cloak;
             case Service::Invitation: return one == Recipe::Invitation;
-            default: return true;
+            case Service::DarkHorse: return one == Recipe::DarkHorse;
+            case Service::DarkRaven: return one == Recipe::DarkRaven;
+            // The Goblin's Combine knows none of the Trainer's.
+            default: return one != Recipe::DarkHorse && one != Recipe::DarkRaven;
         }
     };
     for (Recipe one : kOrder) {
@@ -334,6 +368,8 @@ void combine(const content::Tables& tables, const Machine& box, const Sorted& s,
                 case Service::Dinorant: j.nearest = Recipe::Dinorant; break;
                 case Service::Cloak: j.nearest = Recipe::Cloak; break;
                 case Service::Invitation: j.nearest = Recipe::Invitation; break;
+                case Service::DarkHorse: j.nearest = Recipe::DarkHorse; break;
+                case Service::DarkRaven: j.nearest = Recipe::DarkRaven; break;
                 default: break;
             }
         }
@@ -477,6 +513,20 @@ void combine(const content::Tables& tables, const Machine& box, const Sorted& s,
             j.failure = "The eye, the key and the Chaos are lost";
             break;
         }
+        case Recipe::DarkHorse:
+        case Recipe::DarkRaven: {
+            const bool horse = j.nearest == Recipe::DarkHorse;
+            need(j, horse ? "Spirit of Dark Horse" : "Spirit of Dark Raven", s.spirits[horse ? 0 : 1], 1);
+            need(j, "Jewel of Bless", s.bless, horse ? kHorseBless : kRavenBless);
+            need(j, "Jewel of Soul", s.soul, horse ? kHorseSoul : kRavenSoul);
+            need(j, "Jewel of Chaos", s.chaos, 1);
+            need(j, "Jewel of Life", s.life, 1);
+            j.rate = kBreedRate;
+            j.zen = horse ? kHorseBreedZen : kRavenBreedZen;
+            j.success = horse ? "Dark Horse, level 1" : "Dark Raven, level 1";
+            j.failure = "Everything in the box is lost";
+            break;
+        }
         case Recipe::None:
             break;
     }
@@ -538,6 +588,33 @@ void addSocket(const content::Tables& tables, const Machine& box, const Sorted& 
     j.failure = "The jewels are lost, the " + name + " is kept";
     j.ready = s.things == 1 + s.life && s.life == kAddSocketLife && s.chaos == kAddSocketChaos &&
               s.soul == kAddSocketSoul && s.bless == kAddSocketBless;
+}
+
+void addLuck(const content::Tables& tables, const Machine& box, const Sorted& s, Judged& j) {
+    const int rare = s.tiers[int(Rarity::Rare)], epic = s.tiers[int(Rarity::Epic)],
+              legendary = s.tiers[int(Rarity::Legendary)];
+    need(j, "Item without Luck", s.luckless, 1);
+    need(j, "Jewel of Chaos", s.chaos, 1);
+    need(j, "Jewel of Bless", s.bless, 1);
+    need(j, "Jewel of Soul", s.soul, 1);
+    need(j, "Jewel of Life", s.life, 1);
+    need(j, "Rare rune", rare, 1);
+    need(j, "Epic rune", epic, 1);
+    need(j, "Legendary rune", legendary, 1);
+    j.zen = kAddLuckZen;
+    j.rate = kAddLuckRate;
+    if (s.luckless != 1) {
+        j.title = s.luckless == 0 ? "Put in a weapon, armour, shield or wings" : "One item at a time";
+        return;
+    }
+    j.target = s.lucklessCell;
+    const std::string name = labelAt(tables, box, j.target);
+    j.title = "Luck for the " + name;
+    j.success = name + " with Luck";
+    j.failure = "The jewels and runes are lost, the " + name + " is kept";
+    // A Common or an Ancient rune is a fourth rune: things counts it, so the box is not ready.
+    j.ready = s.things == 1 + s.life + 3 && s.runes == 3 && rare == 1 && epic == 1 &&
+              legendary == 1 && s.chaos == 1 && s.bless == 1 && s.soul == 1 && s.life == 1;
 }
 
 void fuseRunes(const content::Tables& tables, const Machine& box, const Sorted& s, Judged& j) {
@@ -681,6 +758,7 @@ Judged judge(const content::Tables& tables, const Machine& box, Service service,
         case Service::Combine: combine(tables, box, s, kin, j); break;
         case Service::RemoveRune: removeRune(tables, box, s, socket, j); break;
         case Service::AddSocket: addSocket(tables, box, s, j); break;
+        case Service::AddLuck: addLuck(tables, box, s, j); break;
         case Service::FuseRunes: fuseRunes(tables, box, s, j); break;
         case Service::FirstWings:
         case Service::SecondWings:
@@ -688,7 +766,11 @@ Judged judge(const content::Tables& tables, const Machine& box, Service service,
         case Service::Upgrade:
         case Service::Dinorant:
         case Service::Cloak:
-        case Service::Invitation: combine(tables, box, s, kin, j, service); break;
+        case Service::Invitation:
+        case Service::DarkHorse:
+        case Service::DarkRaven: combine(tables, box, s, kin, j, service); break;
+        // Restore Life reads what he wears, not the box: Realm::judged fills it.
+        case Service::MendPets: break;
     }
     // **A bound thing goes into any mix** (the user, 2026-10-23: "also allow to craft with bound
     // items"), and what a mix with one makes is bound (Realm::mix), so a quest's reward still
@@ -871,6 +953,8 @@ const char* recipeName(Recipe recipe) {
         case Recipe::Invitation: return "Devil's Invitation";
         case Recipe::Wings: return "1st Level Wings";
         case Recipe::SecondWings: return "2nd Level Wings";
+        case Recipe::DarkHorse: return "Dark Horse Resurrection";
+        case Recipe::DarkRaven: return "Dark Raven Resurrection";
         case Recipe::None: break;
     }
     return "";
@@ -881,6 +965,7 @@ const char* serviceName(Service service) {
         case Service::Combine: return "Combine";
         case Service::RemoveRune: return "Remove Rune";
         case Service::AddSocket: return "Add Socket";
+        case Service::AddLuck: return "Add Luck";
         case Service::FuseRunes: return "Fuse Runes";
         case Service::FirstWings: return "1st Wings";
         case Service::SecondWings: return "2nd Wings";
@@ -889,6 +974,9 @@ const char* serviceName(Service service) {
         case Service::Dinorant: return "Dinorant";
         case Service::Cloak: return "Invisibility Cloak";
         case Service::Invitation: return "Devil's Invitation";
+        case Service::DarkHorse: return "Dark Horse";
+        case Service::DarkRaven: return "Dark Raven";
+        case Service::MendPets: return "Restore Life";
     }
     return "";
 }
@@ -898,6 +986,7 @@ const char* serviceVerb(Service service) {
         case Service::Combine: return "Combine";
         case Service::RemoveRune: return "Remove";
         case Service::AddSocket: return "Add Socket";
+        case Service::AddLuck: return "Add Luck";
         case Service::FuseRunes: return "Fuse";
         case Service::FirstWings:
         case Service::SecondWings: return "Create Wings";
@@ -906,6 +995,9 @@ const char* serviceVerb(Service service) {
         case Service::Dinorant: return "Create";
         case Service::Cloak: return "Create";
         case Service::Invitation: return "Create";
+        case Service::DarkHorse:
+        case Service::DarkRaven: return "Resurrect";
+        case Service::MendPets: return "Restore";
     }
     return "";
 }
