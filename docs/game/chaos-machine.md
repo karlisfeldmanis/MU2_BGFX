@@ -89,7 +89,7 @@ The Jewel of Harmony's three (docs/plans/jewel-of-harmony.md step 6, protocol 59
 |---|---|---|---|---|
 | Refine Gemstone | Gemstones, any number (Fill takes them all) | 80% each | none | a Jewel of Harmony for each that takes; the rest are lost |
 | Smelt | weapons, staffs, shields or armour with no Harmony option; the 84 cheapest (the Kris, the Bronze set...) at +4 or more | 50% each excellent piece, 20% each other | none | a Higher Refining Stone from an excellent piece, a Lower from any other; every piece eaten |
-| Remove Harmony | one piece with a Harmony option | 100% | 100,000 to 360,000 by the option's level | the option off; the piece stays bound |
+| Remove Harmony | one piece with a Harmony option, 1 Jewel of Harmony, 1 Chaos (ours; the user, 2026-10-25) | 100% | 100,000 to 360,000 by the option's level | the option off; the piece stays bound; the jewels are spent |
 
 The rates and the cheap list are OpenMU's (mix.bmd agrees on 80, 20 and 50; WebZen's are
 commonserver.cfg keys and its list a JewelOfHarmonySmelt.txt we do not have). MU takes one

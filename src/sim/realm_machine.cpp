@@ -558,10 +558,12 @@ bool Realm::mix(Service service, int socket) {
             break;
         }
         case Service::RemoveHarmony: {
-            // The option off; the bind stays (the user's decision: removing does not unbind).
+            // The option off and the jewels spent; the bind stays (the user's decision: removing
+            // does not unbind).
             Held thing = me().machine[j.target];
             thing.harmony = 0;
             thing.harmonyLevel = 0;
+            spendAllBut(j.target);
             me().machine.put(j.target, thing);
             break;
         }

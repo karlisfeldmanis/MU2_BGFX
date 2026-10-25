@@ -9638,7 +9638,9 @@ void testCraftsFromTheBag() {
          [](sim::Realm& r, const int32_t* k, const uint8_t*, int16_t) {
              const int at = r.give(k[4], -1, 5);
              for (int i = 0; i < 40 && r.satchel()[at].harmony == 0; ++i) r.refine(r.give(k[15]), at);
-         }, 1},
+             r.give(k[15]);
+             r.give(k[0]);
+         }, 3},
     };
     check(int(sizeof(crafts) / sizeof(crafts[0])) == sim::kRowCount, "a craft for every service on the list");
 
@@ -17550,9 +17552,12 @@ void testHarmony(const content::Tables& tables) {
         held.harmonyLevel = 7;
         held.bound = true;
         check(judgeOf(sim::Service::Smelt, {held}).blocked, "a piece with an option does not smelt");
-        const sim::Judged removal = judgeOf(sim::Service::RemoveHarmony, {held});
+        const int32_t chaosJewel = tables.itemAt(12, 15), harmonyJewel = tables.itemNamed("JewelOfHarmony");
+        check(!judgeOf(sim::Service::RemoveHarmony, {held}).ready, "its option does not come off for Zen alone");
+        const sim::Judged removal = judgeOf(sim::Service::RemoveHarmony,
+                                            {held, sim::Held{harmonyJewel, 0, 1}, sim::Held{chaosJewel, 0, 1}});
         check(removal.ready && removal.rate == 100 && removal.zen == 220000,
-              "its option comes off always, for level 7's 220,000");
+              "with a Jewel of Harmony and a Chaos it comes off always, for level 7's 220,000");
         check(judgeOf(sim::Service::RefineGemstone, {sim::Held{tables.itemNamed("Gemstone"), 0, 5}}).ready,
               "a stack of Gemstones refines");
     }

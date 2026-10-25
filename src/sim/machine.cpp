@@ -72,6 +72,7 @@ struct Sorted {
     int lucky = 0, luckyCell = -1;        // and that have it
     int spirits[2] = {};                  // the Trainer's: Spirits +0 (the horse's) and +1 (the raven's)
     int gemstones = 0;                    // Harmony's: Gemstones to refine
+    int harmonyJewels = 0;                // and Jewels of Harmony, Remove Harmony's price
     int smeltLower = 0, smeltHigher = 0, smeltCell = -1;  // pieces a smelt takes: plain, excellent
     int smeltShort = 0, smeltShortCell = -1;  // one of the cheap ones under +4 (sim::smeltsCheap)
     int harmonized = 0, harmonizedCell = -1;  // pieces carrying a Harmony option
@@ -114,6 +115,10 @@ Sorted sort(const content::Tables& tables, const Machine& box) {
             s.others += n;
             if (gemstone(*row)) {
                 s.gemstones += n;
+                continue;
+            }
+            if (jewelOfHarmony(*row)) {
+                s.harmonyJewels += n;
                 continue;
             }
             if (harmonyFamily(*row) != HarmonyFamily::None) {
@@ -689,6 +694,8 @@ void smelt(const content::Tables& tables, const Machine& box, const Sorted& s, J
 
 void removeHarmony(const content::Tables& tables, const Machine& box, const Sorted& s, Judged& j) {
     need(j, "Item with a Harmony option", s.harmonized, 1);
+    need(j, "Jewel of Harmony", s.harmonyJewels, kHarmonyRemoveJewels);
+    need(j, "Jewel of Chaos", s.chaos, kHarmonyRemoveChaos);
     j.rate = 100;
     if (s.harmonized != 1) {
         j.title = s.harmonized == 0 ? "Put in an item with a Harmony option" : "One item at a time";
@@ -700,8 +707,9 @@ void removeHarmony(const content::Tables& tables, const Machine& box, const Sort
     j.zen = kHarmonyRemoveZen[std::clamp<int>(thing.harmonyLevel, 0, kHarmonyTop)];
     const std::string name = labelAt(tables, box, j.target);
     j.title = std::string("Remove ") + (option ? option->name : "Harmony");
-    j.success = name + " with no Harmony option, still bound";
-    j.ready = s.things == 1 && s.chaos == 0 && s.bless == 0 && s.soul == 0;
+    j.success = name + " with no Harmony option, still bound; the jewels are spent";
+    j.ready = s.things == 1 + s.harmonyJewels && s.harmonyJewels == kHarmonyRemoveJewels &&
+              s.chaos == kHarmonyRemoveChaos && s.bless == 0 && s.soul == 0;
 }
 
 void fuseRunes(const content::Tables& tables, const Machine& box, const Sorted& s, Judged& j) {

@@ -109,6 +109,11 @@ inline constexpr int kSmeltChance = 20;
 inline constexpr int kSmeltExcellentChance = 50;
 inline constexpr int64_t kHarmonyRemoveZen[kHarmonyTop + 1] = {
     100000, 110000, 120000, 130000, 140000, 150000, 200000, 220000, 240000, 280000, 320000, 360000};
+// And a Jewel of Harmony and a Jewel of Chaos beside the Zen (ours; the user, 2026-10-25: "ask
+// something more for removing", then the Zen, a Harmony and a Chaos), so a reroll costs a jewel to
+// take the option off besides the ones that lay the next.
+inline constexpr int kHarmonyRemoveJewels = 1;
+inline constexpr int kHarmonyRemoveChaos = 1;
 // The 84 cheapest pieces -- the Kris, the Small Axe, the Bronze set and their like -- smelt only at
 // +4 or more (OpenMU's RefineStoneCrafting list, WebZen's JewelOfHarmonySmelt.txt's level).
 inline constexpr int kSmeltCheapFrom = 4;
