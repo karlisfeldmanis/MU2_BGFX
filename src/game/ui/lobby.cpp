@@ -11,7 +11,6 @@
 #include "game/ui/sheet.h"
 #include "game/ui/slab.h"
 #include "game/ui/tip.h"
-#include "game/ui/vitals.h"
 #include "sim/quests.h"
 
 namespace mu::game {
@@ -539,16 +538,16 @@ void Lobby::rebuild() {
     }
 
     // ---- the name plates (CCharInfoBalloon) ----------------------------------------------
-    // Hung by the bottom middle over each figure, one card holding all he is, top to bottom: his
-    // rebirths when he has any (the world tag's banner), the name, his level and class, and under
-    // a hairline his guild's mark and name when he is in one. MU printed the guild status between
-    // name and class, "(Commoner)" for none; a guildless plate here simply ends at the class.
+    // Hung by the bottom middle over each figure: the name and LEVEL n CLASS on the card, his
+    // guild's mark and name in a darker footer under them when he is in one, and his rebirths on
+    // a wine tab sat across the card's top edge when he has any -- the user's pick B, "Crown tab
+    // + guild footer", from the canvas of five (2026-10-25). MU printed the guild status between
+    // name and class, "(Commoner)" for none; a guildless card simply has no footer.
     for (const Seat& one : roster_) {
         if (one.slot < 0 || one.slot >= kRosterSlots || !view_.plateSeen[one.slot]) continue;
         const bool picked = view_.picked == one.slot;
         const bool hovered = view_.hovered == one.slot && !picked;
-        const float namePx = 17.0f * u, linePx = 12.5f * u, guildPx = 12.0f * u;
-        const float bannerU = u * 1.25f;
+        const float namePx = 17.0f * u, linePx = 12.5f * u, guildPx = 12.0f * u, tabPx = 10.5f * u;
         const std::string name = one.name;
         const std::string sub = "LEVEL " + std::to_string(one.level) + "  " +
                                 sheet::shouted(sim::className(int(one.kin), one.second));
@@ -557,35 +556,26 @@ void Lobby::rebuild() {
         const float nameTrack = namePx * 0.06f;
         const float nameWide = nf.measure(namePx, name) + nameTrack * float(name.size() - 1);
         const float subWide = tip::trackedWidth(face, linePx, 0.12f, sub);
-        const bool reborn = one.rebirths > 0, guilded = !one.guild.empty();
-        const float bannerWide = reborn ? rebirthBannerWidth(bannerU, one.rebirths) : 0.0f;
+        const bool guilded = !one.guild.empty();
         const float markSide = std::round(guildPx * 1.05f), markGap = std::round(5.0f * u);
         const float guildWide = guilded ? markSide + markGap + face.measure(guildPx, one.guild) : 0.0f;
-        // The rows' heights, each from its foot to the next one's.
-        const float bannerRow = reborn ? std::round(21.0f * u) : 0.0f;
-        const float guildRow = guilded ? std::round(24.0f * u) : 0.0f;
-        const float plateW = std::round(std::max({nameWide, subWide, bannerWide, guildWide, 120.0f * u}) +
-                                        36.0f * u);
-        const float plateH = std::round(56.0f * u) + bannerRow + guildRow;
+        // A tab sits across the top edge: the words come down by its lower half.
+        const float tabRoom = one.rebirths > 0 ? std::round(7.0f * u) : 0.0f;
+        const float bodyH = std::round(54.0f * u) + tabRoom, footH = guilded ? std::round(24.0f * u) : 0.0f;
+        const float plateW = std::round(std::max({nameWide, subWide, guildWide, 130.0f * u}) + 40.0f * u);
+        const float plateH = bodyH + footH;
         const Box plate{std::round(view_.plate[one.slot][0] - plateW * 0.5f),
                         std::round(view_.plate[one.slot][1] - plateH), plateW, plateH};
-        const float radius = 8.0f * u;
-        tip::shadowUnder(canvas_, plate, 0.6f, radius + line);
+        const float radius = 6.0f * u;
         const slab::Tone rim = picked ? slab::kPale.times(0.85f)
-                               : hovered ? slab::kBronze.times(0.65f)
-                                         : slab::kBronze.times(0.38f);
-        tip::panel(canvas_, plate.grown(line), radius + line, rim.packed(), rim.times(0.4f).packed());
-        tip::panel(canvas_, plate, radius, gfx::rgba(0.075f, 0.069f, 0.062f, 0.93f),
-                   gfx::rgba(0.035f, 0.032f, 0.029f, 0.93f));
-        float y = plate.y;
-        if (reborn) {
-            // The banner's words 16 under the card's top, a clear line over the name;
-            // rebirthBanner lifts them off `top`.
-            rebirthBanner(canvas_, plate.midX(), std::round(y + 16.0f * u) + rebirthBannerLift(bannerU), bannerU,
-                          picked || hovered ? 1.0f : 0.85f, one.rebirths);
-            y += bannerRow;
-        }
-        const float nameBase = std::round(y + 25.0f * u);
+                               : hovered ? slab::kBronze.times(0.75f)
+                                         : slab::kBronze.times(0.5f);
+        tip::shadowUnder(canvas_, plate, 0.6f, radius + line);
+        tip::panel(canvas_, plate.grown(line), radius + line, rim.packed(), rim.times(0.6f).packed());
+        const uint32_t card = gfx::rgba(0.063f, 0.055f, 0.047f, 0.95f);
+        tip::panel(canvas_, plate, radius, card, card);
+        // The name and the class line, under the tab's lower half when it has one.
+        const float nameBase = std::round(plate.y + tabRoom + 26.0f * u);
         const float nameX = std::round(plate.midX() - nameWide * 0.5f);
         const uint32_t nameInk = picked ? sheet::ink::kTitle : sheet::ink::kFigure;
         if (gothic) {
@@ -596,21 +586,37 @@ void Lobby::rebuild() {
         } else {
             sheet::printed(canvas_, nameX, nameBase, namePx, nameInk, name);
         }
-        // "class level" in orange, as MU prints it.
-        tip::tracked(canvas_, std::round(plate.midX() - subWide * 0.5f), std::round(y + 45.0f * u),
+        tip::tracked(canvas_, std::round(plate.midX() - subWide * 0.5f), std::round(plate.y + tabRoom + 45.0f * u),
                      linePx, 0.12f, picked ? sheet::ink::kGold : sheet::ink::kMark, sub, 1.0f);
         if (guilded) {
-            // A hairline across the card, clear at its ends, then the mark and the name.
-            const float ruleY = std::round(y + 56.0f * u);
-            const float inset = std::round(14.0f * u), half = std::round((plateW - 2.0f * inset) * 0.5f);
-            const uint32_t hair = rim.times(0.9f).packed(), none = rim.times(0.0f).packed();
-            canvas_.shade({plate.x + inset, ruleY, half, line}, none, hair, hair, none);
-            canvas_.shade({plate.x + inset + half, ruleY, half, line}, hair, none, none, hair);
-            const float base = std::round(ruleY + 17.0f * u);
+            // The footer: darker, its top square under a hairline, its foot the card's corners.
+            const Box foot{plate.x, plate.y + bodyH, plate.w, footH};
+            const uint32_t deep = gfx::rgba(0.027f, 0.024f, 0.020f, 0.97f);
+            tip::panel(canvas_, foot, radius, deep, deep);
+            canvas_.rect({foot.x, foot.y, foot.w, std::min(radius, foot.h)}, deep);
+            canvas_.rect({foot.x, foot.y, foot.w, line}, rim.times(0.75f).packed());
+            const float base = std::round(foot.y + 17.0f * u);
             const float left = std::round(plate.midX() - guildWide * 0.5f);
             guildmark::draw(canvas_, {left, std::round(base - markSide * 0.86f), markSide, markSide}, one.mark);
             sheet::printed(canvas_, left + markSide + markGap, base, guildPx,
                            picked ? sheet::ink::kFigure : tip::ink::kQuiet, one.guild);
+        }
+        const gfx::Face* tabFace = controls::wordFace();
+        if (one.rebirths > 0 && tabFace != nullptr) {
+            // The crown tab: wine under a gold hairline, small radius, its middle on the card's top
+            // edge; the words the world tag's banner's, REBIRTH and the count in numerals.
+            const std::string words = "REBIRTH " + net::romanNumeral(one.rebirths);
+            const float size = std::round(tabPx), track = size * 0.24f;
+            const float wide = tabFace->measure(size, words) + track * float(words.size() - 1);
+            const float tabH = std::round(18.0f * u), tabW = std::round(wide + 20.0f * u);
+            const Box tab{std::round(plate.midX() - tabW * 0.5f), std::round(plate.y - tabH * 0.5f) - line, tabW, tabH};
+            const uint32_t gold = gfx::rgba(0.788f, 0.639f, 0.353f, 1.0f);
+            tip::panel(canvas_, tab.grown(line), 3.0f * u + line, gold, gold);
+            tip::panel(canvas_, tab, 3.0f * u, gfx::rgba(0.255f, 0.090f, 0.078f, 1.0f),
+                       gfx::rgba(0.200f, 0.070f, 0.060f, 1.0f));
+            const float baseline = std::round(tab.y + tab.h * 0.5f + tabFace->ascent(size) * 0.5f);
+            canvas_.lettered(*tabFace, controls::wordTexture(), std::round(tab.midX() - wide * 0.5f), baseline,
+                             size, track, gfx::rgba(0.949f, 0.812f, 0.525f, 1.0f), words);
         }
     }
 

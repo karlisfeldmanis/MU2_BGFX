@@ -268,21 +268,6 @@ void banner(gfx::Canvas& canvas, float x, float foot, float u, float alpha, int 
 
 }  // namespace
 
-void rebirthBanner(gfx::Canvas& canvas, float x, float top, float u, float alpha, int rebirths) {
-    if (rebirths > 0) banner(canvas, x, top - std::round(kBannerOver * u), u, alpha, rebirths);
-}
-
-float rebirthBannerWidth(float u, int rebirths) {
-    const gfx::Face* face = controls::wordFace();
-    if (face == nullptr || rebirths <= 0) return 0.0f;
-    const std::string words = "REBIRTH " + net::romanNumeral(rebirths);
-    const float size = std::round(kBannerType * u);
-    return face->measure(size, words) + size * kBannerTracking * float(words.size() - 1) +
-           2.0f * (std::round(kBannerLine * u) + std::round(kBannerGap * u));
-}
-
-float rebirthBannerLift(float u) { return std::round(kBannerOver * u); }
-
 void Vitals::dismiss() {
     if (on_ == 0) return;
     on_ = 0;
