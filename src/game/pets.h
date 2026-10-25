@@ -106,6 +106,11 @@ private:
     bool horseUp_ = false;
     bool flying_ = false;  // setFlying
     float horseIn_ = 0.0f;  // 0 gone, 1 there: the fade at a safe zone's edge
+    // Where the rider stood last frame: a jump past kHorseJump (a respawn, a warp) takes the horse
+    // away at once rather than fading it in his new place.
+    float riderAt_[3] = {};
+    bool riderSeen_ = false;
+    float horseHeld_ = 0.0f;  // seconds the horse stays away after that jump
     int shown_ = -1;    // the pet's number
     int mounted_ = -1;  // the mount's
     bool angelUp_ = false;

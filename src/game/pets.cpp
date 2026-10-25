@@ -36,6 +36,11 @@ constexpr float kHeadingEase = 10.0f;
 // tile and back (GOBoid.cpp:498-502), a cut; **ours**, a short fade, as a pop on screen is
 // closed (docs/game/mount.md).
 constexpr float kHorseFade = 0.25f;
+// Farther than a rider goes in a frame, in metres: past it he was set down somewhere else.
+constexpr float kHorseJump = 2.0f;
+// And how long it stays away after: past the tick the sim takes to see where he stands. A warp to a
+// field, still riding, brings it back under him after this.
+constexpr float kHorseHeld = 0.3f;
 // The Dark Horse's stand against the 0.34 its model is cooked at: MU plays it at 0.3
 // (GOBoid.cpp:424-428).
 constexpr float kDarkHorseStand = 0.3f / 0.34f;
@@ -180,7 +185,21 @@ void Pets::ride(float seconds, const Figure& hero, int worn, bool riding, int ac
         // was not on tarkan ground").
         if (flying_) action += 1;
     }
-    horseIn_ = std::clamp(horseIn_ + (riding ? seconds : -seconds) / kHorseFade, 0.0f, 1.0f);
+    // **Set down elsewhere, the horse is gone at once** (the user, 2026-10-25: "horse was little bit
+    // vissivle on respawn"): he comes back in town still riding for the tick before the sim sees the
+    // safe tile, and the horse faded out there in front of him. MU hides it on a safe tile at once
+    // (GOBoid.cpp:325-329); the quarter second's fade stays for riding over the zone's edge.
+    const float* at = hero.position();
+    if (riderSeen_ && std::hypot(at[0] - riderAt_[0], at[2] - riderAt_[2]) > kHorseJump) {
+        horseIn_ = 0.0f;
+        horseUp_ = false;
+        horseHeld_ = kHorseHeld;
+    }
+    for (int k = 0; k < 3; ++k) riderAt_[k] = at[k];
+    riderSeen_ = true;
+    horseHeld_ = std::max(horseHeld_ - seconds, 0.0f);
+    const bool shown = riding && horseHeld_ <= 0.0f;
+    horseIn_ = std::clamp(horseIn_ + (shown ? seconds : -seconds) / kHorseFade, 0.0f, 1.0f);
     if (!horseUp_) {
         horse_.stand(mount, ground, hero.yaw(), hero.scale());
         horseUp_ = true;
