@@ -107,12 +107,15 @@
     "event": false,
     "floors": false,
     "move_order": 12,
-    "note": "Kanturu Relics, MU's map 38, entered from the Ruins' door (gates 129/131). arrive is the middle of spawn gate 137's box, the safe hall (OpenMU VersionSeasonSix Gates.cs:283), where a death in the Relics stands up too (OM's spawn gate; WZ's 139 lies inside the same hall). The Town Portal goes to Tarkan's town (home 8), as the Ruins'. Last on the M key's walk (12), so no other map's order moves. No drops yet: no breed stands here. When they do, the Gemstone falls here as in the Ruins, one kill in 150 (sim::kGemstoneOdds; docs/plans/jewel-of-harmony.md).",
+    "note": "Kanturu Relics, MU's map 38, entered from the Ruins' door (gates 129/131). arrive is the middle of spawn gate 137's box, the safe hall (OpenMU VersionSeasonSix Gates.cs:283), where a death in the Relics stands up too (OM's spawn gate; WZ's 139 lies inside the same hall). The Town Portal goes to Tarkan's town (home 8), as the Ruins'. Last on the M key's walk (12), so no other map's order moves. No drops yet: no breed stands here. When they do, the Gemstone falls here as in the Ruins, one kill in 150 (sim::kGemstoneOdds; docs/plans/jewel-of-harmony.md). Drops and exp_bonus as the Ruins' besides its own Ancient runes (the user, 2026-10-25): the Feather, the Scroll of Nova and x1.25 kill experience, so the harder map never pays less.",
     "drops": [
       "kanturu_gear",
       "ancient_runes",
-      "gemstone"
-    ]
+      "gemstone",
+      "feather",
+      "nova_scroll"
+    ],
+    "exp_bonus": 1.25
   },
   "show": {
     "void_clouds": {
