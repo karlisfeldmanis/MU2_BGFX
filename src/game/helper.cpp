@@ -41,6 +41,8 @@ constexpr double kLootGiveUp = 6.0;
 // before it fights, hit or not (MuHelper.cpp's Work). Waiting for the last one to fall left it all
 // lying where the monsters never stop coming (the user, 2026-10-24, on Aida).
 constexpr float kLootUnderAttack = kSetOn;
+// Said once as the bag fills (Helper::filled); the user, 2026-10-25, word for word.
+constexpr const char* kBagFull = "Bag full — the Helper now picks up only Zen and stackables";
 // He has wandered back when he is this near the spot, in tiles.
 constexpr float kHome = 1.5f;
 // A worn piece is mended at this share of its durability or under, in percent: MU Helper's
@@ -395,6 +397,7 @@ void Helper::start(const Play& play, const Stats* carried) {
     askedAt_ = -1e9;
     walkedColumn_ = walkedRow_ = -1;
     target_ = picking_ = 0;
+    full_ = false;
     tried_.clear();
     lootTried_.clear();
     potions_ = play.realm().autoDrinkSlot(false) >= 0;
@@ -431,6 +434,16 @@ std::string Helper::halt(const std::string& why) {
     stop(endedBy(why));
     core::logf("helper: %s", why.c_str());
     return why;
+}
+
+// A full bag does not stop it (Mu-Classic on Discord, 2026-10-25: "it should continuo to work an
+// pick stackable items only"): loot() takes only what pours into the bag, Zen and what tops up a
+// stack, and the player is told once each time the bag fills.
+bool Helper::filled(bool full) {
+    const bool newly = full && !full_;
+    full_ = full;
+    if (newly) core::logf("helper: the bag is full, picking up Zen and stackables only");
+    return newly;
 }
 
 std::string Helper::finished() {
@@ -479,7 +492,7 @@ std::string Helper::update(Play& play, const HelperSettings& settings, double se
 
     if (!hero.alive()) return halt("Helper stopped: you died.");
     if (tables->grid.safe(hero.column(), hero.row())) return halt("Helper stopped: you are in a safe zone.");
-    if (realm.satchel().free(*tables, 1, 1) < 0) return halt("Helper stopped: the bag is full.");
+    if (filled(realm.satchel().free(*tables, 1, 1) < 0)) return kBagFull;
     // Out of the potions he set out with: a young hero who carries none may still be helped.
     if (potions_ && realm.autoDrink().health > 0 && realm.autoDrinkSlot(false) < 0) {
         return halt("Helper stopped: no healing potions left.");
@@ -670,7 +683,7 @@ std::string Helper::follow(Play& play, const HelperSettings& settings, double se
                                           [&](const sim::Lying& one) { return one.id == picking_; })) {
             picking_ = 0;
         }
-        if (realm.satchel().free(tables, 1, 1) < 0) return halt("Helper stopped: the bag is full.");
+        if (filled(realm.satchel().free(tables, 1, 1) < 0)) return kBagFull;
         if (potions_ && realm.autoDrink().health > 0 && realm.autoDrinkSlot(false) < 0) {
             return halt("Helper stopped: no healing potions left.");
         }

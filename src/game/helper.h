@@ -10,8 +10,9 @@
 //
 // A hand, not a brain, as Auto-play is (game/quest_auto.h): it raises the orders a player's own
 // clicks raise and decides nothing the realm decides. It mends his worn gear as it goes. It
-// stops when he dies, when he stands in a safe zone, when the bag is full, when the healing potions he set out with or his shots run out,
-// on another map, and when the player clicks the world himself. Ours: WebZen's helper charged Zen every five
+// stops when he dies, when he stands in a safe zone, when the healing potions he set out with or his shots run out,
+// on another map, and when the player clicks the world himself. A full bag does not stop it: it
+// goes on taking Zen and what tops up a stack (Helper::filled). Ours: WebZen's helper charged Zen every five
 // minutes and ran on the server; this one is the client's and costs nothing.
 #pragma once
 
@@ -178,6 +179,8 @@ public:
 
 private:
     std::string halt(const std::string& why);
+    // Whether the bag has just filled (`full` now, not the beat before): the line is said once.
+    bool filled(bool full);
     // The quest it follows handed in: counted, and the Helper stops.
     std::string finished();
     // Following a quest (HelperSettings::quest): `shown`, the one the tracker shows.
@@ -192,6 +195,7 @@ private:
 
     bool on_ = false;
     bool potions_ = false;  // he carried a healing potion when it started
+    bool full_ = false;     // the bag was full at the last beat
     Stats stats_;
     int anchorColumn_ = 0, anchorRow_ = 0;
     double since_ = 0.0, clock_ = 0.0;
