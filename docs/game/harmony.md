@@ -34,7 +34,8 @@ jewel flag, which would put it in MU's jewel drop group; `sim::harmonyMaterial` 
   (the user, 2026-10-25). The cards say so.
 - **Active** only while the item's plus is at least the option's level: a failed Soul greys it
   out (the card says "(at +N)") until the plus is back.
-- **Strength.** Every flat option is three times MU's (`kHarmonyStrength`); Damage taken keeps
+- **Strength.** Every flat option is three times MU's (`kHarmonyStrength`), but a staff's Wizardry
+  damage twice (`kHarmonyWizardryStrength`, the user's trim after the sweep); Damage taken keeps
   MU's 3-5% a piece. Defense counts half, as WebZen's server applies it.
 - A miss that takes a Strength or Agility requirement cut away from a worn piece he no longer
   meets moves it into the bag, as a Soul's outgrown plus does: a stone's miss, and a Soul's, whose
@@ -68,7 +69,7 @@ The options, by level 0 / 6 / 11 (MU's values; ours three times, but Damage take
 with every piece's option at level 11 (weapon Damage, a staff's Wizardry damage, armour Maximum
 life), in the Ruins. Damage an hour of the best three skills: knight +15-19%, elf +5-15%,
 gladiator +18-47%, Dark Lord +29-42%, wizard +28-68% (a flat +75 on a 156-209 band); life
-+20-30%. At +9 the options stop at level 9, about three quarters of that. The raid party's heroes
++20-30%. The staff's Wizardry trimmed to twice MU's (+50 at 11): the wizard +33-49%. At +9 the options stop at level 9, about three quarters of that. The raid party's heroes
 (content/raid/party.json) strike under the Ruins' defence, at its floor, where a flat add changes
 nothing.
 

@@ -48,6 +48,10 @@ inline constexpr int kHarmonyTop = 11;
 // The one percent option, Damage taken, keeps MU's 3-5 a piece: five pieces at MU's already take
 // a quarter off every blow, and three times would reach kDamageDecreaseMost on its own.
 inline constexpr double kHarmonyStrength = 3.0;
+// But a staff's Wizardry damage twice MU's (the user, 2026-10-25, "Trim the staff's Wizardry"):
+// at three times, a flat +75 on a wizard's 156-209 gave his skills 28-68% more in the Ruins'
+// sweep, where a knight's weapon gave 15-19% (docs/game/harmony.md).
+inline constexpr double kHarmonyWizardryStrength = 2.0;
 
 struct HarmonyOption {
     uint8_t number = 0;       // MU's, in its table

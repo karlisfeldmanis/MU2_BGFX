@@ -93,7 +93,9 @@ int harmonyValue(const content::ItemRow& row, const Held& what) {
 
 int harmonyAt(const HarmonyOption& option, int level) {
     const int value = option.value[std::clamp(level, 0, kHarmonyTop)];
-    return option.percent ? value : int(double(value) * kHarmonyStrength);
+    if (option.percent) return value;
+    return int(double(value) * (option.effect == HarmonyEffect::Wizardry ? kHarmonyWizardryStrength
+                                                                         : kHarmonyStrength));
 }
 
 Needs harmonyEased(const content::ItemRow& row, const Held& what, Needs asked) {
