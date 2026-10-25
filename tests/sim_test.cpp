@@ -992,10 +992,11 @@ void testItems(const content::Tables& tables) {
     // and the shields, bows, staffs, mace and swords between. 401 since 2026-10-23: the 59 rows
     // of the missing-gear audit -- twelve sets' 56 pieces (*Male21, 35-38, 46-49, 51, 53) and
     // the three gamble arms (Spear12, Bow25, Staff34). 402 since 2026-10-24: the Orb of Fire
-    // Slash (1bd2f5da). A count
+    // Slash (1bd2f5da). 420 since 2026-10-25: the Jewel of Harmony's four, the Gemstone, the
+    // jewel and the two Refining Stones (docs/plans/jewel-of-harmony.md step 1). A count
     // rather than a list, because what it is guarding is the cook -- a
     // recipe that stops being picked up is a row the shelf silently cannot sell.
-    checkEqual(long(tables.items.size()), 416, "416 item rows cooked");
+    checkEqual(long(tables.items.size()), 420, "420 item rows cooked");
     // And Noria's three shops sell only what is cooked: Elf Lala, Eo the Craftsman and Potion
     // Girl Amy, every offer a row (the user, 2026-09-28: "fill Noria's vendors").
     // And Lumen's, whose Guardian Angel and Imp are ours (the user, 2026-09-30: "put imp and
@@ -9094,7 +9095,7 @@ void testIcarusGates() {
     checkEqual(s.gated, 0, "an unwinged knight does not go through");
     checkEqual(s.barred, -1, "and is told he cannot fly");
     s = walk(tower, 18, 249, 18, 250, 160, 3);
-    checkEqual(s.barred, -1, "nor with the Horn of Uniria worn over his wings");
+    checkEqual(s.barred, -2, "nor with the Horn of Uniria worn over his wings, and is told the Uniria cannot fly");
     s = walk(icarus, 15, 13, 15, 12, 1, 1);
     checkEqual(s.gated, 64, "Icarus's first row, gate 64, takes him back at any level");
     check(s.column >= 17 && s.column <= 19 && s.row == 249, "out on floor 7's gate 65");
