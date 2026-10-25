@@ -6,10 +6,12 @@
 #include <cstdio>
 
 #include "game/ui/controls.h"
+#include "game/ui/guild_mark.h"
 #include "game/ui/panel.h"
 #include "game/ui/sheet.h"
 #include "game/ui/slab.h"
 #include "game/ui/tip.h"
+#include "game/ui/vitals.h"
 #include "sim/quests.h"
 
 namespace mu::game {
@@ -537,14 +539,16 @@ void Lobby::rebuild() {
     }
 
     // ---- the name plates (CCharInfoBalloon) ----------------------------------------------
-    // Hung by the bottom middle over each figure: the name, and the class and level under it.
-    // MU prints the guild status between them, "(Commoner)" for none; there are no guilds here
-    // and the line is left out.
+    // Hung by the bottom middle over each figure, one card holding all he is, top to bottom: his
+    // rebirths when he has any (the world tag's banner), the name, his level and class, and under
+    // a hairline his guild's mark and name when he is in one. MU printed the guild status between
+    // name and class, "(Commoner)" for none; a guildless plate here simply ends at the class.
     for (const Seat& one : roster_) {
         if (one.slot < 0 || one.slot >= kRosterSlots || !view_.plateSeen[one.slot]) continue;
         const bool picked = view_.picked == one.slot;
         const bool hovered = view_.hovered == one.slot && !picked;
-        const float namePx = 17.0f * u, linePx = 12.5f * u;
+        const float namePx = 17.0f * u, linePx = 12.5f * u, guildPx = 12.0f * u;
+        const float bannerU = u * 1.25f;
         const std::string name = one.name;
         const std::string sub = "LEVEL " + std::to_string(one.level) + "  " +
                                 sheet::shouted(sim::className(int(one.kin), one.second));
@@ -553,19 +557,35 @@ void Lobby::rebuild() {
         const float nameTrack = namePx * 0.06f;
         const float nameWide = nf.measure(namePx, name) + nameTrack * float(name.size() - 1);
         const float subWide = tip::trackedWidth(face, linePx, 0.12f, sub);
-        const float plateW = std::round(std::max(nameWide, subWide) + 36.0f * u);
-        const float plateH = std::round(56.0f * u);
+        const bool reborn = one.rebirths > 0, guilded = !one.guild.empty();
+        const float bannerWide = reborn ? rebirthBannerWidth(bannerU, one.rebirths) : 0.0f;
+        const float markSide = std::round(guildPx * 1.05f), markGap = std::round(5.0f * u);
+        const float guildWide = guilded ? markSide + markGap + face.measure(guildPx, one.guild) : 0.0f;
+        // The rows' heights, each from its foot to the next one's.
+        const float bannerRow = reborn ? std::round(21.0f * u) : 0.0f;
+        const float guildRow = guilded ? std::round(24.0f * u) : 0.0f;
+        const float plateW = std::round(std::max({nameWide, subWide, bannerWide, guildWide, 120.0f * u}) +
+                                        36.0f * u);
+        const float plateH = std::round(56.0f * u) + bannerRow + guildRow;
         const Box plate{std::round(view_.plate[one.slot][0] - plateW * 0.5f),
                         std::round(view_.plate[one.slot][1] - plateH), plateW, plateH};
-        tip::shadowUnder(canvas_, plate, 0.6f, 12.0f * u + line);
+        const float radius = 8.0f * u;
+        tip::shadowUnder(canvas_, plate, 0.6f, radius + line);
         const slab::Tone rim = picked ? slab::kPale.times(0.85f)
                                : hovered ? slab::kBronze.times(0.65f)
                                          : slab::kBronze.times(0.38f);
-        tip::panel(canvas_, plate.grown(line), 12.0f * u + line, rim.packed(),
-                   rim.times(0.4f).packed());
-        tip::panel(canvas_, plate, 12.0f * u, gfx::rgba(0.075f, 0.069f, 0.062f, 0.93f),
+        tip::panel(canvas_, plate.grown(line), radius + line, rim.packed(), rim.times(0.4f).packed());
+        tip::panel(canvas_, plate, radius, gfx::rgba(0.075f, 0.069f, 0.062f, 0.93f),
                    gfx::rgba(0.035f, 0.032f, 0.029f, 0.93f));
-        const float nameBase = std::round(plate.y + 25.0f * u);
+        float y = plate.y;
+        if (reborn) {
+            // The banner's words 16 under the card's top, a clear line over the name;
+            // rebirthBanner lifts them off `top`.
+            rebirthBanner(canvas_, plate.midX(), std::round(y + 16.0f * u) + rebirthBannerLift(bannerU), bannerU,
+                          picked || hovered ? 1.0f : 0.85f, one.rebirths);
+            y += bannerRow;
+        }
+        const float nameBase = std::round(y + 25.0f * u);
         const float nameX = std::round(plate.midX() - nameWide * 0.5f);
         const uint32_t nameInk = picked ? sheet::ink::kTitle : sheet::ink::kFigure;
         if (gothic) {
@@ -577,9 +597,21 @@ void Lobby::rebuild() {
             sheet::printed(canvas_, nameX, nameBase, namePx, nameInk, name);
         }
         // "class level" in orange, as MU prints it.
-        tip::tracked(canvas_, std::round(plate.midX() - subWide * 0.5f),
-                     std::round(plate.y + 45.0f * u), linePx, 0.12f,
-                     picked ? sheet::ink::kGold : sheet::ink::kMark, sub, 1.0f);
+        tip::tracked(canvas_, std::round(plate.midX() - subWide * 0.5f), std::round(y + 45.0f * u),
+                     linePx, 0.12f, picked ? sheet::ink::kGold : sheet::ink::kMark, sub, 1.0f);
+        if (guilded) {
+            // A hairline across the card, clear at its ends, then the mark and the name.
+            const float ruleY = std::round(y + 56.0f * u);
+            const float inset = std::round(14.0f * u), half = std::round((plateW - 2.0f * inset) * 0.5f);
+            const uint32_t hair = rim.times(0.9f).packed(), none = rim.times(0.0f).packed();
+            canvas_.shade({plate.x + inset, ruleY, half, line}, none, hair, hair, none);
+            canvas_.shade({plate.x + inset + half, ruleY, half, line}, hair, none, none, hair);
+            const float base = std::round(ruleY + 17.0f * u);
+            const float left = std::round(plate.midX() - guildWide * 0.5f);
+            guildmark::draw(canvas_, {left, std::round(base - markSide * 0.86f), markSide, markSide}, one.mark);
+            sheet::printed(canvas_, left + markSide + markGap, base, guildPx,
+                           picked ? sheet::ink::kFigure : tip::ink::kQuiet, one.guild);
+        }
     }
 
     // ---- the bar (CCharSelMainWin) --------------------------------------------------------

@@ -35,6 +35,8 @@ std::vector<Seat> seatsOf(const net::Roster& roster, const content::Tables& tabl
         seat.second = one.second;
         seat.level = std::max(1, one.level);
         seat.rebirths = std::max(0, one.rebirths);
+        seat.guild = one.guild;
+        seat.mark = one.mark;
         for (const net::Seat::Worn& w : one.worn) {
             const sim::Held& h = w.held;
             if (h.empty() || size_t(h.item) >= tables.items.size()) continue;

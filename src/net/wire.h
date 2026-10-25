@@ -199,7 +199,8 @@ namespace mu::net {
 //     step 5), and their happening, What::Harmonized.
 // 59: the Chaos Machine's Harmony services (sim::Service 15-17): Refine Gemstone, Smelt and Remove
 //     Harmony (docs/plans/jewel-of-harmony.md step 6).
-constexpr uint32_t kVersion = 59;
+// 60: a Roster's seat carries his guild's name and mark, for the character screen's plates.
+constexpr uint32_t kVersion = 60;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box,
 // by its name, so the game talks to mu-classic.com as the launcher does, not to a bare address.
 constexpr const char* kDefaultHost = "mu-classic.com";
@@ -476,6 +477,8 @@ struct Seat {
     bool second = false;  // his class's second (sim::promoted)
     int32_t rebirths = 0; // a reborn one opens every class to his account (protocol 49)
     std::string world;    // where he comes in
+    std::string guild;    // his guild's name, empty in none, and its mark (protocol 60)
+    GuildMarkBits mark{};
     struct Worn {
         uint8_t slot = 0;  // below sim::kWorn
         sim::Held held;

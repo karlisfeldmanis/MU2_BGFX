@@ -171,4 +171,12 @@ private:
     uint64_t rebuilds_ = 0;
 };
 
+// A reborn's mark, "REBIRTH III" between two gold hairlines, centred on `x` and standing a
+// little over `top` -- the cap of the name it crowns. The name tags' own, lent to the lobby's
+// plates.
+void rebirthBanner(gfx::Canvas& canvas, float x, float top, float u, float alpha, int rebirths);
+// Its width, hairlines included, and how far over `top` its words' foot stands.
+float rebirthBannerWidth(float u, int rebirths);
+float rebirthBannerLift(float u);
+
 }  // namespace mu::game

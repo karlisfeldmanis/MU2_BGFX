@@ -25,7 +25,7 @@ bool inPlay(const std::vector<std::unique_ptr<Session>>& sessions, uint64_t toke
 }
 
 // The account's characters as the screen stands them: his pedestal, his name, his class and level,
-// promoted or not, the world he comes into, and what he wears. One never played is level 1 in his
+// promoted or not, his rebirths and guild, the world he comes into, and what he wears. One never played is level 1 in his
 // class's town with his class's weapon, as he will be made.
 net::Roster rosterOf(const std::string& account, net::Refused refused) {
     net::Roster roster;
@@ -36,6 +36,10 @@ net::Roster rosterOf(const std::string& account, net::Refused refused) {
         seat.slot = one.slot;
         seat.name = one.name;
         seat.kin = uint8_t(one.kin);
+        if (const auto guild = g_guilds.find(guildOf(one.token)); guild != g_guilds.end()) {
+            seat.guild = guild->second.name;
+            seat.mark = guild->second.mark;
+        }
         if (one.fresh) {
             seat.level = sim::kNewLevel;
             seat.world = sim::homeWorld(one.kin);

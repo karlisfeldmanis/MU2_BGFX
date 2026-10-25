@@ -37,6 +37,8 @@ struct Seat {
     bool second = false;  // his class's second, Sevina's treasure handed in (sim::promoted)
     int level = 1;
     int rebirths = 0;  // a reborn one opens every class to the account (Lobby::gladiatorOpen)
+    std::string guild;  // empty in none
+    net::GuildMarkBits mark{};
     std::vector<Saved::Item> items;  // what he wears, by slot below sim::kWorn
 };
 
