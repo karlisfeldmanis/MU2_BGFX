@@ -187,7 +187,9 @@ namespace mu::net {
 //     (sim::kSkills 50, kKeptLayout 19), and each Seat's rebirths (a reborn one opens the Magic
 //     Gladiator and the Dark Lord to his account), so a client on 53 is refused instead of
 //     reading the record short.
-constexpr uint32_t kVersion = 54;
+// 55: the Jewel of Harmony's option on an item (docs/plans/jewel-of-harmony.md; sim::Held::harmony
+//     and harmonyLevel, kKeptLayout 20, 2026-10-25): two more bytes in every item a frame carries.
+constexpr uint32_t kVersion = 55;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box,
 // by its name, so the game talks to mu-classic.com as the launcher does, not to a bare address.
 constexpr const char* kDefaultHost = "mu-classic.com";
@@ -207,8 +209,9 @@ constexpr const char* kDefaultHost = "mu-classic.com";
 // (2026-10-24), where 9-15 carry 40; 17 a 43rd, Swell Life's (2026-10-25), where 16 carries 42;
 // 18 30 quests, Kanturu's two (2026-10-25), where 12-17 carry 28; 19 the Dark Lord's seven
 // skills' cools (kSkills 50), where 17-18 carry 43, and his Command, last (docs/plans/dark-lord.md),
-// where 3-18 carry none and read as 0.
-constexpr int kKeptLayout = 19;
+// where 3-18 carry none and read as 0; 20 each item's Jewel of Harmony option, its number and level
+// (sim::Held::harmony, 2026-10-25), where 3-19 carry none.
+constexpr int kKeptLayout = 20;
 // MU's GameServer listened on 55901; ours is its own.
 constexpr int kDefaultPort = 44406;
 // The longest frame a client accepts: a Welcome with its snapshot, about half a MB for a town of
@@ -668,7 +671,9 @@ bool parse(const std::vector<uint8_t>& body, GuildCall& out);
 
 // A character alone, in the bytes a Welcome or a Tick carries him in: what the server's character
 // store keeps (server/src/store.h). `keptFrom` is false unless the bytes are exactly one.
-void putKept(std::vector<uint8_t>& out, const sim::Kept& one);
+// `layout` below kKeptLayout writes an older row: below 20 its items carry no Harmony option. The
+// store never writes one; sim_test cuts its older layouts from it.
+void putKept(std::vector<uint8_t>& out, const sim::Kept& one, int layout = kKeptLayout);
 bool keptFrom(const std::vector<uint8_t>& bytes, sim::Kept& out, int layout = kKeptLayout);
 
 // The realm after a step, as one number: what the tick said (every happening's bytes, which

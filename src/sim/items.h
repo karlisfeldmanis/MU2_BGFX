@@ -104,6 +104,11 @@ struct Held {
     // listed (2026-10-11: "per character"); on the ground his alone (Realm::mayTake). WoW's soulbound.
     // Last, so the brace lists that fill the fields in order are untouched.
     bool bound = false;
+    // Its Jewel of Harmony option (sim/harmony.h, docs/plans/jewel-of-harmony.md): the option's
+    // number in its item's table, 0 for none, and its level, raised by the Refining Stones. After
+    // `bound`, in what was its padding, for the same reason.
+    uint8_t harmony = 0;
+    uint8_t harmonyLevel = 0;
     bool empty() const { return item < 0; }
 };
 

@@ -24,6 +24,8 @@
 #include "sim/audit.h"
 #include "sim/broker.h"
 #include "sim/event.h"
+#include "sim/harmony.h"
+#include "sim/item_link.h"
 #include "sim/items.h"
 #include "sim/raid_party.h"
 #include "sim/random.h"
@@ -993,10 +995,11 @@ void testItems(const content::Tables& tables) {
     // of the missing-gear audit -- twelve sets' 56 pieces (*Male21, 35-38, 46-49, 51, 53) and
     // the three gamble arms (Spear12, Bow25, Staff34). 402 since 2026-10-24: the Orb of Fire
     // Slash (1bd2f5da). 420 since 2026-10-25: the Jewel of Harmony's four, the Gemstone, the
-    // jewel and the two Refining Stones (docs/plans/jewel-of-harmony.md step 1). A count
+    // jewel and the two Refining Stones (docs/plans/jewel-of-harmony.md step 1). 425 the same
+    // day: the Dark Lord's five scrolls (content/items/misc/Scroll*.json). A count
     // rather than a list, because what it is guarding is the cook -- a
     // recipe that stops being picked up is a row the shelf silently cannot sell.
-    checkEqual(long(tables.items.size()), 420, "420 item rows cooked");
+    checkEqual(long(tables.items.size()), 425, "425 item rows cooked");
     // And Noria's three shops sell only what is cooked: Elf Lala, Eo the Craftsman and Potion
     // Girl Amy, every offer a row (the user, 2026-09-28: "fill Noria's vendors").
     // And Lumen's, whose Guardian Angel and Imp are ours (the user, 2026-09-30: "put imp and
@@ -6330,6 +6333,32 @@ void testTalentCommands(const content::Tables& tables) {
         sim::Kept back;
         check(net::keptFrom(bytes, back), "the kept bytes read");
         check(back.hero.talents == saved.talents, "with his talents");
+        // A layout-19 row has no Jewel of Harmony option on its items (kKeptLayout 20): two bytes
+        // fewer in every item, which putKept writes as a 19 when asked. Every older layout below
+        // is cut from that 19.
+        {
+            sim::Kept harmonised = kept;
+            const int first = sim::kWorn;  // the bag's first cell, a +9 of row 1
+            harmonised.hero.slots[first] = sim::Held{1, 9, 1};
+            harmonised.hero.slots[first].harmony = 3;
+            harmonised.hero.slots[first].harmonyLevel = 9;
+            std::vector<uint8_t> harmonisedBytes;
+            net::putKept(harmonisedBytes, harmonised);
+            sim::Kept read;
+            check(net::keptFrom(harmonisedBytes, read) && read.hero.slots[first].harmony == 3 && read.hero.slots[first].harmonyLevel == 9,
+                  "an item's Harmony option is kept");
+            std::vector<uint8_t> nineteen;
+            net::putKept(nineteen, harmonised, 19);
+            checkEqual(long(harmonisedBytes.size() - nineteen.size()),
+                       long(2 * (sim::kSlots + sim::kVaultCells + sim::kMachineCells)),
+                       "a layout-19 row is two bytes an item shorter");
+            check(net::keptFrom(nineteen, read, 19) && read.hero.slots[first].harmony == 0 &&
+                      read.hero.slots[first].item == harmonised.hero.slots[first].item,
+                  "and reads with its items whole and no Harmony");
+            check(!net::keptFrom(nineteen, read, 20), "and is not a layout 20");
+        }
+        bytes.clear();
+        net::putKept(bytes, kept, 19);
         // A layout-18 row has no Dark Lord (kKeptLayout 19): neither his seven cools, the 44th to
         // the 50th (found by the first byte the 44th moves, eight bytes each), nor his Command,
         // the row's last four bytes. Every older layout below is cut from a layout 18 (`eighteen`).
@@ -6337,7 +6366,7 @@ void testTalentCommands(const content::Tables& tables) {
         forced.hero.coolsLeft[43] = 0x7F;
         forced.hero.points.command = 77;
         std::vector<uint8_t> forcedBytes;
-        net::putKept(forcedBytes, forced);
+        net::putKept(forcedBytes, forced, 19);
         size_t lordAt = 0;
         while (lordAt < bytes.size() && bytes[lordAt] == forcedBytes[lordAt]) ++lordAt;
         const size_t lordCools = 8 * size_t(sim::kSkills - 43);
@@ -6348,7 +6377,7 @@ void testTalentCommands(const content::Tables& tables) {
         };
         {
             sim::Kept read;
-            check(net::keptFrom(forcedBytes, read) && read.hero.coolsLeft[43] == 0x7F &&
+            check(net::keptFrom(forcedBytes, read, 19) && read.hero.coolsLeft[43] == 0x7F &&
                       read.hero.points.command == 77,
                   "the Dark Lord's cools and Command are kept");
             check(net::keptFrom(eighteen(forcedBytes), read, 18) && read.hero.points.command == 0 &&
@@ -6364,7 +6393,7 @@ void testTalentCommands(const content::Tables& tables) {
         sim::Kept flipped = kept;
         flipped.hero.found ^= 1u;
         std::vector<uint8_t> flippedBytes;
-        net::putKept(flippedBytes, flipped);
+        net::putKept(flippedBytes, flipped, 19);
         flippedBytes = eighteen(flippedBytes);
         size_t foundAt = 0;
         while (foundAt < bytes.size() && bytes[foundAt] == flippedBytes[foundAt]) ++foundAt;
@@ -6380,9 +6409,9 @@ void testTalentCommands(const content::Tables& tables) {
             marked.hero.quests[sim::kKantursGate].state = sim::QuestState::Active;
             marked.hero.quests[sim::kRuinsOfKantur].completions = 3;
             std::vector<uint8_t> markedBytes;
-            net::putKept(markedBytes, marked);
+            net::putKept(markedBytes, marked, 19);
             sim::Kept read;
-            check(net::keptFrom(markedBytes, read) && read.hero.quests[sim::kKantursGate].state == sim::QuestState::Active &&
+            check(net::keptFrom(markedBytes, read, 19) && read.hero.quests[sim::kKantursGate].state == sim::QuestState::Active &&
                       read.hero.quests[sim::kRuinsOfKantur].completions == 3,
                   "Kanturu's two quests are kept");
             check(net::keptFrom(seventeen(eighteen(markedBytes)), read, 17) &&
@@ -6403,7 +6432,7 @@ void testTalentCommands(const content::Tables& tables) {
         cooled.hero.coolsLeft[41] = 34;
         cooled.hero.coolsLeft[42] = 35;
         std::vector<uint8_t> cooledBytes;
-        net::putKept(cooledBytes, cooled);
+        net::putKept(cooledBytes, cooled, 19);
         cooledBytes = seventeen(eighteen(cooledBytes));
         size_t coolAt = 0;
         while (coolAt < bytes.size() && bytes[coolAt] == cooledBytes[coolAt]) ++coolAt;  // its low byte
@@ -6436,7 +6465,7 @@ void testTalentCommands(const content::Tables& tables) {
         sim::Kept marked = kept;
         marked.hero.quests[sim::kKantursCaptain].state = sim::QuestState::Active;
         std::vector<uint8_t> markedBytes;
-        net::putKept(markedBytes, marked);
+        net::putKept(markedBytes, marked, 19);
         markedBytes = seventeen(eighteen(markedBytes));
         size_t at = 0;
         while (at < bytes.size() && bytes[at] == markedBytes[at]) ++at;
@@ -6446,7 +6475,7 @@ void testTalentCommands(const content::Tables& tables) {
         // last, and cut out of the empty cells between the 21st and the 170th.
         const auto firstMoved = [&](const sim::Kept& other) {
             std::vector<uint8_t> them;
-            net::putKept(them, other);
+            net::putKept(them, other, 19);
             them = seventeen(eighteen(them));
             size_t i = 0;
             while (i < bytes.size() && bytes[i] == them[i]) ++i;
@@ -6471,7 +6500,7 @@ void testTalentCommands(const content::Tables& tables) {
         sim::Kept placed = kept;
         placed.vault.put(9, sim::Held{1, 0, 1});  // the second row's second cell, eight across
         std::vector<uint8_t> placedBytes;
-        net::putKept(placedBytes, placed);
+        net::putKept(placedBytes, placed, 19);
         placedBytes = seventeen(eighteen(placedBytes));
         check(net::keptFrom(fifteen(narrowed(placedBytes)), narrow, 14) && narrow.vault[9].empty() &&
                   narrow.vault[sim::widenedCell(9)].item == 1 && sim::widenedCell(9) == sim::kVaultColumns + 1,
@@ -17046,6 +17075,64 @@ void testChatWire() {
     check(cut.size() == net::kMostSaid - 1, "a line past kMostSaid is cut before a letter it would halve");
 }
 
+// The Jewel of Harmony's options (sim/harmony.h, docs/plans/jewel-of-harmony.md step 2): which
+// table an item draws from, the weighted draw by the item's plus, when an option works, and that
+// the option rides an item through the market's words and a chat link.
+void testHarmony(const content::Tables& tables) {
+    std::printf("jewel of harmony\n");
+    const int32_t sword = tables.itemNamed("Sword17"), staff = tables.itemNamed("Staff10"),
+                  armour = tables.itemNamed("ArmorMale46"), wing = tables.itemNamed("Wing06"),
+                  jewel = tables.itemNamed("JewelOfHarmony");
+    check(sword >= 0 && staff >= 0 && armour >= 0 && wing >= 0 && jewel >= 0, "the rows are cooked");
+    if (sword < 0 || staff < 0 || armour < 0 || wing < 0 || jewel < 0) return;
+    const content::ItemRow& swordRow = tables.items[size_t(sword)];
+    checkEqual(int(sim::harmonyFamily(swordRow)), int(sim::HarmonyFamily::Weapon), "a sword draws a weapon's");
+    checkEqual(int(sim::harmonyFamily(tables.items[size_t(staff)])), int(sim::HarmonyFamily::Staff), "a staff a staff's");
+    checkEqual(int(sim::harmonyFamily(tables.items[size_t(armour)])), int(sim::HarmonyFamily::Defence),
+               "armour the defence's");
+    checkEqual(int(sim::harmonyFamily(tables.items[size_t(wing)])), int(sim::HarmonyFamily::None), "wings none");
+    check(sim::harmonyMaterial(tables.items[size_t(jewel)]) &&
+              sim::stackMost(tables.items[size_t(jewel)]) == sim::kStackMost,
+          "the jewel stacks as the jewels do");
+    // The draw: at +0 only the four that ask nothing of the plus, at +11 all seven, by weight.
+    sim::Random dice(77);
+    const auto draws = [&](const content::ItemRow& row, int plus) {
+        std::map<int, int> seen;
+        sim::Held what{sword, int16_t(plus), 1};
+        for (int i = 0; i < 4000; ++i) ++seen[sim::drawHarmony(row, what, dice)];
+        return seen;
+    };
+    const std::map<int, int> low = draws(swordRow, 0), high = draws(swordRow, 11);
+    check(low.size() == 4 && low.count(1) && low.count(2) && low.count(3) && low.count(4),
+          "at +0 a sword rolls only options 1 to 4");
+    check(high.size() == 7 && high.count(7) && !high.count(0), "at +11 all seven, never none");
+    // 40 in 240 at +11: one in six.
+    check(high.at(1) > 500 && high.at(1) < 850, "by OpenMU's weights");
+    content::ItemRow loose = swordRow;
+    loose.needAgility = 0;
+    check(!draws(loose, 11).count(4), "and no agility cut on an item that asks no agility");
+    // It works while the plus holds its level, and greys out below it.
+    sim::Held held{sword, 9, 1};
+    held.harmony = 2;  // Maximum damage
+    held.harmonyLevel = 9;
+    check(sim::harmonyActive(held), "a level-9 option on a +9 works");
+    checkEqual(sim::harmonyValue(swordRow, held), 17, "for MU's 17 at level 9");
+    held.refinement = 8;
+    check(!sim::harmonyActive(held) && sim::harmonyValue(swordRow, held) == 0, "and not on a +8");
+    held.refinement = 11;
+    held.harmony = 5;
+    held.harmonyLevel = 11;
+    sim::Command packed;
+    sim::packHeld(held, packed);
+    const sim::Held unpacked = sim::unpackHeld(packed);
+    check(unpacked.harmony == 5 && unpacked.harmonyLevel == 11 && unpacked.refinement == 11 &&
+              (packed.target & 0x80000000u) == 0,
+          "the market's words carry it, clear of BrokerBuy's bit");
+    const std::vector<sim::ItemLink> links = sim::findLinks("look " + sim::itemLink(swordRow, held));
+    check(links.size() == 1 && links[0].held.harmony == 5 && links[0].held.harmonyLevel == 11,
+          "and so does a chat link");
+}
+
 void testKept(const content::Tables& tables) {
     std::printf("kept\n");
     sim::Realm from;
@@ -17432,6 +17519,7 @@ int main() {
     testTalents();
     testTalentCommands(tables);
     testTalentStats(tables);
+    testHarmony(tables);
     testTalentSpecials(tables);
     testExcellent(tables);
     testSets(tables);

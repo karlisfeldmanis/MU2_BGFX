@@ -362,6 +362,7 @@ add_library(mu_sim STATIC
   src/sim/realm_party.cpp
   src/sim/realm_raid.cpp
   src/sim/raid_party.cpp
+  src/sim/harmony.cpp
   src/sim/skills.cpp
   src/sim/audit.cpp
 )

@@ -21,7 +21,8 @@ bool same(const Held& a, const Held& b) {
            a.excellent == b.excellent && a.sockets == b.sockets &&
            std::equal(std::begin(a.powers), std::end(a.powers), std::begin(b.powers)) &&
            std::equal(std::begin(a.affixes), std::end(a.affixes), std::begin(b.affixes)) &&
-           a.wing == b.wing && a.bound == b.bound;
+           a.wing == b.wing && a.bound == b.bound && a.harmony == b.harmony &&
+           a.harmonyLevel == b.harmonyLevel;
 }
 
 }  // namespace

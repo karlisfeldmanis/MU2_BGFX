@@ -49,13 +49,14 @@ void testDarkLord(void (*check)(bool, const char*), void (*checkEqual)(long long
     check(!knight.spend(0, 0, 0, 0, 1), "a knight may not spend on Command");
     checkEqual(knight.hero().points.command, 0, "and has none");
 
-    // Through a character's bytes (kKeptLayout 19), and a layout-18 record reads none.
+    // Through a character's bytes (kKeptLayout 19, written as a 19 since Harmony's 20), and a
+    // layout-18 record reads none.
     sim::Kept kept;
     kept.hero = realm.record();
     std::vector<uint8_t> bytes;
-    net::putKept(bytes, kept);
+    net::putKept(bytes, kept, 19);
     sim::Kept back;
-    check(net::keptFrom(bytes, back), "his bytes read back");
+    check(net::keptFrom(bytes, back, 19), "his bytes read back");
     checkEqual(back.hero.points.command, 30, "his Command read back");
     checkEqual(int(back.hero.kin), int(sim::Kin::DarkLord), "and his class");
     // Layout 19 also carries his skills' cools from the 44th, Force's: found by the first byte a
@@ -63,7 +64,7 @@ void testDarkLord(void (*check)(bool, const char*), void (*checkEqual)(long long
     sim::Kept forced = kept;
     forced.hero.coolsLeft[43] = 0x7F;
     std::vector<uint8_t> forcedBytes;
-    net::putKept(forcedBytes, forced);
+    net::putKept(forcedBytes, forced, 19);
     size_t cool = 0;
     while (cool < bytes.size() && bytes[cool] == forcedBytes[cool]) ++cool;
     std::vector<uint8_t> older(bytes.begin(), bytes.end() - 4);

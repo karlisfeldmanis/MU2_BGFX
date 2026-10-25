@@ -122,7 +122,8 @@ float floatOf(uint32_t v) {
     return f;
 }
 
-void putHeld(Out& o, const sim::Held& h) {
+// `layout` is the kept bytes' to write; a frame's own items are always the current one's.
+void putHeld(Out& o, const sim::Held& h, int layout = kKeptLayout) {
     o.i32(h.item);
     o.u32(uint32_t(uint16_t(h.refinement)) | uint32_t(uint16_t(h.durability)) << 16);
     o.u8(uint8_t((h.skill ? 1 : 0) | (h.luck ? 2 : 0) | (h.bound ? 4 : 0)));
@@ -132,9 +133,14 @@ void putHeld(Out& o, const sim::Held& h) {
     for (uint8_t p : h.powers) o.u8(p);
     for (uint8_t a : h.affixes) o.u8(a);
     o.u8(h.wing);
+    if (layout >= 20) {
+        o.u8(h.harmony);
+        o.u8(h.harmonyLevel);
+    }
 }
 
-sim::Held takeHeld(In& in) {
+// `layout` is the kept bytes' (kKeptLayout); a frame's own items are always the current one's.
+sim::Held takeHeld(In& in, int layout = kKeptLayout) {
     sim::Held h;
     h.item = in.i32();
     const uint32_t both = in.u32();
@@ -151,10 +157,15 @@ sim::Held takeHeld(In& in) {
     for (uint8_t& p : h.powers) p = in.u8();
     for (uint8_t& a : h.affixes) a = in.u8();
     h.wing = in.u8();
+    // Its Jewel of Harmony option from layout 20; none before it.
+    if (layout >= 20) {
+        h.harmony = in.u8();
+        h.harmonyLevel = in.u8();
+    }
     return h;
 }
 
-void putKept(Out& o, const sim::Kept& k) {
+void putKept(Out& o, const sim::Kept& k, int layout = kKeptLayout) {
     const sim::HeroRecord& r = k.hero;
     o.u8(uint8_t(r.kin));
     o.i32(r.column);
@@ -178,7 +189,7 @@ void putKept(Out& o, const sim::Kept& k) {
     o.i64(r.aleTicksLeft);
     o.i32(r.might);
     o.i64(r.mightTicksLeft);
-    for (const sim::Held& h : r.slots) putHeld(o, h);
+    for (const sim::Held& h : r.slots) putHeld(o, h, layout);
     for (const sim::QuestProgress& q : r.quests) {
         o.u8(uint8_t(q.state));
         for (uint16_t c : q.counts) o.u32(c);
@@ -188,9 +199,9 @@ void putKept(Out& o, const sim::Kept& k) {
     o.u32(r.found);
     o.i32(r.summonSkill);
     o.i32(r.summonHealth);
-    for (int cell = 0; cell < sim::kVaultCells; ++cell) putHeld(o, k.vault[cell]);
+    for (int cell = 0; cell < sim::kVaultCells; ++cell) putHeld(o, k.vault[cell], layout);
     o.i64(k.vault.zen());
-    for (int cell = 0; cell < sim::kMachineCells; ++cell) putHeld(o, k.machine[cell]);
+    for (int cell = 0; cell < sim::kMachineCells; ++cell) putHeld(o, k.machine[cell], layout);
     const sim::WayBack& way = r.wayBack;
     o.i32(way.map);
     o.i32(way.column);
@@ -243,7 +254,7 @@ sim::Kept takeKept(In& in, int layout = kKeptLayout) {
     r.aleTicksLeft = in.i64();
     r.might = in.i32();
     r.mightTicksLeft = in.i64();
-    for (sim::Held& h : r.slots) h = takeHeld(in);
+    for (sim::Held& h : r.slots) h = takeHeld(in, layout);
     // Layouts 3 and 4 carry 24 quests, 5 to 7 carry 25, 8 to 11 carry 27, 12 to 17 carry 28; the
     // rest stand untaken.
     const int quests = layout >= 18 ? sim::kQuests
@@ -263,13 +274,13 @@ sim::Kept takeKept(In& in, int layout = kKeptLayout) {
     k.vault.clear();
     const bool wide = layout >= 15;
     for (int cell = 0; cell < (wide ? sim::kVaultCells : sim::kOldVaultCells); ++cell) {
-        const sim::Held h = takeHeld(in);
+        const sim::Held h = takeHeld(in, layout);
         if (!h.empty()) k.vault.put(wide ? cell : sim::widenedCell(cell), h);
     }
     k.vault.setZen(in.i64());
     k.machine.clear();
     for (int cell = 0; cell < sim::kMachineCells; ++cell) {
-        const sim::Held h = takeHeld(in);
+        const sim::Held h = takeHeld(in, layout);
         if (!h.empty()) k.machine.put(cell, h);
     }
     if (layout >= 4) {
@@ -1030,9 +1041,9 @@ bool parse(const std::vector<uint8_t>& body, Hash& out) {
     return in.done();
 }
 
-void putKept(std::vector<uint8_t>& out, const sim::Kept& one) {
+void putKept(std::vector<uint8_t>& out, const sim::Kept& one, int layout) {
     Out o{out};
-    putKept(o, one);
+    putKept(o, one, layout);
 }
 
 bool keptFrom(const std::vector<uint8_t>& bytes, sim::Kept& out, int layout) {

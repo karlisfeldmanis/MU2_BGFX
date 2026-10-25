@@ -57,7 +57,9 @@ inline std::string itemLink(const content::ItemRow& row, const Held& held) {
                               held.affixes[0],
                               held.affixes[1],
                               held.affixes[2],
-                              held.wing};
+                              held.wing,
+                              held.harmony,
+                              held.harmonyLevel};
     size_t n = sizeof fields / sizeof fields[0];
     while (n > 3 && fields[n - 1] == 0) --n;
     std::string out = "{i:";
@@ -102,7 +104,7 @@ inline std::vector<ItemLink> findLinks(const std::string& text) {
             at += 3;
             continue;
         }
-        fields.resize(15, 0);
+        fields.resize(17, 0);
         ItemLink link;
         link.from = at;
         link.to = end + 1;
@@ -121,6 +123,8 @@ inline std::vector<ItemLink> findLinks(const std::string& text) {
         for (int k = 0; k < 3; ++k) h.powers[k] = uint8_t(fields[size_t(8 + k)]);
         for (int k = 0; k < 3; ++k) h.affixes[k] = uint8_t(fields[size_t(11 + k)]);
         h.wing = uint8_t(fields[14]);
+        h.harmony = uint8_t(fields[15]);
+        h.harmonyLevel = uint8_t(fields[16]);
         out.push_back(link);
         at = end + 1;
     }

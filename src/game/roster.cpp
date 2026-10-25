@@ -55,6 +55,8 @@ std::vector<Seat> seatsOf(const net::Roster& roster, const content::Tables& tabl
                 item.affixes[i] = h.affixes[i];
             }
             item.wing = h.wing;
+            item.harmony = h.harmony;
+            item.harmonyLevel = h.harmonyLevel;
             item.worn = true;
             seat.items.push_back(item);
         }

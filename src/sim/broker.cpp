@@ -88,21 +88,24 @@ bool brokerAlike(const content::ItemRow& row, const Held& what) {
     // single one fills a row of alike things.
     return (kind == BrokerKind::Jewels || kind == BrokerKind::Tickets) && what.refinement == 0 &&
            (!stacks(row) || what.durability <= 1) &&
-           !what.skill && !what.luck && what.option == 0 && what.excellent == 0;
+           !what.skill && !what.luck && what.option == 0 && what.excellent == 0 && what.harmony == 0;
 }
 
 // a: the item; b: refinement and durability; c: the flags, option, excellent and sockets;
-// d: the three powers and the wing; target: the three affixes.
+// d: the three powers and the wing; target: the three affixes. The Harmony option rides in bits
+// that were free, its number in c's bits 3-6 and its level in target's 24-27 (bit 31 is
+// BrokerBuy's), so no ledger or book that keeps these words changed shape.
 void packHeld(const Held& what, Command& into) {
     into.a = what.item;
     into.b = int32_t(uint32_t(uint16_t(what.refinement)) | uint32_t(uint16_t(what.durability)) << 16);
     into.c = int32_t(uint32_t((what.skill ? 1 : 0) | (what.luck ? 2 : 0) | (what.bound ? 4 : 0)) |
+                     uint32_t(what.harmony & 15) << 3 |
                      uint32_t(uint8_t(what.option)) << 8 | uint32_t(what.excellent) << 16 |
                      uint32_t(what.sockets) << 24);
     into.d = int32_t(uint32_t(what.powers[0]) | uint32_t(what.powers[1]) << 8 |
                      uint32_t(what.powers[2]) << 16 | uint32_t(what.wing) << 24);
     into.target = uint32_t(what.affixes[0]) | uint32_t(what.affixes[1]) << 8 |
-                  uint32_t(what.affixes[2]) << 16;
+                  uint32_t(what.affixes[2]) << 16 | uint32_t(what.harmonyLevel & 15) << 24;
 }
 
 Held unpackHeld(const Command& from) {
@@ -114,12 +117,14 @@ Held unpackHeld(const Command& from) {
     what.skill = (c & 1) != 0;
     what.luck = (c & 2) != 0;
     what.bound = (c & 4) != 0;
+    what.harmony = uint8_t((c >> 3) & 15);
     what.option = int8_t(uint8_t(c >> 8));
     what.excellent = uint8_t(c >> 16);
     what.sockets = uint8_t(c >> 24);
     for (int i = 0; i < 3; ++i) what.powers[i] = uint8_t(d >> (8 * i));
     what.wing = uint8_t(d >> 24);
     for (int i = 0; i < 3; ++i) what.affixes[i] = uint8_t(from.target >> (8 * i));
+    what.harmonyLevel = uint8_t((from.target >> 24) & 15);
     return what;
 }
 

@@ -86,6 +86,11 @@ Saved::Item readItem(const core::Json& one) {
         item.affixes[i] = std::clamp(int(affixes.at(i).numberOr(0)), 0, sim::kAffixes);
     }
     item.wing = int(one["wing"].numberOr(0)) & 0xff;
+    const core::Json& harmony = one["harmony"];
+    if (harmony.size() == 2) {
+        item.harmony = std::clamp(int(harmony.at(0).numberOr(0)), 0, 255);
+        item.harmonyLevel = std::clamp(int(harmony.at(1).numberOr(0)), 0, 255);
+    }
     item.worn = one["wear"].boolOr(false);
     return item;
 }
@@ -99,12 +104,14 @@ void writeHeld(std::FILE* f, const content::Tables& tables, int slot, const sim:
     std::fprintf(f,
                  ", \"plus\": %d, \"durability\": %d, \"wear\": true, \"skill\": %s, "
                  "\"luck\": %s, \"option\": %d, \"excellent\": %d, \"sockets\": %d, "
-                 "\"powers\": [%d, %d, %d], \"affixes\": [%d, %d, %d], \"wing\": %d, \"bound\": %s}",
+                 "\"powers\": [%d, %d, %d], \"affixes\": [%d, %d, %d], \"wing\": %d, \"bound\": %s, "
+                 "\"harmony\": [%d, %d]}",
                  int(held.refinement), int(held.durability), held.skill ? "true" : "false",
                  held.luck ? "true" : "false", int(held.option), int(held.excellent),
                  int(held.sockets), int(held.powers[0]), int(held.powers[1]),
                  int(held.powers[2]), int(held.affixes[0]), int(held.affixes[1]),
-                 int(held.affixes[2]), int(held.wing), held.bound ? "true" : "false");
+                 int(held.affixes[2]), int(held.wing), held.bound ? "true" : "false",
+                 int(held.harmony), int(held.harmonyLevel));
     *first = false;
 }
 
@@ -339,6 +346,8 @@ void resolveSave(const content::Tables& tables, Saved& saved) {
         for (int i = 0; i < 3; ++i) held.powers[i] = uint8_t(item.powers[i]);
         for (int i = 0; i < 3; ++i) held.affixes[i] = uint8_t(item.affixes[i]);
         held.wing = uint8_t(item.wing);
+        held.harmony = uint8_t(item.harmony);
+        held.harmonyLevel = uint8_t(item.harmonyLevel);
         // A jewel a quest paid before jewels were never bound comes back free (sim::bindable).
         held.bound = item.bound && sim::bindable(tables.items[size_t(row)]);
         capSockets(tables.items[size_t(row)], held);
@@ -376,6 +385,8 @@ void resolveSave(const content::Tables& tables, Saved& saved) {
         for (int i = 0; i < 3; ++i) held.powers[i] = uint8_t(item.powers[i]);
         for (int i = 0; i < 3; ++i) held.affixes[i] = uint8_t(item.affixes[i]);
         held.wing = uint8_t(item.wing);
+        held.harmony = uint8_t(item.harmony);
+        held.harmonyLevel = uint8_t(item.harmonyLevel);
         held.bound = item.bound && sim::bindable(*r);
         capSockets(*r, held);
         saved.machine.put(item.slot, held);
@@ -664,6 +675,8 @@ sim::Vault resolveVault(const content::Tables& tables, const Saved& saved) {
         for (int i = 0; i < 3; ++i) held.powers[i] = uint8_t(item.powers[i]);
         for (int i = 0; i < 3; ++i) held.affixes[i] = uint8_t(item.affixes[i]);
         held.wing = uint8_t(item.wing);
+        held.harmony = uint8_t(item.harmony);
+        held.harmonyLevel = uint8_t(item.harmonyLevel);
         held.bound = item.bound && sim::bindable(*r);
         capSockets(*r, held);
         vault.put(item.slot, held);
