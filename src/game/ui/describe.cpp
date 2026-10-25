@@ -9,6 +9,7 @@
 
 #include "sim/config.h"
 #include "sim/event.h"
+#include "sim/harmony.h"
 #include "sim/lord_pets.h"
 #include "sim/quests.h"
 #include "sim/rules.h"
@@ -994,7 +995,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     const bool waves = row.skill == sim::skill::kForceWave;
     if ((sim::takesOptions(row) || sim::jewellery(row) || sim::anyWing(row)) &&
         (what.luck || what.option > 0 || what.excellent != 0 || waves ||
-         (sim::secondWing(row) && what.wing != 0))) {
+         (sim::secondWing(row) && what.wing != 0) || what.harmony != 0)) {
         Section options;
         // MU's line split at its last word where that word is the value: "Max life +8%"
         // is the prose "Max life" and the value "+8%". A line whose last word is not a
@@ -1065,6 +1066,26 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             if (what.excellent & (1u << bit)) {
                 option("", sim::excellentLine(row, bit), tip::Mark::Star, Tone::Green);
             }
+        }
+        // Its Jewel of Harmony option under them, where MU prints it, in MU's gold
+        // (UIJewelHarmony: 1.0, 0.8, 0.1) -- grey, with the plus it waits for, while the item's
+        // plus is under the option's level (sim::harmonyActive).
+        if (const sim::HarmonyOption* harmony = sim::harmonyOf(row, what)) {
+            const bool on = sim::harmonyActive(what);
+            const int level = std::min<int>(what.harmonyLevel, sim::kHarmonyTop);
+            const int value = on ? sim::harmonyValue(row, what)
+                                 : int(double(harmony->value[level]) * sim::kHarmonyStrength);
+            const bool cut = harmony->effect == sim::HarmonyEffect::StrengthAsked ||
+                             harmony->effect == sim::HarmonyEffect::AgilityAsked;
+            Row line;
+            line.keyword = "Harmony";
+            line.free = harmony->name;
+            line.tail = (cut ? "-" : "+") + std::to_string(value) + (harmony->percent ? "%" : "");
+            if (!on) line.tail += " (at +" + std::to_string(level) + ")";
+            line.freeTone = on ? Tone::Yellow : Tone::Gray;
+            line.mark = tip::Mark::Diamond;
+            line.markTone = on ? Tone::Yellow : Tone::Gray;
+            options.rows.push_back(line);
         }
         sheet.sections.push_back(options);
     }
@@ -1468,9 +1489,10 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     // with how far short, when it is not: a card read for a second should have the one line that
     // stops you wearing it be the one that shouts. MU prints them white and only the failures
     // red; the card goes one step quieter on the ones you meet.
-    // A Dark Horse asks by its level (sim::asks over the Held).
-    const sim::Needs asked =
-        sim::levelledPet(row) ? sim::asks(row, what) : sim::asks(row, plus, what.excellent != 0);
+    // A Dark Horse asks by its level (sim::asks over the Held); a Harmony option's cut comes off
+    // (sim::harmonyEased), shown already taken as MU shows it.
+    const sim::Needs asked = sim::harmonyEased(
+        row, what, sim::levelledPet(row) ? sim::asks(row, what) : sim::asks(row, plus, what.excellent != 0));
     const sim::Needs owed = sim::shortOf(asked, who.level, who.points);
     // One class line, and none when every class may: the allowed ones in mu.db's order, the
     // wizard, the elf, the knight, the gladiator -- green when yours is among them and red when

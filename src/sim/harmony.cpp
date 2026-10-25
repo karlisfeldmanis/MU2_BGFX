@@ -1,5 +1,6 @@
 #include "sim/harmony.h"
 
+#include <algorithm>
 #include <iterator>
 
 namespace mu::sim {
@@ -87,7 +88,16 @@ bool harmonyActive(const Held& what) {
 int harmonyValue(const content::ItemRow& row, const Held& what) {
     const HarmonyOption* option = harmonyOf(row, what);
     if (option == nullptr || !harmonyActive(what) || what.harmonyLevel > kHarmonyTop) return 0;
-    return option->value[what.harmonyLevel];
+    return int(double(option->value[what.harmonyLevel]) * kHarmonyStrength);
+}
+
+Needs harmonyEased(const content::ItemRow& row, const Held& what, Needs asked) {
+    const HarmonyOption* option = harmonyOf(row, what);
+    if (option == nullptr) return asked;
+    const int cut = harmonyValue(row, what);
+    if (option->effect == E::StrengthAsked) asked.strength = std::max(0, asked.strength - cut);
+    if (option->effect == E::AgilityAsked) asked.agility = std::max(0, asked.agility - cut);
+    return asked;
 }
 
 int drawHarmony(const content::ItemRow& row, const Held& what, Random& dice) {

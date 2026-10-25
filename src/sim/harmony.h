@@ -41,6 +41,10 @@ enum class HarmonyEffect : uint8_t {
 
 // Option levels 0 to kHarmonyTop: ours stop at the plus's own top.
 inline constexpr int kHarmonyTop = 11;
+// How much stronger than MU's every option is (the user, 2026-10-25: "our harmony stones has to be
+// stronger that original"): the table's value times this, rounded down, on the card and in the
+// stats alike. 1 until it is measured on the Kanturu kits and picked (the plan's step 3).
+inline constexpr double kHarmonyStrength = 1.0;
 
 struct HarmonyOption {
     uint8_t number = 0;       // MU's, in its table
@@ -61,8 +65,12 @@ const HarmonyOption* harmonyOf(const content::ItemRow& row, const Held& what);
 // Whether its option works: MU's rule, the item's plus at least the option's level
 // (JoH.cpp:473-476). A failed Jewel of Soul that drops the plus greys it out until it is raised.
 bool harmonyActive(const Held& what);
-// Its value now: the option's at its level, or 0 when it is none or inactive.
+// Its value now: the option's at its level times kHarmonyStrength, or 0 when it is none or
+// inactive.
 int harmonyValue(const content::ItemRow& row, const Held& what);
+// What `what` asks of its wearer once its option's requirement cut is taken off (the weapon's
+// and staff's Strength and Agility requirement options, zzzitem.cpp:528-560), never below nought.
+Needs harmonyEased(const content::ItemRow& row, const Held& what, Needs asked);
 // The option a Jewel of Harmony lays on `what`: a weighted draw among its family's options whose
 // least is at most its plus (JoH.cpp:528-579), the requirement cuts left out of an item that asks
 // nothing of that stat (WebZen meant to and never did, JoH.cpp:555). 0 when none can roll. The

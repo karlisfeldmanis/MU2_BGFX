@@ -15,6 +15,7 @@
 //
 // The rolls: the dragon's off `raidDice_`, the raiders' off `raiderDice_`, so a run with no raid
 // is not moved by one.
+#include "sim/harmony.h"
 #include "sim/realm.h"
 #include "sim/fmath.h"
 #include "sim/lord_pets.h"
@@ -75,7 +76,7 @@ std::string kitInto(const content::Tables& tables, const RaiderKit& kit, Satchel
             // Why, as the item card would say it: what it asks that he has not.
             const content::ItemRow& row = tables.items[size_t(item)];
             const Needs short_ =
-                shortOf(asks(row, held), who.level, who.points);
+                shortOf(harmonyEased(row, held, asks(row, held)), who.level, who.points);
             char why[160];
             std::snprintf(why, sizeof(why),
                           " (short: level %d, strength %d, agility %d, vitality %d, energy %d%s%s)",

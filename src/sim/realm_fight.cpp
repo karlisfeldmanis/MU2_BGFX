@@ -99,9 +99,20 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
         lord.maximumDamage += skillDamage + skillDamage / 2 + flat;
         swinger = &lord;
     }
-    Blow blow = row && row->wizardry ? cast(attacker.stats, *guard,
-                                            row->damage + (attacker.player ? me().chargeDamage : 0), dice)
-                                     : strike(*swinger, *guard, dice);
+    // The Jewel of Harmony's skill damage, flat (WebZen ObjAttack.cpp:3200-3207): on a spell's own
+    // damage, and on both ends of the band a skill's swing rolls in. Never on a plain swing.
+    const int harmonySkill = row != nullptr && attacker.player ? attacker.excel.harmonySkill : 0;
+    Fighter skilled;
+    if (harmonySkill > 0 && !row->wizardry) {
+        skilled = *swinger;
+        skilled.minimumDamage += harmonySkill;
+        skilled.maximumDamage += harmonySkill;
+        swinger = &skilled;
+    }
+    Blow blow = row && row->wizardry
+                    ? cast(attacker.stats, *guard,
+                           row->damage + (attacker.player ? me().chargeDamage : 0) + harmonySkill, dice)
+                    : strike(*swinger, *guard, dice);
     attacker.stats.damageDealt = dealt;
     if (blow.hit && impPaid) attacker.health -= impCost;
     // Ice's and Poison's elements, and a poisoner's bite on him. WebZen lays them before the

@@ -17131,6 +17131,35 @@ void testHarmony(const content::Tables& tables) {
     const std::vector<sim::ItemLink> links = sim::findLinks("look " + sim::itemLink(swordRow, held));
     check(links.size() == 1 && links[0].held.harmony == 5 && links[0].held.harmonyLevel == 11,
           "and so does a chat link");
+    // Worn, it counts (step 3). A requirement cut comes off what the item asks.
+    sim::Held eased{sword, 9, 1};
+    eased.harmony = 3;  // Strength requirement, level 9: MU's 29
+    eased.harmonyLevel = 9;
+    checkEqual(long(sim::harmonyEased(swordRow, eased, sim::asks(swordRow, 9)).strength),
+               long(std::max(0, sim::asks(swordRow, 9).strength - 29)), "a Strength requirement option asks 29 less");
+    const int32_t kris = tables.itemNamed("Sword01");
+    check(kris >= 0, "the Kris is cooked");
+    if (kris < 0) return;
+    sim::Realm realm;
+    realm.raise(&tables, 41, 138, 124, sim::Kin::DarkKnight, 400);
+    sim::HeroRecord rec = realm.record();
+    rec.points.strength = 900;
+    rec.points.agility = 300;
+    rec.points.vitality = 300;
+    rec.slots[sim::kWeaponRight] = sim::Held{kris, 9, 40};
+    rec.slots[sim::kArmour] = sim::Held{armour, 9, 40};
+    realm.restore(rec);
+    const long bandLow = realm.hero().stats.minimumDamage, bandTop = realm.hero().stats.maximumDamage;
+    const long life = realm.hero().maxHealth;
+    rec.slots[sim::kWeaponRight].harmony = 2;  // Maximum damage, level 9: MU's 17
+    rec.slots[sim::kWeaponRight].harmonyLevel = 9;
+    rec.slots[sim::kArmour].harmony = 3;  // Maximum life, level 9: MU's 19
+    rec.slots[sim::kArmour].harmonyLevel = 9;
+    realm.restore(rec);
+    checkEqual(long(realm.hero().stats.maximumDamage), bandTop + long(17 * sim::kHarmonyStrength),
+               "a Kris's Maximum damage option raises the top of his band");
+    checkEqual(long(realm.hero().stats.minimumDamage), bandLow, "and not its bottom");
+    checkEqual(long(realm.hero().maxHealth), life + long(19 * sim::kHarmonyStrength), "armour's Maximum life raises his life");
 }
 
 void testKept(const content::Tables& tables) {

@@ -321,6 +321,16 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
             out->offhandMaximumDamage += arms.wingDamage;
         }
     }
+    // The Jewel of Harmony's damage, flat on both ends of both hands' bands, beside the wing's
+    // (WebZen JoH.cpp:1124-1133, after the base attack is reckoned).
+    if (arms.excel.harmonyMinimum > 0 || arms.excel.harmonyMaximum > 0) {
+        out->minimumDamage += arms.excel.harmonyMinimum;
+        out->maximumDamage += arms.excel.harmonyMaximum;
+        if (arms.dual) {
+            out->offhandMinimumDamage += arms.excel.harmonyMinimum;
+            out->offhandMaximumDamage += arms.excel.harmonyMaximum;
+        }
+    }
     // The luck option is 0.75's only source: a twentieth for each lucky thing worn.
     out->criticalChance = arms.criticalChance;
     out->criticalDamage = arms.excel.criticalDamage;
@@ -343,8 +353,11 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
     // the Magic Gladiator's relate energy to wizardry damage, at the same ninth and quarter
     // (ClassMagicGladiator.cs:70-71); a knight or an elf with a staff has no band to raise.
     const bool wizard = kin == Kin::DarkWizard || kin == Kin::MagicGladiator;
-    out->wizardMinimum = wizard ? double(points.energy) / 9.0 + arms.wingWizardry : 0.0;
-    out->wizardMaximum = wizard ? double(points.energy) / 4.0 + arms.wingWizardry : 0.0;
+    // And a staff's Harmony wizardry, flat on both ends (JoH.cpp:1160-1161).
+    out->wizardMinimum =
+        wizard ? double(points.energy) / 9.0 + arms.wingWizardry + arms.excel.harmonyWizardry : 0.0;
+    out->wizardMaximum =
+        wizard ? double(points.energy) / 4.0 + arms.wingWizardry + arms.excel.harmonyWizardry : 0.0;
     out->wizardryRate = 1.0 + arms.staffRise / 100.0;
     // Off-Hand Mastery, on the left hand's band; Gladiator's Edge, a share of his wizardry band
     // on both ends of his weapon's (sim/talents.h).
@@ -360,7 +373,9 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
     out->defenseRate = float(double(out->defenseRate) * (1.0 + arms.setDefenseRate));
     out->defenseRate = float(double(out->defenseRate) * excel.defenseRateRate);
     out->excellentChance = excel.excellentChance;
-    out->damageDecrease = std::min(kDamageDecreaseMost, excel.damageDecrease);
+    // Harmony's percent off a blow taken beside the excellent armour's (JoH.cpp:1173, DamageMinus).
+    const double decrease = excel.damageDecrease + double(excel.harmonyTaken) / 100.0;
+    out->damageDecrease = std::min(kDamageDecreaseMost, decrease);
     out->blockChance = std::min(excel.blockChance, kSteadfastMost);
     out->ignoreDefense = excel.ignoreDefense;
     // His talents' (sim::TalentShares): the two rates, then the chances, each under the cap
@@ -371,13 +386,14 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
     if (talent.excellent != 0) out->excellentChance += talent.excellent;
     if (talent.ignoreDefense != 0) out->ignoreDefense += talent.ignoreDefense;
     if (talent.damageDecrease != 0) {
-        out->damageDecrease = std::min(kDamageDecreaseMost, excel.damageDecrease + talent.damageDecrease);
+        out->damageDecrease = std::min(kDamageDecreaseMost, decrease + talent.damageDecrease);
     }
     if (talent.block != 0) out->blockChance = std::min(excel.blockChance + talent.block, kSteadfastMost);
     out->damageTaken = arms.pet.taken;
     out->damageDealt = arms.pet.dealt;
     out->greaterDamage = arms.greaterDamage;
-    out->criticalAdd = arms.criticalAdd;
+    // Harmony's critical damage, flat on a critical's top as a Dark Lord's Critical Damage is.
+    out->criticalAdd = arms.criticalAdd + excel.harmonyCritical;
 
     // Truncated, and it is a departure of the same kind as the two above: OpenMU keeps
     // MaximumHealth as a float attribute and compares health against it as one. Nothing in
@@ -385,8 +401,9 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
     // 35 + 2 + 75 for a knight -- and this is marked rather than argued.
     *maxHealth = int(double(row.baseHealth) + double(level) * double(row.healthPerLevel) +
                      double(points.vitality) * double(row.healthPerVitality));
-    // The Guardian Angel's +50, raw, so the armour's rate below takes it too.
-    *maxHealth += arms.pet.health;
+    // The Guardian Angel's +50, raw, so the armour's rate below takes it too; and Harmony's max
+    // life the same way (JoH.cpp:1170, AddLife).
+    *maxHealth += arms.pet.health + excel.harmonyLife;
     // Four pieces of a set.
     if (arms.setHealth > 0.0) *maxHealth = int(double(*maxHealth) * (1.0 + arms.setHealth));
     // And the excellent armour's +8% a piece on top.

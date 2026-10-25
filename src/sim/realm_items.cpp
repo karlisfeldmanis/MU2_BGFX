@@ -16,6 +16,7 @@
 
 #include "core/log.h"
 #include "sim/broker.h"
+#include "sim/harmony.h"
 #include "sim/lord_pets.h"
 #include "sim/realm_tuning.h"
 #include "sim/wear.h"
@@ -399,6 +400,36 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
             if (has(5)) e.excellentChance += 0.2;
         }
     }
+    // And the Jewel of Harmony's options (sim/harmony.h): the hands', the shield's and the five
+    // armour pieces', each active one summed into its stat as WebZen sums them.
+    for (int slot = kWeaponRight; slot <= kBoots; ++slot) {
+        const content::ItemRow* row = rowAt(slot);
+        if (!row || kit[slot].harmony == 0) continue;
+        const HarmonyOption* option = harmonyOf(*row, kit[slot]);
+        const int value = harmonyValue(*row, kit[slot]);
+        if (option == nullptr || value == 0) continue;
+        Excellence& e = hero.excel;
+        switch (option->effect) {
+            case HarmonyEffect::MinimumDamage: e.harmonyMinimum += value; break;
+            case HarmonyEffect::MaximumDamage: e.harmonyMaximum += value; break;
+            case HarmonyEffect::Damage:
+                e.harmonyMinimum += value;
+                e.harmonyMaximum += value;
+                break;
+            case HarmonyEffect::Wizardry: e.harmonyWizardry += value; break;
+            case HarmonyEffect::CriticalDamage: e.harmonyCritical += value; break;
+            case HarmonyEffect::SkillDamage: e.harmonySkill += value; break;
+            case HarmonyEffect::Defense: e.harmonyDefense += value; break;
+            case HarmonyEffect::MaximumLife: e.harmonyLife += value; break;
+            case HarmonyEffect::LifeRecovery: e.harmonyLifeRecovery += value; break;
+            case HarmonyEffect::ManaRecovery: e.harmonyManaRecovery += value; break;
+            case HarmonyEffect::DamageTaken: e.harmonyTaken += value; break;
+            // The requirement cuts are the wearing's (sim::harmonyEased), not a stat.
+            case HarmonyEffect::StrengthAsked:
+            case HarmonyEffect::AgilityAsked:
+            case HarmonyEffect::None: break;
+        }
+    }
     // Which worn runes count (sim::stackMostOf): of a limited one the first so many found.
     bool counted[kRingLeft + 1][kMostSockets] = {};
     {
@@ -615,7 +646,8 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
     hero.weaponCut = weaponSlot >= 0 ? cutAt(weaponSlot) : 0.0f;
     hero.offhandCut = hero.dual ? cutAt(kWeaponLeft) : 0.0f;
     hero.shield = left && (left->shield() || hero.dual) ? tables_->armNamed(left->name) : -1;
-    hero.wornDefense = 0;
+    // Harmony's defence at half, as WebZen's server lays it (JoH.cpp:1163, "like set items").
+    hero.wornDefense = hero.excel.harmonyDefense / 2;
     hero.wornDefenseRate = 0;
     hero.shieldDefense = 0;
     for (int slot = kWeaponLeft; slot <= kBoots; ++slot) {
@@ -1197,6 +1229,16 @@ void Realm::recover(Body& hero) {
                 core::logf("renewal rune: tick %lld, +%d health", (long long)tick_, whole);
             }
             if (whole > 0) hero.health = std::min(hero.maxHealth, hero.health + whole);
+        }
+    }
+    // Harmony's life and mana each three seconds, anywhere: WebZen's flat amount a regeneration
+    // tick (user.cpp:23339, 23150).
+    if (hero.alive() && tick_ % kRecoverEveryTicks == 0) {
+        if (hero.excel.harmonyLifeRecovery > 0) {
+            hero.health = std::min(hero.maxHealth, hero.health + hero.excel.harmonyLifeRecovery);
+        }
+        if (hero.excel.harmonyManaRecovery > 0) {
+            hero.mana = std::min(hero.maxMana, hero.mana + hero.excel.harmonyManaRecovery);
         }
     }
     if (tick_ % kRecoveryTicks != 0 || !hero.alive() || hero.sd >= hero.maxSd) {

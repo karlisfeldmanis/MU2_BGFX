@@ -162,6 +162,20 @@ struct Excellence {
     int lightningRing = 0;
     int fireRing = 0;
     int windRing = 0;
+    // The Jewel of Harmony's options worn (sim/harmony.h), every active one summed, as WebZen sums
+    // them (JoH.cpp:1241-1354): flat on the damage band's ends (both hands), on wizardry's, on a
+    // critical's top and on a skill's damage; armour on the defence (half, JoH.cpp:1163), max
+    // life, life and mana each recovery tick, and a percent off every blow taken.
+    int harmonyMinimum = 0;
+    int harmonyMaximum = 0;
+    int harmonyWizardry = 0;
+    int harmonyCritical = 0;
+    int harmonySkill = 0;
+    int harmonyDefense = 0;
+    int harmonyLife = 0;
+    int harmonyLifeRecovery = 0;
+    int harmonyManaRecovery = 0;
+    int harmonyTaken = 0;  // percent
 };
 
 struct Fighter {
