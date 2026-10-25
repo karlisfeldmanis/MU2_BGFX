@@ -1114,6 +1114,8 @@ void Play::update(double seconds) {
                     happening.b == 0
                         ? std::string(sealed && sealed->sealed ? sealed->sealed : "The way")
                               + " is sealed. Its door will not open."
+                    : happening.b == -2
+                        ? std::string("A Uniria cannot fly. Take it off and wear wings, or ride a Dinorant.")
                     : happening.b < 0
                         ? std::string("You need wings or a Dinorant to enter Icarus.")
                         : "Only characters of level " + std::to_string(happening.b) +
