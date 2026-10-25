@@ -160,6 +160,12 @@ void Pets::ride(float seconds, const Figure& hero, int worn, bool riding, int ac
     // his ride strikes and swings, 0 under the rest. Its 3 is Earthshake's, its 5 and 6 the two
     // horse idles, which nothing here plays.
     if (mounted_ == 4) action = action == 2 ? 1 : action == 3 ? 2 : 0;
+    // **The Dark Horse follows his clip in its run and its attack, and keeps its own in its idle**
+    // (ours, 2026-10-25, the user: "horde legs aniamtiins dont feel 60fps"): its attack on its own
+    // clock was cut at half by his quicker swings and begun again, and its idle held to his clip
+    // jumped as his swing gave way to his stand (0.83 to 0.02 in a frame) -- the legs snapped
+    // twice a swing. One swing is now one whole kick, as one bound is one stride.
+    const bool slaved = mounted_ == 4 ? action != 0 : !ownClock;
     // He sits 30 over the ground on the dragon (Play's kDinorantLift) and it stands on it.
     float ground[3] = {hero.position()[0], hero.position()[1], hero.position()[2]};
     if (mounted_ == 3) {
@@ -190,7 +196,7 @@ void Pets::ride(float seconds, const Figure& hero, int worn, bool riding, int ac
     // on a crossfade, a hitch or a resumed walk phase, and the rider bounces off the saddle's
     // beat. So the leap and the stand take his clip's own place, as a fraction: one bound of
     // the horse is one bounce of the rider, whatever the frame did. **ours**.
-    if (!ownClock) horse_.setClock(hero.through() * horse_.length());
+    if (slaved) horse_.setClock(hero.through() * horse_.length());
 }
 
 bool Pets::breathe(float seconds, float at[3]) {
