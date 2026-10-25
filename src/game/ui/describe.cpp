@@ -1074,7 +1074,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             const bool on = sim::harmonyActive(what);
             const int level = std::min<int>(what.harmonyLevel, sim::kHarmonyTop);
             const int value = on ? sim::harmonyValue(row, what)
-                                 : int(double(harmony->value[level]) * sim::kHarmonyStrength);
+                                 : sim::harmonyAt(*harmony, level);
             const bool cut = harmony->effect == sim::HarmonyEffect::StrengthAsked ||
                              harmony->effect == sim::HarmonyEffect::AgilityAsked;
             Row line;

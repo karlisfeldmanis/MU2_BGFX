@@ -88,7 +88,12 @@ bool harmonyActive(const Held& what) {
 int harmonyValue(const content::ItemRow& row, const Held& what) {
     const HarmonyOption* option = harmonyOf(row, what);
     if (option == nullptr || !harmonyActive(what) || what.harmonyLevel > kHarmonyTop) return 0;
-    return int(double(option->value[what.harmonyLevel]) * kHarmonyStrength);
+    return harmonyAt(*option, what.harmonyLevel);
+}
+
+int harmonyAt(const HarmonyOption& option, int level) {
+    const int value = option.value[std::clamp(level, 0, kHarmonyTop)];
+    return option.percent ? value : int(double(value) * kHarmonyStrength);
 }
 
 Needs harmonyEased(const content::ItemRow& row, const Held& what, Needs asked) {

@@ -41,10 +41,13 @@ enum class HarmonyEffect : uint8_t {
 
 // Option levels 0 to kHarmonyTop: ours stop at the plus's own top.
 inline constexpr int kHarmonyTop = 11;
-// How much stronger than MU's every option is (the user, 2026-10-25: "our harmony stones has to be
-// stronger that original"): the table's value times this, rounded down, on the card and in the
-// stats alike. 1 until it is measured on the Kanturu kits and picked (the plan's step 3).
-inline constexpr double kHarmonyStrength = 1.0;
+// How much stronger than MU's a flat option is (the user, 2026-10-25: "our harmony stones has to be
+// stronger that original", then "you decide"): three times, on the card and in the stats alike.
+// MU's flat values were a few percent of a level-400 hero's -- +14 on a Titan knight's 549-703,
+// +115 life on 3,073 from five pieces; three times is felt and still under an excellent set's.
+// The one percent option, Damage taken, keeps MU's 3-5 a piece: five pieces at MU's already take
+// a quarter off every blow, and three times would reach kDamageDecreaseMost on its own.
+inline constexpr double kHarmonyStrength = 3.0;
 
 struct HarmonyOption {
     uint8_t number = 0;       // MU's, in its table
@@ -65,8 +68,9 @@ const HarmonyOption* harmonyOf(const content::ItemRow& row, const Held& what);
 // Whether its option works: MU's rule, the item's plus at least the option's level
 // (JoH.cpp:473-476). A failed Jewel of Soul that drops the plus greys it out until it is raised.
 bool harmonyActive(const Held& what);
-// Its value now: the option's at its level times kHarmonyStrength, or 0 when it is none or
-// inactive.
+// An option's value at `level`: MU's times kHarmonyStrength, a percent one MU's own.
+int harmonyAt(const HarmonyOption& option, int level);
+// Its value now, harmonyAt its level, or 0 when it is none or inactive.
 int harmonyValue(const content::ItemRow& row, const Held& what);
 // What `what` asks of its wearer once its option's requirement cut is taken off (the weapon's
 // and staff's Strength and Agility requirement options, zzzitem.cpp:528-560), never below nought.

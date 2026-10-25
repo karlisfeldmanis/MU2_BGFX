@@ -17116,7 +17116,7 @@ void testHarmony(const content::Tables& tables) {
     held.harmony = 2;  // Maximum damage
     held.harmonyLevel = 9;
     check(sim::harmonyActive(held), "a level-9 option on a +9 works");
-    checkEqual(sim::harmonyValue(swordRow, held), 17, "for MU's 17 at level 9");
+    checkEqual(sim::harmonyValue(swordRow, held), 51, "for three times MU's 17 at level 9");
     held.refinement = 8;
     check(!sim::harmonyActive(held) && sim::harmonyValue(swordRow, held) == 0, "and not on a +8");
     held.refinement = 11;
@@ -17136,7 +17136,7 @@ void testHarmony(const content::Tables& tables) {
     eased.harmony = 3;  // Strength requirement, level 9: MU's 29
     eased.harmonyLevel = 9;
     checkEqual(long(sim::harmonyEased(swordRow, eased, sim::asks(swordRow, 9)).strength),
-               long(std::max(0, sim::asks(swordRow, 9).strength - 29)), "a Strength requirement option asks 29 less");
+               long(std::max(0, sim::asks(swordRow, 9).strength - 87)), "a Strength requirement option asks three times MU's 29 less");
     const int32_t kris = tables.itemNamed("Sword01");
     check(kris >= 0, "the Kris is cooked");
     if (kris < 0) return;
@@ -17156,10 +17156,13 @@ void testHarmony(const content::Tables& tables) {
     rec.slots[sim::kArmour].harmony = 3;  // Maximum life, level 9: MU's 19
     rec.slots[sim::kArmour].harmonyLevel = 9;
     realm.restore(rec);
-    checkEqual(long(realm.hero().stats.maximumDamage), bandTop + long(17 * sim::kHarmonyStrength),
+    checkEqual(long(realm.hero().stats.maximumDamage), bandTop + 51,
                "a Kris's Maximum damage option raises the top of his band");
     checkEqual(long(realm.hero().stats.minimumDamage), bandLow, "and not its bottom");
-    checkEqual(long(realm.hero().maxHealth), life + long(19 * sim::kHarmonyStrength), "armour's Maximum life raises his life");
+    checkEqual(long(realm.hero().maxHealth), life + 57, "armour's Maximum life raises his life");
+    // Damage taken stays MU's percent: 5 at level 11.
+    const sim::HarmonyOption* taken = sim::harmonyOption(sim::HarmonyFamily::Defence, 7);
+    check(taken != nullptr && sim::harmonyAt(*taken, 11) == 5, "and Damage taken keeps MU's percent");
 }
 
 void testKept(const content::Tables& tables) {
