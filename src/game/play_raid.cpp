@@ -499,7 +499,7 @@ void Play::otherPets(float seconds) {
         }
         Drawn& rider = drawn_[i];
         otherPets_[i].update(seconds, rider.figure, pet, body.alive());
-        otherPets_[i].ride(seconds, rider.figure, mount, body.riding && body.alive(), horseAction(rider, mount));
+        otherPets_[i].ride(seconds, rider.figure, mount, body.riding, horseAction(rider, mount));  // and as he dies (Play::update)
         horseBreath(otherPets_[i], seconds);
     }
 }

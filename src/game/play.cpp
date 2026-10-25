@@ -3458,8 +3458,10 @@ void Play::update(double seconds) {
             const int mount = petNumber(realm_.satchel()[sim::kMount]);
             const int action = horseAction(*hero, mount);
             const bool galloping = action == 2;
-            pets_.ride(float(seconds), hero->figure, mount,
-                       realm_.hero().riding && realm_.hero().alive(), action);
+            // The horse under him while he dies, as MU's, whose mount lives as long as its rider
+            // (`o->Live = o->Owner->Live`, GOBoid.cpp:494, :597): he falls off it where it stands,
+            // and it goes with him into town, where every mount fades.
+            pets_.ride(float(seconds), hero->figure, mount, realm_.hero().riding, action);
             horseBreath(pets_, float(seconds));
             if (pinning_ && pinned_.gallop >= 0.0f && realm_.hero().riding) {
                 pets_.setGallop(pinned_.gallop);
