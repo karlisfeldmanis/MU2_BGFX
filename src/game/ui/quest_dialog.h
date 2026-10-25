@@ -59,6 +59,7 @@ public:
         bool claim = false;   // and Complete on his thanks: the win taken, out to Devias
         int pick = -1;        // kList: the quest a row was clicked for
         bool back = false;    // a quest's page opened from kList: Back, to the list
+        int trip = -1;        // kList: a keeper's travel row clicked (sim::TravelRow::keeper)
     };
     // The `quest` that opens the Messenger's page (Realm::gating).
     static constexpr int kGate = 1000;
@@ -185,9 +186,12 @@ private:
     bool staffHeld_ = false;  // the staff in his bag, whatever the run's phase
     // kList: the giver's quests, read from the realm each frame, and each row's box in the
     // body's units. Hovered and pressed as 20 + the row.
+    // A row of the giver's list: a quest, or (quest -1) a trip he keeps, a travel row
+    // (sim::TravelRow::keeper): Elpis's into the Relics.
     struct Entry {
         int quest = -1;
         gfx::Box box;
+        int trip = -1;
     };
     std::vector<Entry> entries_;
     int32_t giver_ = -1;

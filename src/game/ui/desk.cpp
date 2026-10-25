@@ -651,6 +651,9 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         if (result.pick >= 0) {
             picked_ = result.pick;
             click();
+        } else if (result.trip >= 0) {
+            // A trip the giver keeps (Elpis's into the Relics): the Move list's own request.
+            expect(play.travel(result.trip), Then::Travel);
         } else if (result.back) {
             picked_ = -1;
             click();

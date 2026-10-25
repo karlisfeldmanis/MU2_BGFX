@@ -13,6 +13,7 @@
 #include "game/ui/tracker.h"
 #include "sim/items.h"
 #include "sim/quests.h"
+#include "sim/travel.h"
 #include "sim/wear.h"
 
 namespace mu::game {
@@ -648,6 +649,13 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
             int quests[sim::kQuests];
             const int n = realm.questsAt(giver_, quests);
             for (int i = 0; i < n; ++i) entries_.push_back({quests[i], {}});
+            // And the trips he keeps, once opened (the user, 2026-10-25: "allow to get in triught
+            // quest giver on kanturu"), under his quests.
+            for (int i = 0; i < sim::kTravels; ++i) {
+                if (sim::travelAt(i).keeper == giver_ && realm.travelRefusal(i) != sim::TravelRefusal::Unknown) {
+                    entries_.push_back({-1, {}, i});
+                }
+            }
         }
     } else if (angel) {
         mode = Mode::Angel;
@@ -770,7 +778,7 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
     bool cancel = escape;
     bool chose = false;
     bool back = false;
-    int pick = -1;
+    int pick = -1, trip = -1;
     int turn = 0;
     if (pointer.released) {
         if (pressing_ >= 0 && pressing_ == over_) {
@@ -781,7 +789,11 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
                 path_ = sim::QuestPath(pressing_ - 30);
                 chose = true;
             }
-            else if (pressing_ >= 20) pick = entries_[size_t(pressing_ - 20)].quest;
+            else if (pressing_ >= 20) {
+                const Entry& one = entries_[size_t(pressing_ - 20)];
+                if (one.trip >= 0) trip = one.trip;
+                else pick = one.quest;
+            }
             else if (pressing_ == 3) turn = -1;
             else if (pressing_ == 4) turn = 1;
             // The Messenger's castles turn here, the new page fading in from the arrow's side.
@@ -803,6 +815,7 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
         out->turn = turn;
         out->pick = pick;
         out->back = back;
+        out->trip = trip;
         if (cancel) out->close = true;
         else if (primary && mode_ == Mode::Angel) {
             if (angel_ == sim::AngelState::Done) out->claim = true;
@@ -852,6 +865,10 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
     now.level = realm.hero().level;
     now.listed = listed_;
     for (size_t i = 0; i < entries_.size() && i < size_t(sim::kQuests); ++i) {
+        if (entries_[i].trip >= 0) {
+            now.entries[i] = -1 - entries_[i].trip * 16 - int(realm.travelRefusal(entries_[i].trip));
+            continue;
+        }
         const sim::QuestProgress& one = realm.quest(entries_[i].quest);
         now.entries[i] = 1 + entries_[i].quest + int(one.state) * 64 +
                          int(realm.questOffered(entries_[i].quest)) * 512 +
@@ -1114,6 +1131,33 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
         // level -- the title, and at the right what stands between him and it.
         for (size_t i = 0; i < entries_.size(); ++i) {
             const Entry& one = entries_[i];
+            if (one.trip >= 0) {
+                // A trip he keeps: a gold arrow, "To <map>", and at the right Free or the level
+                // it asks.
+                const sim::TravelRefusal why = realm.travelRefusal(one.trip);
+                const bool go = why == sim::TravelRefusal::None;
+                const std::string status =
+                    why == sim::TravelRefusal::Level
+                        ? "Level " + std::to_string(sim::moveLevel(sim::travelAt(one.trip).level, realm.hero().kin))
+                        : go ? std::string("Free") : std::string();
+                const Box box = {std::round(sx(one.box.x)), std::round(by(one.box.y)),
+                                 std::round(one.box.w * u), std::round(one.box.h * u)};
+                if (over_ == 20 + int(i) && go) {
+                    const uint32_t hot = quest_marks::faded(style::kBlood, style::kEmberAlpha);
+                    const uint32_t clear = quest_marks::faded(style::kBlood, 0.0f);
+                    body_.shade({box.x, box.y + box.h * 0.3f, box.w, box.h * 0.7f}, clear, clear, hot, hot);
+                }
+                const float mid = one.box.y + kEntry * 0.5f + 5.0f;
+                controls::label(body_, sx(kInset + 2.0f), by(mid + 1.0f), 19.0f * u, go ? kZenGold : style::kAshInk,
+                                "\xC2\xBB");
+                controls::label(body_, sx(kInset + 22.0f), by(mid), kBody * u, go ? style::kBoneHi : style::kAshInk,
+                                "To the " + std::string(sim::travelAt(one.trip).name));
+                if (!status.empty()) {
+                    controls::ranged(body_, sx(kInset + inner()), by(mid), 13.5f * u,
+                                     go ? kZenGold : style::kDanger, status);
+                }
+                continue;
+            }
             const sim::QuestRow& quest = sim::questAt(one.quest);
             const sim::QuestProgress& at = realm.quest(one.quest);
             const bool again = at.completions > 0;

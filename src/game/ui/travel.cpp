@@ -201,6 +201,7 @@ void Travel::open(const gfx::Interface& interface, const std::string& assetDir,
         const sim::TravelRow& row = sim::travelAt(i);
         const MapRow* map = mapNumbered(int(row.map));
         if (map == nullptr) continue;  // only the worlds this game has
+        if (row.keeper != 0) continue;  // a giver's own trip, in his window (Elpis's Relics)
         Place* place = nullptr;
         for (Place& one : places_) {
             if (one.map == row.map) place = &one;

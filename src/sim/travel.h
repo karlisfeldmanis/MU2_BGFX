@@ -27,6 +27,9 @@ struct TravelRow {
     int32_t column, row;   // the middle of the exit gate it lands on
     int8_t dx, dy;         // that gate's facing, as sim/gates.h stores one
     const char* key;       // what a save calls it (game/save.cpp), never renamed: not its index
+    // The townsperson whose window sends him, by number, or 0: such a row is not on the Move
+    // list, only in that giver's window, and taken only while it is open (TravelRefusal::Away).
+    int32_t keeper = 0;
 };
 
 inline constexpr int kTravels = 19;
@@ -41,7 +44,7 @@ int travelIndexOf(const std::string& key);
 // not started"): a Dungeon floor's row asks its own link of the Golden Archer's chain taken once
 // -- the first floor The Catacombs, the second the next, the third the last (travelQuest).
 // `Wings` is MU's door rule on the Icarus row: wings or a Dinorant worn (sim::canFly).
-enum class TravelRefusal : uint8_t { None, Unknown, Here, Dead, Level, Zen, Quest, Wings };
+enum class TravelRefusal : uint8_t { None, Unknown, Here, Dead, Level, Zen, Quest, Wings, Away };
 
 // The rows of `map`, a bit a row.
 uint32_t travelRowsOf(int32_t map);

@@ -9037,6 +9037,41 @@ void testKanturuRelicsGates() {
     s = walk(ruins, 86, 90, 89, 90, 319, true);
     checkEqual(s.gated, 0, "below 320 not even then");
     checkEqual(s.barred, 320, "told the level it asks");
+    // And Elpis's trip into the Relics, off the Move list (the user, 2026-10-25: "dont put kanturu
+    // relics on map, but allow to get in triught quest giver on kanturu"): free, from her window.
+    int row = -1;
+    for (int i = 0; i < sim::kTravels; ++i) {
+        if (sim::travelAt(i).map == 38) row = i;
+    }
+    check(row >= 0 && sim::travelAt(row).keeper == sim::kElpisNumber && sim::travelAt(row).zen == 0,
+          "the Relics' row is Elpis's, and free");
+    int elpis = -1;
+    for (size_t i = 0; i < ruins.folk.size(); ++i) {
+        if (ruins.folk[i].number == sim::kElpisNumber) elpis = int(i);
+    }
+    check(elpis >= 0, "Elpis stands in the Ruins");
+    if (row >= 0 && elpis >= 0) {
+        const content::Townsperson& e = ruins.folk[size_t(elpis)];
+        sim::Realm camp;
+        camp.raise(&ruins, 7, e.x - 2, e.y, sim::Kin::DarkKnight, 400);
+        checkEqual(int(camp.travelRefusal(row)), int(sim::TravelRefusal::Unknown), "unopened before the far road");
+        sim::HeroRecord done = camp.record();
+        done.quests[sim::kRoadToRelics].completions = 1;
+        done.quests[sim::kRoadToRelics].state = sim::QuestState::Resting;
+        done.quests[sim::kRoadToRelics].availableAt = int64_t(1) << 40;
+        camp.restore(done);
+        checkEqual(int(camp.travelRefusal(row)), int(sim::TravelRefusal::Away), "and with it, only from her window");
+        sim::Request talk;
+        talk.kind = sim::Request::Kind::Talk;
+        talk.target = uint32_t(elpis);
+        camp.ask(talk);
+        for (int tick = 0; tick < 400 && camp.questing() < 0; ++tick) camp.step();
+        check(camp.questing() == elpis, "her window opens");
+        checkEqual(int(camp.travelRefusal(row)), int(sim::TravelRefusal::None), "and the Relics are hers to give");
+        const int64_t zen = camp.money();
+        check(camp.travel(row), "the trip taken");
+        checkEqual(long(camp.money()), long(zen), "for nothing");
+    }
     // And back, gate 131 (Gates.cs:540): MU asks 150, ours free, onto the Ruins' 132.
     s = walk(relics, 77, 105, 69, 105, 1);
     checkEqual(s.gated, 131, "a level 1 knight takes the Relics' way back, gate 131");

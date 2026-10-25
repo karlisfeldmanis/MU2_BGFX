@@ -162,7 +162,11 @@ there?", picked "After the far road"): the Ruins' door to the Relics, gate 129 a
 far road ends, is back (shut 4c2a0165) and asks The Road to the Relics handed in and level 320
 (`"quest": "road_to_relics"` on the gate, `EnterGate::quest`; a hero without it is told "The door
 to the Relics opens to those who cleared Elpis's far road.", `Barred` -3). The hand-in also opens
-a 19th M-list row, Kanturu Relics, 10,000 Zen at 320, landing on the door's exit 130 (70,105).
+Elpis's trip into the Relics (the user: "dont put kanturu relics on map, but allow to get in
+triught quest giver on kanturu"; picked: keep the door too, free): a 19th travel row, Kanturu
+Relics, kept by her (`TravelRow::keeper`), so it is not on the M list but a row "To the Kanturu
+Relics" in her window's list, free at 320, taken only while her window is open
+(`TravelRefusal::Away`), landing on the door's exit 130 (70,105).
 The Relics hold Persona (161), Twin Tale (160) and Dreadfear (162), 63 in all.
 
 ## Rewards

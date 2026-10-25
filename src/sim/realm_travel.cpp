@@ -67,11 +67,12 @@ constexpr TravelRow kRows[kTravels] = {
     // the camp at 20,218, facing nowhere. It opens as Kantur's Gate is taken from the Keeper, or
     // when he speaks to Elpis there.
     {"Kanturu", 37, 320, 9000, 20, 218, 0, 0, "kanturu"},
-    // The Relics, after it for the same reason (the user, 2026-10-25: "After the far road"): open
-    // once The Road to the Relics is handed in, as their door (gate 129) asks. Season Six's
-    // "KanturuRuins2" is 10,000 Zen at 160 (Gates.cs:73); ours at 320 as the quest, landing on
-    // the door's exit 130's middle, 70,105, facing east as it does.
-    {"Kanturu Relics", 38, 320, 10000, 70, 105, 1, 0, "kanturu_relics"},
+    // The Relics, after it for the same reason, but off the Move list (the user, 2026-10-25: "dont
+    // put kanturu relics on map, but allow to get in triught quest giver on kanturu"): Elpis's,
+    // in her window, free, once The Road to the Relics is handed in, as their door (gate 129)
+    // asks. Season Six's "KanturuRuins2" is 10,000 Zen at 160 (Gates.cs:73); ours at 320 as the
+    // quest, landing on the door's exit 130's middle, 70,105, facing east as it does.
+    {"Kanturu Relics", 38, 320, 0, 70, 105, 1, 0, "kanturu_relics", kElpisNumber},
 };
 
 // A chained map's floors, every floor a link and its row open once the link is taken: the
@@ -309,6 +310,11 @@ TravelRefusal Realm::travelRefusal(int index) const {
     if (const int q = travelQuest(index); q >= 0 && !huntedAt(index)) {
         const QuestProgress& link = me().quests[q];
         if (link.state == QuestState::Untaken && link.completions == 0) return TravelRefusal::Quest;
+    }
+    // A keeper's row only from his open window.
+    if (to.keeper != 0 && (me().questing < 0 || size_t(me().questing) >= tables_->folk.size() ||
+                           tables_->folk[size_t(me().questing)].number != to.keeper)) {
+        return TravelRefusal::Away;
     }
     const Body& hero = mine();
     if (!hero.alive()) return TravelRefusal::Dead;
