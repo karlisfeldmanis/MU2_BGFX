@@ -104,6 +104,7 @@ constexpr Resistance kResistances[] = {
     {357, 26, 26},  // Genocider
     {358, 29, 29},  // Persona
     {359, 28, 28},  // Twin Tale
+    {360, 27, 27},  // Dreadfear
     {549, 20, 20},  // Bloody Orc
     {550, 20, 20},  // Bloody Death Rider
     {552, 20, 20},  // Bloody Witch Queen
@@ -185,6 +186,7 @@ constexpr DropRate kDropRates[] = {
     {357, 30, 3, 10},  // Genocider
     {358, 30, 3, 10},  // Persona
     {359, 30, 3, 10},  // Twin Tale
+    {360, 30, 3, 10},  // Dreadfear
     {549, 30, 3, 8},  // Bloody Orc
     {550, 30, 3, 10},  // Bloody Death Rider
     {552, 30, 3, 10},  // Bloody Witch Queen

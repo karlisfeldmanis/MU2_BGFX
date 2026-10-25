@@ -148,6 +148,7 @@ bool ShadowStars::open(const std::string& assetDir, content::Textures& textures,
     berserker_.open(assetDir, textures, table);
     twinTale_.open(assetDir, textures, table);
     persona_.open(assetDir, textures, table);
+    dreadfear_.open(assetDir, textures, table);
     stars_.reserve(kStars);
     embers_.reserve(kEmbers);
     open_ = bgfx::isValid(shiny_) && bgfx::isValid(ring_);
@@ -167,6 +168,7 @@ void ShadowStars::shutdown() {
     berserker_.shutdown();
     twinTale_.shutdown();
     persona_.shutdown();
+    dreadfear_.shutdown();
     open_ = false;
 }
 
@@ -182,6 +184,7 @@ void ShadowStars::update(float seconds) {
     berserker_.update(seconds);
     twinTale_.update(seconds);
     persona_.update(seconds);
+    dreadfear_.update(seconds);
     stars_.clear();
     starlights_.clear();
     ribbons_.clear();
@@ -417,6 +420,7 @@ void ShadowStars::gather(gfx::Effects& effects) const {
     berserker_.gather(effects);
     twinTale_.gather(effects);
     persona_.gather(effects);
+    dreadfear_.gather(effects);
     if (bgfx::isValid(light_)) {
         for (const Starlight& one : starlights_) {
             gfx::Sprite sprite;
