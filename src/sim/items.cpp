@@ -625,9 +625,9 @@ const PowerRow* powerOf(uint8_t power) {
         {Power::LesserInsight, "Lesser Insight", "+10% energy", kEveryClass, kAny, Rarity::Rare},
         {Power::GreaterInsight, "Greater Insight", "+30% energy", kEveryClass, kAny,
          Rarity::Epic},
-        {Power::LesserAscendance, "Lesser Ascendance", "+10% all stats", kEveryClass,
+        {Power::LesserAscendance, "Lesser Ascendance", "+5% all stats", kEveryClass,
          kInWeapon | kInShield, Rarity::Epic},
-        {Power::GreaterAscendance, "Greater Ascendance", "+30% all stats", kEveryClass,
+        {Power::GreaterAscendance, "Greater Ascendance", "+15% all stats", kEveryClass,
          kInWeapon | kInShield, Rarity::Legendary, true},
         // The Common runes (sim/items.h kCinderChance...), each a Legendary's faint copy.
         // The knight's and the wizard's Common and Epic runes are the Magic Gladiator's too.
@@ -827,7 +827,15 @@ HeroPoints statShareOf(Power power) {
     const int p = int(power);
     if (p < int(Power::LesserMight) || p > int(Power::GreaterAscendance)) return {};
     // Two tiers a stat, in the enum's order: Might, Grace, Vigor, Insight, Ascendance.
-    const int share = (p - int(Power::LesserMight)) % 2 == 0 ? 10 : 30;
+    const bool lesser = (p - int(Power::LesserMight)) % 2 == 0;
+    // Ascendance at half a single stat's, 5 and 15 (Discord #67, 2026-10-25): at 10 and 30 it
+    // put 10-130% on an hour's damage in tests/kits/ascendance.json's sweep, and the knight with
+    // two swords on Aida at 29M against the elf's 12M.
+    if (p >= int(Power::LesserAscendance)) {
+        const int share = lesser ? 5 : 15;
+        return {share, share, share, share};
+    }
+    const int share = lesser ? 10 : 30;
     switch ((p - int(Power::LesserMight)) / 2) {
         case 0: return {share, 0, 0, 0};
         case 1: return {0, share, 0, 0};

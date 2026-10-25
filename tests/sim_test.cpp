@@ -11058,8 +11058,8 @@ void testRunes(const content::Tables& tables) {
                   "Hellfire and Evil Spirit are the second class's too");
         }
         const sim::HeroPoints all = sim::statShareOf(sim::Power::GreaterAscendance);
-        check(all.strength == 30 && all.agility == 30 && all.vitality == 30 && all.energy == 30,
-              "Greater Ascendance is +30% on all four");
+        check(all.strength == 15 && all.agility == 15 && all.vitality == 15 && all.energy == 15,
+              "Greater Ascendance is +15% on all four");
         check(sim::statShareOf(sim::Power::LesserGrace).agility == 10 &&
                   sim::statShareOf(sim::Power::LesserGrace).strength == 0,
               "Lesser Grace is +10% agility alone");

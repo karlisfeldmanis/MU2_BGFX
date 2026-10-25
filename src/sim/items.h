@@ -964,7 +964,8 @@ constexpr double kSpiritOdds = 2.0 / 3.0;  // rand()%3 < 2
 constexpr int64_t kSpiritDelayTicks = 40;  // rand()%2000 ms, the realm's twenty ticks a second
 // **The stat runes** (the user, 2026-10-05: "+10% all stats ... +10% agility, energy, vitality,
 // str"), then 'lets keep only +10 and +30': Might is strength, Grace agility, Vigor vitality,
-// Insight energy, Ascendance all four, at 10 percent (Lesser) and 30 (Greater). Every class's, in
+// Insight energy, Ascendance all four, at 10 percent (Lesser) and 30 (Greater) -- Ascendance at 5
+// and 15 since 2026-10-25 (Discord #67). Every class's, in
 // any socket -- Ascendance a weapon's alone (the user, 2026-10-05: 'runes which increase all
 // stats only on weapons'), and a shield's since 2026-10-25 (Discord #67): see kAscendanceMost.
 // The share is of
@@ -1004,7 +1005,7 @@ Power onceKinOf(Power power);
 constexpr int kStatRuneMost = 4;
 // **Ascendance, Lesser and Greater together: three worn count, the strongest**, and no more than
 // two are set in a weapon and one in a shield (`settable`). Two swords held four where a staff or
-// a bow held three, +120% all stats to +90% (Discord #67, 2026-10-25; the user: "lets allow
+// a bow held three, +120% all stats to +90% at the time (Discord #67, 2026-10-25; the user: "lets allow
 // Ascendance max 3 runes, 2 on weapons and 1 on shield"). A weapon set with three before keeps
 // them, and still counts three at most.
 constexpr int kAscendanceMost = 3;

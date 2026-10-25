@@ -347,7 +347,7 @@ QuestRow devin() {
     row.paid[n++] = {.item = "Shield15", .kin = wizard, .sockets = 1,
                      .firstOnly = true};  // Legendary Shield
     row.paid[n++] = {.item = "Bow05", .kin = elf, .sockets = 2, .firstOnly = true};  // Tiger Bow
-    // Its two runes, the first Epic of the ladder (the Ice Queen is 52): +10% all stats (the
+    // Its two runes, the first Epic of the ladder (the Ice Queen is 52): +5% all stats since 2026-10-25 (the
     // user, 2026-10-05: 'add tier-1 all stats to devias quest line for all classes') -- **the
     // elf's Barrage** in its place (2026-10-08: "replace some rune reward in devias for
     // multi-shot icnrease damage rune") -- and a Rare on the class's own stat.
@@ -1062,7 +1062,7 @@ QuestRow tersiaSkyDoor() {
                                  .firstOnly = true};  // Storm Crow
     row.paid[row.paidCount++] = {.item = "BootMale16", .kin = gladiator, .sockets = 2,
                                  .firstOnly = true};
-    // And the first second-class Legendary, every class's: Greater Ascendance, +30% all stats,
+    // And the first second-class Legendary, every class's: Greater Ascendance, +15% all stats,
     // Tarkan's until this day (the Magic Gladiator's its Lesser, sim::gladiatorRune). Spirit
     // Plague, the Epic it had, is the wizard's at Tarkan now.
     row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::GreaterAscendance),
