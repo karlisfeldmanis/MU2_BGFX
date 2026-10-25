@@ -207,6 +207,8 @@ void InvasionSky::update(float seconds, const float hero[3], const content::Grou
     }
     for (Wyrm& one : wyrms_) {
         if (!one.live) continue;
+        // MU's Scale * 40 a frame (GOBoid.cpp:1285, 1402). Our larger draw scale feeds it too, so
+        // they cross at 10-14 m/s for MU's 6-8: kept, the user's (2026-10-25: "Keep as is").
         const float speed = one.scale * 40.0f / 100.0f * kReferenceFps;
         one.at[0] += std::sin(one.yaw) * speed * seconds;
         one.at[2] += std::cos(one.yaw) * speed * seconds;

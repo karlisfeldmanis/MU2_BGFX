@@ -79,4 +79,5 @@ with pets for DL"). The two research files beside this one are the sources, ever
    +-60, homing by MoveHumming with MU's rolled aim and kicked pitch (fx/raven.h). Waiting on a cook
    (asked): MODEL_AIR_FORCE's puffs at its head as it dives (Skill/AirForce.bmd), and the level-40
    chrome and pulsing glow on dkthreebody (ZzzObject.cpp:981-1001). The 350 over the Dark Horse is
-   MU's intent, dead code in both clients (Helper.Type holds a MODEL_), kept until the user says.
+   MU's intent, dead code in both clients (Helper.Type holds a MODEL_): kept, the user's (2026-10-25,
+   "Keep 350"). Both cooks done since (dfa023a5): the level-40 chrome and glow, the dash's puffs.
