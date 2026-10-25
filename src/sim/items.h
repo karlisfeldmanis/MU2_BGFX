@@ -1694,10 +1694,12 @@ constexpr int kKundunRaidTier = 3;
 constexpr int kKundunItemIn100[kKundunTiers] = {50, 55, 60, 65};
 constexpr int kKundunExcellentIn100[kKundunTiers] = {40, 50, 60, 70};
 constexpr int64_t kKundunZen[kKundunTiers] = {50000, 100000, 150000, 200000};
-// A plain row's level is the bag file's plus `rand()%addlevel` (EledoradoBoxOpenEven's, 2 for +1
-// to +3 and 1 for +4): +5/+6 from the +1 box, +4/+5 from the +2 and +3, +4 from the +4.
-constexpr int kKundunPlainLevel[kKundunTiers] = {5, 4, 4, 4};
-constexpr int kKundunAddLevel[kKundunTiers] = {2, 2, 2, 1};
+// A plain row's level is a base plus `rand()%addlevel`. **Ours, a step a tier** (the user,
+// 2026-10-25: "can we rise item lvls so its not so low lvl", the excellent ones kept at +0):
+// +5/+6, +6/+7, +7/+8 and +8/+9. WebZen's (EledoradoBoxOpenEven, the bag files' level 4 and
+// addlevel 2, 2, 2, 1) were +5/+6, +4/+5, +4/+5 and +4.
+constexpr int kKundunPlainLevel[kKundunTiers] = {5, 6, 7, 8};
+constexpr int kKundunAddLevel[kKundunTiers] = {2, 2, 2, 2};
 // The Box of Luck as OpenMU's Version095d opens it (BoxOfLuck.cs): one in two an item at +6
 // off its list, else 10,000 Zen. WebZen's own eventitembag.txt is not in hand.
 constexpr int kLuckItemIn100 = 50;

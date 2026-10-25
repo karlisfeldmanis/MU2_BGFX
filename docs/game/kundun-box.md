@@ -23,13 +23,16 @@ by order:
 - +2: both pools identical.
 - +3: the plain pool held the **Legendary** set (7..11, 3) where bag10 has the **Plate** set
   (7..11, 9), against the table in §3. Fixed to Plate. The excellent pool was identical.
-- +4: built from bag11 row for row (`sim::kKundunPlain4`, `kKundunExcellent4`), plain at +4 as
-  `addlevel` 1 gives, 200,000 Zen otherwise. Rates ours, one step on: an item 65 in 100, 70 of
+- +4: built from bag11 row for row (`sim::kKundunPlain4`, `kKundunExcellent4`), plain at +8/+9
+  (WebZen's +4, below), 200,000 Zen otherwise. Rates ours, one step on: an item 65 in 100, 70 of
   those excellent (45.5 in 100 boxes; WebZen's 15 and 2). Its drop levels are 44-72, so in the
   Ruins (a kill there drops 127-141) it is a jewel box with old gear. Nothing drops it yet: the
   Golden Satyros (docs/plans/jewel-of-harmony.md §5) is next. The raid's hoard stays +3
   (`sim::kKundunRaidTier`).
 - Rates of +1 to +3 are ours, not WebZen's (§3), as the user picked on 2026-10-06 and 10-21.
+- **Plain levels raised, ours** (the user, 2026-10-25: "can we rise item lvls so its not so low
+  lvl"; the plus, not the lists; excellent kept at +0): +5/+6, +6/+7, +7/+8, +8/+9 from the +1 to
+  +4 box (`kKundunPlainLevel`, `kKundunAddLevel`), where WebZen's were +5/+6, +4/+5, +4/+5, +4.
 
 Sources, highest first: WebZen GameServer 1.00.93 (`WZ`, under `Source/Server Side/GameServer/`,
 0.97d base unless a flag is named), MuMain (`MM`, `src/source/`), OpenMU (`OM`). The repo's
