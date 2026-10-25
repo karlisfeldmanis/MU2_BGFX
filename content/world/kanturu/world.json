@@ -295,7 +295,7 @@
         216
       ],
       "look": 3,
-      "note": "MU's Elpis (368), the Refinery Tower's keeper (OpenMU KanturuEvent.cs:51, 77,177 in map 39), stood in the Ruins camp because the Tower is not playable (the user, 2026-10-23: find better locations for them, then you decide): before the north ruin wall at the head of the camp, a shrine, facing the camera. Her refining is not built."
+      "note": "MU's Elpis (368), the Refinery Tower's keeper (OpenMU KanturuEvent.cs:51, 77,177 in map 39), stood in the Ruins camp because the Tower is not playable. Since 2026-10-25 by the camp's fire stands at 35,216, on the way from the arrival to the Ruins, where the user showed her in game (\"put her here, and scale down her size\"); before, at the north ruin wall (30,202). She gives every Kanturu quest. Her refining is not built."
     }
   ]
 }
