@@ -86,4 +86,10 @@ private:
 // MODEL_WING + i from Wing(i+1).bmd). Null for anything else or a table without it.
 const FigureBody* wingBody(const Figures& figures, int group, int number);
 
+// What a worn row in the wing slot adds to the bearer's own figure, by its wardrobe name, or
+// empty: the Cape of Lord (13/30) is no wing body on Bone05 but DarkLordCape, a mesh on his own
+// bones (pipeline/dark_lord_cape.py, docs/plans/dark-lord-cape.md "Decided" 6), worn as an armour
+// piece is (Figures::dress).
+std::string backPiece(int group, int number);
+
 }  // namespace mu::game

@@ -709,6 +709,7 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
     // price, not the wing's. Its option by its kind: the Elf's life regeneration beside the
     // rings', Heaven's wizardry, Satan's damage (docs/game/wings.md).
     hero.wingDamage = hero.wingWizardry = 0;
+    hero.wornCommand = 0;
     if (const content::ItemRow* wing = rowAt(kWings);
         wing && anyWing(*wing) && kit[kWings].durability > 0) {
         const Held& worn = kit[kWings];
@@ -722,12 +723,16 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
             case WingOption::Wizardry: hero.wingWizardry = option; break;
             case WingOption::Damage: hero.wingDamage = option; break;
         }
-        // A 2nd wing's extras (zzzitem.cpp:1488-1505, :3039-3044; ObjCalCharacter.cpp:1264-1265).
-        if (secondWing(*wing)) {
+        // A 2nd wing's extras (zzzitem.cpp:1488-1505, :3039-3044; ObjCalCharacter.cpp:1264-1265),
+        // and the cape's, with its Command (:1268-1273).
+        if (secondWing(*wing) || capeOfLord(*wing)) {
             const int extra = kWingExtraBase + kWingExtraPerPlus * std::max<int>(0, worn.refinement);
             if (worn.wing & kWingMaxLife) hero.pet.health += extra;
             if (worn.wing & kWingMaxMana) hero.excel.moreMana += extra;
             if (worn.wing & kWingIgnoreDefense) hero.excel.ignoreDefense += kWingIgnoreChance;
+            if (capeOfLord(*wing) && (worn.wing & kWingCommand)) {
+                hero.wornCommand = capeCommand(worn.refinement);
+            }
         }
     }
     // The stat runes, in any socket of anything worn, summed (sim::statShareOf) -- the best
@@ -1511,13 +1516,13 @@ void Realm::leave(const Body& dead, const Body& killer) {
             break;
         }
     }
-    // Loch's Feather in Tarkan, Icarus and Blood Castle 6, the same way (sim::kFeatherOdds).
+    // Loch's Feather in Tarkan, Icarus and Blood Castle 6, the same way (sim::kFeatherOdds), and
+    // the Crest of Monarch by the same rule on a roll of its own after it, off the same dice.
     const bool featherHere = featherMap(tables_->map) ||
                              (event() == EventKind::Castle && run_.castle == kFeatherCastle);
-    if (level >= kFeatherFromLevel && featherHere &&
-        featherDice_.nextInt(0, kFeatherOdds) == 0) {
+    const auto leaveOne = [&](bool (*which)(const content::ItemRow&)) {
         for (size_t i = 0; i < tables_->items.size(); ++i) {
-            if (!lochsFeather(tables_->items[i])) continue;
+            if (!which(tables_->items[i])) continue;
             Lying feather;
             feather.what = Held{int32_t(i), 0, 1};
             std::tie(feather.column, feather.row) = clearing(dead.column(), dead.row());
@@ -1528,6 +1533,10 @@ void Realm::leave(const Body& dead, const Body& killer) {
             say(What::Dropped, dead, int32_t(feather.id), int32_t(i), 0);
             break;
         }
+    };
+    if (level >= kFeatherFromLevel && featherHere) {
+        if (featherDice_.nextInt(0, kFeatherOdds) == 0) leaveOne(lochsFeather);
+        if (featherDice_.nextInt(0, kFeatherOdds) == 0) leaveOne(crestOfMonarch);
     }
     // The Scroll of Nova in the same two, the same way (sim::kNovaScrollOdds).
     if (level >= kNovaScrollFromLevel && novaScrollMap(tables_->map) &&

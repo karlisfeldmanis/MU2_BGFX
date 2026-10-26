@@ -202,7 +202,16 @@ constexpr double kWingWearSteps = 565.0;
 // (docs/worlds/mg-port.md).
 constexpr int kSpiritsNumber = 13, kSoulNumber = 14, kDragonNumber = 16, kDarknessNumber = 22;
 bool secondWing(const content::ItemRow& row);
-// Either level: what slot 7 takes and every rule below reads.
+// **The Cape of Lord** (MU's 13/30, ours the same; docs/plans/dark-lord-cape.md), the Dark Lord's
+// back: worn in slot 7, a wing to every rule that asks for one -- the doors of Icarus and Kanturu,
+// the fly pose, the wear by the hour (gObjWingSprite counts it, user.cpp:10433-10468). Its own
+// numbers, the user's (2026-10-25, the plan's "Decided"): level 180 + 4 a plus (the client's),
+// defence 2 a plus as a 2nd wing's, his blows x(120 + 2 a plus)% (ObjAttack.cpp:1176-1182) at 3
+// Life a blow, what reaches him x(90 - 2 a plus)% (OpenMU's 10 + 2L absorb, Wings.cs:160-163),
+// its option damage always (SLEEVEOFLORD_OPTION_BUG_PATCH), and an extra only it rolls, Command.
+constexpr int kCapeNumber = 30;
+bool capeOfLord(const content::ItemRow& row);
+// Either level, or the cape: what slot 7 takes and every rule below reads.
 bool anyWing(const content::ItemRow& row);
 // What a worn wing's additional option is (zzzitem.cpp:1150-1222): the 1st wings' by the wing,
 // the 2nd wings' by their PLUS_WING_OP1_TYPE bit (Held::wing's kWingOptionKind) -- Spirits
@@ -215,6 +224,12 @@ int wingOptionValue(const content::ItemRow& row, const Held& held);
 // a blow ignores the defence it meets -- the card's 3%; WebZen's `rand()%100 <= 3` is 4 (ours,
 // the card's number).
 constexpr int kWingExtraBase = 50, kWingExtraPerPlus = 5;
+// The cape's Command extra: +10 and 5 a plus into his Command (zzzitem.cpp:3054-3059,
+// ObjCalCharacter.cpp:1268-1273, MU's AddLeadership).
+constexpr int kCapeCommandBase = 10, kCapeCommandPerPlus = 5;
+inline int capeCommand(int refinement) {
+    return kCapeCommandBase + kCapeCommandPerPlus * (refinement > 0 ? refinement : 0);
+}
 constexpr double kWingIgnoreChance = 0.03;
 // Its extras, Held::wing, WebZen's PLUS_WING_* (zzzitem.cpp:1488-1505): max life and max mana
 // +50 and 5 a plus, a 3% chance a blow ignores the defence it meets (ObjBaseAttack.cpp:1322-
@@ -223,6 +238,9 @@ enum : uint8_t {
     kWingMaxLife = 0x01,
     kWingMaxMana = 0x02,
     kWingIgnoreDefense = 0x04,
+    // The cape's alone (PLUS_WING_ADD_LEADERSHIP): its mix rolls one of four bits where a 2nd
+    // wing's rolls one of three (MixSystem.cpp:2852-2855, :2869-2872).
+    kWingCommand = 0x08,
     kWingOptionKind = 0x20,
 };
 // **Loch's Feather** (13/14), the 2nd wings' ingredient. MU drops it in Icarus alone
@@ -235,6 +253,13 @@ enum : uint8_t {
 bool lochsFeather(const content::ItemRow& row);
 constexpr int kFeatherOdds = 500;
 constexpr int kFeatherFromLevel = 60;
+// **The Crest of Monarch**, the cape's ingredient in the feather's place. MU's is Loch's Feather
+// at +1 (MixSystem.cpp:2545-2553); ours its own row, 13/6, a number MU leaves empty, drawn as
+// Item/DarkLordSleeve.bmd (the user, 2026-10-25: "its own item row"). It falls where the feather
+// does, of the same monsters, on its own roll beside the feather's (the same day: "our Loch's
+// Feather rule").
+constexpr int kCrestNumber = 6;
+bool crestOfMonarch(const content::ItemRow& row);
 // **The Scroll of Nova** (15, 18; content/items/misc/Book19.json), the Soul Master's: in the
 // Lost Tower, Atlans, Tarkan and Icarus (novaScrollMap), a kill of
 // kNovaScrollFromLevel or over leaves one, one in kNovaScrollOdds, its own roll (the user,

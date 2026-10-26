@@ -210,8 +210,8 @@ void Litter::buildItem(const sim::Lying& one, Drop& drop) {
     const content::ItemRow& row = models_->tables()->items[size_t(one.what.item)];
     drop.shine = shineOf(row, one.what.refinement, one.what.excellent != 0);
     // Loch's Feather too, which is rare (the user, 2026-10-04: 'feather is pretty rare item use
-    // same ligh effect which quest items has').
-    if (sim::classTreasure(row) || sim::lochsFeather(row)) {
+    // same ligh effect which quest items has'), and the Crest of Monarch, rarer still.
+    if (sim::classTreasure(row) || sim::lochsFeather(row) || sim::crestOfMonarch(row)) {
         drop.glow = 3;
         for (int k = 0; k < 3; ++k) drop.glowColour[k] = kQuestViolet[k];
     } else if (legendary(row, one.what)) {

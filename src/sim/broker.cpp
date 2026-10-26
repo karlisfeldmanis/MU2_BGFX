@@ -69,7 +69,7 @@ BrokerNo brokerable(const content::Tables& tables, const Held& what) {
     if (what.empty() || size_t(what.item) >= tables.items.size()) return BrokerNo::Empty;
     const content::ItemRow& row = tables.items[size_t(what.item)];
     if (!tradeable(row, what)) return BrokerNo::Bound;
-    if (lochsFeather(row)) return BrokerNo::Quest;
+    if (lochsFeather(row) || crestOfMonarch(row)) return BrokerNo::Quest;
     // The user's goods (2026-10-11): gear, jewels, runes, wings, pets and the events' tickets and
     // parts -- not potions, ammunition, scrolls or orbs.
     if (ammunition(row) || brokerKind(row) == BrokerKind::Count) return BrokerNo::Kind;

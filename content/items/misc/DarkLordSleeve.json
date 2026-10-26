@@ -1,0 +1,55 @@
+{
+  "item": "DarkLordSleeve",
+  "mu_name": "Crest of Monarch",
+  "mu_name_from": "MuMain draws Loch's Feather at +1 as MODEL_EVENT+16 = Data\\Item\\DarkLordSleeve.bmd (ZzzOpenData.cpp:1015; ZzzObject.cpp:6174-6177; ZzzInventory.cpp:10483-10485) and names it the Crest of Monarch (ZzzInventory.cpp:6579-6581). Ours is its own row, group 13 number 6, a number MU leaves empty (the user, 2026-10-25, docs/plans/dark-lord-gear.md \"Decided\" 3: \"its own item row\").",
+  "why_this_one": "The Cape of Lord's ingredient: the 2nd wings' mix with the Crest in Loch's Feather's place (WebZen 1.00.93 MixSystem.cpp WingChaosMix:2545-2553; docs/plans/dark-lord-cape.md section 2).",
+  "profile": "weapon",
+  "profile_note": "As Loch's Feather: a small object in the bag and on the ground.",
+  "tells": "Used to make the Cape of Lord",
+  "tells_from": "Ours: MU prints the feather's 'Used to upgrade wings' under it too (GT 748, ZzzInventory.cpp:4384), and the Crest makes the cape alone. Its name purple as the feather's (game/ui/describe.cpp, Tone::Quest).",
+  "ground_note": "MuMain lays it at angle 45 and scale 0.5 (ZzzObject.cpp:5806-5810) and turns it (-90, 0, 0) in the bag (ZzzInventory.cpp:8222-8225); ours lays every drop by its bounds (game/fx/litter.cpp) and frames every bag model by them, so neither number is carried. It stands in the feather's violet column on the ground.",
+  "effects_note": "No effect in MuMain: no glow, chrome, sprite or light names MODEL_EVENT+16 outside the model swap.",
+  "stats": {
+    "note": "Ours: Loch's Feather's row (13/14) at its own number, as it is that feather at +1 in MU. Not in the ordinary drop -- it falls on its own roll beside the feather's, where the feather does (sim::crestOfMonarch, sim::kFeatherOdds; the user, 2026-10-25: \"our Loch's Feather rule\").",
+    "from": "OpenMU VersionSeasonSix/Items/Wings.cs CreateFeather (DropLevel 78, 1x2, Durability 1); Maps/Icarus.cs:39-47 drops it as the feather at ItemLevel 1.",
+    "group": 13,
+    "number": 6,
+    "drop_level": 78,
+    "drops_from_monsters": false,
+    "width": 1,
+    "height": 2,
+    "durability": 1
+  },
+  "sheets": {
+    "darklordsleeve": "darklordsleeve.png"
+  },
+  "sheet_from": "Data/Item/DarkLordSleeve.OZT (32x64, opaque): a blue banner with a gold sun crest above a gold sprig, rounded gold-edged ends. Decoded from MuMain with pipeline/decode_texture.py.",
+  "sheet_materials": {
+    "darklordsleeve": "cloth"
+  },
+  "sheet_materials_from": "An embroidered cloth sleeve, judged from the sheet.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 6,
+      "area": 2016.3,
+      "along": [
+        -3.2,
+        4.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ]
+    }
+  ]
+}

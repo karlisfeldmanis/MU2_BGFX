@@ -48,8 +48,10 @@ struct Sorted {
     // every other recipe and service refuses a box with one in it, as it refuses a stranger.
     int life = 0;
     // The 2nd wings' box: the 1st wings in it, the feathers, the excellent things at +4 or more
-    // that raise the rate, and any 2nd wing, which spoils it (MixSystem.cpp:2494-2508).
+    // that raise the rate, and any 2nd wing or cape, which spoils it (MixSystem.cpp:2494-2521). A
+    // Crest of Monarch in the feather's place makes it the Cape of Lord's (:2545-2553).
     int firstWings = 0, firstWingCell = -1, feathers = 0, excellents = 0, secondWings = 0;
+    int crests = 0;
     int optioned = 0;   // things at +4 or better with the additional option or a socket: the Chaos Weapon's
     int chaosWeapons = 0;  // and of them the Chaos weapons, which make it the wings' box
     int chaosWeaponCell = -1;
@@ -158,7 +160,9 @@ Sorted sort(const content::Tables& tables, const Machine& box) {
                 s.firstWingCell = cell;
             } else if (lochsFeather(*row)) {
                 s.feathers += n;
-            } else if (secondWing(*row)) {
+            } else if (crestOfMonarch(*row)) {
+                s.crests += n;
+            } else if (secondWing(*row) || capeOfLord(*row)) {
                 ++s.secondWings;
             } else if (what.excellent != 0 && what.refinement >= 4) {
                 ++s.excellents;  // `IsExtItem() && m_Level >= 4` (:2557-2562)
@@ -226,8 +230,9 @@ bool exactly(Recipe recipe, const Sorted& s, bool loose = false) {
             return s.chaosWeapons >= 1 && (loose || s.things == s.optioned + s.boosters) &&
                    s.chaos >= 1;
         case Recipe::SecondWings:
-            return s.firstWings == 1 && s.feathers == 1 && s.chaos == 1 && s.secondWings == 0 &&
-                   s.bless == 0 && s.soul == 0 && s.things == 2 + s.excellents;
+            return s.firstWings == 1 && s.feathers + s.crests == 1 && s.chaos == 1 &&
+                   s.secondWings == 0 && s.bless == 0 && s.soul == 0 &&
+                   s.things == 2 + s.excellents;
         case Recipe::Dinorant:
             return s.horns == kDinorantHorns && s.things == s.horns && s.chaos == 1 &&
                    s.bless == 0 && s.soul == 0;
@@ -274,12 +279,13 @@ int likeness(Recipe recipe, const Sorted& s) {
             if (s.soul > 0) points += 3;
             break;
         case Recipe::SecondWings:
-            if (s.things != s.firstWings + s.feathers + s.excellents || s.secondWings > 0 ||
-                s.bless > 0 || s.soul > 0 || s.firstWings + s.feathers == 0) {
+            if (s.things != s.firstWings + s.feathers + s.crests + s.excellents ||
+                s.secondWings > 0 || s.bless > 0 || s.soul > 0 ||
+                s.firstWings + s.feathers + s.crests == 0) {
                 return 0;
             }
             if (s.firstWings > 0) points += 10;
-            if (s.feathers > 0) points += 5;
+            if (s.feathers + s.crests > 0) points += 5;
             if (s.excellents > 0) points += 3;
             break;
         case Recipe::Wings:
@@ -457,16 +463,22 @@ void combine(const content::Tables& tables, const Machine& box, const Sorted& s,
             break;
         }
         case Recipe::SecondWings: {
+            // The Crest asked in the feather's place once one is in (the cape's mix), else the feather.
+            const bool cape = s.crests > 0;
             need(j, "1st level wing", s.firstWings, 1);
-            need(j, "Loch's Feather", s.feathers, 1);
+            if (cape) need(j, "Crest of Monarch", s.crests, 1);
+            else need(j, "Loch's Feather", s.feathers, 1);
             need(j, "Jewel of Chaos", s.chaos, 1);
             need(j, "Excellent item +4", s.excellents, 0);
             // Anything else spoils the box (exactly()); the first of it is named, so a grey button
-            // says why (the user, 2026-10-23). WebZen's WingChaosMix takes it along, lost.
-            const int strangers = s.things - s.firstWings - s.feathers - s.excellents + s.bless + s.soul;
+            // says why (the user, 2026-10-23). WebZen's WingChaosMix takes it along, lost. A
+            // feather beside a Crest is one of them.
+            const int strangers = s.things - s.firstWings - (cape ? s.crests : s.feathers) -
+                                  s.excellents + s.bless + s.soul;
             for (int cell = 0; cell < kMachineCells && strangers > 0; ++cell) {
                 const content::ItemRow* row = rowOf(tables, box[cell]);
-                if (!row || firstWing(*row) || lochsFeather(*row) || jewelOfChaos(*row) ||
+                if (!row || firstWing(*row) || jewelOfChaos(*row) ||
+                    (cape ? crestOfMonarch(*row) : lochsFeather(*row)) ||
                     (box[cell].excellent != 0 && box[cell].refinement >= 4 && !secondWing(*row))) {
                     continue;
                 }
@@ -485,7 +497,7 @@ void combine(const content::Tables& tables, const Machine& box, const Sorted& s,
             j.rate = int(std::min<int64_t>(100, wing / 4000000 + excellent / 40000));
             j.zen = kSecondWingsZen;
             j.target = s.firstWingCell;
-            j.success = secondWingName(kin);
+            j.success = cape ? "Cape of Lord" : secondWingName(kin);
             j.failure = "Everything in the box is lost";
             break;
         }

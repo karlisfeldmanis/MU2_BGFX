@@ -186,6 +186,16 @@ const FigureBody* Play::dressOf(const sim::Body& hero, const sim::Satchel& bag,
         worn.push_back(row.name);
         wornShine.push_back(shineOf(row, held.refinement, held.excellent != 0));
     }
+    // And the Dark Lord's cape, on his own bones (backPiece); its plus shows nothing, as MU's.
+    if (const sim::Held& wing = bag[sim::kWings];
+        !wing.empty() && size_t(wing.item) < tables_.items.size()) {
+        const content::ItemRow& row = tables_.items[size_t(wing.item)];
+        const std::string back = backPiece(row.group, row.number);
+        if (!back.empty()) {
+            worn.push_back(back);
+            wornShine.push_back(ShineLook{});
+        }
+    }
     // How each hand's plus shows: the hand slot holding the item of that name. The realm says
     // which arm swings, not which slot it came out of.
     const auto handShine = [&](const std::string& arm) {
@@ -238,7 +248,8 @@ uint64_t Play::gearOf(const sim::Body& body) const {
             const sim::Held& held = (*bag)[slot];
             mix(uint64_t(uint32_t(held.item)) << 16 | uint64_t(uint16_t(held.refinement)) << 8 | held.excellent);
         }
-        for (int slot : {sim::kWeaponRight, sim::kWeaponLeft}) {
+        // The wing slot too: the cape is part of the figure (dressOf).
+        for (int slot : {sim::kWeaponRight, sim::kWeaponLeft, sim::kWings}) {
             const sim::Held& held = (*bag)[slot];
             mix(uint64_t(uint32_t(held.item)) << 16 | uint64_t(uint16_t(held.refinement)) << 8 | held.excellent);
         }

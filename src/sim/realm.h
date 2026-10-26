@@ -398,12 +398,15 @@ struct Body {
     // The stat runes worn, percent of each (sim::statShareOf summed, Realm::rearm), and the points
     // with them in, which is what every point buys -- damage, defence, life, mana, spells.
     HeroPoints runeShare;
+    // The Command the Cape of Lord's extra adds (sim::kWingCommand, Realm::rearm), MU's
+    // AddLeadership: in his total, never in what he spent.
+    int32_t wornCommand = 0;
     HeroPoints totalPoints() const {
         return {points.strength + points.strength * runeShare.strength / 100,
                 points.agility + points.agility * runeShare.agility / 100,
                 points.vitality + points.vitality * runeShare.vitality / 100,
                 points.energy + points.energy * runeShare.energy / 100,
-                points.command + points.command * runeShare.command / 100};
+                points.command + points.command * runeShare.command / 100 + wornCommand};
     }
     // What is in his hands, as indices into Tables::arms, or -1. A monster's weapon is part of
     // its row and not an item: `monster_kinds` carries the damage band whole. `shield` is the

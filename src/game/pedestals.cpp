@@ -162,6 +162,14 @@ const FigureBody* Pedestals::dressed(int slot, sim::Kin kin, bool second,
         worn.push_back(armour[s]->name);
         wornShine.push_back(shineOf(*armour[s], armourPlus[s], armourExcellent[s]));
     }
+    // And the Dark Lord's cape, on his own bones (backPiece).
+    for (const Saved::Item& item : items) {
+        const std::string back = item.slot == sim::kWings ? backPiece(item.group, item.number) : "";
+        if (!back.empty()) {
+            worn.push_back(back);
+            wornShine.push_back(ShineLook{});
+        }
+    }
     return figures_->dress("Lobby" + std::to_string(slot), bareBody(kin, second, figures_), weapon,
                            shield, worn,
                            wornShine, weaponShine, shieldShine);

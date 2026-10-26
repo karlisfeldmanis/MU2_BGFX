@@ -257,10 +257,21 @@ bool Realm::mix(Service service, int socket) {
             return false;
         }
     }
+    // A Crest of Monarch in the box makes it the Cape of Lord's, whoever mixes it
+    // (MixSystem.cpp:2545-2553, :2762-2767); the cape is the Dark Lord's to wear.
+    bool cape = false;
+    for (int cell = 0; cell < kMachineCells && j.recipe == Recipe::SecondWings; ++cell) {
+        const Held& in = me().machine[cell];
+        cape = cape || (!in.empty() && size_t(in.item) < tables_->items.size() &&
+                        crestOfMonarch(tables_->items[size_t(in.item)]));
+    }
     const int32_t secondWingItem =
-        j.recipe == Recipe::SecondWings ? tables_->itemAt(12, secondWingOf(hero.kin)) : -1;
+        j.recipe != Recipe::SecondWings ? -1
+        : cape                          ? tables_->itemAt(kGroupPets, kCapeNumber)
+                                        : tables_->itemAt(12, secondWingOf(hero.kin));
     if (j.recipe == Recipe::SecondWings && secondWingItem < 0) {
-        refusal_ = std::string("no ") + secondWingName(hero.kin) + " is in this world's tables";
+        refusal_ = std::string("no ") + (cape ? "Cape of Lord" : secondWingName(hero.kin)) +
+                   " is in this world's tables";
         return false;
     }
     if (j.recipe == Recipe::Cloak && tables_->itemAt(kGroupPets, 18) < 0) {
@@ -404,8 +415,12 @@ bool Realm::mix(Service service, int socket) {
                         case 1: if (roll < 10) wing.option = 2; break;
                         default: if (roll < 20) wing.option = 1; break;
                     }
-                    if (mixDice_.nextInt(0, 5) == 0) wing.wing = uint8_t(1u << mixDice_.nextInt(0, 3));
-                    if (mixDice_.nextInt(0, 2) != 0) wing.wing |= kWingOptionKind;
+                    // The cape rolls one of four extras, Command the fourth, and its option is
+                    // damage whatever its kind bit (sim::capeOfLord), so it carries none.
+                    if (mixDice_.nextInt(0, 5) == 0) {
+                        wing.wing = uint8_t(1u << mixDice_.nextInt(0, cape ? 4 : 3));
+                    }
+                    if (mixDice_.nextInt(0, 2) != 0 && !cape) wing.wing |= kWingOptionKind;
                     me().machine.put(0, wing);
                 }
             } else if (j.recipe == Recipe::Cloak) {

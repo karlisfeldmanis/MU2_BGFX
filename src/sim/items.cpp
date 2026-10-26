@@ -64,8 +64,8 @@ Needs asks(const content::ItemRow& row, int refinement, bool excellent) {
     Needs n;
     // A wing asks 4 levels more a plus: it falls to the rings' branch of WebZen's
     // `m_RequireLevel = RequireLevel + m_Level * 4` (zzzitem.cpp:628-632).
-    // A 2nd wing 5 a plus (zzzitem.cpp:594-597).
-    n.level = row.needLevel + (firstWing(row)    ? 4 * std::max(0, refinement)
+    // A 2nd wing 5 a plus (zzzitem.cpp:594-597). The cape 4, a helper row's (:629-636).
+    n.level = row.needLevel + (firstWing(row) || capeOfLord(row) ? 4 * std::max(0, refinement)
                                : secondWing(row) ? 5 * std::max(0, refinement)
                                                  : 0);
     // The Dark Horse asks 218 + 2 a horse level (WebZen zzzitem.cpp:580-583, MuMain's card
@@ -477,7 +477,15 @@ bool secondWing(const content::ItemRow& row) {
                                row.number == kDragonNumber || row.number == kDarknessNumber);
 }
 bool lochsFeather(const content::ItemRow& row) { return row.group == 13 && row.number == 14; }
-bool anyWing(const content::ItemRow& row) { return firstWing(row) || secondWing(row); }
+bool crestOfMonarch(const content::ItemRow& row) {
+    return row.group == kGroupPets && row.number == kCrestNumber;
+}
+bool capeOfLord(const content::ItemRow& row) {
+    return row.group == kGroupPets && row.number == kCapeNumber;
+}
+bool anyWing(const content::ItemRow& row) {
+    return firstWing(row) || secondWing(row) || capeOfLord(row);
+}
 
 WingOption wingOption(const content::ItemRow& row, uint8_t bits) {
     const bool kind = (bits & kWingOptionKind) != 0;
@@ -501,8 +509,8 @@ int wingOptionValue(const content::ItemRow& row, const Held& held) {
 int wingDefense(const content::ItemRow& row, int refinement) {
     if (!anyWing(row)) return 0;
     const int plus = std::max(0, refinement);
-    // 3 a plus on a 1st wing, 2 on a 2nd (zzzitem.cpp:878-889), the triangle on both.
-    int defense = row.defense + (secondWing(row) ? 2 : 3) * plus;
+    // 3 a plus on a 1st wing, 2 on a 2nd and the cape (zzzitem.cpp:878-912), the triangle on all.
+    int defense = row.defense + (secondWing(row) || capeOfLord(row) ? 2 : 3) * plus;
     if (plus >= 10) defense += (plus - 9) * (plus - 9 + 1) / 2;
     return defense;
 }
@@ -515,6 +523,11 @@ PetPower wingPower(const content::ItemRow& row, int refinement) {
     // MAKE_ITEMNUM(12,2)` under NEW_FORSKYLAND3, the flag that brought them).
     power.dealt = secondWing(row) ? double(132 + plus) / 100.0 : double(112 + 2 * plus) / 100.0;
     power.taken = secondWing(row) ? double(75 - 2 * plus) / 100.0 : double(88 - 2 * plus) / 100.0;
+    // The cape's x(120 + 2 a plus)% and OpenMU's absorb, 10 + 2 a plus (sim::capeOfLord).
+    if (capeOfLord(row)) {
+        power.dealt = double(120 + 2 * plus) / 100.0;
+        power.taken = double(90 - 2 * plus) / 100.0;
+    }
     // The wizard's wing, Heaven or Soul, 1 Life a blow; the others 3.
     power.lifeCost = row.number == 1 || row.number == kSoulNumber ? 1 : 3;
     return power;
@@ -1056,8 +1069,8 @@ bool refiningJewel(const content::ItemRow& row) {
 }
 
 bool bindable(const content::ItemRow& row) {
-    return !stacks(row) && !refiningJewel(row) && !lochsFeather(row) && !boxOfLuck(row) &&
-           !boxOfKundun(row) && !firecracker(row);
+    return !stacks(row) && !refiningJewel(row) && !lochsFeather(row) && !crestOfMonarch(row) &&
+           !boxOfLuck(row) && !boxOfKundun(row) && !firecracker(row);
 }
 
 bool settable(const content::Tables& tables, const Held& jewel, const Held& target, Kin kin,
@@ -1228,11 +1241,11 @@ int stackMost(const content::ItemRow& row) {
     if (timedPet(row)) return kStackMost;
     // And what else he carries several of and spends one at a time (the user, 2026-10-20: "which
     // else items make sense we stack?", and the table's both halves): the Ale and the Town
-    // Portal (Realm::use spends one), Loch's Feather and the castle's and the square's materials
+    // Portal (Realm::use spends one), Loch's Feather, the Crest of Monarch and the castle's and the square's materials
     // (the machine takes of a stack what the mix wants, sim::piecesWanted), and the boxes
     // (Realm::crack opens one). A material or a box stacks only with its own level (sim::tops).
-    if (ale(row) || portal(row) || lochsFeather(row) || devilsEye(row) || devilsKey(row) ||
-        scrollOfArchangel(row) || bloodBone(row) || boxOfLuck(row) || boxOfKundun(row)) {
+    if (ale(row) || portal(row) || lochsFeather(row) || crestOfMonarch(row) || devilsEye(row) ||
+        devilsKey(row) || scrollOfArchangel(row) || bloodBone(row) || boxOfLuck(row) || boxOfKundun(row)) {
         return kStackMost;
     }
     return 0;

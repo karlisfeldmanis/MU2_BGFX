@@ -884,6 +884,15 @@ const FigureBody* Figures::dress(const std::string& name, const std::string& bas
         const content::Mesh* found = wearable(piece);
         if (!found) continue;
         const ShineLook shine = w < wornShine.size() ? wornShine[w] : ShineLook{};
+        // A piece that covers no bare part is worn over them all: the Dark Lord's cape
+        // (DarkLordCape, game/wings.h backPiece).
+        bool covers = false;
+        for (const char* word : kPieces) covers = covers || piece.rfind(word, 0) == 0;
+        if (!covers) {
+            made->parts.push_back(found);
+            made->partShine.push_back(shine);
+            continue;
+        }
         for (size_t i = 0; i < made->parts.size() && i < 5; ++i) {
             const std::string word = kPieces[i];
             if (piece.compare(0, word.size(), word) != 0) continue;

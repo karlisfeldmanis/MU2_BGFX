@@ -9808,6 +9808,223 @@ void testCraftsFromTheBag() {
     }
 }
 
+// **The Cape of Lord and the Crest of Monarch** (docs/plans/dark-lord-cape.md and its "Decided",
+// the user 2026-10-25): the Crest falls where Loch's Feather does; the 2nd wings' mix with the
+// Crest in the feather's place makes the cape; the cape's numbers by plus; Command its alone; and
+// it is a wing to Icarus.
+void testCapeOfLord() {
+    std::printf("cape of lord\n");
+    const auto load = [](const char* world, content::Tables& out) {
+        std::string error;
+        return content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/" + world + "/" + world +
+                                       ".mur",
+                                   out, error);
+    };
+    content::Tables noria, icarus, lorencia;
+    if (!load("noria", noria) || !load("icarus", icarus) || !load("lorencia", lorencia)) {
+        check(false, "Noria's, Icarus's and Lorencia's tables load");
+        return;
+    }
+    const int32_t cape = noria.itemAt(sim::kGroupPets, sim::kCapeNumber),
+                  crest = noria.itemAt(sim::kGroupPets, sim::kCrestNumber),
+                  feather = noria.itemAt(13, 14), chaos = noria.itemAt(12, 15),
+                  satan = noria.itemAt(12, 2), dragon = noria.itemAt(12, sim::kDragonNumber);
+    check(cape >= 0 && crest >= 0 && feather >= 0 && chaos >= 0 && satan >= 0 && dragon >= 0,
+          "the cape, the Crest, the feather, a Chaos, Satan and Dragon are in Noria's tables");
+    if (cape < 0 || crest < 0 || feather < 0 || chaos < 0 || satan < 0 || dragon < 0) return;
+    for (const content::Tables* world : {&icarus, &lorencia}) {
+        check(world->itemAt(sim::kGroupPets, sim::kCapeNumber) >= 0 &&
+                  world->itemAt(sim::kGroupPets, sim::kCrestNumber) >= 0,
+              "and in every world's");
+    }
+
+    // The rows.
+    const content::ItemRow& row = noria.items[size_t(cape)];
+    const content::ItemRow& crestRow = noria.items[size_t(crest)];
+    check(sim::capeOfLord(row) && sim::anyWing(row) && !sim::secondWing(row) &&
+              sim::placeOf(row) == sim::kWings,
+          "the cape is a wing, worn in slot 7");
+    check(!row.dropsFromMonsters() && !crestRow.dropsFromMonsters(),
+          "neither falls in the ordinary drop");
+    check(sim::crestOfMonarch(crestRow) && !sim::lochsFeather(crestRow) && sim::placeOf(crestRow) < 0,
+          "the Crest is its own row, never a feather, and worn nowhere");
+    checkEqual(row.durability, 200, "the cape's durability 200");
+
+    // Its numbers by plus (the user: level 180 + 4L, absorb 10 + 2L).
+    checkEqual(sim::asks(row, 0, false).level, 180, "level 180 at +0");
+    checkEqual(sim::asks(row, 5, false).level, 200, "and 4 a plus");
+    checkEqual(sim::wingDefense(row, 0), 15, "defence 15 at +0");
+    checkEqual(sim::wingDefense(row, 9), 33, "2 a plus to +9");
+    checkEqual(sim::wingDefense(row, 11), 40, "and the triangle from +10");
+    checkNear(sim::wingPower(row, 0).dealt, 1.20, 1e-9, "his blows x1.20 at +0");
+    checkNear(sim::wingPower(row, 5).dealt, 1.30, 1e-9, "2% more a plus");
+    checkNear(sim::wingPower(row, 0).taken, 0.90, 1e-9, "absorbs 10% at +0");
+    checkNear(sim::wingPower(row, 5).taken, 0.80, 1e-9, "and 2% more a plus");
+    checkEqual(sim::wingPower(row, 0).lifeCost, 3, "3 Life a blow");
+    check(sim::wingOption(row, 0) == sim::WingOption::Damage &&
+              sim::wingOption(row, sim::kWingOptionKind) == sim::WingOption::Damage,
+          "its option is damage, whatever its kind bit");
+    checkEqual(sim::capeCommand(0), 10, "Command +10 at +0");
+    checkEqual(sim::capeCommand(5), 35, "and 5 a plus");
+
+    // Worn by a Dark Lord of 180: his class's alone.
+    int column = -1, cellRow = -1;
+    for (int c = 140; c < 200 && column < 0; ++c) {
+        for (int r = 60; r < 140 && column < 0; ++r) {
+            if (!noria.grid.safe(c, r) && noria.grid.open(c, r)) column = c, cellRow = r;
+        }
+    }
+    sim::Realm knight;
+    check(column >= 0 && knight.raise(&noria, 7, column, cellRow, sim::Kin::DarkKnight, 200),
+          "a level 200 knight off the safe zone");
+    check(!knight.moveItem(knight.give(cape), sim::kWings), "a knight cannot wear the cape");
+    // At 200, the +5's 180 + 4 x 5.
+    sim::Realm lord;
+    check(lord.raise(&noria, 7, column, cellRow, sim::Kin::DarkLord, 200), "a level 200 Dark Lord");
+    const int command = lord.hero().totalPoints().command;
+    const int held = lord.give(cape, -1, 5);
+    check(lord.moveItem(held, sim::kWings), "the Dark Lord wears it");
+    lord.step();
+    checkNear(lord.hero().stats.damageDealt, 1.30, 1e-9, "his blows x1.30 at +5");
+    checkNear(lord.hero().stats.damageTaken, 0.80, 1e-9, "what reaches him x0.80");
+    check(lord.hero().flying, "off the safe zone he flies, as a winged hero");
+    checkEqual(lord.hero().totalPoints().command, command, "no Command without its extra");
+    // With its Command extra: +35 at +5, in his total, never in what he spent.
+    sim::HeroRecord record = lord.record();
+    record.slots[sim::kWings].wing = sim::kWingCommand;
+    lord.restore(record);
+    lord.step();
+    checkEqual(lord.hero().totalPoints().command, command + 35, "the cape's Command +35 at +5");
+    checkEqual(lord.hero().points.command, record.points.command, "his own points untouched");
+    // The bit on a 2nd wing is nothing: Command is the cape's alone.
+    sim::Realm blade;
+    check(blade.raise(&noria, 7, column, cellRow, sim::Kin::DarkKnight, 230), "a level 230 knight");
+    sim::HeroRecord bladeRecord = blade.record();
+    bladeRecord.quests[sim::kTreasureQuests[int(sim::Kin::DarkKnight)]].completions = 1;
+    sim::Held dragonCommand{dragon, 0, 200};
+    dragonCommand.wing = sim::kWingCommand;
+    bladeRecord.slots[sim::kWings] = dragonCommand;
+    blade.restore(bladeRecord);
+    blade.step();
+    checkEqual(blade.hero().totalPoints().command, 0, "Wings of Dragon with the bit give no Command");
+
+    // Icarus takes him with it on, as with any wing.
+    sim::Satchel bag;
+    check(!sim::canFly(icarus, bag), "Icarus refuses him bare");
+    bag.put(sim::kWings, sim::Held{icarus.itemAt(sim::kGroupPets, sim::kCapeNumber), 0, 200});
+    check(sim::canFly(icarus, bag), "and lets him in with the cape on");
+
+    // The Crest falls where the feather does: Tarkan, Icarus and Blood Castle 6, from level 60,
+    // one in kFeatherOdds on its own roll; never in Lorencia, never under 60.
+    const auto fallen = [](const content::Tables& map, int level, int kills, int& feathers) {
+        int crests = 0;
+        feathers = 0;
+        auto at = std::make_unique<sim::Realm>();
+        for (int i = 0; i < kills; ++i) {
+            if (i % 500 == 0) {
+                at = std::make_unique<sim::Realm>();
+                at->raise(&map, uint32_t(53 + i), 20, 20, sim::Kin::DarkLord, 200);
+            }
+            at->dropFor(level);
+            for (const sim::Lying& one : at->lying()) {
+                crests += sim::crestOfMonarch(map.items[size_t(one.what.item)]);
+                feathers += sim::lochsFeather(map.items[size_t(one.what.item)]);
+            }
+        }
+        return crests;
+    };
+    int feathers = 0;
+    checkEqual(fallen(lorencia, 80, 20000, feathers), 0, "Lorencia's kills leave no Crest");
+    checkEqual(fallen(icarus, sim::kFeatherFromLevel - 1, 20000, feathers), 0,
+               "never from a monster under 60");
+    const int kills = 50000;
+    const int crests = fallen(icarus, 90, kills, feathers);
+    std::printf("  Icarus: %d Crests and %d feathers off %d kills (one in %d wanted)\n", crests,
+                feathers, kills, sim::kFeatherOdds);
+    const double want = double(kills) / sim::kFeatherOdds;
+    check(std::abs(crests - want) < want * 0.25, "an Icarus kill leaves a Crest one time in 500");
+    check(std::abs(feathers - want) < want * 0.25, "and the feather as often beside it");
+
+    // The mix: a 1st wing, the Crest and a Chaos, the 2nd wings' box with the Crest in the
+    // feather's place, at WebZen's rate and our 2nd wings' Zen.
+    sim::Machine box;
+    box.put(0, sim::Held{satan, 0, 200});
+    box.put(5, sim::Held{crest, 0, 1});
+    box.put(6, sim::Held{chaos, 0, 1});
+    const sim::Judged made = sim::judge(noria, box, sim::Service::Combine, -1, sim::Kin::DarkLord);
+    check(made.recipe == sim::Recipe::SecondWings && made.ready, "a wing, the Crest and a Chaos");
+    check(made.success == "Cape of Lord", "make the Cape of Lord");
+    checkEqual(made.rate, 13, "a +0 wing alone, 55.4 million over 4 million");
+    checkEqual(int(made.zen), int(sim::kSecondWingsZen), "for a million and a half");
+    check(sim::judge(noria, box, sim::Service::Combine, -1, sim::Kin::DarkKnight).success ==
+              "Cape of Lord",
+          "whoever mixes it");
+    box.put(7, sim::Held{feather, 0, 1});
+    check(!sim::judge(noria, box, sim::Service::SecondWings, -1, sim::Kin::DarkLord).ready,
+          "a feather beside the Crest spoils it");
+    box.lift(7);
+    box.put(7, sim::Held{cape, 0, 200});
+    check(sim::judge(noria, box).recipe == sim::Recipe::None, "and so does a cape already in it");
+    box.lift(7);
+
+    // At the Goblin: a +0 cape or an empty box, its extras one of four bits with Command among
+    // them, never the kind bit.
+    int goblin = -1;
+    for (size_t i = 0; i < noria.folk.size(); ++i) {
+        if (noria.folk[i].number == sim::kChaosGoblin) goblin = int(i);
+    }
+    check(goblin >= 0, "the Chaos Goblin is in Noria's table");
+    if (goblin < 0) return;
+    sim::Request talk;
+    talk.kind = sim::Request::Kind::Talk;
+    talk.target = uint32_t(goblin);
+    // A new forge after each cape, which would spoil the next box; a seed of its own each time.
+    auto forge = std::make_unique<sim::Realm>();
+    const auto open = [&](uint32_t seed) {
+        forge = std::make_unique<sim::Realm>();
+        check(forge->raise(&noria, seed, 182, 105, sim::Kin::DarkLord, 220), "a Dark Lord by him");
+        forge->ask(talk);
+        for (int tick = 0; tick < 400 && forge->mixing() < 0; ++tick) forge->step();
+        forge->earn(2000000000);
+    };
+    open(7);
+    int capes = 0, commands = 0, kinds = 0, wrong = 0;
+    const int tries = 800;
+    for (int attempt = 0; attempt < tries; ++attempt) {
+        if (forge->putIn(forge->give(satan)) < 0 || forge->putIn(forge->give(crest)) < 0 ||
+            forge->putIn(forge->give(chaos)) < 0) {
+            check(false, "a wing, the Crest and a Chaos go in");
+            break;
+        }
+        const int64_t before = forge->money();
+        if (!forge->mix()) {
+            check(false, "the Goblin runs it");
+            break;
+        }
+        wrong += before - forge->money() != sim::kSecondWingsZen;
+        int left = 0, at = -1;
+        for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+            if (!forge->machine()[cell].empty()) ++left, at = cell;
+        }
+        if (forge->mixed()) {
+            const sim::Held& got = forge->machine()[at];
+            wrong += left != 1 || got.item != cape || got.refinement != 0 || got.durability != 200;
+            ++capes;
+            commands += (got.wing & sim::kWingCommand) != 0;
+            kinds += (got.wing & sim::kWingOptionKind) != 0;
+            open(uint32_t(1000 + attempt));
+        } else {
+            wrong += left != 0;
+        }
+    }
+    std::printf("  the Goblin: %d capes off %d tries, %d with Command\n", capes, tries, commands);
+    checkEqual(wrong, 0, "each try costs 1,500,000; a success is a +0 whole cape alone, a "
+                         "failure an empty box");
+    check(std::abs(capes - tries * 13 / 100) < 30, "about 13% of tries make one");
+    check(commands > 0, "some carry Command");
+    checkEqual(kinds, 0, "none carries the kind bit");
+}
+
 void testChaosMachine() {
     std::printf("chaos machine\n");
     content::Tables noria;
@@ -18270,6 +18487,7 @@ int main() {
     testCastleGrid(tables);
     testCharon();
     testChaosMachine();
+    testCapeOfLord();
     testCraftsFromTheBag();
     testRefine(tables);
     testJewelOfLife(tables);

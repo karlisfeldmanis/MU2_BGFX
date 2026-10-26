@@ -82,6 +82,10 @@ const FigureBody* wingBody(const Figures& figures, int group, int number) {
     return nullptr;
 }
 
+std::string backPiece(int group, int number) {
+    return group == sim::kGroupPets && number == sim::kCapeNumber ? "DarkLordCape" : std::string();
+}
+
 void WingLook::wear(const FigureBody* wing, const Figure& bearer) {
     if (wing == wing_) return;
     wing_ = wing;

@@ -78,7 +78,9 @@ std::string kindOf(const content::ItemRow& row) {
     if (sim::ring(row)) return "Ring";
     if (sim::pendant(row)) return "Pendant";
     // In the pets' group 13 too, and no pet: what the 2nd wings are made of.
-    if (sim::lochsFeather(row)) return "Wing material";
+    if (sim::lochsFeather(row) || sim::crestOfMonarch(row)) return "Wing material";
+    // And the Dark Lord's cape, a wing in the pets' group (sim::capeOfLord).
+    if (sim::capeOfLord(row)) return "Cape";
     // Before the jewel: the pets ride in the jewel drop group and are not jewels.
     if (row.group == sim::kGroupPets) return "Pet";
     if (row.jewel()) return "Jewel";
@@ -433,8 +435,9 @@ tip::Tone qualityOf(const content::ItemRow& row, const sim::Held& what) {
     // our ladder's gold.
     // A quest item is purple, the user's of 2026-10-04: Sevina's treasures and the Archangel's
     // weapons, both carried back to whoever asked; and Loch's Feather, which Sevina pays and the
-    // 2nd wings are made of ('loch feather has to use pruple label color').
-    if (sim::classTreasure(row) || sim::lochsFeather(row)) {
+    // 2nd wings are made of ('loch feather has to use pruple label color'), and the Crest of
+    // Monarch, which the cape is made of in its place.
+    if (sim::classTreasure(row) || sim::lochsFeather(row) || sim::crestOfMonarch(row)) {
         return Tone::Quest;
     }
     // MU draws Devil Square's three yellow too (ZzzInventory.cpp:2186-2189).
@@ -1070,7 +1073,8 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     const bool waves = row.skill == sim::skill::kForceWave;
     if ((sim::takesOptions(row) || sim::jewellery(row) || sim::anyWing(row)) &&
         (what.luck || what.option > 0 || what.excellent != 0 || waves ||
-         (sim::secondWing(row) && what.wing != 0) || what.harmony != 0)) {
+         ((sim::secondWing(row) || sim::capeOfLord(row)) && what.wing != 0) ||
+         what.harmony != 0)) {
         Section options;
         // MU's line split at its last word where that word is the value: "Max life +8%"
         // is the prose "Max life" and the value "+8%". A line whose last word is not a
@@ -1126,14 +1130,19 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         }
         // A 2nd wing's extras in MuMain's words (GT 740-742, docs/reference/mu-tooltip-lines.md), its
         // numbers WebZen's: 50 and 5 a plus (zzzitem.cpp:3039-3044).
-        if (sim::secondWing(row) && (what.wing & (sim::kWingMaxLife | sim::kWingMaxMana |
-                                                  sim::kWingIgnoreDefense))) {
+        // And the cape's, with its Command (ZzzInfomation.cpp:912-917).
+        if ((sim::secondWing(row) || sim::capeOfLord(row)) &&
+            (what.wing & (sim::kWingMaxLife | sim::kWingMaxMana | sim::kWingIgnoreDefense |
+                          sim::kWingCommand))) {
             const std::string extra = std::to_string(sim::kWingExtraBase +
                                                      sim::kWingExtraPerPlus * what.refinement);
             if (what.wing & sim::kWingMaxLife) rolled("", "Max life +" + extra);
             if (what.wing & sim::kWingMaxMana) rolled("", "Max mana +" + extra);
             if (what.wing & sim::kWingIgnoreDefense) {
                 rolled("", "Ignore defense chance +3%");
+            }
+            if (sim::capeOfLord(row) && (what.wing & sim::kWingCommand)) {
+                rolled("", "Command +" + std::to_string(sim::capeCommand(what.refinement)));
             }
         }
         // And the excellent ones last, in their bit order, as SetItemAttributes adds them.

@@ -99,6 +99,16 @@ const FigureBody* Play::raiderLook(const sim::Body& body) {
             shieldShine = shine;
         }
     }
+    // And the Dark Lord's cape, on his own bones (backPiece).
+    if (const sim::Held& wing = (*bag)[sim::kWings];
+        !wing.empty() && size_t(wing.item) < tables_.items.size()) {
+        const content::ItemRow& row = tables_.items[size_t(wing.item)];
+        const std::string back = backPiece(row.group, row.number);
+        if (!back.empty()) {
+            worn.push_back(back);
+            wornShine.push_back(ShineLook{});
+        }
+    }
     return figures_->dress("Raider" + std::to_string(body.raider), bareBody(body.kin, body.second, figures_),
                            weapon, shield, worn, wornShine, weaponShine, shieldShine);
 }

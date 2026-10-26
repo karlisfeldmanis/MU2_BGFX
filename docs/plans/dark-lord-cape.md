@@ -250,3 +250,16 @@ Goblin-only, from a 1st wing, a Jewel of Chaos, the Crest and an optional +4 exc
 5. The **fly pose** outside towns stays, as MU.
 6. Drawn as a **rigged cape first**; cloth later if wanted.
 7. His shoulder tails and skirt as cloth: **later**.
+
+## Built (2026-10-26)
+
+| piece | where |
+|---|---|
+| Cape of Lord, 13/30 | content/items/pets/DarkLordRobe.json (MU's bag model); `sim::capeOfLord` in `anyWing`, so slot 7, the Icarus and Kanturu doors, wear and the fly pose come with it; level 180 + 4L, defence 2L, x(120 + 2L)%, absorb 10 + 2L, 3 Life a hit (sim/items.cpp) |
+| Command extra | `kWingCommand` 0x08, rolled only by the cape; +10 + 5L into `Body::wornCommand`, which `totalPoints` adds (Realm::rearm) |
+| Crest of Monarch, 13/6 | content/items/misc/DarkLordSleeve.json; `sim::crestOfMonarch`; drops beside the feather on its own roll (Realm's `leaveOne`); stacks, never bound or brokered; the feather's violet column and purple name |
+| The mix | `Recipe::SecondWings` with a Crest in the feather's place makes the cape (machine.cpp, realm_machine.cpp): WebZen's rate, 1,500,000 Zen, a +0 cape or the box lost |
+| The look | content/items/armor/DarkLordCape.json, written by pipeline/dark_lord_cape.py: the cloth's trapezoid on his Spine1/Spine/Pelvis, split below the hips into two tails on the thighs; added to his figure by `game::backPiece` (Play::dressOf, the raid, the lobby). `cutout_alpha` is needed: keyed on brightness, the navy velvet cut away |
+| Tests | tests/sim_test.cpp `testCapeOfLord` |
+
+Not carried: the cloth simulation and his shoulder tails and skirt (the user's "later"), and MU's ground angle 45 / scale 0.5 and bag turn (ours lays and frames every model by its bounds).

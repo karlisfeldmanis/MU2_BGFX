@@ -1,0 +1,76 @@
+{
+  "item": "DarkLordRobe",
+  "mu_name": "Cape of Lord",
+  "mu_name_from": "MODEL_CAPE_OF_LORD = MODEL_HELPER+30, AccessModel(..., L\"Data\\\\Item\\\\\", L\"DarkLordRobe\") (ZzzOpenData.cpp:1016, its sheet :1405); ITEM_CAPE_OF_LORD = ITEM_HELPER + 30 (_enum.h:2729), group 13 number 30; named as OpenMU's VersionSeasonSix/Items/Wings.cs:88.",
+  "why_this_one": "The Dark Lord's wing: his back in slot 7, made in the Chaos Machine from a 1st wing, a Jewel of Chaos and the Crest of Monarch (docs/plans/dark-lord-cape.md, the user's \"Decided\" 2026-10-25).",
+  "profile": "weapon",
+  "profile_note": "MU's DarkLordRobe.bmd is the bag and ground model alone, a 16-triangle folded cloth: RenderLinkObject never draws it on the body (ZzzCharacter.cpp:7006-7012). The worn cape is DarkLordCape (content/items/armor), a mesh on his own bones.",
+  "worn_note": "MuMain wears it as cloth #2 of the Dark Lord's cloth set, a 10x10 sheet pinned to bone 19 (ZzzCharacter.cpp:9691-9765; dark-lord-cape.md section 4). Ours, the user's \"rigged cape first\": DarkLordCape, skinned to his spine, hips and thighs, drawn while this row is worn (game/figures.cpp Figures::dress). His shoulder tails and skirt as cloth are later.",
+  "ground_note": "MuMain turns it (-90, 0, 0) in the bag (ZzzInventory.cpp:8218-8221); ours frames every bag model by its bounds.",
+  "effects_note": "No glow, sprite, particle or light on the Cape of Lord in MuMain, and its plus shows nothing: the wing render forces level 0 and the worn cape is cloth, not a model (dark-lord-cape.md section 4).",
+  "stats": {
+    "note": "The item's own row, OpenMU's Season 6 initialiser; what it does is sim's (sim::capeOfLord): level 180 + 4 a plus, defence 2 a plus, damage x(120 + 2 a plus)%, absorb 10 + 2 a plus, 3 Life a blow, the option damage always, the extras one of four with Command +10 + 5 a plus its alone.",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Wings.cs:88",
+    "call": "this.CreateWing(30, 2, 3, \"Cape of Lord\", 180, 15, 200, 180, 0, 0, 0, 0, 1, 0, 0, this.BuildOptions((0b00, OptionType.PhysDamage)), 20, 10, this._damageIncreaseByLevelTable, this.CreateCapeOptions()); capeOfLord.Group = 13",
+    "group": 13,
+    "number": 30,
+    "drop_level": 180,
+    "drops_from_monsters": false,
+    "slot": 7,
+    "width": 2,
+    "height": 3,
+    "defense": 15,
+    "durability": 200,
+    "requires": {
+      "level": 180,
+      "strength": 0,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "lord"
+    ],
+    "class_level": 1
+  },
+  "sheets": {
+    "darklordrobe": "darklordrobe.png"
+  },
+  "sheet_from": "Data/Item/DarkLordRobe.OZT (128x256 with alpha, 33% cut away): a navy velvet trapezoid edged in gold chain, a gold crest and chain down its middle. The same bytes as Data/Player/DarklordRobe.OZT, the worn cloth's sheet (BITMAP_ROBE+7, ZzzOpenData.cpp:444). Decoded from MuMain with pipeline/decode_texture.py.",
+  "sheet_materials": {
+    "darklordrobe": "cloth"
+  },
+  "sheet_materials_from": "Velvet with gold embroidery, judged from the sheet.",
+  "cutout": [
+    "darklordrobe"
+  ],
+  "cutout_from": "DarkLordRobe.OZT's alpha is the cape's outline; the cloth is drawn MASK_ALPHA (alpha-tested) in MuMain (PhysicsManager.cpp RenderFace).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 16,
+      "area": 19270.8,
+      "along": [
+        -35.2,
+        35.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ]
+    }
+  ],
+  "cutout_alpha": [
+    "darklordrobe"
+  ],
+  "cutout_alpha_from": "Declared: DarkLordRobe.OZT's alpha is the cape's outline (decode_texture: 33% cut away). Without it cutout keys on brightness and the navy velvet, near-black, keyed out, leaving only the gold (2026-10-26)."
+}

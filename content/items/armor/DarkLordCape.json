@@ -1,0 +1,73 @@
+{
+  "item": "DarkLordCape",
+  "mu_name": "Cape of Lord, worn",
+  "mu_name_from": "Not a MU model. MuMain wears the Cape of Lord (13/30) as cloth #2 of the Dark Lord's cloth set: CPhysicsCloth on bone 19, 10x10, 180x180 units, CURVED | SHORT_SHOULDER | MASK_ALPHA, BITMAP_ROBE+7 = Data/Player/DarklordRobe.OZT on both faces (ZzzCharacter.cpp:9691-9765, :9928-9937; docs/plans/dark-lord-cape.md section 4).",
+  "why_this_one": "The user, 2026-10-25 (dark-lord-cape.md \"Decided\" 6): \"Drawn as a rigged cape first; cloth later if wanted.\" The row the Dark Lord wears is DarkLordRobe (content/items/pets); while it is in his wing slot this mesh is added to his figure (game/figures.cpp Figures::dress). No stats: it is no item row of its own.",
+  "model_from": "Written by pipeline/dark_lord_cape.py: the cloth's trapezoid and bow, 56 wide at the shoulders to 108 at the hem, from y 170 to 34 behind the bare Dark Lord at action 0 key 0, skinned one bone a vertex on ArmorClass05's 51 bones -- Spine1, Spine and the Pelvis above the hip joint, and below it two overlapping tails, each on its thigh.",
+  "profile": "armour",
+  "sheets": {
+    "darklordrobe": "darklordrobe.png"
+  },
+  "sheet_from": "Data/Item/DarkLordRobe.OZT (128x256 with alpha), the same bytes as Data/Player/DarklordRobe.OZT, the worn cloth's own sheet; mapped whole as the cloth maps it (PhysicsManager.cpp RenderFace).",
+  "sheet_materials": {
+    "darklordrobe": "cloth"
+  },
+  "sheet_materials_from": "Velvet with gold embroidery, judged from the sheet.",
+  "cutout": [
+    "darklordrobe"
+  ],
+  "cutout_from": "The sheet's alpha cuts the trapezoid; MuMain draws the cloth MASK_ALPHA, alpha-tested.",
+  "cull": false,
+  "cull_from": "MuMain draws the cloth's both faces with the same sheet (PhysicsManager.cpp RenderFace); seen from his front over a shoulder, a culled sheet would vanish.",
+  "effects_note": "No glow, sprite, particle or light on the Cape of Lord, and its plus shows nothing (dark-lord-cape.md section 4). Not carried: the cloth's simulation, its wind and its collision spheres (cloth later, the user's), and the team colours it takes in soccer and duels (CloakLight), which this game has no use for.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "cloth",
+      "triangles": 160,
+      "area": 8472.5,
+      "along": [
+        -26.0,
+        -14.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.002,
+        0.002,
+        0.67,
+        0.67
+      ]
+    },
+    {
+      "island": 1,
+      "material": "cloth",
+      "triangles": 48,
+      "area": 3558.5,
+      "along": [
+        -26.6,
+        -16.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.56,
+        0.485
+      ],
+      "bake_uv": [
+        0.002,
+        0.674,
+        0.376,
+        0.998
+      ]
+    }
+  ],
+  "cutout_alpha": [
+    "darklordrobe"
+  ],
+  "cutout_alpha_from": "Declared: DarkLordRobe.OZT's alpha is the cape's outline (decode_texture: 33% cut away). Without it cutout keys on brightness and the navy velvet, near-black, keyed out, leaving only the gold (2026-10-26)."
+}

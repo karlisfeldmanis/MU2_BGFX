@@ -303,7 +303,7 @@ His gap is armour: one set (Light Plate, 42-62) against scepters to 140. Sets fi
 4. **Dark Master (5) + Divine Scepter** -- 89-117 and the BC reward.
 5. **Paewang (5) + Absolute Scepter** -- the Aida socket pair; needs the lightning-mega sheet and the held loop.
 6. **Sunlight (5) + Soleil** -- the 380 pair for Kanturu; the 380 boots aura with it.
-7. Crest with the cape (see dark-lord-cape.md).
+7. Crest with the cape (see dark-lord-cape.md). **Built 2026-10-26**: dark-lord-cape.md "Built".
 
 ## Open questions
 
