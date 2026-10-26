@@ -36,7 +36,7 @@
       "call_every": 128.0,
       "call_rolls": 1,
       "calls_over_safe": true,
-      "note": "MODEL_CROW (GOBoid.cpp:1342-1345): the bird's 1.0 and light, SOUND_CROW a frame in 128 over the court only (GOBoid.cpp:1495-1501). 6.25: the cook's 0.25 s keys over MU's key a frame (PlaySpeed 1, GOBoid.cpp:1390).",
+      "note": "MODEL_CROW (GOBoid.cpp:1342-1345): the bird's 1.0 and light, SOUND_CROW a frame in 128 while HE stands in the court (GOBoid.cpp:1226, 1495-1501), a quarter of that away from it (ours). 6.25: the cook's 0.25 s keys over MU's key a frame (PlaySpeed 1, GOBoid.cpp:1390).",
       "flap": 6.25
     },
     "void_clouds": {

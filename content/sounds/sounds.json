@@ -2319,7 +2319,7 @@
       "files": [
         "ecrow.wav"
       ],
-      "from": "SOUND_CROW, Data\\Sound\\eCrow.wav. GOBoid.cpp plays it as PlayBuffer(SOUND_CROW, o) at the crow on rand_fps_check(128), and only while the tile under it is exactly TW_SAFEZONE (:1495-1501): the crows caw over Blood Castle's court."
+      "from": "SOUND_CROW, Data\\Sound\\eCrow.wav. GOBoid.cpp plays it as PlayBuffer(SOUND_CROW, o) at the crow on rand_fps_check(128), and only while the tile under the HERO is exactly TW_SAFEZONE (Index is his tile, :1226; the test :1495-1501): the crows caw while he stands in Blood Castle's court. Ours: away from it one call in four is kept (game/world/boids.cpp; the user, 2026-10-02)."
     },
     "mutant_move": {
       "files": [
