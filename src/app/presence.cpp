@@ -210,7 +210,9 @@ bool handshake() {
 
 // ---- the activity ---------------------------------------------------------------------------
 
-std::string quoted(const std::string& text) {
+// Not `quoted`: called on a std::string, argument lookup finds std::quoted too where the standard
+// library declares it here (Linux's libstdc++), and it takes a non-const string better.
+std::string jsonString(const std::string& text) {
     std::string out = "\"";
     for (const char c : text) {
         if (c == '"' || c == '\\') {
@@ -238,8 +240,8 @@ std::string activity(const Said& now, uint64_t nonce) {
     }
     std::string json = "{\"cmd\":\"SET_ACTIVITY\",\"nonce\":\"" + std::to_string(nonce) +
                        "\",\"args\":{\"pid\":" + std::to_string(ourPid()) + ",\"activity\":{";
-    json += "\"details\":" + quoted(details);
-    if (!state.empty()) json += ",\"state\":" + quoted(state);
+    json += "\"details\":" + jsonString(details);
+    if (!state.empty()) json += ",\"state\":" + jsonString(state);
     // A party shows as Discord's own "(2 of 5)" after the state.
     if (now.stage == Stage::Playing && now.party > 1) {
         json += ",\"party\":{\"id\":\"mu\",\"size\":[" + std::to_string(now.party) + "," +
