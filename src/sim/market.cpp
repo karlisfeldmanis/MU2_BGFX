@@ -81,8 +81,12 @@ constexpr Offer kMartin[] = {
 // **Without the source's three +S copies** (the user, 2026-10-01: "dublivated item"): the
 // Sword of Assassin, the Morning Star and the Double Axe stood twice, plain and with their skill. With the
 // skill on the orbs the copy taught nothing and only cost more, so it was the same sword twice.
+//
+// **And the Flail in the free column by the swords, ours** (the user, 2026-10-26: "we need to put
+// some DL weapons on vendors siimiliar/same lvl as DW,DK"): drop level 22, the Dark Lord's
+// Morning Star after the Mace and the Morning Star, as docs/plans/dark-lord.md §8 has it.
 constexpr Offer kBlacksmith[] = {
-    gear(0, kSwords, 1, 0), gear(1, kSwords, 2, 0), gear(2, kSwords, 4, 0),
+    gear(0, kSwords, 1, 0), gear(1, kSwords, 2, 0), gear(2, kSwords, 4, 0), gear(3, kMaces, 2, 0),
     gear(4, kHelms, 0, 0), gear(6, kArmours, 0, 0),
     gear(20, kPants, 0, 0), gear(22, kGloves, 0, 0), gear(24, kBoots, 0, 0),
     gear(26, kGloves, 6, 0), gear(36, kBoots, 6, 0), gear(38, kAxes, 1, 0),
@@ -184,6 +188,10 @@ constexpr Offer kIzabel[] = {
 // 2026-10-07: 'sell some DK orbs on zienna vendor at devias like impale and twisting slash'):
 // Impale and Twisting Slash, past Hanzo's four early ones, which still drop as well. **Twisting
 // Slash off it again** (the user, 2026-10-11): the Golden Archer's first clear pays it, and it drops.
+// **And the Battle Scepter under her swords, ours** (the user, 2026-10-26: "DL weapons on vendors
+// siimiliar/same lvl as DW,DK"): drop level 54, the lowest scepter and the first that carries Force
+// Wave, beside the knight's Serpent Sword and Salamander. No merchant in MU sells one; the higher
+// scepters still drop or are quest pay.
 constexpr Offer kZienna[] = {
     gear(0, kBows, 7, 0), gear(1, kBows, 7, 1), gear(2, kBows, 7, 2), gear(3, kBows, 15, 0),
     gear(4, kBows, 15, 1), gear(5, kBows, 15, 2), gear(6, kHelms, 8, 0), gear(16, kPants, 8, 0),
@@ -192,7 +200,7 @@ constexpr Offer kZienna[] = {
     gear(38, kOrbs, 18, 0),
     gear(48, kAxes, 4, 0), gear(49, kSpears, 3, 0),
     gear(59, kAxes, 5, 0), gear(61, kSwords, 8, 0), gear(62, kBows, 11, 0, true),
-    gear(80, kSwords, 9, 0), gear(84, kSwords, 5, 0, true),
+    gear(80, kSwords, 9, 0), gear(82, kMaces, 8, 0), gear(84, kSwords, 5, 0, true),
     gear(85, kSpears, 7, 0, true),
 };
 
