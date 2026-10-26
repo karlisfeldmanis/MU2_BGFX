@@ -95,5 +95,6 @@ with pets for DL"). The two research files beside this one are the sources, ever
    rings"); Uniria's and the dragon's stand on their own 0.34; the mount faded out with its rider's
    Teleport (a respawn still hides it at once, the user's); an off-screen raven set flying
    (CSPetSystem.cpp:645-651, tested on the ground under it); bred pets' skill, luck and option rolls
-   (MixSystem.cpp:3187-3218). Left: the birds' calls by ground distance (flight.cpp keeps the bird's
-   height, judged so), and the sounds.json crow note, which needs a showing cook.
+   (MixSystem.cpp:3187-3218). The birds' calls stay 3D, not MU's
+   ground distance (the user, 2026-10-26: "Keep ours (3D)"); the crow notes say his tile, cooked
+   (517d72f3). The audit is closed.
