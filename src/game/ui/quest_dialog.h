@@ -84,6 +84,9 @@ public:
     void turning(int direction) { turnDir_ = direction < 0 ? -1 : 1; }
     void open(const gfx::Interface& interface);
     void close();
+    // The Magic Gladiator's path a hand-in pays: the one he last picked, or his build's. Auto-play
+    // hands in by it too.
+    static sim::QuestPath pathFor(const sim::Realm& realm);
     // One frame while the realm has a giver's window open (`quest` >= 0), and once more when it
     // shuts (`quest` < 0) to clear. `wheel` is the mouse wheel this frame, positive toward the
     // screen. `stage` photographs the rewards: the shelf's own, free whenever this is up (a giver
@@ -158,6 +161,10 @@ private:
     // The Magic Gladiator's path on a giver who pays the knight and the wizard their own things:
     // the Melee and Magic pair over the rewards (over_ 30 and 31), in the body's units.
     sim::QuestPath path_ = sim::QuestPath::Melee;
+    // The last path he picked, kept across windows and worlds so the one taken on the offer is
+    // still lit at the hand-in (bug #75, 2026-10-26: a Magic pick paid the Melee reward); -1
+    // before any, when his build picks (sim::gladiatorPath).
+    static int picked_;
     bool paths_ = false;
     gfx::Box pathBox_[2] = {};
     int pathAt(float ux, float uy) const;

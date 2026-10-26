@@ -210,6 +210,10 @@ inline int questPaidKin(const QuestRow& row, int kin, bool first, QuestPath path
     }
     return int(path == QuestPath::Magic ? Kin::DarkWizard : Kin::DarkKnight);
 }
+// His path before he has picked one: by what he built, Magic for more energy than strength.
+inline QuestPath gladiatorPath(const HeroPoints& points) {
+    return points.energy > points.strength ? QuestPath::Magic : QuestPath::Melee;
+}
 // Who takes it back: its receiver, or the giver himself.
 inline int32_t questReceiver(const QuestRow& row) { return row.receiver ? row.receiver : row.giver; }
 inline const char* questReceiverName(const QuestRow& row) {

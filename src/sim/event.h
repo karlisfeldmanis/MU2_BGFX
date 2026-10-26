@@ -46,6 +46,11 @@ struct EventSeat {
     // The Archangel's staff given back and his thanks taken, at the next tick's start.
     bool staffOwed = false;
     bool claimOwed = false;
+    // The plain Archangel weapons he brought into a castle (archangelQuestItem): a statue's copy
+    // is the castle's, and Realm::keptOf leaves any plain one past these behind as he goes --
+    // died, sent out or gone (bug #76, 2026-10-26: a statue's Divine Sword carried out by dying).
+    // An Icarus drop he came with is his.
+    int archangelsIn = 0;
 };
 
 // **When it opens** is a setting, not a rule: RealmConfig::castle (sim/config.h), hourly from

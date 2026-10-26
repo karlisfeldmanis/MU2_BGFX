@@ -16379,6 +16379,22 @@ void testCastleGrid(const content::Tables& lorencia) {
             check(!realm.handInStaff(), "Give does nothing without it");
             realm.give(staff);
             check(realm.angelState() == sim::AngelState::Ready, "with it in the bag he is ready");
+            // Out of the castle -- died, sent out or gone -- a statue's staff stays in it, and one
+            // he brought in goes with him (bug #76, 2026-10-26).
+            const auto staves = [&](const sim::Kept& kept) {
+                int count = 0;
+                for (const sim::Held& one : kept.hero.slots) count += one.item == staff;
+                return count;
+            };
+            checkEqual(staves(realm.keptOf(realm.hero().id)), 0, "out of the castle, the statue's staff stays");
+            {
+                sim::Kept brought = realm.keptOf(realm.hero().id);
+                brought.hero = realm.record();
+                realm.restoreKept(brought);
+                realm.give(staff);
+                checkEqual(staves(realm.keptOf(realm.hero().id)), 1, "and the one he brought in goes with him");
+                realm.restoreKept(brought);  // the one staff again
+            }
             const int64_t zen = realm.money();
             const uint64_t experience = realm.hero().experience;
             const int level = realm.hero().level;

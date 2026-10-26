@@ -10,6 +10,7 @@
 #include "core/log.h"
 #include "core/files.h"
 #include "game/play.h"
+#include "game/ui/quest_dialog.h"
 #include "game/ui/tracker.h"
 #include "game/world/world_show.h"
 #include "sim/gates.h"
@@ -458,11 +459,12 @@ void QuestAuto::visit(Play& play, int folk, bool hand) {
         if (hand) {
             int choice = -1;
             const sim::QuestRow& row = sim::questAt(quest_);
+            const sim::QuestPath path = QuestDialog::pathFor(realm);
             for (int c = 0; c < row.choiceCount && choice < 0; ++c) {
-                if (realm.questChoiceFits(quest_, c)) choice = c;
+                if (realm.questChoiceFits(quest_, c, path)) choice = c;
             }
             handedIn_ = true;
-            play.completeQuest(quest_, choice);
+            play.completeQuest(quest_, choice, path);
         } else {
             play.acceptQuest(quest_);
         }

@@ -1742,6 +1742,8 @@ public:
     void restoreKept(const Kept& kept);
     // And read off a player, for the server to keep as he leaves. Empty for no player.
     Kept keptOf(uint32_t id);
+    // How many plain Archangel weapons (archangelQuestItem) a record holds, worn or carried.
+    int plainArchangels(const HeroRecord& hero) const;
     // The players, in the order they joined, which is id order; and which of them the queries
     // below answer for -- `hero()`, `satchel()`, the windows, the quests. Inside step() the
     // realm works for each in turn and comes back to this one.

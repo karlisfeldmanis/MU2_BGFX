@@ -606,6 +606,12 @@ void QuestDialog::layout(const Play& play) {
     }
 }
 
+int QuestDialog::picked_ = -1;
+
+sim::QuestPath QuestDialog::pathFor(const sim::Realm& realm) {
+    return picked_ >= 0 ? sim::QuestPath(picked_) : sim::gladiatorPath(realm.hero().points);
+}
+
 void QuestDialog::update(float seconds, const Play& play, int quest, bool reading, float width,
                          float height, const Pointer& pointer, float wheel, bool enter,
                          bool escape, Stage* stage, Result* out) {
@@ -634,7 +640,7 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
         quest_ = quest;
         reading_ = reading;
         chosen_ = -1;
-        path_ = sim::QuestPath::Melee;
+        path_ = pathFor(realm);
         over_ = pressing_ = -1;
         trip_ = -1;
         scroll_ = 0.0f;
@@ -808,6 +814,7 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
             else if (pressing_ == 1 || pressing_ == 2) cancel = true;
             else if (pressing_ >= 30) {
                 path_ = sim::QuestPath(pressing_ - 30);
+                picked_ = int(path_);
                 chose = true;
             }
             else if (pressing_ >= 20) {

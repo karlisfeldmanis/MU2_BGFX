@@ -67,6 +67,17 @@ void Realm::restoreKept(const Kept& kept) {
     };
     loosen(me().vault, kVaultCells);
     loosen(me().machine, kMachineCells);
+    // Into a castle: the plain Archangel weapons that are his own (EventSeat::archangelsIn).
+    if (event() == EventKind::Castle) me().event.archangelsIn = plainArchangels(kept.hero);
+}
+
+int Realm::plainArchangels(const HeroRecord& hero) const {
+    int count = 0;
+    for (const Held& one : hero.slots) {
+        count += !one.empty() && size_t(one.item) < tables_->items.size() &&
+                 archangelQuestItem(tables_->items[size_t(one.item)], one);
+    }
+    return count;
 }
 
 Kept Realm::keptOf(uint32_t id) {
@@ -75,6 +86,20 @@ Kept Realm::keptOf(uint32_t id) {
     if (at < 0) return out;
     For him(*this, size_t(at));
     out.hero = record();
+    // Out of a castle, a statue's weapon stays in it (bug #76): every plain one past those he
+    // brought in, worn or in the bag.
+    if (event() == EventKind::Castle) {
+        int extra = plainArchangels(out.hero) - me().event.archangelsIn;
+        for (int i = kSlots - 1; i >= 0 && extra > 0; --i) {
+            Held& one = out.hero.slots[i];
+            if (one.empty() || size_t(one.item) >= tables_->items.size() ||
+                !archangelQuestItem(tables_->items[size_t(one.item)], one)) {
+                continue;
+            }
+            one = Held{};
+            --extra;
+        }
+    }
     out.vault = me().vault;
     out.machine = me().machine;
     return out;
