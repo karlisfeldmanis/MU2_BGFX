@@ -341,8 +341,9 @@ void selfLines(const sim::SkillRow& row, const content::Tables* tables, const si
             std::snprintf(sum, sizeof sum, "%d agi, %d ene, no shield (max %d%%)", has.agility,
                           has.energy, cap);
         } else if (row.number == sim::skill::kSoulBarrier) {
-            std::snprintf(sum, sizeof sum, "%d shield, %d ene, %d agi (max %d%%)",
-                          who.shieldDefense, has.energy, has.agility, cap);
+            std::snprintf(sum, sizeof sum, "%d shield, %d %s, %d agi (max %d%%)",
+                          who.shieldDefense, sim::barrierMain(has), has.command > 0 ? "cmd" : "ene",
+                          has.agility, cap);
         } else {
             std::snprintf(sum, sizeof sum, "%d shield, %d str, %d agi (max %d%%)",
                           who.shieldDefense, has.strength, has.agility, cap);

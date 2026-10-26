@@ -571,16 +571,21 @@ inline float runeForce(const Body& hero, Element element) {
 
 // What a skill costs him in mana: its row's, less his talents' for that skill, a heal's or buff's,
 // or a summon's (sim/talents.h), never under one. The row's for a hero with none.
+// **The Dark Lord's Magic Shield at the knight's Defense's 30** (the user, 2026-10-26): his mana
+// is a knight's, 59 at level 20, and the wizard's 70 would keep his guard from him for levels.
+constexpr int32_t kLordBarrierMana = 30;
 inline int32_t manaCostOf(const Body& hero, const SkillRow& row) {
-    if (!hero.player || !hero.talentShare.any || row.mana <= 0) return row.mana;
+    const int32_t mana =
+        hero.kin == Kin::DarkLord && row.number == skill::kSoulBarrier ? kLordBarrierMana : row.mana;
+    if (!hero.player || !hero.talentShare.any || mana <= 0) return mana;
     const TalentShares& t = hero.talentShare;
     TalentAsk ask;
     ask.skill = row.number;
     float less = talentSum(hero.kin, hero.talents, TalentStat::SkillManaCost, ask);
     if (row.mends || row.aids()) less += t.aidManaCost;
     if (row.summons > 0) less += t.summonManaCost;
-    if (less == 0.0f) return row.mana;
-    return std::max<int32_t>(1, int32_t(float(row.mana) * (1.0f + less / 100.0f)));
+    if (less == 0.0f) return mana;
+    return std::max<int32_t>(1, int32_t(float(mana) * (1.0f + less / 100.0f)));
 }
 
 // How much further his talents carry a skill (Special::Reach: Wider Rings, Frost Burst, Legion),

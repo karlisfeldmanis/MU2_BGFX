@@ -17,8 +17,10 @@
     "durability": 1,
     "classes": [
       "wizard",
-      "gladiator"
+      "gladiator",
+      "lord"
     ],
+    "classes_lord": "The Dark Lord's too, the user's (2026-10-26: 'we need some kind of magic shield also for DL'), off Command where the wizard's is off energy (sim::barrierMain).",
     "classes_gladiator": "The Magic Gladiator's too, the user's (2026-10-07: 'MG can use shield skill, and also can use Soul barrier'), where MuMain's item.bmd leaves him out.",
     "classes_from": "CreateScroll's QualifiedCharacters, the Dark Wizard's line (SoulMasterAndGrandMaster in Season 6 is the wizard's own evolution). Prize.ReadBy refuses the other two.",
     "requires": {
@@ -34,7 +36,7 @@
     "note": "What the scroll teaches. Read once and gone.",
     "number": 16,
     "name": "Magic Shield",
-    "tells": "A barrier drawn up behind the shield for five minutes. The better the shield and the keener the wizard, the more of every blow it takes.",
+    "tells": "A barrier drawn up behind the shield for five minutes. The better the shield and the keener the caster, the more of every blow it takes.",
     "tells_from": "The skill's own line in sim/skills.cpp, kept letter for letter so the scroll's tooltip and the skill's card say the same thing.",
     "level_requirement": 12,
     "energy_requirement": 0,

@@ -5358,6 +5358,16 @@ void testSkills(const content::Tables& tables) {
         check(barrier.onSelf() && barrier.aids() && barrier.kin == sim::Kin::DarkWizard &&
                   barrier.families == sim::arms::kShield && !barrier.wizardry,
               "Soul Barrier is the wizard's, a self-cast that aids, off a shield");
+        // And the Dark Lord's (the user, 2026-10-26): his Magic Shield off Command, level with a
+        // new wizard's at the start, and none of the wizard's other spells with it.
+        const sim::HeroPoints lord = sim::startingPoints(sim::Kin::DarkLord);
+        check(sim::skillFor(barrier, sim::Kin::DarkLord) &&
+                  !sim::skillFor(*sim::skillNumbered(sim::skill::kEnergyBall), sim::Kin::DarkLord) &&
+                  !sim::skillFor(*sim::skillNumbered(sim::skill::kDefense), sim::Kin::DarkLord),
+              "the Dark Lord learns Magic Shield and nothing else of the wizard's or knight's");
+        check(sim::barrierMain(lord) == lord.command && sim::barrierMain(wizard) == wizard.energy &&
+                  std::fabs(sim::barrierShare(lord, 3) - start) < 0.02f,
+              "his barrier is off Command, within two points of a new wizard's");
         checkEqual(barrier.boonTicks, sim::skillNumbered(sim::skill::kDefense)->boonTicks,
                    "and it stands as long as Defense");
 
@@ -14575,6 +14585,25 @@ void testScepter(const content::Tables& tables) {
     const int staff = tables.itemAt(5, 0);
     if (staff >= 0) check(sim::staffPower(tables.items[size_t(staff)]), "a staff's power is a staff's");
     check(sim::excellentLine(row, 3) == "Damage +4%", "its excellent 4 is a mace's");
+
+    // His Magic Shield (the user, 2026-10-26): the wizard's scroll read, and thrown behind a shield.
+    {
+        sim::Realm guard;
+        check(guard.raise(&tables, 12, 190, 110, sim::Kin::DarkLord, 20), "a level 20 lord raises, out of town");
+        const int32_t scroll = tables.itemNamed("Book16");
+        const int slot = scroll >= 0 ? guard.give(scroll) : -1;
+        check(slot >= 0 && guard.useItem(slot) && guard.knows(sim::skill::kSoulBarrier),
+              "he reads the Scroll of Magic Shield");
+        const int32_t ball = tables.itemNamed("Book01");
+        const int ballAt = ball >= 0 ? guard.give(ball) : -1;
+        check(ballAt >= 0 && !guard.useItem(ballAt), "and not the wizard's other scrolls");
+        check(guard.equip(tables.armNamed("Mace09"), tables.armNamed("Shield01"), true),
+              "a scepter and a shield in his hands");
+        guard.invoke(sim::skill::kSoulBarrier, guard.hero().id);
+        for (int tick = 0; tick < 60 && guard.hero().boonSkill != sim::skill::kSoulBarrier; ++tick) guard.step();
+        check(guard.hero().boonSkill == sim::skill::kSoulBarrier && guard.hero().boonDamageTaken < 0.9f,
+              "and his Magic Shield goes up");
+    }
 
     sim::Realm armed;
     check(armed.raise(&tables, 12, 138, 124, sim::Kin::DarkLord, 100), "a lord raises");

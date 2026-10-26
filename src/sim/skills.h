@@ -834,6 +834,10 @@ float guardShare(const HeroPoints& points, int shieldDefense);
 // point of each other (16.5% against 16.3% behind a Buckler +1, 14.3% against 14.0% behind a
 // Small Shield), and each spending on his main stat stays level with the other after. MU's own `10 + agility/50 + energy/200` percent
 // (SkillTooltipModel.cpp:248) is a tenth of this at the start and is not followed.
+// **The Dark Lord's is Command in energy's place** (the user, 2026-10-26, his Magic Shield): his
+// main stat as energy is the wizard's, and his 25 at the start stands beside a new wizard's 30.
+// Command is nought for every other class, so a body with any is his.
+int barrierMain(const HeroPoints& points);
 float barrierPoints(const HeroPoints& points, int shieldDefense);
 float barrierShare(const HeroPoints& points, int shieldDefense);
 

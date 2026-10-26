@@ -1120,7 +1120,8 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
     }
     const bool barrier = row->number == sim::skill::kSoulBarrier;
     const bool ward = row->number == sim::skill::kGreaterDefense;
-    sheet.base = barrier ? "AURA \xc2\xb7 DARK WIZARD"
+    sheet.base = barrier && hero_->kin == sim::Kin::DarkLord ? "AURA \xc2\xb7 DARK LORD"
+                 : barrier ? "AURA \xc2\xb7 DARK WIZARD"
                  : ward  ? "AURA \xc2\xb7 FAIRY ELF"
                          : "AURA \xc2\xb7 DARK KNIGHT";
 
@@ -1150,12 +1151,12 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
                                 std::to_string(int(std::lround(0.5 * has.energy))),
                                 tip::Tone::White));
     } else {
-        const int main = barrier ? has.energy : has.strength;
+        const int main = barrier ? sim::barrierMain(has) : has.strength;
         points = barrier ? sim::barrierPoints(has, shield) : sim::guardPoints(has, shield);
         sum.kicker = barrier ? "Barrier points" : "Guard points";
         sum.rows.push_back(said("Shield  " + times(shield, 5.0f), std::to_string(5 * shield),
                                 tip::Tone::White));
-        sum.rows.push_back(said(std::string(barrier ? "Energy  " : "Strength  ") +
+        sum.rows.push_back(said(std::string(!barrier ? "Strength  " : has.command > 0 ? "Command  " : "Energy  ") +
                                     times(main, 1.1f),
                                 std::to_string(int(std::lround(1.1 * main))), tip::Tone::White));
         sum.rows.push_back(said("Agility  " + times(has.agility, 0.5f),

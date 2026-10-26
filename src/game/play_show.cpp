@@ -1249,8 +1249,8 @@ void Play::guardRise(uint32_t who, int32_t skill) {
 }
 
 void Play::showGuard() {
-    // The hero's own class's: a wizard's preview is his blue Magic Shield.
-    const bool wizard = realm_.hero().kin == sim::Kin::DarkWizard;
+    // The hero's own class's: a wizard's preview is his blue Magic Shield, and a Dark Lord's.
+    const bool wizard = realm_.hero().kin == sim::Kin::DarkWizard || realm_.hero().kin == sim::Kin::DarkLord;
     guardRise(realm_.hero().id, wizard ? sim::skill::kSoulBarrier : sim::skill::kDefense);
     guardPreview_ = realm_.tick() + int64_t(kGuardShowSeconds / kTickSeconds);
 }

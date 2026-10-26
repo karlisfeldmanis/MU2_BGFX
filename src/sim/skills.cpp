@@ -234,7 +234,7 @@ constexpr SkillRow kRows[kSkills] = {
     {skill::kSoulBarrier, "Magic Shield", 70, 0.0f, 1.0f, 0.0f, 240, false, Spread::One, 6000,
      0.50f,
      "A barrier drawn up behind the shield for five minutes, on himself or on another player. "
-     "The better the shield and the keener the wizard, the more of every blow it takes.",
+     "The better the shield and the keener the caster, the more of every blow it takes.",
      187, "spell_soul_barrier", true, arms::kShield, 6, Kin::DarkWizard},
 
     // Fire Ball 4, 0.75's row: `CreateSkill(FireBall, ..., DamageType.Wizardry, 8, 6,
@@ -1282,6 +1282,9 @@ int32_t authoredCastTicks(const content::Tables& tables, const SkillRow& row) {
 
 bool skillFor(const SkillRow& row, Kin kin) {
     if (row.kin == kin) return true;
+    // The wizard's Magic Shield is the Dark Lord's guard too (the user, 2026-10-26: "we need some
+    // kind of magic shield also for DL"): every other class has one early, and MU gives him none.
+    if (kin == Kin::DarkLord) return row.number == skill::kSoulBarrier;
     if (kin != Kin::MagicGladiator) return false;
     if (row.kin != Kin::DarkWizard && row.kin != Kin::DarkKnight) return false;
     switch (row.number) {
@@ -1328,8 +1331,10 @@ float guardShare(const HeroPoints& points, int shieldDefense) {
     return kGuardCap * p / (p + 150.0f);
 }
 
+int barrierMain(const HeroPoints& points) { return points.command > 0 ? points.command : points.energy; }
+
 float barrierPoints(const HeroPoints& points, int shieldDefense) {
-    return 5.0f * float(std::max(0, shieldDefense)) + 1.1f * float(points.energy) +
+    return 5.0f * float(std::max(0, shieldDefense)) + 1.1f * float(barrierMain(points)) +
            0.5f * float(points.agility);
 }
 
