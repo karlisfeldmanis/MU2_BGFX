@@ -49,7 +49,7 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     // Fire Slash's cut (SkillRow::cutTicks), WebZen's MaGumSkillDefenseDown: rolled on each body
     // BEFORE the blow is asked, so the blow it lands with already profits, a miss lays it too
     // (protocol.cpp:16718-16719, ObjUseSkill.cpp:1347), and laid again it starts its ten seconds
-    // over and never stacks (BuffEffectSlot.cpp:80-95). A boss shrugs it as it shrugs a Weakness.
+    // over and never stacks (BuffEffectSlot.cpp:80-95). A boss shrugs it (Realm::shrugs).
     // Its own draw, taken only by a row that cuts, so nothing else's dice move.
     const SkillRow* cutter = row != nullptr ? row : sweep_;
     if (cutter != nullptr && cutter->cutTicks > 0 && attacker.player && target.monster() &&
@@ -97,6 +97,13 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
         lord = attacker.stats;
         lord.minimumDamage += skillDamage + flat;
         lord.maximumDamage += skillDamage + skillDamage / 2 + flat;
+        // His talents that name the skill: Arc's critical, Searing's excellent (sim/talents.h).
+        if (attacker.talentShare.any) {
+            lord.criticalChance +=
+                double(talentSkillSum(attacker.kin, attacker.talents, TalentStat::CriticalChance, row->number)) / 100.0;
+            lord.excellentChance +=
+                double(talentSkillSum(attacker.kin, attacker.talents, TalentStat::ExcellentChance, row->number)) / 100.0;
+        }
         swinger = &lord;
     }
     // The Jewel of Harmony's skill damage, flat (WebZen ObjAttack.cpp:3200-3207): on a spell's own
@@ -214,13 +221,6 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
         }
         return;
     }
-    // Landed: a Sleep's sleeper wakes, whoever struck it with whatever (sim/items.h kSleep...;
-    // WebZen's ObjAttack.cpp:2570-2575). A miss above does not wake it, nor a poison, burn or
-    // bleed pulse, which never come through here.
-    if (target.sleepUntil > tick_) {
-        target.sleepUntil = 0;
-        core::logf("sleep: tick %lld, #%u woken by #%u", (long long)tick_, target.id, attacker.id);
-    }
     // A Pyroblaster's Fire Ball strikes harder, its burst's too (sim::kPyroblastForce).
     if (row != nullptr && row->number == skill::kFireBall && attacker.player &&
         pyroblasts(attacker) > 0) {
@@ -270,11 +270,6 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
         skillElement(tables_->kinds[size_t(attacker.kind)].attackSkill) == Element::Wind) {
         force *= float(1.0 - std::min(kResistanceCutMost,
                                       kResistanceCut * double(target.excel.windResistance)));
-    }
-    // A Weakness on the one who swings (sim/items.h kWeakness...): MU's buff 76, its attack
-    // power down by its cut, on every blow it lands -- on a hero, a raider or her summon.
-    if (!attacker.player && attacker.weakUntil > tick_ && attacker.weakCut > 0) {
-        force *= std::max(0.0f, 1.0f - float(attacker.weakCut) / 100.0f);
     }
     // A skill's multiplier, and it goes exactly here: after the roll, the defence and the level
     // floor, which is where OpenMU spends `Stats.SkillMultiplier`
@@ -532,10 +527,11 @@ void Realm::stormcall(Body& hero, Body& struck, int wound) {
             if (power == nullptr || !power->weapon() || !power->takenBy(hero.kin, hero.second)) {
                 continue;
             }
-            // A knight's sweep (`sweep_`: Twisting Slash, Cyclone, a Whirlwind's landing) calls
-            // here once a body; his Strike of Destruction rolls once a skill use instead, in
-            // Realm::land, so it never rolls twice for one action (sim/items.h kSoD...).
-            if (power->power == Power::StrikeOfDestruction && sweep_ != nullptr) continue;
+            // A blade's sweep (`sweep_`: Twisting Slash, Cyclone, Fire Slash, a Whirlwind's
+            // landing) calls here once a body; his Ancient -- the knight's Strike of Destruction,
+            // the gladiator's Flame Strike -- rolls once a skill use instead, in Realm::land, so
+            // it never rolls twice for one action (sim/items.h kSoD..., kFlameStrike...).
+            if (power->rarity == Rarity::Ancient && sweep_ != nullptr) continue;
             callDown(hero, struck, *power, wound);
             if (!hero.alive()) return;
         }
@@ -551,7 +547,7 @@ void Realm::channelRunes(Body& hero, Body& aimed) {
         if (hand.empty()) continue;
         for (int socket = 0; socket < std::min<int>(hand.sockets, kMostSockets); ++socket) {
             const PowerRow* power = powerOf(hand.powers[socket]);
-            // His Ancient spell runes (Ice Storm, Weakness...), each once a channel.
+            // His Ancient spell rune (Requiem), once a channel.
             if (power == nullptr || power->rarity != Rarity::Ancient || !power->weapon() ||
                 !power->takenBy(hero.kin, hero.second)) {
                 continue;
@@ -559,41 +555,6 @@ void Realm::channelRunes(Body& hero, Body& aimed) {
             callDown(hero, aimed, *power, 0);
             if (!hero.alive()) return;
         }
-    }
-}
-
-int Realm::weaknessLook(Body& hero) {
-    // summoner_debuff_ai's monster arm, his energy for the Summoner's, and curse 0: no book.
-    const int energy = hero.totalPoints().energy;
-    int cursed = 0;
-    for (Body& b : bodies_) {
-        if (!b.monster() || !b.alive() || b.weakUntil > tick_) continue;
-        const float dx = b.x - hero.curseX, dy = b.y - hero.curseY;
-        if (dx * dx + dy * dy > kWeaknessTiles * kWeaknessTiles) continue;
-        if (!seen(hero.curseX, hero.curseY, b) || shrugs(b)) continue;
-        const int odds = weaknessOdds(energy);
-        const int seconds = weaknessSeconds(energy, b.level);
-        if (odds <= 0 || seconds <= 0) continue;
-        if (runeDice_.nextInt(0, 100) >= odds) continue;
-        b.weakUntil = tick_ + int64_t(seconds) * kTalentTicksPerSecond;  // twenty a second
-        b.weakCut = weaknessCut(energy);
-        ++cursed;
-    }
-    return cursed;
-}
-
-void Realm::weaknessFields() {
-    for (Body& hero : bodies_) {
-        if (hero.curseUntil == 0) continue;
-        // MU's field goes with him: dead, gone, or its time out.
-        if (!hero.alive() || hero.gone || tick_ >= hero.curseUntil) {
-            hero.curseUntil = hero.curseNext = 0;
-            continue;
-        }
-        if (tick_ < hero.curseNext) continue;
-        hero.curseNext = tick_ + kWeaknessCheckTicks;
-        const RaiderRunes dice(runeDice_, raiderDice_, hero.raider >= 0);
-        weaknessLook(hero);
     }
 }
 
@@ -805,182 +766,6 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
         }
         return;
     }
-    // His Ice Storm, the first Ancient (sim/items.h kIceStorm...): the Soul Master's blizzard
-    // brought down on what he struck -- on a cast that struck no monster, the nearest in his
-    // sight within kStormcallReach -- every monster within kIceStormTiles of it frozen and struck.
-    if (power.power == Power::IceStorm) {
-        if (!runeDice_.nextBool(kIceStormChance)) return;
-        const Body* centre = struck.monster() && struck.alive() ? &struck : nullptr;
-        if (centre == nullptr) {
-            float best = kStormcallReach * kStormcallReach;
-            for (const Body& b : bodies_) {
-                if (!b.monster() || !b.alive()) continue;
-                const float dx = b.x - hero.x, dy = b.y - hero.y, d = dx * dx + dy * dy;
-                if (d <= best && router_.sees(hero.x, hero.y, b.x, b.y, content::kWallNoMove)) {
-                    best = d;
-                    centre = &b;
-                }
-            }
-        }
-        if (centre == nullptr) return;
-        const float cx = centre->x, cy = centre->y;
-        // Everything round it first, in body order so the log is fixed, then the blows: a kill
-        // among them must not move what the storm took.
-        uint32_t victims[kVictims];
-        int found = 0;
-        for (const Body& b : bodies_) {
-            if (found >= kVictims) break;
-            if (!b.monster() || !b.alive()) continue;
-            const float dx = b.x - cx, dy = b.y - cy;
-            if (dx * dx + dy * dy <= kIceStormTiles * kIceStormTiles) victims[found++] = b.id;
-        }
-        say(What::Loosed, hero, skill::kIceStorm, 0, found, centre->id);
-        happenings_.back().rune = true;
-        happenings_.back().x = cx;
-        happenings_.back().y = cy;
-        core::logf("ice storm rune: tick %lld, on #%u, %d frozen", (long long)tick_, centre->id,
-                   found);
-        const float force = kIceStormForce * runeForce(hero, Element::Ice);
-        for (int i = 0; i < found && hero.alive(); ++i) {
-            Body* victim = body(victims[i]);
-            if (victim == nullptr || !victim->alive()) continue;
-            // The Statue of Saint and the raid's dragon take the blow and not the freeze, as
-            // Frost Arrow's.
-            if (!fixed(*victim) && !shrugs(*victim)) {
-                victim->frozenUntil = std::max(victim->frozenUntil, tick_ + kIceStormTicks);
-                halt(*victim);
-            }
-            runeStrike(hero, *victim, force);
-        }
-        return;
-    }
-    // His Weakness (sim/items.h kWeakness...): MU's field laid on his own tile for 30 s, the one
-    // before it gone, and its first look round at once.
-    if (power.power == Power::Weakness) {
-        if (!runeDice_.nextBool(kWeaknessChance)) return;
-        hero.curseX = float(hero.column());
-        hero.curseY = float(hero.row());
-        hero.curseUntil = tick_ + kWeaknessFieldTicks;
-        hero.curseNext = tick_ + kWeaknessCheckTicks;
-        say(What::Loosed, hero, skill::kWeakness, 0, 0, 0);
-        const size_t said = happenings_.size() - 1;
-        happenings_[said].rune = true;
-        happenings_[said].x = hero.curseX;
-        happenings_[said].y = hero.curseY;
-        const int cursed = weaknessLook(hero);
-        happenings_[said].c = cursed;
-        core::logf("weakness rune: tick %lld, at %.0f,%.0f, %d cursed", (long long)tick_,
-                   double(hero.curseX), double(hero.curseY), cursed);
-        return;
-    }
-    // His Pollution (sim/items.h kPollution...): Lagle's ghosts on what he struck -- on a cast
-    // that struck no monster, the nearest in his sight within kStormcallReach -- and on up to
-    // kPollutionMost bodies round it, as SkillAttackPollution counts them.
-    if (power.power == Power::Pollution) {
-        if (!runeDice_.nextBool(kPollutionChance)) return;
-        const Body* centre = runeAim(hero, struck);
-        if (centre == nullptr) return;
-        const float cx = centre->x, cy = centre->y;
-        // What it struck first, then the rest round it in body order, so the log is fixed; all
-        // chosen before any blow, so a kill among them does not move what it took.
-        uint32_t victims[kPollutionMost];
-        int found = 0;
-        victims[found++] = centre->id;
-        for (const Body& b : bodies_) {
-            if (found >= kPollutionMost) break;
-            if (!b.monster() || !b.alive() || b.id == centre->id) continue;
-            const float dx = b.x - cx, dy = b.y - cy;
-            if (dx * dx + dy * dy <= kPollutionTiles * kPollutionTiles) victims[found++] = b.id;
-        }
-        say(What::Loosed, hero, skill::kPollution, 0, found, centre->id);
-        happenings_.back().rune = true;
-        happenings_.back().x = cx;
-        happenings_.back().y = cy;
-        core::logf("pollution rune: tick %lld, on #%u, %d struck", (long long)tick_, centre->id,
-                   found);
-        const float force = kPollutionForce * runeForce(hero, Element::Lightning);
-        for (int i = 0; i < found && hero.alive(); ++i) {
-            Body* victim = body(victims[i]);
-            if (victim == nullptr || !victim->alive()) continue;
-            runeStrike(hero, *victim, force);
-        }
-        return;
-    }
-    // His Drain Life (sim/items.h kDrain...): his rune's blow on what he struck, and life back
-    // off it if it lands, as OpenMU's DrainLifeSkillPlugIn heals off a monster.
-    if (power.power == Power::DrainLife) {
-        if (!runeDice_.nextBool(kDrainChance)) return;
-        const Body* aim = runeAim(hero, struck);
-        Body* target = aim == nullptr ? nullptr : body(aim->id);
-        if (target == nullptr) return;
-        say(What::Loosed, hero, skill::kDrainLife, 0, 0, target->id);
-        happenings_.back().rune = true;
-        happenings_.back().x = target->x;
-        happenings_.back().y = target->y;
-        const int before = target->health;
-        const int level = target->level;
-        runeStrike(hero, *target, kDrainForce * runeForce(hero, Element::None));
-        if (target->health >= before || !hero.alive()) return;  // a miss heals nothing
-        const int was = hero.health;
-        hero.health = std::min(hero.maxHealth,
-                               hero.health + drainLife(hero.totalPoints().energy, level));
-        core::logf("drain life rune: tick %lld, on #%u, +%d life", (long long)tick_, target->id,
-                   hero.health - was);
-        if (hero.health > was) say(What::Leeched, hero, hero.health - was);
-        return;
-    }
-    // His Sleep (sim/items.h kSleep...): up to kSleepMost monsters he sees within kStormcallReach,
-    // never the one he struck -- his next blow would wake it -- those whose quarry is him first,
-    // then the nearest, put to sleep for MU's seconds, the longer kept. Each said as Loosed on the
-    // sleeper, `b` its place in the roll, so the drawing lays its circle once and its rings on each.
-    if (power.power == Power::Sleep) {
-        if (!runeDice_.nextBool(kSleepChance)) return;
-        const int energy = hero.totalPoints().energy;
-        struct Pick {
-            Body* body;
-            bool his;
-            float d;
-        };
-        Pick picks[kSleepMost];
-        int found = 0;
-        for (Body& b : bodies_) {
-            if (!b.monster() || !b.alive() || b.id == struck.id || sleepProof(b)) continue;
-            const float dx = b.x - hero.x, dy = b.y - hero.y, d = dx * dx + dy * dy;
-            if (d > kStormcallReach * kStormcallReach || !seen(hero, b)) continue;
-            if (sleepSeconds(energy, b.level) < 1) continue;
-            const Pick one{&b, b.quarry == hero.id, d};
-            // Kept in order, his first and then the nearest; ties to body order, so the log is fixed.
-            const auto before = [](const Pick& p, const Pick& q) {
-                return p.his != q.his ? p.his : p.d < q.d;
-            };
-            int at = found;
-            while (at > 0 && before(one, picks[at - 1])) --at;
-            if (at >= kSleepMost) continue;
-            for (int i = std::min(found, kSleepMost - 1); i > at; --i) picks[i] = picks[i - 1];
-            picks[at] = one;
-            found = std::min(found + 1, kSleepMost);
-        }
-        // The Golden Dragon near him shrugs, and says so, as it shrugs every hold.
-        for (const Body& b : bodies_) {
-            if (isBoss(b) && b.alive()) {
-                const float dx = b.x - hero.x, dy = b.y - hero.y;
-                if (dx * dx + dy * dy <= kStormcallReach * kStormcallReach) shrugs(b);
-            }
-        }
-        for (int i = 0; i < found; ++i) {
-            Body& b = *picks[i].body;
-            const int64_t until = tick_ + int64_t(sleepSeconds(energy, b.level)) * kTalentTicksPerSecond;
-            b.sleepUntil = std::max(b.sleepUntil, until);
-            halt(b);
-            say(What::Loosed, hero, skill::kSleep, i, found, b.id);
-            happenings_.back().rune = true;
-            happenings_.back().x = b.x;
-            happenings_.back().y = b.y;
-            core::logf("sleep rune: tick %lld, #%u asleep till %lld (%d of %d, not #%u)",
-                       (long long)tick_, b.id, (long long)b.sleepUntil, i + 1, found, struck.id);
-        }
-        return;
-    }
     // His Requiem (sim/items.h kRequiem...): Neil called up against what he struck -- on a cast
     // that struck no monster, the nearest in his sight within kStormcallReach -- and up to
     // kRequiemMost bodies round it, as SkillAttackRequiem counts them, each blow held
@@ -1084,6 +869,67 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
             victim->burnUntil = tick_ + kBurnRuneTicks;
             victim->burnNext = tick_ + kBurnRuneEvery;
             victim->burnBy = hero.id;
+        }
+        return;
+    }
+    // His Flame Strike (sim/items.h kFlameStrike...): a flaming blade whirled round him, striking
+    // what stands in WebZen's band along his line to what he struck -- on a cast or a skill whose
+    // struck one has fallen, the nearest in his sight within kStormcallReach -- twice each, at once.
+    if (power.power == Power::FlameStrike) {
+        if (!runeDice_.nextBool(kFlameStrikeChance)) return;
+        const Body* aim = runeAim(hero, struck);
+        if (aim == nullptr && !struck.monster()) return;
+        const float ax = aim != nullptr ? aim->x : struck.x;
+        const float ay = aim != nullptr ? aim->y : struck.y;
+        const float way = fm::atan2(ay - hero.y, ax - hero.x);
+        const float c = fm::cos(way), s = fm::sin(way);
+        // Everything alive in sight in the band, nearest first -- ties to body order, so the log
+        // is fixed -- the first kFlameSure surely, the next to kFlameMost each on a coin flip,
+        // none past; all chosen before any blow, so a kill among them does not move what it took.
+        struct Pick {
+            uint32_t id;
+            float d;
+        };
+        Pick picks[kFlameMost];
+        int inside = 0;
+        for (const Body& b : bodies_) {
+            if (!b.monster() || !b.alive()) continue;
+            const float dx = b.x - hero.x, dy = b.y - hero.y;
+            if (!inBand(dx, dy, c, s, kFlameNear, kFlameFar, kFlameDeep, kFrustumBehind) ||
+                !seen(hero, b)) {
+                continue;
+            }
+            const Pick one{b.id, dx * dx + dy * dy};
+            int at = inside;
+            while (at > 0 && one.d < picks[at - 1].d) --at;
+            if (at >= kFlameMost) continue;
+            for (int i = std::min(inside, kFlameMost - 1); i > at; --i) picks[i] = picks[i - 1];
+            picks[at] = one;
+            inside = std::min(inside + 1, kFlameMost);
+        }
+        uint32_t victims[kFlameMost];
+        int found = 0;
+        for (int i = 0; i < inside; ++i) {
+            if (i >= kFlameSure && !runeDice_.nextBool(0.5)) continue;
+            victims[found++] = picks[i].id;
+        }
+        if (found == 0) return;
+        // At his feet, with his heading in `b`, thousandths of a radian, as Twister's: the
+        // drawing whirls the blade round him, not round what it struck.
+        say(What::Loosed, hero, skill::kFlameStrike, int32_t(std::lround(way * 1000.0f)), found,
+            victims[0]);
+        happenings_.back().rune = true;
+        happenings_.back().x = hero.x;
+        happenings_.back().y = hero.y;
+        core::logf("flame strike rune: tick %lld, toward #%u, %d struck", (long long)tick_,
+                   victims[0], found);
+        const float force = kFlameStrikeForce * runeForce(hero, Element::Fire);
+        for (int i = 0; i < found && hero.alive(); ++i) {
+            for (int blow = 0; blow < kFlameStrikeBlows && hero.alive(); ++blow) {
+                Body* victim = body(victims[i]);
+                if (victim == nullptr || !victim->alive()) break;
+                runeStrike(hero, *victim, force);
+            }
         }
         return;
     }
@@ -1240,6 +1086,8 @@ float Realm::talentBlow(Body& attacker, const Body& target, const SkillRow* row)
         sum += eye * float(std::min(near, kTalentEyeMost));
     }
     sum += talentAttunement(kin, ranks, ask.element, attacker.excel.elementRunes);
+    // The Dark Lord's Horseman, while he rides.
+    if (attacker.riding) sum += t.ridingDamage;
     // The timed ones: Battle Fury on a swing or skill, Battle Mage on a spell too.
     if (attacker.procUntil > tick_ && (!ask.spell || attacker.procWizardry)) sum += attacker.procAmount;
     // Riposte, spent on this blow.
@@ -1289,6 +1137,14 @@ void Realm::talentRelease(Body& hero, const SkillRow* row) {
     if (found && talentDice_.nextInt(0, 100) < found->chance) {
         hero.chillArmed = true;
         hero.chillSeconds = int8_t(found->seconds);
+    }
+    // Static Shock: a chill on the skill's own chance (TalentStat::ChillChance).
+    if (row && !hero.chillArmed) {
+        const float shock = talentSkillSum(hero.kin, hero.talents, TalentStat::ChillChance, row->number, &found);
+        if (shock > 0.0f && found && float(talentDice_.nextInt(0, 100)) < shock) {
+            hero.chillArmed = true;
+            hero.chillSeconds = int8_t(found->seconds);
+        }
     }
     // Mana Surge: a spell's mana back.
     if (row && row->wizardry) {
@@ -1536,18 +1392,27 @@ void Realm::land(Body& hero) {
     // which has chance to cast lightnings on monsters on casts"), once a cast, on a monster near
     // him or else the one it was cast at. Only Stormcall rolls here: callDown passes over the
     // wizard's other weapon powers, and the knight's are not his to set. And the Soul Master's
-    // Ice Storm, once a cast as well (sim/items.h kIceStorm...).
+    // Ancient (Requiem), once a cast as well (sim/items.h kRequiem...).
     if (spell && spell->wizardry && hero.player && hero.alive()) {
         Body* aimed = body(at);
         stormcall(hero, aimed != nullptr ? *aimed : hero, 0);
-    } else if (spell && !spell->wizardry && hero.player && hero.kin == Kin::DarkKnight &&
-               hero.alive()) {
-        // And a knight's skill that struck something: his Ancient (Strike of Destruction) once a
-        // use, on what he aimed at -- channelRunes walks only the Ancients, and a skill's blows
-        // never reach stormcall's roll of it (sim/items.h kSoD...). A miss, or a skill that
-        // struck nothing, rolls nothing. On the first body it struck, not what it was aimed at:
-        // Twisting Slash and Cyclone are aimed at him, and he is no ground to break.
-        if (Body* first = body(struckSince(hero, said))) channelRunes(hero, *first);
+    } else if (spell && !spell->wizardry && hero.player &&
+               (hero.kin == Kin::DarkKnight || hero.kin == Kin::MagicGladiator) && hero.alive()) {
+        // And a blade skill that struck something: his Ancient (the knight's Strike of
+        // Destruction, the gladiator's Flame Strike) once a use, on what he aimed at --
+        // channelRunes walks only the Ancients, and a skill's blows never reach stormcall's roll
+        // of it (sim/items.h kSoD..., kFlameStrike...). A miss, or a skill that struck nothing,
+        // rolls nothing. On the first body it struck, not what it was aimed at: Twisting Slash
+        // and Cyclone are aimed at him, and he is no ground to break.
+        uint32_t first = struckSince(hero, said);
+        // Power Slash's waves strike later (Realm::powerSlash), so none has landed yet: the
+        // nearest in its wedge stands in for the first struck, and a wedge with nothing in it
+        // rolls nothing.
+        if (first == 0 && spell->number == sim::skill::kPowerSlash) {
+            uint32_t wedge[kVictims];
+            if (gather(hero, *spell, wedge, kVictims) > 0) first = wedge[0];
+        }
+        if (Body* one = body(first)) channelRunes(hero, *one);
     }
 }
 
@@ -1734,8 +1599,8 @@ void Realm::loose(Body& hero, const SkillRow& row, uint32_t at, float force, boo
             happenings_[said].what == What::Hit) {
             pyroblast(hero, at, x, y, force);
         }
-        if (row.number == skill::kFireScream && said < happenings_.size() &&
-            happenings_[said].what == What::Hit) {
+        if ((row.number == skill::kFireScream || (row.number == skill::kFireBurst && talentChainBlast(hero) > 0.0f)) &&
+            said < happenings_.size() && happenings_[said].what == What::Hit) {
             explode(hero, *struck, happenings_[said].a);
         }
     }
@@ -2062,7 +1927,9 @@ void Realm::arrive() {
                 hop(hero, flight, flight.target, x, y);
             } else if (flight.skill == skill::kFireBall && happenings_[said].what == What::Hit) {
                 pyroblast(hero, flight.target, x, y, flight.force);
-            } else if (flight.skill == skill::kFireScream && happenings_[said].what == What::Hit) {
+            } else if ((flight.skill == skill::kFireScream ||
+                        (flight.skill == skill::kFireBurst && talentChainBlast(hero) > 0.0f)) &&
+                       happenings_[said].what == What::Hit) {
                 explode(hero, *target, happenings_[said].a);
             }
         }
@@ -2301,7 +2168,9 @@ void Realm::fireBurst(Body& hero, const SkillRow& row, uint32_t aimedAt, float f
         if (!one.monster() || !one.alive() || one.id == aimedAt) continue;
         if (tables_->grid.safe(one.column(), one.row())) continue;
         const int dx = one.column() - cx, dy = one.row() - cy;
-        if (dx * dx + dy * dy >= kBurstTiles * kBurstTiles) continue;
+        // Wide Burst's tile on top (Special::Reach).
+        const int tiles = kBurstTiles + int(talentReach(hero, row.number));
+        if (dx * dx + dy * dy >= tiles * tiles) continue;
         const int32_t wait = burstDice_.nextInt(kBurstFirstTick, kBurstLastTick + 1);
         say(What::Loosed, hero, row.number, wait, 1, one.id);
         loose(hero, row, one.id, force, false, false, wait);
@@ -2543,7 +2412,9 @@ void Realm::explode(Body& hero, const Body& struck, int32_t damage) {
     // WebZen's: one roll a landed blow, a tenth of it, nothing under one; the bodies within
     // whole-tile distance 1 of the struck, itself included, named now and struck 100 ms on.
     if (screamDice_.nextInt(0, kExplosionOf) > kExplosionRate) return;
-    const int32_t blow = damage / 10;
+    // Chain Blast's share in place of the tenth (talentChainBlast).
+    const float chain = talentChainBlast(hero);
+    const int32_t blow = chain > 0.0f ? int32_t(float(damage) * chain / 100.0f) : damage / 10;
     if (blow < 1) return;
     Blast* blast = nullptr;
     for (Blast& one : blasts_) {
@@ -2918,9 +2789,6 @@ void Realm::kill(Body& dead, Body& killer) {
         dead.bleedRequiem = false;
         dead.chilledUntil = 0;
         dead.frozenUntil = 0;
-        dead.sleepUntil = 0;
-        // And his Weakness field, which MU takes up as he dies.
-        dead.curseUntil = dead.curseNext = 0;
         dead.boonSkill = skill::kNone;
         dead.boonDamageTaken = 1.0f;
         dead.stats.damageTaken = dead.pet.taken;
@@ -3265,13 +3133,10 @@ void Realm::raiseBeast(Body& beast) {
     std::fill(std::begin(beast.hurtAt), std::end(beast.hurtAt), int64_t(0));
     beast.chilledUntil = 0;
     beast.frozenUntil = 0;
-    beast.sleepUntil = 0;
     beast.poisonUntil = 0;
     beast.bleed = 0;
     beast.bleedUntil = 0;
     beast.bleedRequiem = false;
-    beast.weakUntil = 0;
-    beast.weakCut = 0;
     beast.defenseCutUntil = 0;
     beast.defenseCut = 0;
     beast.walking = false;

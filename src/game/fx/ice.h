@@ -33,9 +33,6 @@ public:
     // An Ice Monster's death: its body out and ten shards off its feet, no block. `scale`
     // shrinks the shards and their throw -- Cometfall's crystals are small (fx/comet.h).
     void shatter(const float feet[3], float scale = 1.0f);
-    // One shard off `feet`, as an Ice Storm crystal throws one time in five when it lands
-    // (MoveEffect's MODEL_BLIZZARD, `CreateEffect(MODEL_ICE_SMALL, ...)`; fx/blizzard.h).
-    void splinter(const float feet[3]) { shards(feet, 1); }
     // **Cold on the caster** while he casts it (the user, 2026-09-28: "character need some ice
     // smoke effect on cast"), ours, as Meteorite's burn is: frosty wisps born round his body --
     // `feet` and his drawn `tall` -- rising off him. Called every frame the cast runs.

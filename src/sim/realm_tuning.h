@@ -596,6 +596,14 @@ inline float talentReach(const Body& hero, int32_t skill) {
     ask.skill = skill;
     return talentSpecial(hero.kin, hero.talents, Special::Reach, ask);
 }
+// Chain Blast's share of a blow an Explosion bursts, in percent (Special::ChainBlast), 0 untaken:
+// taken, Fire Burst's blows roll it too and every Explosion bursts this much, not a tenth.
+inline float talentChainBlast(const Body& hero) {
+    if (!hero.player || !hero.talentShare.any) return 0.0f;
+    TalentAsk ask;
+    ask.skill = skill::kFireBurst;
+    return talentSpecial(hero.kin, hero.talents, Special::ChainBlast, ask);
+}
 inline int talentChain(const Body& hero, int32_t skill) {
     if (!hero.player || !hero.talentShare.any) return 0;
     TalentAsk ask;

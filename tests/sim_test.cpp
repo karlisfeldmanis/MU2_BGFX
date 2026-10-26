@@ -6277,10 +6277,52 @@ void testTalents() {
     att[1] = {10, 0, 1, 10, 0, 1, 0, 0, 0};
     checkNear(sim::talentSpecial(Kin::DarkWizard, att, sim::Special::Attunement, fire), 5.0, 1e-4, "fire's attunement on fire");
     checkNear(sim::talentSpecial(Kin::DarkWizard, att, sim::Special::Attunement, bolt), 5.0, 1e-4, "the storm's on lightning");
-    for (const Kin kin : {Kin::DarkKnight, Kin::DarkWizard, Kin::FairyElf, Kin::MagicGladiator}) {
+    for (const Kin kin : {Kin::DarkKnight, Kin::DarkWizard, Kin::FairyElf, Kin::MagicGladiator, Kin::DarkLord}) {
         const sim::TalentTree tree = sim::talentTree(kin);
         check(std::string(tree.columns[tree.count - 1].name) == "Fortune", "Fortune is the last column");
     }
+
+    // The Dark Lord's (talents_lord.inc): Fire Burst to Chain Blast and Quick Burst, Electric Spike
+    // to Arc and Static Shock, the raven to Kinship -- 85 of his 111.
+    checkEqual(sim::talentTree(Kin::DarkLord).count, 6, "a lord has six columns");
+    checkEqual(sim::talentPoints(Kin::DarkLord, 400, 0), 111, "and the gladiator's 111");
+    const sim::TalentRanks dl = ranksOf({{0, 0, 0, 0, 0, 0, 0, 0, 0},
+                                         {10, 0, 1, 10, 0, 1, 10, 0, 0},
+                                         {10, 0, 1, 0, 10, 1, 10, 0, 0},
+                                         {10, 0, 1, 10, 0, 0, 0, 0, 0}});
+    check(sim::talentsValid(Kin::DarkLord, dl, 111) && !sim::talentsValid(Kin::DarkLord, dl, 80),
+          "his 85 fit 111 and not 80");
+    checkNear(sim::talentSkillSum(Kin::DarkLord, dl, TalentStat::CriticalChance, 65), 5.0, 1e-4, "Arc on Electric Spike");
+    checkNear(sim::talentSkillSum(Kin::DarkLord, dl, TalentStat::CriticalChance, 61), 0.0, 1e-4, "not on Fire Burst");
+    checkNear(sim::talentSkillSum(Kin::DarkLord, dl, TalentStat::AttackSpeed, 78), 10.0, 1e-4, "Quick Burst on Fire Scream");
+    const sim::TalentEffect* shock = nullptr;
+    checkNear(sim::talentSkillSum(Kin::DarkLord, dl, TalentStat::ChillChance, 65, &shock), 10.0, 1e-4,
+              "Static Shock 10%");
+    check(shock != nullptr && shock->seconds == 3, "for three seconds");
+    const sim::TalentShares lord = sim::talentShares(Kin::DarkLord, dl, sim::TalentAsk{});
+    checkNear(lord.command, 30.0, 1e-4, "Kinship's 30 Command");
+    checkNear(lord.ravenDamage, 20.0, 1e-4, "Talons' 20%");
+    checkNear(lord.ravenReach, 1.0, 1e-4, "Hunting Eye's tile");
+    checkNear(lord.critical + lord.attackSpeed, 0.0, 1e-4, "skill-named shares stay out of the plain ones");
+    sim::TalentAsk burst;
+    burst.skill = 61;
+    sim::TalentAsk scream;
+    scream.skill = 78;
+    checkNear(sim::talentSpecial(Kin::DarkLord, dl, sim::Special::ChainBlast, burst), 25.0, 1e-4, "Chain Blast on Fire Burst");
+    checkNear(sim::talentSpecial(Kin::DarkLord, dl, sim::Special::ChainBlast, scream), 0.0, 1e-4, "named for Fire Burst alone");
+    checkNear(sim::talentSpecial(Kin::DarkLord, dl, sim::Special::Reach, burst), 1.0, 1e-4, "Wide Burst's tile");
+}
+
+// The Dark Lord's talents on the hero: Kinship's Command is his, as worn Command is.
+void testLordTalents(const content::Tables& tables) {
+    std::printf("talents: the Dark Lord's\n");
+    sim::Realm realm;
+    check(realm.raise(&tables, 31, 138, 124, sim::Kin::DarkLord, 400), "a level-400 lord raises");
+    const int before = realm.hero().totalPoints().command;
+    checkEqual(realm.talentTake(3, 0, 10), 10, "ten into Talons");
+    checkEqual(realm.talentTake(3, 2, 1), 1, "Hunting Eye");
+    checkEqual(realm.talentTake(3, 3, 10), 10, "ten into Kinship");
+    checkEqual(realm.hero().totalPoints().command - before, 30, "30 Command more");
 }
 
 // Talents on the hero (Realm::talentTake, talentGive, talentReset): the commands, their
@@ -11064,8 +11106,8 @@ void testChaosMachine() {
 
     // Fuse Runes: three rares, a Chaos and a Life make an epic.
     int rares[3] = {}, found = 0;
-    for (int p = 1; sim::powerOf(uint8_t(p)) && found < 3; ++p) {
-        if (sim::powerOf(uint8_t(p))->rarity == sim::Rarity::Rare) rares[found++] = p;
+    for (int p = 1; p < sim::kPowerEnd && found < 3; ++p) {
+        if (sim::powerOf(uint8_t(p)) && sim::powerOf(uint8_t(p))->rarity == sim::Rarity::Rare) rares[found++] = p;
     }
     check(found == 3, "three rare runes to fuse");
     for (int i = 0; i < 3; ++i) {
@@ -11086,7 +11128,8 @@ void testChaosMachine() {
     // Add Luck: a sword without Luck, three of each jewel and a Rare, an Epic and a Legendary rune,
     // until it takes; failure keeps the sword. A lucky sword is no target.
     uint8_t tier[3] = {};
-    for (int p = 1; sim::powerOf(uint8_t(p)); ++p) {
+    for (int p = 1; p < sim::kPowerEnd; ++p) {
+        if (!sim::powerOf(uint8_t(p))) continue;  // a retired number
         const int r = int(sim::powerOf(uint8_t(p))->rarity);
         if (r < 3 && tier[r] == 0) tier[r] = uint8_t(p);
     }
@@ -12533,193 +12576,6 @@ void ancientHunt(const content::Tables& tables, int staff, sim::Power power, boo
     }
 }
 
-// Weakness, the Summoner's curse on a Soul Master's staff (sim/items.h kWeakness...): a field on
-// his tile about one cast in ten, which curses round it as it lies and keeps cursing, and a
-// cursed monster's blows are lighter by MU's cut.
-void testWeaknessRune(const content::Tables& tables, int rune, int staff, int sword) {
-    std::printf("weakness rune\n");
-    using sim::Kin;
-    using sim::Power;
-    const sim::PowerRow* row = sim::powerOf(uint8_t(Power::Weakness));
-    check(row != nullptr && row->rarity == sim::Rarity::Ancient && row->second && row->once &&
-              row->weapon(),
-          "Weakness is an Ancient weapon rune, a second class's, one to a thing");
-    const auto held = [](int item, uint8_t sockets, Power first) {
-        sim::Held h{int32_t(item), 0, 1};
-        h.sockets = sockets;
-        h.powers[0] = uint8_t(first);
-        return h;
-    };
-    const auto sets = [&](int into, Kin kin, bool second) {
-        return sim::settable(tables, held(rune, 0, Power::Weakness), held(into, 1, Power::None),
-                             kin, second);
-    };
-    check(sets(staff, Kin::DarkWizard, true), "a Soul Master sets Weakness in his staff");
-    check(!sets(staff, Kin::DarkWizard, false) && !sets(sword, Kin::DarkKnight, true) &&
-              !sets(staff, Kin::FairyElf, true),
-          "nobody else does");
-    {
-        sim::Random dice(20261022);
-        int at = 0, below = 0;
-        for (int i = 0; i < 4000; ++i) {
-            at += sim::drawRunePower(dice, Kin::DarkWizard, true, 160) == uint8_t(Power::Weakness);
-            below += sim::drawRunePower(dice, Kin::DarkWizard, true, 140) == uint8_t(Power::Weakness);
-        }
-        std::printf("  Weakness in 4000 drops: %d at 140, %d at 160\n", below, at);
-        check(at > 0 && below == 0, "it falls past Aida and not before");
-    }
-    // MU's formulas, at a thousand energy on a level-80 monster: 52% for 12 s, 21% off.
-    checkEqual(sim::weaknessOdds(1000), 52, "MU's odds");
-    checkEqual(sim::weaknessSeconds(1000, 80), 12, "MU's seconds");
-    checkEqual(sim::weaknessCut(1000), 21, "MU's cut");
-
-    int casts = 0, fields = 0, cursedAtOnce = 0, cursedLater = 0, cursedSeen = 0;
-    int64_t fieldEnds = 0;
-    bool farCursed = false;
-    ancientHunt(tables, staff, Power::Weakness, true, [&](const sim::Realm& realm) {
-        const int64_t now = int64_t(realm.tick());
-        bool laid = false;
-        for (const sim::Happening& h : realm.happenings()) {
-            if (h.who != realm.hero().id) continue;
-            if (h.what == sim::What::Cast && h.a == sim::skill::kLightning) ++casts;
-            if (h.what == sim::What::Loosed && h.a == sim::skill::kWeakness) {
-                ++fields;
-                cursedAtOnce += h.c;
-                laid = true;
-                fieldEnds = now + sim::kWeaknessFieldTicks;
-            }
-        }
-        const sim::Body& hero = realm.hero();
-        if (hero.curseUntil != 0) check(hero.curseUntil == fieldEnds, "the field lasts 30 s");
-        for (const sim::Body& one : realm.bodies()) {
-            if (!one.monster() || !one.alive() || one.weakUntil <= now) continue;
-            // Freshly cursed this tick by the field's later look, not by the rune's roll.
-            const int64_t whole =
-                int64_t(sim::weaknessSeconds(hero.totalPoints().energy, one.level)) * 20;
-            if (one.weakUntil == now + whole && !laid) ++cursedLater;
-            ++cursedSeen;
-            const float dx = one.x - hero.curseX, dy = one.y - hero.curseY;
-            if (one.weakUntil == now + whole &&
-                dx * dx + dy * dy > sim::kWeaknessTiles * sim::kWeaknessTiles + 0.01f) {
-                farCursed = true;
-            }
-            checkEqual(one.weakCut, sim::weaknessCut(hero.totalPoints().energy),
-                       "a cursed monster's cut is MU's");
-        }
-    });
-    std::printf("  Weakness: %d casts, %d fields, %d cursed as laid, %d by a later look\n", casts,
-                fields, cursedAtOnce, cursedLater);
-    check(fields > 0 && cursedAtOnce > 0, "Weakness lays its field and curses round it");
-    check(cursedLater > 0, "and the field keeps cursing as it lies");
-    check(!farCursed, "never past its four tiles");
-    if (casts > 0) {
-        const double rate = double(fields) / casts;
-        check(rate > 0.05 && rate < 0.16, "about one cast in ten");
-    }
-
-    // A cursed monster's blows: the same fight twice, once with every monster cursed by a 40% cut.
-    long long plain = 0, weak = 0;
-    int plainHits = 0, weakHits = 0;
-    for (int pass = 0; pass < 2; ++pass) {
-        ancientHunt(tables, staff, Power::None, false, [&](const sim::Realm& realm) {
-            for (const sim::Happening& h : realm.happenings()) {
-                if (h.what != sim::What::Hit || h.whom != realm.hero().id || h.thrown) continue;
-                (pass == 0 ? plain : weak) += h.a;
-                ++(pass == 0 ? plainHits : weakHits);
-            }
-            if (pass == 1) {
-                for (const sim::Body& one : realm.bodies()) {
-                    if (!one.monster()) continue;
-                    auto& b = const_cast<sim::Body&>(one);
-                    b.weakUntil = int64_t(realm.tick()) + 100;
-                    b.weakCut = 40;
-                }
-            }
-        });
-    }
-    const double plainMean = plainHits ? double(plain) / plainHits : 0.0,
-                 weakMean = weakHits ? double(weak) / weakHits : 0.0;
-    std::printf("  blows on him: %d at %.1f plain, %d at %.1f cursed\n", plainHits, plainMean,
-                weakHits, weakMean);
-    check(plainHits > 20 && weakHits > 20 && weakMean < plainMean * 0.7 &&
-              weakMean > plainMean * 0.45,
-          "a cursed monster strikes about 40% lighter");
-}
-
-// Pollution, the Summoner's Book of Lagle on a Soul Master's staff (sim/items.h kPollution...):
-// about one cast in ten, what he struck and up to three more within three tiles of it, each
-// struck by his rune's blow.
-void testPollutionRune(const content::Tables& tables, int rune, int staff, int sword) {
-    std::printf("pollution rune\n");
-    using sim::Kin;
-    using sim::Power;
-    const sim::PowerRow* row = sim::powerOf(uint8_t(Power::Pollution));
-    check(row != nullptr && row->rarity == sim::Rarity::Ancient && row->second && row->once &&
-              row->weapon(),
-          "Pollution is an Ancient weapon rune, a second class's, one to a thing");
-    const auto held = [](int item, uint8_t sockets, Power first) {
-        sim::Held h{int32_t(item), 0, 1};
-        h.sockets = sockets;
-        h.powers[0] = uint8_t(first);
-        return h;
-    };
-    const auto sets = [&](int into, Kin kin, bool second) {
-        return sim::settable(tables, held(rune, 0, Power::Pollution), held(into, 1, Power::None),
-                             kin, second);
-    };
-    check(sets(staff, Kin::DarkWizard, true), "a Soul Master sets Pollution in his staff");
-    check(!sets(staff, Kin::DarkWizard, false) && !sets(sword, Kin::DarkKnight, true) &&
-              !sets(staff, Kin::FairyElf, true),
-          "nobody else does");
-    {
-        sim::Random dice(20261023);
-        int at = 0, below = 0;
-        for (int i = 0; i < 4000; ++i) {
-            at += sim::drawRunePower(dice, Kin::DarkWizard, true, 160) == uint8_t(Power::Pollution);
-            below += sim::drawRunePower(dice, Kin::DarkWizard, true, 140) == uint8_t(Power::Pollution);
-        }
-        std::printf("  Pollution in 4000 drops: %d at 140, %d at 160\n", below, at);
-        check(at > 0 && below == 0, "it falls past Aida and not before");
-    }
-    int casts = 0, ghosts = 0, most = 0, blows = 0, far = 0;
-    bool overCount = false;
-    ancientHunt(tables, staff, Power::Pollution, true, [&](const sim::Realm& realm) {
-        bool loosed = false;
-        float cx = 0.0f, cy = 0.0f;
-        for (const sim::Happening& h : realm.happenings()) {
-            if (h.who != realm.hero().id) continue;
-            if (h.what == sim::What::Cast && h.a == sim::skill::kLightning) ++casts;
-            if (h.what == sim::What::Loosed && h.a == sim::skill::kPollution) {
-                ++ghosts;
-                most = std::max(most, h.c);
-                overCount |= h.c < 1 || h.c > sim::kPollutionMost;
-                loosed = true;
-                cx = h.x;
-                cy = h.y;
-                continue;
-            }
-            // The ghosts' blows follow their Loosed in the same tick.
-            if (loosed && h.what == sim::What::Hit && h.thrown) {
-                ++blows;
-                if (const sim::Body* struck = realm.find(h.whom)) {
-                    const float dx = struck->x - cx, dy = struck->y - cy;
-                    far += dx * dx + dy * dy > (sim::kPollutionTiles + 0.5f) * (sim::kPollutionTiles + 0.5f);
-                }
-            }
-            if (h.what == sim::What::Loosed && h.a != sim::skill::kPollution) loosed = false;
-        }
-    });
-    std::printf("  Pollution: %d casts, %d loosed, at most %d struck, %d blows, %d far\n", casts,
-                ghosts, most, blows, far);
-    check(ghosts > 0 && blows >= ghosts, "Pollution strikes what he struck");
-    check(!overCount, "never more than four");
-    checkEqual(far, 0, "never past three tiles of it");
-    if (casts > 0) {
-        const double rate = double(ghosts) / casts;
-        check(rate > 0.05 && rate < 0.16, "about one cast in ten");
-    }
-}
-
 // The checks every Ancient weapon rune of the Soul Master's shares: the row, who sets it, and
 // that it falls past Aida and not before.
 void ancientRow(const content::Tables& tables, sim::Power power, const char* name, int rune,
@@ -12751,40 +12607,6 @@ void ancientRow(const content::Tables& tables, sim::Power power, const char* nam
     }
     std::printf("  %s in 4000 drops: %d at 140, %d at 160\n", name, below, at);
     check(at > 0 && below == 0, "it falls past Aida and not before");
-}
-
-// Drain Life, the Summoner's drain on a Soul Master's staff (sim/items.h kDrain...): about one
-// cast in ten, a blow on what he struck and, when it lands, his energy / 15 + its level / 2.5
-// back as life.
-void testDrainLifeRune(const content::Tables& tables, int rune, int staff, int sword) {
-    std::printf("drain life rune\n");
-    ancientRow(tables, sim::Power::DrainLife, "Drain Life", rune, staff, sword);
-    checkEqual(sim::drainLife(300, 50), 40, "energy 300 off a level-50 monster heals 40");
-    int casts = 0, drains = 0, healed = 0, life = 0;
-    ancientHunt(tables, staff, sim::Power::DrainLife, true, [&](const sim::Realm& realm) {
-        bool drained = false;
-        for (const sim::Happening& h : realm.happenings()) {
-            if (h.who != realm.hero().id) continue;
-            if (h.what == sim::What::Cast && h.a == sim::skill::kLightning) ++casts;
-            if (h.what == sim::What::Loosed && h.a == sim::skill::kDrainLife) {
-                ++drains;
-                drained = true;
-            }
-            if (drained && h.what == sim::What::Leeched) {
-                ++healed;
-                life += h.a;
-                drained = false;
-            }
-        }
-    }, true);
-    std::printf("  Drain Life: %d casts, %d drains, %d healed, %d life\n", casts, drains, healed,
-                life);
-    check(drains > 0, "Drain Life strikes what he struck");
-    check(healed > 0 && life > 0, "and gives him life back");
-    if (casts > 0) {
-        const double rate = double(drains) / casts;
-        check(rate > 0.05 && rate < 0.16, "about one cast in ten");
-    }
 }
 
 // Requiem, the Summoner's Book of Neil on a Soul Master's staff (sim/items.h kRequiem...): about
@@ -12890,202 +12712,6 @@ void testRequiemRune(const content::Tables& tables, int rune, int staff, int swo
     }
 }
 
-// Sleep, the Summoner's first curse on a Soul Master's staff (sim/items.h kSleep...): about one
-// cast in ten puts up to three monsters near him to sleep -- never the one he struck, never past
-// four tiles -- for MU's seconds, at most eight; asleep they neither step nor swing, a landed blow
-// wakes one and a bleed's pulse does not, and an Elite and the Golden Dragon never sleep.
-void testSleepRune(const content::Tables& tables, int rune, int staff, int sword) {
-    std::printf("sleep rune\n");
-    ancientRow(tables, sim::Power::Sleep, "Sleep", rune, staff, sword);
-    check(sim::sleepSeconds(5000, 1) == sim::kSleepMostSeconds && sim::sleepSeconds(200, 140) == 0,
-          "MU's seconds, capped at eight, none for a strong monster");
-    struct Sleeper {
-        float x = 0.0f, y = 0.0f;
-        int64_t since = 0;
-    };
-    std::map<uint32_t, Sleeper> asleep;  // as seen at the end of the last tick
-    uint32_t aimed = 0, elite = 0;
-    int casts = 0, rolls = 0, laid = 0, most = 0, overCount = 0, struckOne = 0, far = 0,
-        tooLong = 0, wrongTime = 0, stepped = 0, swung = 0, woken = 0, unwoken = 0, eliteSlept = 0;
-    ancientHunt(tables, staff, sim::Power::Sleep, true, [&](const sim::Realm& realm) {
-        const int64_t now = int64_t(realm.tick());
-        const sim::Body& hero = realm.hero();
-        // One monster made an Elite at the start, the nearest but his first target: it shrugs.
-        if (elite == 0) {
-            float best = 1e9f;
-            for (const sim::Body& b : realm.bodies()) {
-                if (!b.monster() || !b.alive() || b.id == aimed) continue;
-                const float dx = b.x - hero.x, dy = b.y - hero.y;
-                if (dx * dx + dy * dy < best) {
-                    best = dx * dx + dy * dy;
-                    elite = b.id;
-                }
-            }
-            if (elite != 0) const_cast<sim::Body*>(realm.find(elite))->elite = true;
-        }
-        std::set<uint32_t> landedOn;
-        // What his blow landing now struck: the first body it fell on this tick. A Lightning
-        // let go here was named some casts back, so his aim now is not it.
-        uint32_t struck = 0;
-        for (const sim::Happening& h : realm.happenings()) {
-            if (h.who == hero.id && (h.what == sim::What::Cast || h.what == sim::What::Swung) &&
-                h.whom != 0) {
-                aimed = h.whom;
-            }
-            if (h.who == hero.id && struck == 0 &&
-                (h.what == sim::What::Hit || h.what == sim::What::Missed) && h.whom != hero.id) {
-                struck = h.whom;
-            }
-            if (h.who == hero.id && h.what == sim::What::Cast && h.a == sim::skill::kLightning) {
-                ++casts;
-            }
-            if (h.what == sim::What::Hit && !h.bled && !h.poisoned && !h.burned) {
-                landedOn.insert(h.whom);
-            }
-            if (h.what != sim::What::Loosed || h.a != sim::skill::kSleep || h.who != hero.id) continue;
-            if (h.b == 0) ++rolls;
-            ++laid;
-            most = std::max(most, h.c);
-            overCount += h.c < 1 || h.c > sim::kSleepMost;
-            struckOne += h.whom == struck;
-            eliteSlept += h.whom == elite;
-            const sim::Body* b = realm.find(h.whom);
-            if (b == nullptr) continue;
-            const float dx = b->x - hero.x, dy = b->y - hero.y;
-            far += dx * dx + dy * dy > sim::kStormcallReach * sim::kStormcallReach + 0.01f;
-            const int64_t want =
-                int64_t(sim::sleepSeconds(hero.totalPoints().energy, b->level)) * 20;
-            tooLong += b->sleepUntil - now > int64_t(sim::kSleepMostSeconds) * 20;
-            wrongTime += b->sleepUntil < now + want;
-        }
-        // A sleeper's blow, unless it was struck awake this tick first.
-        for (const sim::Happening& h : realm.happenings()) {
-            if ((h.what == sim::What::Hit || h.what == sim::What::Missed) && !h.bled &&
-                !h.poisoned && !h.burned && asleep.count(h.who) != 0 && landedOn.count(h.who) == 0) {
-                ++swung;
-            }
-        }
-        // Lightning reaches far past his four tiles, so two awake monsters are kept beside him
-        // (not his aim, nor the Elite), set down there as a pack would come at him.
-        {
-            int beside = 0;
-            for (const sim::Body& b : realm.bodies()) {
-                if (!b.monster() || !b.alive() || b.sleepUntil > now || b.id == aimed ||
-                    b.id == elite) {
-                    continue;
-                }
-                const float dx = b.x - hero.x, dy = b.y - hero.y;
-                beside += dx * dx + dy * dy <= 3.0f * 3.0f;
-            }
-            for (const sim::Body& b : realm.bodies()) {
-                if (beside >= 2) break;
-                if (!b.monster() || !b.alive() || b.sleepUntil > now || b.id == aimed ||
-                    b.id == elite) {
-                    continue;
-                }
-                const float dx = b.x - hero.x, dy = b.y - hero.y;
-                const float d = dx * dx + dy * dy;
-                if (d <= 3.0f * 3.0f || d > 30.0f * 30.0f) continue;
-                auto& m = const_cast<sim::Body&>(b);
-                m.x = float(int(hero.x) + (beside == 0 ? 2 : -2));
-                m.y = float(int(hero.y) + 1);
-                m.walking = false;
-                // And hardy, so his chain does not fell them before the roll.
-                m.maxHealth = m.health = 1000000;
-                ++beside;
-            }
-        }
-        // Who slept through this tick: not a step. Who was struck: awake now.
-        std::map<uint32_t, Sleeper> next;
-        for (const sim::Body& b : realm.bodies()) {
-            if (!b.monster()) continue;
-            eliteSlept += b.id == elite && b.sleepUntil > now;
-            const auto was = asleep.find(b.id);
-            if (was != asleep.end() && landedOn.count(b.id) != 0) {
-                if (b.sleepUntil == 0) ++woken;
-                else ++unwoken;
-            }
-            if (!b.alive() || b.sleepUntil <= now) continue;
-            if (was != asleep.end() && (b.x != was->second.x || b.y != was->second.y)) ++stepped;
-            next[b.id] = Sleeper{b.x, b.y, was != asleep.end() ? was->second.since : now};
-        }
-        asleep.swap(next);
-    });
-    std::printf("  Sleep: %d casts, %d rolls, %d put to sleep (at most %d a roll), %d struck one, "
-                "%d far, %d long, %d short, %d stepped, %d swung, %d woken by a blow, %d not\n",
-                casts, rolls, laid, most, struckOne, far, tooLong, wrongTime, stepped, swung, woken,
-                unwoken);
-    check(rolls > 0 && laid >= rolls, "Sleep puts monsters to sleep");
-    checkEqual(overCount, 0, "never more than three");
-    checkEqual(struckOne, 0, "never the one he struck");
-    checkEqual(far, 0, "never past four tiles");
-    checkEqual(tooLong, 0, "never longer than eight seconds");
-    checkEqual(wrongTime, 0, "for MU's seconds");
-    checkEqual(stepped, 0, "a sleeper takes no step");
-    checkEqual(swung, 0, "nor a swing");
-    check(woken > 0, "a blow wakes a sleeper");
-    checkEqual(unwoken, 0, "every landed blow");
-    checkEqual(eliteSlept, 0, "an Elite never sleeps");
-    // Every cast has two awake beside him to sleep (the pull above).
-    if (casts > 0) {
-        const double rate = double(rolls) / casts;
-        check(rate > 0.05 && rate < 0.16, "about one cast in ten");
-    }
-
-    // A bleed's pulse does not wake it, and its time does.
-    {
-        sim::Realm realm;
-        realm.raise(&tables, 5, 200, 160, sim::Kin::DarkWizard, 150);
-        realm.unseen(true);
-        uint32_t id = 0;
-        for (const sim::Body& b : realm.bodies()) {
-            if (b.monster() && b.alive()) {
-                id = b.id;
-                break;
-            }
-        }
-        check(id != 0, "a monster to sleep");
-        if (id != 0) {
-            auto& b = const_cast<sim::Body&>(*realm.find(id));
-            const int64_t now = int64_t(realm.tick());
-            b.sleepUntil = now + 60;
-            b.bleed = 1;
-            b.bleedDamage = 1;
-            b.bleedUntil = now + 50;
-            b.bleedNext = now + 2;
-            b.bleedBy = realm.hero().id;
-            int pulses = 0;
-            bool slept = true;
-            for (int t = 0; t < 40; ++t) {
-                realm.step();
-                for (const sim::Happening& h : realm.happenings()) {
-                    pulses += h.what == sim::What::Hit && h.bled && h.whom == id;
-                }
-                slept &= b.sleepUntil > int64_t(realm.tick());
-            }
-            check(pulses > 0 && slept, "a bleed's pulse does not wake a sleeper");
-            for (int t = 0; t < 30; ++t) realm.step();
-            check(b.sleepUntil <= int64_t(realm.tick()), "and its time does");
-        }
-    }
-
-    // The Golden Dragon shrugs it.
-    {
-        std::vector<sim::RaiderKit> party;
-        sim::readParty(std::string(MU2_SOURCE_DIR) + "/content/raid/party.json", &party);
-        if (!party.empty()) {
-            sim::Realm raid;
-            raid.setRaid(10, party, true);
-            raid.setRaidLanding(0);
-            raid.raise(&tables, 9, 140, 65, party[0].kin, party[0].level);
-            raid.invade();
-            for (int i = 0; i < 40 * 20 && raid.raidStage() == sim::RaidStage::None; ++i) raid.step();
-            const sim::Body* dragon = raid.invader();
-            check(dragon != nullptr && raid.sleepProof(*dragon), "the Golden Dragon never sleeps");
-        }
-    }
-}
-
 // Strike of Destruction, the Blade Knight's Season 4 skill on his sword (sim/items.h kSoD...):
 // about one landed swing in seven, and about one knight skill in seven that strikes something -- once
 // a use, never once a body, never on a skill that struck nothing -- the ground broken under what
@@ -13098,7 +12724,8 @@ void testStrikeOfDestructionRune(const content::Tables& tables, int rune, int st
     check(row != nullptr && row->rarity == sim::Rarity::Ancient && row->second && row->once &&
               row->weapon() && !sim::stackingOf(Power::StrikeOfDestruction).stacks,
           "an Ancient weapon rune, a second class's, one to a thing, not stacking");
-    check(sim::powerOf(uint8_t(Power::Sleep) + 1) == row, "it follows Sleep, the numbers unbroken");
+    check(int(Power::StrikeOfDestruction) == 80 && sim::powerOf(uint8_t(Power::Sleep)) == nullptr,
+          "it keeps 80, and the retired Sleep before it has no row");
     {
         const auto held = [](int item, uint8_t sockets, Power first) {
             sim::Held h{int32_t(item), 0, 1};
@@ -13248,6 +12875,179 @@ void testStrikeOfDestructionRune(const content::Tables& tables, int rune, int st
     checkEqual(first.rolls, 0, "a first-class knight's never rolls");
 }
 
+void testFlameStrikeRune(const content::Tables& tables, int rune, int staff, int sword) {
+    std::printf("flame strike rune\n");
+    using sim::Kin;
+    using sim::Power;
+    const sim::PowerRow* row = sim::powerOf(uint8_t(Power::FlameStrike));
+    check(row != nullptr && row->rarity == sim::Rarity::Ancient && !row->second && row->once &&
+              row->weapon() && !sim::stackingOf(Power::FlameStrike).stacks,
+          "an Ancient weapon rune, a first class's, one to a thing, not stacking");
+    check(sim::powerOf(uint8_t(Power::StrikeOfDestruction) + 1) == row,
+          "it follows Strike of Destruction, the numbers unbroken");
+    {
+        const auto held = [](int item, uint8_t sockets, Power first) {
+            sim::Held h{int32_t(item), 0, 1};
+            h.sockets = sockets;
+            h.powers[0] = uint8_t(first);
+            return h;
+        };
+        const auto sets = [&](int into, Kin kin, bool second) {
+            return sim::settable(tables, held(rune, 0, Power::FlameStrike),
+                                 held(into, 1, Power::None), kin, second);
+        };
+        check(sets(sword, Kin::MagicGladiator, false), "a Magic Gladiator sets it in his sword");
+        check(!sets(sword, Kin::DarkKnight, true) && !sets(staff, Kin::DarkWizard, true),
+              "nobody else does");
+        sim::Random dice(20261026);
+        int at = 0, below = 0;
+        for (int i = 0; i < 4000; ++i) {
+            at += sim::drawRunePower(dice, Kin::MagicGladiator, false, 160) ==
+                  uint8_t(Power::FlameStrike);
+            below += sim::drawRunePower(dice, Kin::MagicGladiator, false, 140) ==
+                     uint8_t(Power::FlameStrike);
+        }
+        std::printf("  Flame Strike in 4000 drops: %d at 140, %d at 160\n", below, at);
+        check(at > 0 && below == 0, "it falls past Aida and not before");
+    }
+    // A level-150 gladiator hunting in Lorencia with it in his sword, 12000 ticks: plain swings,
+    // or Fire Slash or Power Slash every 25 ticks with his swings between. A roll whose band
+    // holds nothing alive -- a slash that killed all it struck -- whirls nothing.
+    struct Tally {
+        int swings = 0, uses = 0, casts = 0, rolls = 0, onSwing = 0, onSkill = 0, twice = 0,
+            most = 0, over = 0, outside = 0, struck = 0, blows = 0, short_ = 0, extra = 0;
+    };
+    const auto hunt = [&](int32_t skill, Kin kin) {
+        Tally t;
+        sim::Realm realm;
+        realm.raise(&tables, 5, 200, 160, kin, 150);
+        if (skill != 0) realm.learn(skill);
+        const uint8_t powers[3] = {uint8_t(Power::FlameStrike), 0, 0};
+        realm.give(sword, sim::kWeaponRight, 0, -1, false, 0, 0, 1, powers);
+        realm.undying(true);
+        int32_t swung = 0;
+        uint32_t fighting = 0;
+        for (int tick = 0; tick < 12000 && realm.hero().alive(); ++tick) {
+            if (realm.hero().mana < 100) {
+                sim::HeroRecord record = realm.record();
+                record.mana = realm.hero().maxMana;
+                realm.restore(record);
+            }
+            const sim::Body& hero = realm.hero();
+            uint32_t nearest = 0;
+            float best = 1e9f;
+            for (const sim::Body& one : realm.bodies()) {
+                if (!one.monster() || !one.alive()) continue;
+                const float dx = one.x - hero.x, dy = one.y - hero.y;
+                if (dx * dx + dy * dy < best) {
+                    best = dx * dx + dy * dy;
+                    nearest = one.id;
+                }
+            }
+            if (skill != 0 && nearest != 0 && tick % 25 == 0 && best <= 9.0f) {
+                realm.invoke(skill, nearest);
+            } else if (nearest != 0 && nearest != fighting) {
+                fighting = nearest;
+                sim::Request request;
+                request.kind = sim::Request::Kind::Attack;
+                request.target = nearest;
+                realm.ask(request);
+            }
+            const float hx = realm.hero().x, hy = realm.hero().y;
+            realm.step();
+            const uint32_t me = realm.hero().id;
+            bool landed = false;
+            int rolled = 0;
+            const sim::Happening* loosed = nullptr;
+            for (const sim::Happening& h : realm.happenings()) {
+                if (h.who != me) continue;
+                if (h.what == sim::What::Swung) {
+                    swung = h.a;
+                    if (h.a == skill && skill != 0) ++t.casts;
+                }
+                if (h.what == sim::What::Hit && !h.rune && !h.thrown && !h.reflected && !h.bled &&
+                    !h.poisoned && !h.burned) {
+                    landed = true;
+                }
+                if (h.what == sim::What::Loosed && h.a == sim::skill::kFlameStrike) {
+                    ++rolled;
+                    loosed = &h;
+                }
+            }
+            if (landed) {
+                if (swung == 0) ++t.swings;
+                else ++t.uses;
+            }
+            t.rolls += rolled;
+            t.twice += rolled > 1;
+            if (rolled > 0 && landed) {
+                if (swung == 0) ++t.onSwing;
+                else ++t.onSkill;
+            }
+            if (loosed == nullptr) continue;
+            t.most = std::max(t.most, loosed->c);
+            t.over += loosed->c < 1 || loosed->c > sim::kFlameMost;
+            // Its blows, each on a body in the band from where he stood (a little more for what
+            // stepped in the same tick), each body struck twice unless the first killed it.
+            const float way = float(loosed->b) / 1000.0f;
+            const float c = std::cos(way), s = std::sin(way);
+            std::map<uint32_t, int> blows;
+            for (const sim::Happening& h : realm.happenings()) {
+                if (h.who != me || !h.rune ||
+                    (h.what != sim::What::Hit && h.what != sim::What::Missed)) {
+                    continue;
+                }
+                ++t.blows;
+                ++blows[h.whom];
+                const sim::Body* on = realm.find(h.whom);
+                if (on == nullptr) continue;
+                t.outside += !sim::inBand(on->x - hx, on->y - hy, c, s, sim::kFlameNear + 0.5f,
+                                          sim::kFlameFar + 0.5f, sim::kFlameDeep + 0.5f,
+                                          sim::kFrustumBehind + 0.5f);
+            }
+            t.struck += int(blows.size());
+            t.extra += int(blows.size()) != loosed->c;
+            for (const auto& [id, n] : blows) {
+                const sim::Body* on = realm.find(id);
+                t.short_ += n > sim::kFlameStrikeBlows ||
+                            (n < sim::kFlameStrikeBlows && on != nullptr && on->alive());
+            }
+        }
+        return t;
+    };
+    const Tally plain = hunt(0, Kin::MagicGladiator);
+    std::printf("  swings: %d landed, %d rolls (%d on a swing), at most %d struck, %d struck in "
+                "all, %d blows\n",
+                plain.swings, plain.rolls, plain.onSwing, plain.most, plain.struck, plain.blows);
+    check(plain.rolls > 0 && plain.struck >= plain.rolls, "it whirls on his swings");
+    if (plain.swings > 0) {
+        const double rate = double(plain.onSwing) / plain.swings;
+        check(rate > 0.10 && rate < 0.21, "about one landed swing in seven (sim::kFlameStrikeChance)");
+    }
+    const Tally fire = hunt(sim::skill::kFireSlash, Kin::MagicGladiator);
+    std::printf("  Fire Slash: %d uses that struck, %d swings, %d rolls (%d on a skill), %d twice "
+                "in a tick, at most %d struck\n",
+                fire.uses, fire.swings, fire.rolls, fire.onSkill, fire.twice, fire.most);
+    check(fire.onSkill > 0, "it rolls on a Fire Slash that struck");
+    if (fire.uses > 0) {
+        const double rate = double(fire.onSkill) / fire.uses;
+        check(rate > 0.07 && rate < 0.23, "about one Fire Slash in seven, not one a body");
+    }
+    const Tally power = hunt(sim::skill::kPowerSlash, Kin::MagicGladiator);
+    std::printf("  Power Slash: %d casts, %d rolls, %d twice in a tick\n", power.casts,
+                power.rolls, power.twice);
+    check(power.rolls > 0, "it rolls on a Power Slash, though its waves strike later");
+    for (const Tally* t : {&plain, &fire, &power}) {
+        checkEqual(t->twice, 0, "never twice for one action");
+        checkEqual(t->over, 0, "never more than twelve");
+        checkEqual(t->outside, 0, "never a body outside the band in front of him");
+        checkEqual(t->extra, 0, "the bodies struck are the count it said");
+        checkEqual(t->short_, 0, "two blows on each body that stands");
+    }
+    const Tally knight = hunt(0, Kin::DarkKnight);
+    checkEqual(knight.rolls, 0, "a knight's never rolls");
+}
+
 void testAncientRunes(const content::Tables& tables) {
     std::printf("ancient runes\n");
     using sim::Kin;
@@ -13256,9 +13056,9 @@ void testAncientRunes(const content::Tables& tables) {
               sword = tables.itemNamed("Sword01");
     check(rune >= 0 && staff >= 0 && sword >= 0, "the Rune of Creation, a staff and a sword");
     if (rune < 0 || staff < 0 || sword < 0) return;
-    const sim::PowerRow* storm = sim::powerOf(uint8_t(Power::IceStorm));
+    const sim::PowerRow* storm = sim::powerOf(uint8_t(Power::Requiem));
     check(storm != nullptr && storm->rarity == sim::Rarity::Ancient && storm->second && storm->once,
-          "Ice Storm is an Ancient, a second class's, one to a thing");
+          "Requiem is an Ancient, a second class's, one to a thing");
     check(std::string(sim::rarityName(sim::Rarity::Ancient)) == "Ancient", "and is called so");
     // Who may set it: a Soul Master's staff, nobody else's and nothing else.
     const auto held = [](int item, uint8_t sockets, Power first) {
@@ -13268,7 +13068,7 @@ void testAncientRunes(const content::Tables& tables) {
         return h;
     };
     const auto sets = [&](int into, Kin kin, bool second) {
-        return sim::settable(tables, held(rune, 0, Power::IceStorm), held(into, 1, Power::None), kin,
+        return sim::settable(tables, held(rune, 0, Power::Requiem), held(into, 1, Power::None), kin,
                              second);
     };
     check(sets(staff, Kin::DarkWizard, true), "a Soul Master sets it in his staff");
@@ -13280,13 +13080,13 @@ void testAncientRunes(const content::Tables& tables) {
         sim::Random dice(20261021);
         int below = 0, at = 0, knight = 0, wizard = 0;
         for (int i = 0; i < 4000; ++i) {
-            below += sim::drawRunePower(dice, Kin::DarkWizard, true, 140) == uint8_t(Power::IceStorm);
+            below += sim::drawRunePower(dice, Kin::DarkWizard, true, 140) == uint8_t(Power::Requiem);
             at += sim::drawRunePower(dice, Kin::DarkWizard, true, sim::kAncientLevel) ==
-                  uint8_t(Power::IceStorm);
-            knight += sim::drawRunePower(dice, Kin::DarkKnight, true, 160) == uint8_t(Power::IceStorm);
-            wizard += sim::drawRunePower(dice, Kin::DarkWizard, false, 160) == uint8_t(Power::IceStorm);
+                  uint8_t(Power::Requiem);
+            knight += sim::drawRunePower(dice, Kin::DarkKnight, true, 160) == uint8_t(Power::Requiem);
+            wizard += sim::drawRunePower(dice, Kin::DarkWizard, false, 160) == uint8_t(Power::Requiem);
         }
-        std::printf("  Ice Storm in 4000 drops: %d at 140, %d at %d\n", below, at, sim::kAncientLevel);
+        std::printf("  Requiem in 4000 drops: %d at 140, %d at %d\n", below, at, sim::kAncientLevel);
         checkEqual(below, 0, "no Ancient falls from Aida's hardest");
         check(at > 0, "one falls past it");
         checkEqual(knight + wizard, 0, "and never for a knight or a first-class wizard");
@@ -13308,72 +13108,16 @@ void testAncientRunes(const content::Tables& tables) {
     // The fuse refuses three Ancients, as it refuses three Legendaries.
     check(sim::nextRarity(sim::Rarity::Ancient) == sim::Rarity::Ancient,
           "an Ancient fuses into nothing higher or lower");
-
-    // A Soul Master's hunt with Ice Storm in his staff, casting Lightning at the nearest.
-    sim::Realm realm;
-    realm.raise(&tables, 5, 200, 160, Kin::DarkWizard, 150);
-    promote(realm);
-    realm.learn(sim::skill::kLightning);
-    const uint8_t powers[3] = {uint8_t(Power::IceStorm), 0, 0};
-    realm.give(staff, sim::kWeaponRight, 0, -1, false, 0, 0, 1, powers);
-    int casts = 0, storms = 0, caught = 0, frozen = 0, blows = 0;
-    uint32_t fighting = 0;
-    for (int tick = 0; tick < 12000 && realm.hero().alive(); ++tick) {
-        if (realm.hero().health < realm.hero().maxHealth / 2 || realm.hero().mana < 100) {
-            sim::HeroRecord record = realm.record();
-            record.health = realm.hero().maxHealth;
-            record.mana = realm.hero().maxMana;
-            realm.restore(record);
-        }
-        const sim::Body& hero = realm.hero();
-        uint32_t nearest = 0;
-        float best = 1e9f;
-        for (const sim::Body& one : realm.bodies()) {
-            if (!one.monster() || !one.alive()) continue;
-            const float dx = one.x - hero.x, dy = one.y - hero.y;
-            if (dx * dx + dy * dy < best) {
-                best = dx * dx + dy * dy;
-                nearest = one.id;
-            }
-        }
-        if (nearest != 0 && nearest != fighting) {
-            fighting = nearest;
-            sim::Request request;
-            request.kind = sim::Request::Kind::Attack;
-            request.target = nearest;
-            request.skill = sim::skill::kLightning;
-            realm.ask(request);
-        }
-        realm.step();
-        bool storming = false;
-        for (const sim::Happening& h : realm.happenings()) {
-            if (h.who != realm.hero().id) continue;
-            if (h.what == sim::What::Cast && h.a == sim::skill::kLightning) ++casts;
-            if (h.what == sim::What::Loosed && h.a == sim::skill::kIceStorm) {
-                ++storms;
-                caught += h.c;
-                storming = true;
-                for (const sim::Body& one : realm.bodies()) {
-                    frozen += one.monster() && one.alive() && one.frozenUntil > int64_t(realm.tick());
-                }
-            }
-            if (storming && h.what == sim::What::Hit && h.thrown) ++blows;
-        }
+    // One Ancient a class (the user, 2026-10-26): the wizard's other five are retired, their
+    // numbers held and never reused, and a rune still holding one is inert.
+    for (const Power gone : {Power::IceStorm, Power::Weakness, Power::Pollution, Power::DrainLife,
+                             Power::Sleep}) {
+        check(sim::powerOf(uint8_t(gone)) == nullptr, "a retired Ancient has no row");
     }
-    std::printf("  Ice Storm: %d casts, %d storms, %d caught, %d left frozen, %d blows\n", casts,
-                storms, caught, frozen, blows);
-    check(storms > 0 && caught >= storms, "Ice Storm comes down on what he struck");
-    check(frozen > 0 && blows > 0, "and freezes and strikes round it");
-    if (casts > 0) {
-        const double rate = double(storms) / casts;
-        check(rate > 0.05 && rate < 0.16, "about one cast in ten");
-    }
-    testWeaknessRune(tables, rune, staff, sword);
-    testPollutionRune(tables, rune, staff, sword);
-    testDrainLifeRune(tables, rune, staff, sword);
+    check(sim::kPowerEnd > int(Power::StrikeOfDestruction), "the powers' walk reaches past the gaps");
     testRequiemRune(tables, rune, staff, sword);
-    testSleepRune(tables, rune, staff, sword);
     testStrikeOfDestructionRune(tables, rune, staff, sword);
+    testFlameStrikeRune(tables, rune, staff, sword);
 }
 
 void testGroupRunes(const content::Tables& tables) {
@@ -13396,8 +13140,9 @@ void testGroupRunes(const content::Tables& tables) {
     using sim::Kin;
     using sim::Power;
     int groupless = 0;
-    for (int p = 1; sim::powerOf(uint8_t(p)); ++p) {
-        groupless += sim::powerOf(uint8_t(p))->classes == 0 || sim::powerOf(uint8_t(p))->slots == 0;
+    for (int p = 1; p < sim::kPowerEnd; ++p) {
+        if (!sim::powerOf(uint8_t(p))) continue;  // a retired number
+        groupless +=sim::powerOf(uint8_t(p))->classes == 0 || sim::powerOf(uint8_t(p))->slots == 0;
     }
     checkEqual(groupless, 0, "every rune names its classes and its sockets");
     for (const Power power : {Power::Fireburst, Power::FireRing}) {
@@ -16728,11 +16473,6 @@ void testCastleGrid(const content::Tables& lorencia) {
         run.step();
         for (int t = 0; t < 100 && standing(sim::kCastleStatue) < 1; ++t) run.step();
         checkEqual(standing(sim::kCastleStatue), 1, "and the Statue of Saint rises");
-        for (const sim::Body& one : run.bodies()) {
-            if (one.monster() && one.alive() && numberOf(one) == sim::kCastleStatue) {
-                check(run.sleepProof(one), "the Statue of Saint never sleeps (the Sleep rune)");
-            }
-        }
         for (int t = 0; t < 200; ++t) run.step();
         checkEqual(standing(sim::kCastleSorcerer), 0, "the sorcerers stay dead");
         const int32_t staff = castle.itemAt(sim::kDivineStaffGroup, sim::kDivineStaffNumber);
@@ -18524,6 +18264,7 @@ int main() {
     testResetPoints(tables);
     testTalents();
     testTalentCommands(tables);
+    testLordTalents(tables);
     testTalentStats(tables);
     testHarmony(tables);
     testTalentSpecials(tables);

@@ -91,31 +91,6 @@ void Play::debuffShows(float frames) {
             }
         }
     }
-    // A body under a Weakness curse (the Ancient rune, sim/items.h kWeakness...): MU's
-    // eDeBuff_AttackDown, a red star and a red streak shed off a bone drawn at random, each one
-    // frame in two (fx/weakness.h).
-    for (Drawn& one : drawn_) {
-        const sim::Body* body = realm_.find(one.id);
-        const FigureBody* look = one.figure.body();
-        if (!body || !body->alive() || body->weakUntil <= int64_t(realm_.tick()) ||
-            !one.visible || !one.placed || look == nullptr || look->boneCount() < 2) {
-            one.weakOwed = 0.0f;
-            continue;
-        }
-        if (one.burningDice == 0) one.burningDice = 0x9e3779b9u ^ (one.id * 2654435761u);
-        const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
-        const float origin[3] = {0.0f, 0.0f, 0.0f};
-        one.weakOwed += frames;
-        while (one.weakOwed >= 1.0f) {
-            one.weakOwed -= 1.0f;
-            one.burningDice ^= one.burningDice << 13;
-            one.burningDice ^= one.burningDice >> 17;
-            one.burningDice ^= one.burningDice << 5;
-            const int b = int(one.burningDice % uint32_t(bones.size()));
-            float at[3];
-            if (one.figure.pointOn(b, origin, at)) weakness_.mark(at);
-        }
-    }
     // A bleeding body (sim kBleeders, the user, 2026-10-12: 'bleed', 'Blood drips on the hero'):
     // drops of blood off bones drawn at random, more with each stack.
     for (Drawn& one : drawn_) {
@@ -168,30 +143,6 @@ void Play::debuffShows(float frames) {
             const int b = int(one.burningDice % uint32_t(bones.size()));
             float at[3];
             if (one.figure.pointOn(b, origin, at)) requiem_.mist(at);
-        }
-    }
-    // A body a Sleep rune holds (sim/items.h kSleep...): MU's eDeBuff_Sleep, one violet puff off a
-    // bone drawn at random one frame in two (fx/sleep.h).
-    for (Drawn& one : drawn_) {
-        const sim::Body* body = realm_.find(one.id);
-        const FigureBody* look = one.figure.body();
-        if (!body || !body->alive() || body->sleepUntil <= realm_.tick() || !one.visible ||
-            !one.placed || look == nullptr || look->boneCount() < 2) {
-            one.sleepOwed = 0.0f;
-            continue;
-        }
-        if (one.burningDice == 0) one.burningDice = 0x9e3779b9u ^ (one.id * 2654435761u);
-        const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
-        const float origin[3] = {0.0f, 0.0f, 0.0f};
-        one.sleepOwed += frames * 0.5f;
-        while (one.sleepOwed >= 1.0f) {
-            one.sleepOwed -= 1.0f;
-            one.burningDice ^= one.burningDice << 13;
-            one.burningDice ^= one.burningDice >> 17;
-            one.burningDice ^= one.burningDice << 5;
-            const int b = int(one.burningDice % uint32_t(bones.size()));
-            float at[3];
-            if (one.figure.pointOn(b, origin, at)) sleep_.puff(at);
         }
     }
 }

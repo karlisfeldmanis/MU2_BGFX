@@ -128,7 +128,6 @@ bool Realm::turn(Body& one) {
 
 void Realm::advance(Body& one) {
     if (one.frozenUntil > tick_) return;  // frozen: not a step, not a turn
-    if (one.sleepUntil > tick_) return;   // a Sleep rune's: held as frozen is (kSleep...)
     // A body that is standing still still comes round: a fighter between two blows turns onto
     // what it is hitting, and a walk that has just been given spends its first tick or two
     // turning before any ground is covered.
@@ -518,7 +517,6 @@ bool Realm::beside(const Body& target, int radius, const Body& walker, int* colu
 
 void Realm::think(Body& beast) {
     if (beast.frozenUntil > tick_) return;  // frozen: no thought and no swing until it thaws
-    if (beast.sleepUntil > tick_) return;   // asleep (a Sleep rune's): nor while it sleeps
     if (beast.wakesAt > tick_) return;      // risen, and standing its five seconds
     const content::MonsterKind& kind = tables_->kinds[size_t(beast.kind)];
 

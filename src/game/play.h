@@ -43,15 +43,12 @@
 #include "game/fx/wave.h"
 #include "game/fx/arrow.h"
 #include "game/fx/blink.h"
-#include "game/fx/blizzard.h"
-#include "game/fx/weakness.h"
 #include "game/fx/pollution.h"
-#include "game/fx/drain.h"
 #include "game/fx/pet_lights.h"
 #include "game/fx/raven.h"
 #include "game/fx/requiem.h"
 #include "game/fx/strike_of_destruction.h"
-#include "game/fx/sleep.h"
+#include "game/fx/flame_strike.h"
 #include "game/fx/chains.h"
 #include "game/fx/ice.h"
 #include "game/fx/stains.h"
@@ -238,6 +235,7 @@ public:
     // The tile a click on (column, row) walks to: itself, unless the route there is a detour,
     // and then as far toward it as a straight line goes -- his own tile, when that is nowhere.
     void clickGoal(int* column, int* row);
+    bool openClickRouter();  // clickRouter_ on the realm's grid; false when it has none
     void leftLetGo();
     // What the right button's quick slot holds, by MU's skill number, 0 for nothing. The desk's
     // and handed down each frame, as the bar is the interface's and the order is the realm's.
@@ -1089,23 +1087,18 @@ public:
     Blink& blink() { return blink_; }
     // And his Ice. fx/ice.h.
     Ice& ice() { return ice_; }
-    // And the Ancient rune Ice Storm's blizzard. fx/blizzard.h.
-    Blizzard& blizzard() { return blizzard_; }
-    // And the Ancient rune Weakness's red circles and its curse's mark. fx/weakness.h.
-    Weakness& weakness() { return weakness_; }
-    // And the Ancient rune Pollution's circle and Lagle's ghosts. fx/pollution.h.
+    // And the Summoner's casting circle under the Ancient rune Requiem's caster. fx/pollution.h.
     Pollution& pollution() { return pollution_; }
-    // And the Ancient rune Drain Life's motes, ghosts and strands. fx/drain.h.
-    Drain& drain() { return drain_; }
     RavenShow& ravenShow() { return ravenShow_; }
     PetLights& petLights() { return petLights_; }
     // And the Ancient rune Requiem's Neil, thorns and burning ground. fx/requiem.h.
     Requiem& requiem() { return requiem_; }
-    // And the Ancient rune Sleep's circle, rings and a sleeper's puffs. fx/sleep.h.
-    Sleep& sleep() { return sleep_; }
     // And the Ancient rune Strike of Destruction's flares, blades, cracks and splash.
     // fx/strike_of_destruction.h.
     StrikeOfDestruction& destruction() { return destruction_; }
+    // And the Ancient rune Flame Strike's whirled blade, its ring and the fire on what it struck.
+    // fx/flame_strike.h.
+    FlameStrike& flameStrike() { return flameStrike_; }
     // And a Whirlwind rune's pull, the chains he hauls them in by. fx/chains.h.
     Chains& chains() { return chains_; }
     // What a death leaves by the head: MU's CreateBlood. fx/stains.h.
@@ -1481,9 +1474,7 @@ private:
         // An Immolate rune's burn on it (kEmberFlames): frames owed, and its draw of bones.
         float burningOwed = 0.0f;
         float sickOwed = 0.0f, bleedOwed = 0.0f;  // poison's smoke, a bleed's drips: owed
-        float weakOwed = 0.0f;  // a Weakness curse's red, frames owed (fx/weakness.h)
         float requiemOwed = 0.0f;  // a Requiem bleed's mist, frames owed (fx/requiem.h)
-        float sleepOwed = 0.0f;    // a Sleep rune's puffs, frames owed (fx/sleep.h)
         uint32_t burningDice = 0;
         float snortOwed = 0.0f;
         // An Elite Yeti's breath: the same puff out of Box03, in every action, one in four
@@ -2036,15 +2027,12 @@ private:
     int64_t lastEvilTick_ = -1000;
     Blink blink_;
     Ice ice_;
-    Blizzard blizzard_;
-    Weakness weakness_;
-    Pollution pollution_;
-    Drain drain_;
+    Pollution pollution_;  // Requiem's casting circle
     RavenShow ravenShow_;  // the Dark Raven's dash, ball and level flares (fx/raven.h)
     PetLights petLights_;  // the Guardian Angel's twinkle and glow, the Imp's ember (fx/pet_lights.h)
     Requiem requiem_;
-    Sleep sleep_;
     StrikeOfDestruction destruction_;
+    FlameStrike flameStrike_;
     Chains chains_;
     Stains stains_;
     TrapShow trapShow_;
@@ -2101,6 +2089,9 @@ private:
     // once where the walk ends when the button comes up.
     bool leftSteered_ = false;
     int leftColumn_ = -1, leftRow_ = -1;
+    // And whether that tile is the far one steering asks along the pointer's line, past the
+    // pointer (Play::leftHeld): letting go then asks the tile pointed at, to stop there.
+    bool leftFar_ = false;
     int walkedColumn_ = -1, walkedRow_ = -1;  // the goal of his last `Walked`
     int64_t leftAskedTick_ = 0;
     // The hand's own router, for a click's detour (Play::clickGoal): never the realm's, whose
@@ -2172,8 +2163,6 @@ private:
     std::vector<Meteor::Impact> meteorImpacts_;
     // Cometfall's landings this frame, each laid as a rock's impact (Play::update).
     std::vector<Comet::Landing> cometLandings_;
-    // And Ice Storm's crystals down this frame (Play::update).
-    std::vector<Blizzard::Landing> blizzardLandings_;
     // The wandering cry's own dice: the drawing's, so that hearing a spider never moves the
     // sim's seeded stream.
     uint32_t wanderDice_ = 0x6d2b79f5u;
@@ -2232,13 +2221,9 @@ private:
         int boltThunder = -1, witchThunder = -1;  // eThunder, a Hydra's and Lizard King's bolts; eElec, a Witch Queen's ring
         int rage2 = -1, rage3 = -1;    // Rageful Blow's streaks and its cracks
         int iceCast = -1;                                 // spell_ice, on an Ice Monster's cast
-        int iceStorm = -1, iceStormLand = -1;  // eSuddenIce_1 and _2, the Ancient rune Ice Storm's
-        int weakness = -1;                     // SE_Ch_summoner_weakness, the Ancient rune Weakness's
-        int pollution = -1;                    // Rargle, the Ancient rune Pollution's
-        int drainLife = -1;                    // SE_Ch_summoner_skill07, the Ancient rune Drain Life's
         int requiem = -1, requiemThorns = -1;  // SE_Ch_summoner_skill06_requiem01/02, Requiem's
-        int sleep = -1;                        // SE_Ch_summoner_skill03_sleep, the Ancient rune Sleep's
         int destruction = -1;                  // BLOW_OF_DESTRUCTION, the Ancient rune Strike of Destruction's
+        int flameStrike = -1;                  // flame_strike, the Ancient rune Flame Strike's
         int bloodAttack = -1;                  // eBloodAttack, Fire Slash's cut landing on a body
         int whirlPull = -1;                    // whirl_pull, a Whirlwind rune's pull landing
         // The knight's skills, one wave each -- and Cyclone and Slash share SWORD4, which is
@@ -2454,6 +2439,7 @@ private:
     float through_ = 0.0f;  // how far between the last tick and the next, 0 to 1
 
     int pointedColumn_ = -1, pointedRow_ = -1;
+    float pointedX_ = 0.0f, pointedY_ = 0.0f;  // the same point unrounded, in the sim's tiles
     uint32_t pointedAt_ = 0;  // the body under the pointer, or 0
     uint32_t pointedPlayer_ = 0;  // another player under it, or 0 (pointedPlayer)
     std::string targetName_;  // his target, by name (target)

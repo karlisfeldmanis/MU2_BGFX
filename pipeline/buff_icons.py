@@ -157,9 +157,6 @@ TALENT_STATES = {
     # And the knight's Swell Life (skill 48, 2026-10-25), a lookup: eBuff_Life is 8 in MuMain's
     # eBuffState, the cell MuMain registers for AT_SKILL_SWELL_LIFE (WSclient.cpp:4730).
     "swell_life": ("status", 8, "Swell Life, skill 48: eBuff_Life"),
-    # And a monster's sleep under the Ancient rune Sleep (skill 219, 2026-10-25), on the target
-    # frame: eDeBuff_Sleep is 72, S17's buff_template 72 "Sleep" (BuffDef.h:65).
-    "sleep": ("status", 72, "Sleep, skill 219: eDeBuff_Sleep"),
 }
 
 #: MuMain's own sheets in the repository's reference tree. MuDream's 4x copies of status 2, 3 and

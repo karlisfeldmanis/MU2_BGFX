@@ -1385,9 +1385,6 @@ void Realm::step() {
         heroAfter();
     }
     me_ = 0;
-    // Each Weakness field's look round (sim/items.h kWeakness...): a clock that runs only while
-    // one lies, so a run without the rune is not moved.
-    weaknessFields();
     // The traps fire on their own clock at whoever stands in their way -- a clock that stands
     // still while nobody lives to be caught, as it did while the one hero lay dead.
     if (anyAlive) fireTraps();

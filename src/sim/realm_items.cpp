@@ -2888,7 +2888,8 @@ uint8_t drawRunePower(Random& dice, Kin kin, bool second, int level, bool common
     };
     int count[kRarities] = {};
     double held = 0.0;
-    for (int p = 1; powerOf(uint8_t(p)); ++p) {
+    for (int p = 1; p < kPowerEnd; ++p) {
+        if (!powerOf(uint8_t(p))) continue;  // a retired number
         const int r = int(powerOf(uint8_t(p))->rarity);
         if (drawable(*powerOf(uint8_t(p))) && level >= kRuneRarityLevel[r]) ++count[r];
     }
@@ -2905,7 +2906,8 @@ uint8_t drawRunePower(Random& dice, Kin kin, bool second, int level, bool common
         for (int r = kRarities - 1; rarity < 0 && r >= 0; --r) rarity = count[r] > 0 ? r : -1;
     }
     int pick = rarity >= 0 ? dice.nextInt(0, count[rarity]) : -1;
-    for (int p = 1; pick >= 0 && powerOf(uint8_t(p)); ++p) {
+    for (int p = 1; pick >= 0 && p < kPowerEnd; ++p) {
+        if (!powerOf(uint8_t(p))) continue;
         const PowerRow& row = *powerOf(uint8_t(p));
         if (drawable(row) && int(row.rarity) == rarity && level >= kRuneRarityLevel[rarity] &&
             pick-- == 0)
@@ -2916,12 +2918,14 @@ uint8_t drawRunePower(Random& dice, Kin kin, bool second, int level, bool common
 
 uint8_t drawRuneOf(Random& dice, Kin kin, bool second, Rarity rarity) {
     int count = 0;
-    for (int p = 1; powerOf(uint8_t(p)); ++p) {
+    for (int p = 1; p < kPowerEnd; ++p) {
+        if (!powerOf(uint8_t(p))) continue;  // a retired number
         const PowerRow& row = *powerOf(uint8_t(p));
         count += row.rarity == rarity && runeDrawable(row, kin, second) ? 1 : 0;
     }
     int pick = count > 0 ? dice.nextInt(0, count) : -1;
-    for (int p = 1; pick >= 0 && powerOf(uint8_t(p)); ++p) {
+    for (int p = 1; pick >= 0 && p < kPowerEnd; ++p) {
+        if (!powerOf(uint8_t(p))) continue;
         const PowerRow& row = *powerOf(uint8_t(p));
         if (row.rarity == rarity && runeDrawable(row, kin, second) && pick-- == 0) return uint8_t(p);
     }

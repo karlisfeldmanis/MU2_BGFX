@@ -600,15 +600,10 @@ void Play::openSound(const std::string& assetDir, bool muted, bool offline) {
     heard_.hellfire = sound_.load("balrog_hellfire", true);
     novaBurstSound_ = sound_.load("nova_burst", true);
     heard_.iceCast = sound_.load("spell_ice", true);
-    heard_.iceStorm = sound_.load("spell_ice_storm", true);
-    heard_.iceStormLand = sound_.load("spell_ice_storm_land", true);
-    heard_.weakness = sound_.load("spell_weakness", true);
-    heard_.pollution = sound_.load("spell_pollution", true);
-    heard_.drainLife = sound_.load("spell_drain_life", true);
     heard_.requiem = sound_.load("spell_requiem", true);
     heard_.requiemThorns = sound_.load("spell_requiem_thorns", true);
-    heard_.sleep = sound_.load("spell_sleep", true);
     heard_.destruction = sound_.load("spell_strike_of_destruction", true);
+    heard_.flameStrike = sound_.load("spell_flame_strike", true);
     // The knight's skills, by the table's own index, so a cast asks for its wave by the same
     // number its cooldown is kept under. Both `sKnightSkill4` names are the same file: MU plays
     // SWORD4 for Cyclone and for Slash alike.

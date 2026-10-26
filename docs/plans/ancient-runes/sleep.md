@@ -1,3 +1,5 @@
+**Removed 2026-10-26** (one Ancient a class: the Dark Wizard keeps Requiem). Power 79 stays retired, never reused.
+
 # Sleep (skill 219, the Summoner's curse) as an Ancient rune -- research dossier
 
 Researched 2026-10-25 before any build, for the seventh Ancient rune on the Soul Master's weapon, after Ice Storm (74),

@@ -12,8 +12,7 @@ TalentTree talentTree(Kin kin) {
         case Kin::FairyElf: return {kFairyElfTalents, int(std::size(kFairyElfTalents))};
         case Kin::MagicGladiator:
             return {kMagicGladiatorTalents, int(std::size(kMagicGladiatorTalents))};
-        // His tree is phase 8's (docs/plans/dark-lord.md); none until then.
-        case Kin::DarkLord: break;
+        case Kin::DarkLord: return {kDarkLordTalents, int(std::size(kDarkLordTalents))};
     }
     return {};
 }
@@ -102,6 +101,27 @@ float talentSum(Kin kin, const TalentRanks& ranks, TalentStat stat, const Talent
     return sum;
 }
 
+float talentSkillSum(Kin kin, const TalentRanks& ranks, TalentStat stat, int32_t skill,
+                     const TalentEffect** found) {
+    const TalentTree tree = talentTree(kin);
+    float sum = 0.0f;
+    if (found) *found = nullptr;
+    if (skill == 0) return sum;
+    for (int c = 0; c < tree.count; ++c) {
+        for (int i = 0; i < kTalentNodes; ++i) {
+            const int rank = ranks[size_t(c)][size_t(i)];
+            const TalentEffect& effect = tree.columns[c].nodes[i].effect;
+            if (rank == 0 || effect.stat != stat) continue;
+            bool named = false;
+            for (const int32_t one : effect.skills) named = named || (one != 0 && one == skill);
+            if (!named) continue;
+            if (found && !*found) *found = &effect;
+            sum += effect.amount * float(isMajor(i) ? 1 : rank);
+        }
+    }
+    return sum;
+}
+
 TalentShares talentShares(Kin kin, const TalentRanks& ranks, const TalentAsk& holding) {
     TalentShares s;
     const TalentTree tree = talentTree(kin);
@@ -164,12 +184,21 @@ TalentShares talentShares(Kin kin, const TalentRanks& ranks, const TalentAsk& ho
                 case TalentStat::MoreItems: s.moreItems += v; break;
                 case TalentStat::MoreExcellentItems: s.moreExcellent += v; break;
                 case TalentStat::PotionHealing: s.potionHealing += v; break;
+                case TalentStat::RidingDamage: s.ridingDamage += v; break;
+                case TalentStat::Command: s.command += v; break;
+                case TalentStat::RavenDamage: s.ravenDamage += v; break;
+                case TalentStat::RavenAttackSpeed: s.ravenSpeed += v; break;
+                case TalentStat::RavenCritical: s.ravenCritical += v; break;
+                case TalentStat::RavenBallDamage: s.ravenBall += v; break;
+                case TalentStat::RavenWear: s.ravenWear += v; break;
                 case TalentStat::Special:
                     if (e.special == Special::OffHand) s.offHand += v;
                     if (e.special == Special::WizardryIntoSwings) s.wizardryIntoSwings += v;
+                    if (e.special == Special::RavenReach) s.ravenReach += v;
                     break;
                 case TalentStat::SkillDamage:
-                case TalentStat::SkillManaCost: break;
+                case TalentStat::SkillManaCost:
+                case TalentStat::ChillChance: break;
             }
         }
     }

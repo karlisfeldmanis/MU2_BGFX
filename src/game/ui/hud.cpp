@@ -404,8 +404,6 @@ const char* Hud::artOf(const Boon& one) {
            : one.frozen           ? "skill_7"
            // Fire Slash's cut wears the skill's own cell.
            : one.cut              ? "skill_55"
-           // A Sleep rune's: MU's buff icon 72, eDeBuff_Sleep (pipeline/buff_icons.py).
-           : one.sleep            ? "buff_sleep"
            : one.ale              ? "buff_ale"
            : one.frenzy           ? "buff_frenzy"
            : one.potion == 0      ? "buff_healing"

@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Dark Lord talents</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&amp;family=Inter:wght@400;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0b0a09}
+.ic{background-image:url(/_blob/aaffdacc20b2c9a90e4c3fa73d7b9741);background-repeat:no-repeat;image-rendering:pixelated}
+</style>
+</helmet>
+<div style="width: 1260px; height: 980px; box-sizing: border-box; padding: 24px 30px 20px; background: #12100e; border: 1px solid #3a2f25; color: #d8cfc2; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; gap: 14px">
+  <div style="display: flex; align-items: baseline; justify-content: space-between">
+    <div style="display: flex; align-items: baseline; gap: 14px">
+      <h1 style="margin: 0; font-family: Cinzel, serif; font-size: 26px; font-weight: 700; color: #e9dcc6; letter-spacing: 1px">Talents</h1>
+      <span style="font-family: Cinzel, serif; font-size: 16px; color: #b0a08a">Dark Lord</span>
+    </div>
+    <div style="font-size: 13px; color: #b0a08a">Talent points <span style="color: #e9dcc6; font-weight: 600">111</span> at level 400 · one every 25 stat points</div>
+  </div>
+  <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0; flex-grow: 1; border-top: 1px solid #2c241d">
+    <sc-for list="{{columns}}" as="col" hint-placeholder-count="6">
+      <div style="display: flex; flex-direction: column; gap: 6px; padding: 12px 8px 0; border-right: 1px solid #2c241d">
+        <div style="text-align: center; min-height: 52px">
+          <div style="font-family: Cinzel, serif; font-size: 15px; font-weight: 700; color: #e9dcc6">{{col.name}}</div>
+          <div style="font-size: 11px; color: #9a8b77; margin-top: 3px">{{col.sub}}</div>
+        </div>
+        <sc-for list="{{col.tiers}}" as="tier" hint-placeholder-count="3">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding-bottom: 6px">
+            <div style="display: flex; gap: 6px; align-items: flex-start; width: 100%">
+              <sc-for list="{{tier.smalls}}" as="nd" hint-placeholder-count="2">
+                <div style="flex: 1 1 0; display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: center">
+                  <div style="position: relative; padding: 2px; border: 1px solid #4a3d31; background: #1b1714">
+                    <div class="ic" style="{{nd.sprite}}"></div>
+                    <div style="position: absolute; left: 2px; right: 2px; bottom: 2px; background: rgba(0,0,0,0.72); font-size: 10px; color: #d8cfc2; line-height: 13px">0/10</div>
+                  </div>
+                  <div style="font-size: 11px; font-weight: 600; color: #e2d6c4">{{nd.n}}</div>
+                  <div style="font-size: 10px; color: #a8998a; line-height: 13px">{{nd.label}}</div>
+                  <sc-if value="{{nd.isNew}}" hint-placeholder-val="{{false}}">
+                    <div style="font-size: 9px; color: #e89a3c; letter-spacing: 0.5px">NEW SIM</div>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+            <div style="width: 1px; height: 10px; background: #5a4a3b"></div>
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: center; width: 100%">
+              <div style="position: relative; padding: 2px; border: 1px solid #7a6449; background: #1b1714">
+                <div class="ic" style="{{tier.major.sprite}}"></div>
+                <div style="position: absolute; left: 2px; right: 2px; bottom: 2px; background: rgba(0,0,0,0.72); font-size: 10px; color: #d8cfc2; line-height: 13px">0/1</div>
+              </div>
+              <div style="font-size: 12px; font-weight: 600; color: #ecdcbf">{{tier.major.n}}</div>
+              <div style="font-size: 10px; color: #b5a593; line-height: 13px">{{tier.major.text}}</div>
+              <sc-if value="{{tier.major.isNew}}" hint-placeholder-val="{{false}}">
+                <div style="font-size: 9px; color: #e89a3c; letter-spacing: 0.5px">NEW SIM</div>
+              </sc-if>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-for>
+  </div>
+  <div style="display: flex; justify-content: space-between; font-size: 11px; color: #8d7f6e; border-top: 1px solid #2c241d; padding-top: 10px">
+    <span>A major opens at 10 points in either small above it; the next tier opens when the major is taken.</span>
+    <span><span style="color: #e89a3c">NEW SIM</span> = needs sim code the other classes don't have</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1260,"height":980}}'>
+// The Dark Lord's tree, in the shape pipeline/talents_table.js reads: a small is
+// {k:'s', n, label, per, icon}, a major {k:'m', n, text, icon}. `nu` marks new sim work.
+const LORD = [
+  {name: 'Scepter', sub: 'Force, Force Wave, one hand and shield', skills: [60], nodes: [
+    {k: 's', n: 'Scepter Arm', label: 'Force and Force Wave damage', per: 2, icon: 509},
+    {k: 's', n: 'Heavy Hand', label: 'one-handed weapon damage', per: 1, icon: 513},
+    {k: 'm', n: 'Execution', text: '+20% Force and Force Wave damage to monsters under 30% life', icon: 518},
+    {k: 's', n: 'Lord’s Shield', label: 'defense with a shield', per: 2, icon: 528},
+    {k: 's', n: 'Sure Grip', label: 'attack success rate', per: 2, icon: 501},
+    {k: 'm', n: 'Riposte', text: 'When a monster misses you, your next hit deals 30% more', icon: 345},
+    {k: 's', n: 'Swing', label: 'attack speed', per: 1, icon: 353},
+    {k: 's', n: 'Keen Edge', label: 'excellent damage chance', per: 0.5, icon: 508},
+    {k: 'm', n: 'Emperor’s Scepter', text: '+15% Force and Force Wave damage', icon: 500},
+  ]},
+  {name: 'Fire Burst', sub: 'Fire Burst, Fire Scream, Explosion', skills: [61, 78], nodes: [
+    {k: 's', n: 'Burst', label: 'Fire Burst damage', per: 2, icon: 514},
+    {k: 's', n: 'Scream', label: 'Fire Scream damage', per: 2, icon: 520},
+    {k: 'm', n: 'Wide Burst', text: 'Fire Burst splashes onto monsters 1 tile further', icon: 527},
+    {k: 's', n: 'Kindle', label: 'Fire Burst and Fire Scream mana cost', per: -2, icon: 517},
+    {k: 's', n: 'Pyre', label: 'ignore defense chance', per: 0.2, icon: 512},
+    {k: 'm', n: 'Chain Blast', text: 'Fire Burst’s hits can Explode too, and every Explosion bursts a quarter of the blow', icon: 523, nu: true},
+    {k: 's', n: 'Quick Burst', label: 'attack speed with Fire Burst and Fire Scream', per: 1, icon: 515, nu: true},
+    {k: 's', n: 'Searing', label: 'excellent damage chance with Fire Burst and Fire Scream', per: 0.5, icon: 522, nu: true},
+    {k: 'm', n: 'Hellstorm', text: '+15% Fire Burst and Fire Scream damage', icon: 390},
+  ]},
+  {name: 'Electric Spike', sub: 'Electric Spike, and Earthshake on the horse', skills: [65, 62], nodes: [
+    {k: 's', n: 'Spark', label: 'Electric Spike damage', per: 2, icon: 519},
+    {k: 's', n: 'Charge', label: 'Electric Spike mana cost', per: -2, icon: 521},
+    {k: 'm', n: 'Overload', text: 'Electric Spike deals 15% more to chilled monsters', icon: 503},
+    {k: 's', n: 'Stomp', label: 'Earthshake damage', per: 2, icon: 510},
+    {k: 's', n: 'Arc', label: 'Electric Spike critical damage chance', per: 0.5, icon: 511, nu: true},
+    {k: 'm', n: 'Trample', text: '+10% damage while three or more monsters are near', icon: 506},
+    {k: 's', n: 'Static Shock', label: 'chance Electric Spike chills: half walk and slower swings for 3 s', per: 1, icon: 309, nu: true},
+    {k: 's', n: 'Horseman', label: 'damage while riding', per: 1, icon: 507, nu: true},
+    {k: 'm', n: 'Thunderlord', text: '+15% Electric Spike damage', icon: 528},
+  ]},
+  {name: 'Raven', sub: 'the Dark Raven and Command', skills: [], nodes: [
+    {k: 's', n: 'Talons', label: 'raven damage', per: 2, icon: 526, nu: true},
+    {k: 's', n: 'Wingbeat', label: 'raven attack speed', per: 1, icon: 530, nu: true},
+    {k: 'm', n: 'Hunting Eye', text: 'The raven reaches monsters 1 tile further', icon: 529, nu: true},
+    {k: 's', n: 'Kinship', label: 'Command', per: 3, icon: 504, nu: true},
+    {k: 's', n: 'Feather Guard', label: 'slower raven wear', per: 5, icon: 532, nu: true},
+    {k: 'm', n: 'Hunting Bond', text: '+15% raven damage', icon: 533, nu: true},
+    {k: 's', n: 'Keen Raven', label: 'raven critical damage chance', per: 1, icon: 516, nu: true},
+    {k: 's', n: 'Wingspan', label: 'raven damage to every monster in its ball', per: 2, icon: 531, nu: true},
+    {k: 'm', n: 'Lord of Ravens', text: '+10 raven attack speed', icon: 537, nu: true},
+  ]},
+  {name: 'Command', sub: 'Critical Damage, Summon, the party', skills: [64, 63], nodes: [
+    {k: 's', n: 'Insight', label: 'excellent damage chance', per: 0.5, icon: 383},
+    {k: 's', n: 'Precision', label: 'critical damage chance', per: 0.5, icon: 366},
+    {k: 'm', n: 'Lord’s Critical', text: 'Critical Damage adds 15% more', icon: 511, nu: true},
+    {k: 's', n: 'Rally', label: 'Critical Damage and Summon mana cost', per: -2, icon: 505},
+    {k: 's', n: 'Far Reach', label: 'tiles of reach for buffs', per: 0.3, icon: 417},
+    {k: 'm', n: 'Patron', text: 'Your buffs on party members are 15% stronger', icon: 433},
+    {k: 's', n: 'Unseen', label: 'defense rate', per: 2, icon: 313},
+    {k: 's', n: 'Aegis', label: 'max shield', per: 5, icon: 302},
+    {k: 'm', n: 'Iron Will', text: 'When one blow takes 10% of your life or more, take 30% less for 4 s', icon: 375},
+  ]},
+  {name: 'Fortune', sub: 'Zen, jewels and luck', skills: [], nodes: [
+    {k: 's', n: 'Prospector', label: 'Zen from kills', per: 1, icon: 341},
+    {k: 's', n: 'Scavenger', label: 'more jewels from kills', per: 0.5, icon: 534},
+    {k: 'm', n: 'Treasure Hunter', text: '+10% Zen from kills', icon: 539},
+    {k: 's', n: 'Field Medic', label: 'potion healing', per: 2, icon: 368},
+    {k: 's', n: 'Lucky', label: 'critical damage chance', per: 0.5, icon: 366},
+    {k: 'm', n: 'Jeweller’s Eye', text: '+5% more jewels from kills', icon: 535},
+    {k: 's', n: 'Collector', label: 'more items from kills', per: 1, icon: 536},
+    {k: 's', n: 'Fortunate', label: 'excellent damage chance', per: 0.5, icon: 369},
+    {k: 'm', n: 'Lucky Find', text: '+20% more excellent items from kills', icon: 538},
+  ]},
+];
+
+// MU's new_Master_Icon.OZJ: 20x28 cells, 25 a row, cell = number - 300.
+function sprite(icon, scale) {
+  const i = icon - 300, c = i % 25, r = Math.floor(i / 25);
+  const w = 20 * scale, h = 28 * scale;
+  return 'width:' + w + 'px;height:' + h + 'px;background-size:' + (512 * scale) + 'px ' + (512 * scale) +
+    'px;background-position:-' + (c * w) + 'px -' + (r * h) + 'px';
+}
+function amount(nd) {
+  const sign = nd.per > 0 ? '+' : '';
+  const unit = /reach|Command|attack speed/.test(nd.label) ? '' : '%';
+  return sign + nd.per + unit + ' ' + nd.label;
+}
+
+class Component extends DCLogic {
+  renderVals() {
+    const columns = LORD.map((col) => {
+      const tiers = [0, 1, 2].map((t) => {
+        const three = col.nodes.slice(t * 3, t * 3 + 3);
+        return {
+          smalls: three.slice(0, 2).map((nd) => ({n: nd.n, label: amount(nd), isNew: !!nd.nu, sprite: sprite(nd.icon, 2)})),
+          major: {n: three[2].n, text: three[2].text, isNew: !!three[2].nu, sprite: sprite(three[2].icon, 2.4)},
+        };
+      });
+      return {name: col.name, sub: col.sub, tiers};
+    });
+    return {columns};
+  }
+}
+</script>
+</body>
+</html>

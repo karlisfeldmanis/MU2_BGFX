@@ -16,6 +16,8 @@
 //     not implemented at all -- see `docs/game/skills-dk.md` §3.1a.
 #pragma once
 
+#include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <string>
 
@@ -186,30 +188,19 @@ constexpr int32_t kPowerSlash = 56;
 // not 0.75's (OpenMU VersionSeasonSix/SkillsInitializer.cs:167, MuMain _enum.h:337). His party's
 // most health raised by a share for five minutes (Body::swell, sim::swellShare). MU's number.
 constexpr int32_t kSwellLife = 48;
-// `AT_SKILL_BLAST_FREEZE`, Ice Storm, the Soul Master's Season 3 spell: no row and never learned,
-// only the Ancient rune's (sim/items.h kIceStorm...), said as Loosed so the drawing lets its
-// blizzard fall (fx/blizzard.h). MU's number, free in this table.
-constexpr int32_t kIceStorm = 39;
-// `AT_SKILL_ALICE_WEAKNESS`, the Summoner's Weakness: the same, the Ancient rune Weakness's
-// (sim/items.h kWeakness...), said as Loosed where its field is laid (fx/weakness.h). MU's number,
-// past kSkills and never a row.
-constexpr int32_t kWeakness = 221;
-// `AT_SKILL_SUMMON_POLLUTION`, the Summoner's Book of Lagle: the Ancient rune Pollution's
-// (sim/items.h kPollution...), said as Loosed on what it struck (fx/pollution.h). MU's number.
-constexpr int32_t kPollution = 225;
-// `AT_SKILL_ALICE_DRAINLIFE`: the Ancient rune Drain Life's (sim/items.h kDrain...), said as
-// Loosed on what it struck (fx/drain.h). MU's number.
-constexpr int32_t kDrainLife = 214;
 // `AT_SKILL_SUMMON_REQUIEM`, the Summoner's Book of Neil: the Ancient rune Requiem's (sim/items.h
-// kRequiem...), said as Loosed on the point it was thrown at (fx/requiem.h). MU's number.
+// kRequiem...), said as Loosed on the point it was thrown at (fx/requiem.h). MU's number, no row
+// and never learned. (Ice Storm 39, Weakness 221, Pollution 225, Drain Life 214 and Sleep 219
+// were the retired Ancients', removed 2026-10-26.)
 constexpr int32_t kRequiem = 224;
-// `AT_SKILL_SLEEP`, the Summoner's first curse: the Ancient rune Sleep's (sim/items.h kSleep...),
-// said as Loosed on each body it put to sleep (fx/sleep.h). MU's number.
-constexpr int32_t kSleep = 219;
 // `AT_SKILL_STRIKE_OF_DESTRUCTION`, the Blade Knight's Season 4 orb skill: the Ancient rune Strike
 // of Destruction's (sim/items.h kSoD...), said as Loosed on the point the ground breaks at
 // (fx/strike_of_destruction.h). MU's number.
 constexpr int32_t kStrikeOfDestruction = 232;
+// `AT_SKILL_FLAME_STRIKE`, the Duel Master's Season 4 sword skill: the Ancient rune Flame Strike's
+// (sim/items.h kFlameStrike...), said as Loosed at his feet with his heading (fx/flame_strike.h).
+// MU's number.
+constexpr int32_t kFlameStrike = 236;
 }  // namespace skill
 
 // What an iced body's walking is multiplied by: OpenMU's `IcedMovementSpeedFactor`, 0.5, which
@@ -355,6 +346,17 @@ constexpr float kFrustumBehind = 0.5f;
 constexpr int kFrustumSure = 5;
 constexpr int kFrustumMost = 11;
 constexpr float kFrustumOdds = 0.5f;
+// Whether a body `dx`, `dy` tiles from him lies in a band along the heading (`c`, `s` its cosine
+// and sine): from `behind` tiles back to `deep` out, `atFeet` either side at his feet running to
+// `atEdge` at its far edge -- Power Slash's wedge (kFrustum...) and the Flame Strike rune's band
+// (sim/items.h kFlame...), WebZen's SkillFrustrum measured in floats.
+inline bool inBand(float dx, float dy, float c, float s, float atFeet, float atEdge, float deep,
+                   float behind) {
+    const float ahead = dx * c + dy * s;
+    const float aside = -dx * s + dy * c;
+    const float half = atFeet + (atEdge - atFeet) * std::max(0.0f, ahead) / deep;
+    return !(ahead < -behind || ahead > deep || std::fabs(aside) > half);
+}
 // **And each is struck as its wave reaches it** (the dossier's 5.4, the Fire Burst rule "the
 // number comes with the visual"): MuMain's carriers go 60 units a frame at 25 -- fifteen tiles a
 // second (ZzzEffect.cpp:1991-1998, Direction (0, -60, 0)) -- leaving as his swing begins.

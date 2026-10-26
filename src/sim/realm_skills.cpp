@@ -118,8 +118,13 @@ int32_t Realm::clipTicksOf(const Body& hero, const SkillRow& row) const {
                                    ? &tables_->arms[size_t(hero.shield)]
                                    : nullptr;
     // And his talents': attack speed on a skill's clip, casting speed on a spell's.
-    const float talented = row.wizardry ? hero.talentShare.castSpeed
-                                        : hero.talentShare.attackSpeed + float(hero.talentSpeed(tick_));
+    // And Quick Burst's, on the skills it names.
+    const float talented =
+        row.wizardry ? hero.talentShare.castSpeed
+                     : hero.talentShare.attackSpeed + float(hero.talentSpeed(tick_)) +
+                           (hero.talentShare.any
+                                ? talentSkillSum(hero.kin, hero.talents, TalentStat::AttackSpeed, row.number)
+                                : 0.0f);
     return castTicks(*tables_, hero.kin, hero.totalPoints().agility, right, left, row,
                      hero.castSpeed(tick_) + int(talented));
 }
@@ -379,15 +384,21 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
             // party on this map within ten whole tiles (`gObjCalDistance < 10`), himself alone
             // outside one (ObjUseSkill.cpp:4150-4215). A recast replaces it rather than stacking --
             // but a weaker lord's not a stronger one's still standing (ours, the ward's rule).
-            const int32_t keen = keenOf(hero.totalPoints());
+            // His talents: Lord's Critical on every one, Patron on his party's, Far Reach's tiles.
+            const int32_t base = keenOf(hero.totalPoints());
+            const float keener = hero.talentShare.any
+                                     ? talentSpecial(hero.kin, hero.talents, Special::KeenMore, TalentAsk{})
+                                     : 0.0f;
             const int64_t until = tick_ + keenTicksOf(hero.totalPoints());
             for (Body& one : bodies_) {
                 const bool his = &one == &hero;
                 if (!his && (hero.party == 0 || !one.player || one.party != hero.party || !one.alive())) continue;
                 if (!his) {
                     const float dx = float(one.column() - hero.column()), dy = float(one.row() - hero.row());
-                    if (int(std::sqrt(dx * dx + dy * dy)) >= 10) continue;
+                    if (float(int(std::sqrt(dx * dx + dy * dy))) >= 10.0f + hero.talentShare.aidReach) continue;
                 }
+                const float more = keener + talentAid(hero, one);
+                const int32_t keen = more != 0.0f ? int32_t(float(base) * (1.0f + more / 100.0f)) : base;
                 if (one.keenUntil > tick_ && one.keen > keen) continue;
                 one.keen = keen;
                 one.keenUntil = until;
@@ -683,7 +694,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         hero.channelStruckCount = 0;
         hero.channelEcho = false;
         // His Ancient spell rune, once a channel as once a cast (Realm::land): a channel never
-        // comes down through `land` (sim/items.h kIceStorm...).
+        // comes down through `land` (sim/items.h kRequiem...).
         if (hero.player && row.wizardry) {
             Body* aimed = body(at);
             channelRunes(hero, aimed != nullptr ? *aimed : hero);
@@ -795,12 +806,10 @@ int Realm::gather(const Body& hero, const SkillRow& row, uint32_t* victims, int 
             // Power Slash's wedge along the aim: from half a tile behind his middle (the near edge
             // through his own tile) to six out, a tile either side at his feet and six at its far
             // edge.
-            const float c = fm::cos(hero.aim), s = fm::sin(hero.aim);
-            const float ahead = dx * c + dy * s;
-            const float aside = -dx * s + dy * c;
-            const float half = kFrustumNear + (kFrustumFar - kFrustumNear) *
-                                                  std::max(0.0f, ahead) / kFrustumDeep;
-            if (ahead < -kFrustumBehind || ahead > kFrustumDeep || std::fabs(aside) > half) continue;
+            if (!inBand(dx, dy, fm::cos(hero.aim), fm::sin(hero.aim), kFrustumNear, kFrustumFar,
+                        kFrustumDeep, kFrustumBehind)) {
+                continue;
+            }
         }
         if (row.spread == Spread::Arc) {
             // The facing eighth and the two beside it. `aim` and not `facing`, because the throw

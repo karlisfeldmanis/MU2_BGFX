@@ -66,7 +66,10 @@ J runeOdds(Kin kin, bool second, int level, bool commons) {
     };
     int count[kRarities] = {};
     double held = 0.0;
-    for (int p = 1; powerOf(uint8_t(p)); ++p) {
+    // Every number a power may hold, skipping the empty ones: the powers have gaps since the
+    // retired Ancients (2026-10-26), and a release's src/ may have no sim::kPowerEnd.
+    for (int p = 1; p < 256; ++p) {
+        if (!powerOf(uint8_t(p))) continue;
         const int r = int(powerOf(uint8_t(p))->rarity);
         if (drawable(*powerOf(uint8_t(p))) && level >= kRuneRarityLevel[r]) ++count[r];
     }
@@ -76,7 +79,8 @@ J runeOdds(Kin kin, bool second, int level, bool commons) {
         if (count[r] == 0 || held <= 0.0) continue;
         rarities.set(rarityKey(Rarity(r)), J::p(kRuneRarityShare[r] / held));
     }
-    for (int p = 1; powerOf(uint8_t(p)); ++p) {
+    for (int p = 1; p < 256; ++p) {
+        if (!powerOf(uint8_t(p))) continue;
         const PowerRow& row = *powerOf(uint8_t(p));
         const int r = int(row.rarity);
         if (!drawable(row) || level < kRuneRarityLevel[r] || held <= 0.0) continue;
@@ -124,7 +128,8 @@ J runes() {
         }
     }
     J powers = J::arr();
-    for (int p = 1; powerOf(uint8_t(p)); ++p) {
+    for (int p = 1; p < 256; ++p) {
+        if (!powerOf(uint8_t(p))) continue;  // a retired number
         const PowerRow& row = *powerOf(uint8_t(p));
         J slots = J::arr();
         if (row.slots & kInWeapon) slots.push("weapon");

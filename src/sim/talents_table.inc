@@ -238,7 +238,7 @@ inline constexpr TalentColumn kMagicGladiatorTalents[] = {
     }},
     {"Inferno", "Inferno, Hellfire, Flame, Fire Ball, Meteorite", {14, 10, 5, 4, 2, 0}, {
         {"Inferno Core", "Inferno damage", 486, {TalentStat::SkillDamage, 2.0f, Hold::Any, 0, {14, 0, 0, 0, 0}, Special::None, 0, 0, false}},
-        {"Flame Strike", "Hellfire damage", 483, {TalentStat::SkillDamage, 2.0f, Hold::Any, 0, {10, 0, 0, 0, 0}, Special::None, 0, 0, false}},
+        {"Hellfire Core", "Hellfire damage", 483, {TalentStat::SkillDamage, 2.0f, Hold::Any, 0, {10, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Wider Rings", "Hellfire and Inferno reach one tile further", 492, {TalentStat::Special, 1.0f, Hold::Any, 0, {10, 14, 0, 0, 0}, Special::Reach, 0, 0, false}},
         {"Tinder", "fire damage", 378, {TalentStat::ElementDamage, 1.0f, Hold::Any, bit(Element::Fire), {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Smoulder", "fire spell mana cost", 451, {TalentStat::SkillManaCost, -2.0f, Hold::Any, 0, {4, 5, 10, 14, 2}, Special::None, 0, 0, false}},

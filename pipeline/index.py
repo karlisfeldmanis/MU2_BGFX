@@ -399,13 +399,6 @@ EFFECTS = {
     "nova_streak_soft": "effects/nova/streak_soft.png",
     "explosion_mono": "effects/firecracker/explotion01mono.png",
 
-    # The Ancient rune Weakness's (game/fx/weakness.h): MU's BITMAP_MAGIC_ZIN circle on the
-    # ground, Effect/mzine_typer2.jpg; BITMAP_SHINY + 6, Effect/shiny05.jpg; and BITMAP_PIN_LIGHT,
-    # Effect/pin_lights.jpg (ZzzOpenData.cpp:5223, 5224, 5448).
-    "weakness_circle": "effects/weakness/mzine_typer2.png",
-    "weakness_shiny": "effects/weakness/shiny05.png",
-    "weakness_pin": "effects/weakness/pin_lights.png",
-
     # The Magic Gladiator's Fire Slash (game/fx/fire_slash.h): BITMAP_JOINT_FORCE's ribbon,
     # Effect/motion_blur_r2.jpg, 64 by 128, an orange-red flame gradient white-hot at U 1, laid
     # wrapping (GL_REPEAT, ZzzOpenData.cpp:5295); and BITMAP_SKULL, Skill/Skull.jpg, 16 by 16 and
@@ -415,20 +408,13 @@ EFFECTS = {
     "fire_slash_ribbon": "effects/fireslash/motion_blur_r2.png",
     "fire_slash_skull": "effects/fireslash/skull.png",
 
-    # The Ancient rune Drain Life's (game/fx/drain.h): BITMAP_LIGHT + 2, Effect/cra_04.jpg, its
-    # red motes; and BITMAP_DRAIN_LIFE_GHOST, Effect/gostmark01.jpg, the ghosts it throws
-    # (ZzzOpenData.cpp:5429, 5222).
+    # BITMAP_LIGHT + 2, Effect/cra_04.jpg (ZzzOpenData.cpp:5429): the retired Drain Life rune's
+    # red motes (2026-10-26), kept for the set shine's puffs (game/fx/set_shine.cpp reads it).
     "drain_mote": "effects/drain/cra_04.png",
-    "drain_ghost": "effects/drain/gostmark01.png",
 
     # The Ancient rune Requiem's (game/fx/requiem.h): BITMAP_ADV_SMOKE, Effect/fi01.jpg, the
     # magenta mist MU's eDeBuff_NeilDOT throws off a body it bleeds (ZzzOpenData.cpp:5183).
     "requiem_mist": "effects/requiem/fi01.png",
-
-    # The Ancient rune Sleep's (game/fx/sleep.h): BITMAP_TWINTAIL_WATER, Effect/water.jpg, the
-    # violet puffs eDeBuff_Sleep throws off a sleeper (ZzzOpenData.cpp:5428) -- the Twin Tale's
-    # water, the same pixels as MuMain's water.OZJ.
-    "sleep_puff": "effects/kanturu/water.png",
 
     # The Ancient rune Strike of Destruction's (game/fx/strike_of_destruction.h):
     # BITMAP_SWORD_EFFECT_MONO, Effect/Swordeff_mono.jpg, the white flare at the impact
@@ -2164,11 +2150,13 @@ def missiles(root: Path, build: Path) -> dict:
         **_models(root, build, "tarkan"),
         **_models(root, build, "aida"),
         **_models(root, build, "kanturu"),
+        # weakness/ and pollution/ hold only the Summoner's casting circle now, Requiem's
+        # (game/fx/pollution.h); their runes were retired 2026-10-26.
         **_models(root, build, "weakness"),
         **_models(root, build, "pollution"),
         **_models(root, build, "requiem"),
-        **_models(root, build, "sleep"),
         **_models(root, build, "destruction"),
+        **_models(root, build, "flame_strike"),
     }
 
 

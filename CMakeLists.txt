@@ -732,15 +732,12 @@ add_library(mu_game STATIC
   src/game/fx/thunder.cpp
   src/game/fx/blink.cpp
   src/game/fx/ice.cpp
-  src/game/fx/blizzard.cpp
-  src/game/fx/weakness.cpp
   src/game/fx/pollution.cpp
-  src/game/fx/drain.cpp
   src/game/fx/raven.cpp
   src/game/fx/pet_lights.cpp
   src/game/fx/requiem.cpp
-  src/game/fx/sleep.cpp
   src/game/fx/strike_of_destruction.cpp
+  src/game/fx/flame_strike.cpp
   src/game/fx/chains.cpp
   src/game/fx/stains.cpp
   src/game/fx/poison.cpp

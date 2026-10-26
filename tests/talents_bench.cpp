@@ -59,6 +59,10 @@ int main() {
         {"Elf, support", Kin::FairyElf, {S, Z, F, S, F, {7,0,0,0,0,0,0,0,0}}, "Multi-Shot", 24, Element::None, Hold::Bow, false, false},
         {"MG, spellblade", Kin::MagicGladiator, {F, F, Z, Z, F, F, {10,10,1,6,0,0,0,0,0}}, "Twisting Slash", 41, Element::Wind, Hold::Any, false, false},
         {"MG, fire caster", Kin::MagicGladiator, {F, Z, F, S, F, S, {10,10,1,3,0,0,0,0,0}}, "Flame", 5, Element::Fire, Hold::Any, true, false},
+        // The Dark Lord's, a scepter in hand (talents_lord.inc).
+        {"Lord, force wave", Kin::DarkLord, {F, S, S, Z, F, {10,0,0,0,0,0,0,0,0}}, "Force Wave", 60, Element::None, Hold::OneHanded, false, false},
+        {"Lord, fire burst", Kin::DarkLord, {S, F, S, Z, F, {10,0,0,0,0,0,0,0,0}}, "Fire Burst", 61, Element::None, Hold::OneHanded, false, false},
+        {"Lord, electric spike", Kin::DarkLord, {S, S, F, Z, F, {10,0,0,0,0,0,0,0,0}}, "Electric Spike", 65, Element::None, Hold::OneHanded, false, false},
     };
     std::printf("%-30s %-15s %6s %6s  %s\n", "build", "skill", "spent", "build", "full tree");
     for (const Build& b : builds) {

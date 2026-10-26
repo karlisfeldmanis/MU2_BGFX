@@ -2,7 +2,8 @@
 // https://claude.ai/artifact/RTLpPhd7Prn4G6eX86FCaL); the table is generated from it by
 // pipeline/talents_table.js.
 //
-// One tree a class: six columns (the Magic Gladiator's seven), each three tiers of two small talents
+// One tree a class: six columns (the Magic Gladiator's seven; the Dark Lord's is his own canvas's,
+// talents_lord.inc), each three tiers of two small talents
 // leading to one major. A small takes up to kTalentSmallMost points, each a plain stat; a major takes
 // one. A major opens when either small above it holds kTalentMajorOpensAt; the next tier opens when
 // that major is taken; a point comes back only if nothing below it closes. A talent point is earned
@@ -42,6 +43,12 @@ enum class TalentStat : uint8_t {
     SummonDamage, SummonLife, SummonDefense, SummonAttackRate, SummonManaCost,
     SummonDamageTaken, SummonDamageAndLife,
     MoreZen, MoreJewels, MoreItems, MoreExcellentItems, PotionHealing,  // relative: x(1 + n/100)
+    // The Dark Lord's (docs/plans/talents/Lord.dc.html). ChillChance is a skill's chill, a percent a
+    // cast, for `seconds`; RidingDamage counts while he rides; Command and RavenAttackSpeed are counts;
+    // RavenCritical a percent of strikes at the top of the raven's band; RavenBallDamage on the
+    // ball's every body; RavenWear less of the raven's wear.
+    ChillChance, RidingDamage, Command,
+    RavenDamage, RavenAttackSpeed, RavenCritical, RavenBallDamage, RavenWear,
 };
 
 // What he must hold for the talent to count.
@@ -70,6 +77,9 @@ enum class Special : uint8_t {
     Mercy,               // `chance`% a heal: the healed take -amount% for `seconds`
     IronWill,            // a blow of 10% of max life or more: -amount% taken for `seconds`
     WizardryIntoSwings,  // amount% of his wizardry band on weapon blows
+    ChainBlast,          // `skills`' landed blows roll Fire Scream's Explosion too; it bursts amount% of the blow
+    RavenReach,          // the raven reaches monsters amount tiles further
+    KeenMore,            // Critical Damage's add amount% more
 };
 
 constexpr uint8_t bit(Element element) { return uint8_t(1u << unsigned(element)); }
@@ -105,6 +115,7 @@ constexpr bool isMajor(int node) { return node % 3 == 2; }
 constexpr int mostOf(int node) { return isMajor(node) ? 1 : kTalentSmallMost; }
 
 #include "sim/talents_table.inc"
+#include "sim/talents_lord.inc"
 
 // A class's columns, Fortune last.
 struct TalentTree {
@@ -137,6 +148,11 @@ struct TalentAsk {
     bool spell = false;  // a wizardry blow: Frostbite's "all your spells" asks it
 };
 float talentSum(Kin kin, const TalentRanks& ranks, TalentStat stat, const TalentAsk& ask);
+// What his ranks give to `stat` on `skill` alone: only the talents that name it. A skill-named crit
+// or attack speed rides on the unnamed share talentShares already folded in, so talentSum would
+// count that twice. `found`, if given, is set to the first one, for its seconds.
+float talentSkillSum(Kin kin, const TalentRanks& ranks, TalentStat stat, int32_t skill,
+                     const TalentEffect** found = nullptr);
 // The taken Special majors of one kind that count for `ask`, their amounts summed (0 for none).
 // Several majors may share a kind -- Fire and Storm Attunement, the three Reach majors -- so this
 // sums them, filtered by hold, skill and element as talentSum filters a stat. `found`, if given,
@@ -169,6 +185,11 @@ struct TalentShares {
     // Two majors that are a band's share: Off-Hand Mastery's on the left hand's, Gladiator's
     // Edge's of his wizardry on his weapon's.
     float offHand = 0, wizardryIntoSwings = 0;
+    // The Dark Lord's: damage while he rides (read at the blow, as riding comes and goes by the
+    // tick), Command added to his own, and his raven's (ravenSpeed and ravenReach counts, the rest
+    // percent).
+    float ridingDamage = 0, command = 0;
+    float ravenDamage = 0, ravenSpeed = 0, ravenCritical = 0, ravenBall = 0, ravenWear = 0, ravenReach = 0;
 };
 TalentShares talentShares(Kin kin, const TalentRanks& ranks, const TalentAsk& holding);
 // The Attunements on a blow of `element`: each taken one whose elements take it adds its amount

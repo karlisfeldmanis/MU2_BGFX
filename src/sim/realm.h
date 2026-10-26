@@ -406,7 +406,8 @@ struct Body {
                 points.agility + points.agility * runeShare.agility / 100,
                 points.vitality + points.vitality * runeShare.vitality / 100,
                 points.energy + points.energy * runeShare.energy / 100,
-                points.command + points.command * runeShare.command / 100 + wornCommand};
+                points.command + points.command * runeShare.command / 100 + wornCommand +
+                    int(talentShare.command)};
     }
     // What is in his hands, as indices into Tables::arms, or -1. A monster's weapon is part of
     // its row and not an item: `monster_kinds` carries the damage band whole. `shield` is the
@@ -694,10 +695,6 @@ struct Body {
     int64_t chilledUntil = 0;
     // Frozen (a Frost Arrow rune, sim/items.h): neither walks nor swings until this tick.
     int64_t frozenUntil = 0;
-    // Asleep (the Ancient rune Sleep, sim/items.h kSleep...): held as frozen is until this tick, or
-    // until the first blow that lands on it. Not Temper::Asleep (nobody near) nor wakesAt (a
-    // risen beast's standing seconds). 0 for never.
-    int64_t sleepUntil = 0;
     // **His Dark Raven** (sim/lord_pets.h, Realm::raven): its mode (sim::RavenMode), Target's pick,
     // what he last struck (With owner's), the strike in flight -- whom, dash or ball, at the top of
     // its band -- the tick it lands and the tick the next may start.
@@ -728,19 +725,11 @@ struct Body {
     // And whether that bleed is a Requiem's (the Ancient rune, sim/items.h kRequiem...), which
     // the drawing shows as MU's magenta mist rather than drips.
     bool bleedRequiem = false;
-    // Weakened (the Ancient rune Weakness, sim/items.h kWeakness...): until this tick its blows
-    // lose `weakCut` percent. 0 for never.
-    int64_t weakUntil = 0;
-    int32_t weakCut = 0;
     // Its defence cut (Fire Slash's, SkillRow::cutTicks): until this tick every blow on it meets
     // `defenseCut` percent less defence -- MU's BUFFTYPE_DEFENSE_POWER_DEC, its three skulls over
     // the head (fx/fire_slash.h). 0 for never.
     int64_t defenseCutUntil = 0;
     int32_t defenseCut = 0;
-    // And on the one who wears it: his Weakness field, MU's monster 821 -- until this tick, its
-    // next look round, and the tile it lies on. 0 for none; one a caster.
-    int64_t curseUntil = 0, curseNext = 0;
-    float curseX = 0.0f, curseY = 0.0f;
     int32_t blinkColumn = 0, blinkRow = 0;
     // Sitting, leaning or hanging, and off which perch (an index into Tables::perches, -1 for
     // none). The player's only; a monster never poses.
@@ -962,9 +951,6 @@ public:
     // A recording's (`--unseen`): no monster ever notices the hero, so he runs past their nests
     // and is never in a fight. One that is struck still turns on whoever struck it.
     void unseen(bool on) { unseen_ = on; }
-    // Whether a monster never sleeps (the Ancient rune Sleep, sim/items.h kSleep...): the raid's
-    // Golden Dragon, the Statue of Saint and an Elite, which shrug every hold.
-    bool sleepProof(const Body& one) const { return isBoss(one) || fixed(one) || one.elite; }
     // The demo's (`--wing-demo`): every kill in Icarus leaves the first wings. Never set in play.
     void wingDemo(bool on) { wingDemo_ = on; }
     // The crowd bench's fight (`--bench-fight`): a blow that would fell a monster or a player
@@ -2017,11 +2003,6 @@ private:
     // -- not a rune's, a reflect or a pulse -- or 0: what a knight's skill must do for his
     // Ancient to roll, and where it lands (Realm::land, sim/items.h kSoD...).
     uint32_t struckSince(const Body& hero, size_t from) const;
-    // His Weakness field's look round, while it lies (sim/items.h kWeakness...): each monster in
-    // its reach not cursed already rolls MU's odds. How many it cursed.
-    int weaknessLook(Body& hero);
-    // Every caster's field, in body order, once a tick after the players' halves.
-    void weaknessFields();
     // One power's roll and, when it answers, its lightning, rock, chill or poison.
     void callDown(Body& hero, Body& struck, const PowerRow& power, int wound);
     // A magic rune's blow: his swing's roll with his energy's band on top (sim::kRuneEnergyLow

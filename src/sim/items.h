@@ -889,22 +889,26 @@ enum class Power : uint8_t {
     Lacerate = 71,
     Rend = 72,
     Hemorrhage = 73,
-    // The Ancient runes (Rarity::Ancient), each one of MU's later spells (kIceStorm...).
-    IceStorm = 74,
-    // The Summoner's spells on the Soul Master's weapon (the user, 2026-10-21: "we want to take
-    // summoner spells and attach to ancient runes"; kWeakness...).
-    Weakness = 75,
-    Pollution = 76,
-    // 77 was Chain Lightning for a day (2026-10-22), retired before release: the wizard's
-    // Lightning plays its look and sound. The numbers run unbroken (drawRunePower walks them).
-    DrainLife = 77,
-    // The Summoner's Book of Neil (kRequiem...).
+    // The Ancient runes (Rarity::Ancient), each one of MU's later spells, ONE a class (the user,
+    // 2026-10-26). 74-77 and 79 are retired, never reused: Ice Storm, Weakness, Pollution, Drain
+    // Life (77 was Chain Lightning for a day before it) and Sleep were the Dark Wizard's, removed
+    // 2026-10-26 for Requiem alone. powerOf answers nullptr for them, so a rune someone already
+    // holds with one of those numbers is inert. The numbers have gaps: walk them to kPowerEnd.
+    IceStorm = 74,   // retired 2026-10-26
+    Weakness = 75,   // retired 2026-10-26
+    Pollution = 76,  // retired 2026-10-26
+    DrainLife = 77,  // retired 2026-10-26
+    // The Summoner's Book of Neil (kRequiem...), the Dark Wizard's one Ancient.
     Requiem = 78,
-    // The Summoner's first curse (kSleep...).
-    Sleep = 79,
+    Sleep = 79,  // retired 2026-10-26
     // The Blade Knight's Season 4 orb skill, his one Ancient (kSoD...).
-    StrikeOfDestruction = 80
+    StrikeOfDestruction = 80,
+    // The Duel Master's Season 4 sword skill, the Magic Gladiator's one Ancient (kFlameStrike...).
+    FlameStrike = 81
 };
+// One past the last power: every walk over the powers runs `for (p = 1; p < kPowerEnd; ++p)`
+// and skips a null powerOf (the retired numbers). It must follow the last power above.
+constexpr int kPowerEnd = int(Power::FlameStrike) + 1;
 // **A rune's group** (the user, 2026-10-02: "we need to start group runes which is only for
 // specific classes, for specific weapon slots"): which classes may set it, a bit a class, and
 // which sockets take it, a bit a kind of thing. `settable` asks both, the drop draws only a
@@ -1349,62 +1353,8 @@ constexpr double kHellfireRuneChance = 0.10;
 constexpr float kHellfireRuneForce = 0.9f;
 constexpr double kTwisterRuneChance = 0.10;
 constexpr float kTwisterRuneForce = 0.8f;
-// **Ice Storm**, the first Ancient (the user, 2026-10-21: "lets cook 1 of soul master new spells"):
-// the Soul Master's Season 3 spell, MU's AT_SKILL_BLAST_FREEZE (S17 skill_template 39: 80
-// damage, a three-tile area). A spell he casts, or a swing that lands, has kIceStormChance to
-// bring it down on what he struck -- on a cast with no monster struck, the nearest within
-// kStormcallReach -- freezing every monster within kIceStormTiles of it for kIceStormTicks, as
-// MU's eDeBuff_Freeze holds it, and striking each with his rune's blow (runeStrike), ice, so
-// Glacier raises it. Once a cast, as Stormcall rolls (Realm::land). A Soul Master's weapon only.
-// invention, but the spell, its reach and its freeze.
-constexpr double kIceStormChance = 0.10;
-constexpr float kIceStormForce = 1.2f;
-constexpr float kIceStormTiles = 3.0f;
-constexpr int64_t kIceStormTicks = 30;  // a second and a half
-// **Weakness**, the second Ancient and the first of the Summoner's spells (the user, 2026-10-21:
-// "we want to take summoner spells and attach to ancient runes"): MU's AT_SKILL_ALICE_WEAKNESS
-// (S17 skill_template 221: 30000 ms, effect radius 4, buff 76 "attack power reduction"). As
-// SkillHandler::SkillBuffWeakness lays it, a field (monster 821) set on the caster's tile for the
-// skill's 30 s, one a caster -- a second replaces the first -- that every 500 ms (821's
-// attack_speed, summoner_debuff_ai) curses each monster within kWeaknessTiles of it that is not
-// cursed already: it takes at (energy / 50 + curse / 6 + 32)% for (energy / 100 + 4 - its level
-// / 40) s, and its blows lose (energy / 58 + 4)% (ai_summoner_debuff.cpp, the monster arm; whole
-// numbers, as MU's int32). `curse` is a Summoner book's curse damage: he holds no book, so it is
-// nought. The field ends with him dying. Ours: the 10% a cast or a landed swing that lets it go
-// (as Ice Storm, Realm::land), and walls -- a monster the field cannot see is not cursed (the
-// user's 2026-10-02 rule for every skill). The Golden Dragon is immune, as MU's bosses are
-// (IsDebuffInmune). A Soul Master's weapon only.
-constexpr double kWeaknessChance = 0.10;  // a cast in ten; the user may tune it
-constexpr float kWeaknessTiles = 4.0f;
-constexpr int64_t kWeaknessFieldTicks = 600;  // the skill's 30000 ms
-constexpr int64_t kWeaknessCheckTicks = 10;   // 821's attack_speed, 500 ms
-inline int weaknessOdds(int energy) { return energy / 50 + 0 / 6 + 32; }
-inline int weaknessSeconds(int energy, int level) { return energy / 100 + 4 - level / 40; }
-inline int weaknessCut(int energy) { return energy / 58 + 4; }
-// **Pollution**, the third Ancient and the Summoner's Book of Lagle (the user, 2026-10-21: "we want to
-// take summoner spells and attach to ancient runes"): MU's AT_SKILL_SUMMON_POLLUTION (S17
-// skill_template 225: 80 damage, effect radius 3, lightning). As SkillHandler::SkillAttackPollution
-// strikes, up to kPollutionMost bodies within kPollutionTiles of the point it was thrown at. A
-// spell he casts, or a swing that lands, has kPollutionChance to let Lagle's ghosts loose on what
-// he struck -- on a cast with no monster struck, the nearest within kStormcallReach -- that one
-// first, then the others round it in body order, each struck with his rune's blow (runeStrike)
-// at kPollutionForce, lightning, so his lightning runes raise it -- MU's 80 damage is Ice Storm's
-// 80, so the same force. Once a cast, as Stormcall rolls (Realm::land). A Soul Master's weapon only.
-// invention, but the spell, its reach and its count.
-constexpr double kPollutionChance = 0.10;  // a cast in ten; the user may tune it
-constexpr float kPollutionForce = 1.2f;
-constexpr float kPollutionTiles = 3.0f;
-constexpr int kPollutionMost = 4;
-// **Drain Life**, the fifth Ancient (the fourth, Chain Lightning, retired the same day: the
-// wizard's Lightning plays its look and sound instead): MU's AT_SKILL_ALICE_DRAINLIFE (OpenMU's S6 row: 35 damage).
-// A spell he casts, or a swing that lands, has kDrainChance to drain what he struck -- on a cast
-// with no monster struck, the nearest within kStormcallReach -- with his rune's blow at
-// kDrainForce (35 against Pollution's 80 at 1.2), no element; if it lands he takes back, as
-// OpenMU's DrainLifeSkillPlugIn heals off a monster, energy / 15 + the monster's level / 2.5,
-// said as Leeched so it shows "+N" over him.
-constexpr double kDrainChance = 0.10;  // a cast in ten; the user may tune it
-constexpr float kDrainForce = 0.525f;
-inline int drainLife(int energy, int level) { return energy / 15 + int(float(level) / 2.5f); }
+// (Ice Storm, Weakness, Pollution and Drain Life, the wizard's first Ancients, were removed
+// 2026-10-26: one Ancient a class, and his is Requiem. Sleep went with them.)
 // **Requiem**, the sixth Ancient and the Summoner's Book of Neil: MU's AT_SKILL_SUMMON_REQUIEM
 // (224; S17 skill_template 224: 65 damage, wind; docs/plans/ancient-runes/requiem.md). A spell he
 // casts, or a swing that lands, has kRequiemChance to call Neil up against what he struck -- on a
@@ -1432,26 +1382,6 @@ constexpr int kRequiemSure = 4;
 constexpr int kRequiemMost = 8;
 constexpr int64_t kRequiemHoldTicks = 20;  // WebZen's and S17's 1000 ms
 constexpr float kRequiemBleedShare = 0.2f;
-// **Sleep**, the seventh Ancient and the Summoner's first curse: MU's AT_SKILL_SLEEP (219; S17
-// skill_template 219: no damage, range 6; docs/plans/ancient-runes/sleep.md). A spell he casts, or
-// a swing that lands, has kSleepChance to put to sleep up to kSleepMost monsters -- never the one
-// he struck, which his next blow would wake -- the nearest he sees within kStormcallReach, those
-// whose quarry is him first; none near, nothing. The 10% alone decides (the user, 2026-10-25),
-// where MU rolls `20 + energy/30 + curse/6` % after its hit. How long is MU's monster formula,
-// sleepSeconds -- `5 + energy/100 - level/20` s, WebZen's and OpenMU's -- capped at kSleepMostSeconds
-// (ours: OpenMU caps it at 20), and under one second it does not take; a second Sleep on a sleeper
-// keeps the longer, as WebZen's gObjCheckPowerfulEffect refuses the shorter. Asleep it neither
-// walks, turns, thinks nor swings (Body::sleepUntil), until its time or the first blow that lands
-// on it, anyone's (WebZen's ObjAttack.cpp:2570-2575); a miss or a poison, burn or bleed pulse does
-// not wake it. Monsters only; the Golden Dragon, the Statue of Saint and the Elites never sleep
-// (Realm::sleepProof). A Soul Master's weapon only.
-constexpr double kSleepChance = 0.10;  // a cast in ten; the user may tune it
-constexpr int kSleepMost = 3;          // ours: MU's Sleep holds one (the user, 2026-10-25)
-constexpr int kSleepMostSeconds = 8;   // ours (the user, 2026-10-25)
-inline int sleepSeconds(int energy, int level) {
-    const int seconds = 5 + energy / 100 - level / 20;
-    return seconds < kSleepMostSeconds ? seconds : kSleepMostSeconds;
-}
 // **Strike of Destruction**, the eighth Ancient and the Dark Knight's one: MU's
 // AT_SKILL_STRIKE_OF_DESTRUCTION (232; S17 skill_template 232: 110 damage, ice, the Blade Knight's;
 // docs/plans/ancient-runes/strike-of-destruction.md). A swing that lands, or a knight's skill that
@@ -1474,6 +1404,27 @@ constexpr float kSoDTiles = 3.0f;    // ours: a disc of 3, where WebZen's is a 7
 constexpr int kSoDSure = 4;
 constexpr int kSoDMost = 8;
 constexpr float kSoDBurnShare = 0.25f;
+// **Flame Strike**, the ninth Ancient and the Magic Gladiator's one: MU's AT_SKILL_FLAME_STRIKE
+// (236; WebZen ObjUseSkill.cpp:7193-7290, S17 and OpenMU agree: 140 damage, fire, the Duel
+// Master's; docs/plans/ancient-runes/flame-strike.md). A swing that lands, a spell he casts, or a
+// blade skill that strikes something -- once a use, never once a body -- has kFlameStrikeChance to
+// whirl a flaming blade round him: every monster in sight in WebZen's band along his line to what
+// he struck (Realm::runeAim; sim::inBand, kFlameNear either side at his feet narrowing to
+// kFlameFar at kFlameDeep out, none behind him), nearest first, the first kFlameSure surely
+// (WebZen's and S17's 8) and the next ones to kFlameMost each on a coin flip on the rune dice
+// (the cap is ours: MU has none). Each is struck kFlameStrikeBlows times at once, as WebZen calls
+// gObjAttack twice in the one loop, by his rune's blow (runeStrike) at kFlameStrikeForce, fire:
+// one of MU's 140 (2.1 against Ice Storm's 80 at 1.2) split in two, so a body takes Strike of
+// Destruction's 2.2 with no burn after. No debuff: MU's buff 83 only draws. A Magic Gladiator's
+// weapon (he has no second class). 15%, the user, 2026-10-25, matching Requiem and SoD.
+constexpr double kFlameStrikeChance = 0.15;
+constexpr float kFlameStrikeForce = 1.1f;
+constexpr int kFlameStrikeBlows = 2;
+constexpr float kFlameNear = 5.0f;
+constexpr float kFlameFar = 2.0f;
+constexpr float kFlameDeep = 4.0f;
+constexpr int kFlameSure = 8;
+constexpr int kFlameMost = 12;
 // **The Common runes** (Rarity::Common), each a Legendary at a fraction, every one first-class:
 // **Cinder** Ring of Fire's ring and **Gust** Twister's storm, a knight's; **Chill** Frost Arrow's
 // freeze for half as long with half its wound, the elf's; **Faint Echo** Arcane Echo's second

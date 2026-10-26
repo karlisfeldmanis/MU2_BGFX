@@ -534,7 +534,8 @@ bool Realm::mix(Service service, int socket) {
                 return row.takenBy(hero.kin, hero.second);
             };
             int count = 0, any = 0;
-            for (int p = 1; powerOf(uint8_t(p)); ++p) {
+            for (int p = 1; p < kPowerEnd; ++p) {
+                if (!powerOf(uint8_t(p))) continue;  // a retired number
                 const PowerRow& row = *powerOf(uint8_t(p));
                 if (int(row.rarity) != rarity) continue;
                 ++any;
@@ -543,7 +544,8 @@ bool Realm::mix(Service service, int socket) {
             const bool mine = count > 0;
             int pick = mixDice_.nextInt(0, mine ? count : std::max(1, any));
             Held fused{rune, 0, 1};
-            for (int p = 1; powerOf(uint8_t(p)); ++p) {
+            for (int p = 1; p < kPowerEnd; ++p) {
+                if (!powerOf(uint8_t(p))) continue;
                 const PowerRow& row = *powerOf(uint8_t(p));
                 if (int(row.rarity) != rarity || (mine && !drawable(row))) continue;
                 if (pick-- == 0) fused.powers[0] = uint8_t(p);

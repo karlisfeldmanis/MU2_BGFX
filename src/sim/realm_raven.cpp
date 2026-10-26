@@ -66,7 +66,10 @@ void Realm::raven(Body& hero) {
     const int level = petLevel(worn), command = hero.totalPoints().command;
     if (command < ravenCommand(level)) return;
     // Past them the timer starts again whatever the mode finds, Normal's nothing too (:125-128).
-    const int ms = std::max(0, 1500 - 10 * ravenSpeed(level, command));
+    // His talents (sim/talents.h): Wingbeat's speed, Hunting Eye's tiles.
+    const TalentShares& t = hero.talentShare;
+    const int ms = std::max(0, 1500 - 10 * (ravenSpeed(level, command) + int(t.ravenSpeed)));
+    const int randomReach = kRavenRandomReach + int(t.ravenReach), reach = kRavenReach + int(t.ravenReach);
     hero.ravenNext = tick_ + ms / 50;
     if (mode == RavenMode::Normal) return;
 
@@ -77,12 +80,12 @@ void Realm::raven(Body& hero) {
         // ten in three, else the ball.
         int count = 0;
         for (const Body& one : bodies_) {
-            if (one.monster() && one.alive() && one.summoner == 0 && tilesApart(hero, one) < kRavenRandomReach) ++count;
+            if (one.monster() && one.alive() && one.summoner == 0 && tilesApart(hero, one) < randomReach) ++count;
         }
         if (count == 0) return;
         int pick = ravenDice_.nextInt(0, count);
         for (const Body& one : bodies_) {
-            if (!one.monster() || !one.alive() || one.summoner != 0 || tilesApart(hero, one) >= kRavenRandomReach) continue;
+            if (!one.monster() || !one.alive() || one.summoner != 0 || tilesApart(hero, one) >= randomReach) continue;
             if (pick-- == 0) {
                 aimed = one.id;
                 break;
@@ -93,7 +96,7 @@ void Realm::raven(Body& hero) {
     } else {
         // With owner: what he last struck; Target: his pick. Within 7 of him (:279-398).
         const Body* one = body(mode == RavenMode::WithOwner ? hero.ravenLast : hero.ravenTarget);
-        if (one == nullptr || !one->alive() || !one->monster() || tilesApart(hero, *one) >= kRavenReach) return;
+        if (one == nullptr || !one->alive() || !one->monster() || tilesApart(hero, *one) >= reach) return;
         aimed = one->id;
         // With owner always the ball (WebZen's bug, kept); Target always the dash, 30% at the top
         // of its band (SendAttackMsg, :528-538).
@@ -104,6 +107,8 @@ void Realm::raven(Body& hero) {
     // WebZen's land on top of each other; ours keeps one in the air, so the last lands now, a
     // beat early.
     if (hero.ravenLands != 0) ravenLand(hero);
+    // Keen Raven: at the top of its band on its own chance.
+    if (!top && t.ravenCritical > 0.0f && float(ravenDice_.nextInt(0, 100)) < t.ravenCritical) top = true;
     hero.ravenAimed = aimed;
     hero.ravenDash = dash;
     hero.ravenTop = top;
@@ -140,6 +145,10 @@ void Realm::ravenLand(Body& hero) {
     const auto strike = [&](Body& target, bool ball) {
         int damage = top ? most : ravenDice_.nextInt(least, most + 1);
         damage += damage * rise / 100;
+        // Talons and Hunting Bond, Wingspan on the ball's.
+        if (const float more = hero.talentShare.ravenDamage + (ball ? hero.talentShare.ravenBall : 0.0f); more != 0.0f) {
+            damage = int(float(damage) * (1.0f + more / 100.0f));
+        }
         damage -= target.stats.defense;
         const float blocking = target.stats.defenseRate;
         if (float(attackRate) < blocking) {
@@ -158,7 +167,9 @@ void Realm::ravenLand(Body& hero) {
         damage = std::max({1, hero.level / 10, damage});
         // Its life, worn by its own landed hits of 50 or more (:1630-1650).
         if (damage >= kRavenWearFrom) {
-            wearDown(kWeaponLeft, double(damage * 2 / 100) / double(kRavenWearTally));
+            // Feather Guard's share less.
+            const double spared = std::max(0.0, 1.0 - double(hero.talentShare.ravenWear) / 100.0);
+            wearDown(kWeaponLeft, double(damage * 2 / 100) / double(kRavenWearTally) * spared);
             // Worn out: it stays, inert, and bleeds a tenth of its level's span (sim::bleedPet).
             if (me().bag[kWeaponLeft].durability <= 0) {
                 Held dead = me().bag[kWeaponLeft];

@@ -1456,51 +1456,6 @@ void Play::update(double seconds) {
                         }
                         at[1] = ground_->heightAt(at[0], at[2]);
                         flame_.light(at, caster->yaw);
-                    } else if (happening.a == sim::skill::kIceStorm) {
-                        // The Ancient rune Ice Storm: MU's ten crystals over the body the realm
-                        // brought it down on, turned to his yaw, with SOUND_SUDDEN_ICE1 there.
-                        const float floor = ground_->heightAt(to[0], to[2]);
-                        const float feet[3] = {to[0], floor, to[2]};
-                        blizzard_.cast(feet, caster->yaw);
-                        if (heard_.iceStorm >= 0) emit(heard_.iceStorm, to[0], to[2], caster->id);
-                    } else if (happening.a == sim::skill::kWeakness) {
-                        // The Ancient rune Weakness: MU's let-go under the caster, where the realm
-                        // laid its field, with SOUND_SKILL_WEAKNESS (fx/weakness.h).
-                        const float at[3] = {caster->crown[0], feet, caster->crown[2]};
-                        weakness_.cast(at);
-                        if (heard_.weakness >= 0) emit(heard_.weakness, at[0], at[2], caster->id);
-                    } else if (happening.a == sim::skill::kPollution) {
-                        // The Ancient rune Pollution: MU's casting circle round him and Lagle's
-                        // ghosts loose on the body the realm struck, with SOUND_SUMMOM_RARGLE
-                        // there (fx/pollution.h).
-                        const float self[3] = {caster->crown[0], feet, caster->crown[2]};
-                        const float there[3] = {to[0], ground_->heightAt(to[0], to[2]), to[2]};
-                        pollution_.cast(self, there);
-                        if (heard_.pollution >= 0) emit(heard_.pollution, to[0], to[2], caster->id);
-                    } else if (happening.a == sim::skill::kDrainLife) {
-                        // The Ancient rune Drain Life: MU's MODEL_ALICE_DRAIN_LIFE between him and
-                        // what it drained, with SOUND_SKILL_DRAIN_LIFE (fx/drain.h). The life it
-                        // gave back is the Leeched after it.
-                        const float self[3] = {caster->crown[0], from[1], caster->crown[2]};
-                        drain_.cast(happening.who, happening.whom, self, to);
-                        if (heard_.drainLife >= 0) {
-                            emit(heard_.drainLife, caster->crown[0], caster->crown[2], caster->id);
-                        }
-                    } else if (happening.a == sim::skill::kSleep) {
-                        // The Ancient rune Sleep: MU's violet circle under him once a roll (`b`
-                        // its first sleeper), with SOUND_SUMMON_SKILL_SLEEP, and the two rings
-                        // on each body it put to sleep, at once (fx/sleep.h).
-                        if (happening.b == 0) {
-                            const float self[3] = {caster->crown[0], feet, caster->crown[2]};
-                            sleep_.cast(self);
-                            if (heard_.sleep >= 0) emit(heard_.sleep, self[0], self[2], caster->id);
-                        }
-                        if (target && target->placed) {
-                            const float at[3] = {target->crown[0],
-                                                 ground_->heightAt(target->crown[0], target->crown[2]),
-                                                 target->crown[2]};
-                            sleep_.rings(happening.whom, at);
-                        }
                     } else if (happening.a == sim::skill::kRequiem) {
                         // The Ancient rune Requiem: MU's casting circle round him in Requiem's
                         // colours, and Neil called up before him against the point the realm
@@ -1530,6 +1485,27 @@ void Play::update(double seconds) {
                         const bool own = happening.who == realm_.hero().id;
                         if (destruction_.cast(self, there, caster->id, own) && heard_.destruction >= 0) {
                             emit(heard_.destruction, there[0], there[2], caster->id);
+                        }
+                    } else if (happening.a == sim::skill::kFlameStrike) {
+                        // The Ancient rune Flame Strike: MU's flaming blade whirled round him
+                        // along the heading the realm struck (`b`, thousandths of a radian, tile
+                        // x/y), with flame_strike.wav, and the fire on each body its blows reached
+                        // -- the rune's Hits after this, his, on the same tick (fx/flame_strike.h).
+                        // One at a time: a roll while one plays strikes unseen, its fire too.
+                        const float yaw = float(happening.b) / 1000.0f;
+                        const float way[2] = {std::cos(yaw), -std::sin(yaw)};
+                        const float self[3] = {caster->crown[0], feet, caster->crown[2]};
+                        if (flameStrike_.cast(self, way, caster->id)) {
+                            if (heard_.flameStrike >= 0) {
+                                emit(heard_.flameStrike, self[0], self[2], caster->id);
+                            }
+                            const std::vector<sim::Happening>& all = realm_.happenings();
+                            for (size_t i = size_t(&happening - all.data()) + 1; i < all.size(); ++i) {
+                                const sim::Happening& h = all[i];
+                                if (h.who != happening.who) continue;
+                                if (h.what == sim::What::Loosed && h.rune) break;
+                                if (h.what == sim::What::Hit && h.rune) flameStrike_.burn(h.whom);
+                            }
                         }
                     } else if (happening.a == sim::skill::kIce) {
                         // The block where the body is drawn, turned to his yaw, as MU turns it.
@@ -2712,17 +2688,7 @@ void Play::update(double seconds) {
     // Not MU's fire blast (Explotion01): the user, 2026-10-06, read it as Meteorite's.
     cometLandings_.clear();
     comet_.update(float(seconds), cometLandings_);
-    // Ice Storm's crystals down: one in five throws an Ice shard, and the first sounds
-    // SOUND_SUDDEN_ICE2 (fx/blizzard.h).
-    blizzardLandings_.clear();
-    blizzard_.update(float(seconds), blizzardLandings_);
-    weakness_.update(float(seconds));
     pollution_.update(float(seconds));
-    for (const Blizzard::Landing& one : blizzardLandings_) {
-        const float feet[3] = {one.x, one.y, one.z};
-        if (one.shard) ice_.splinter(feet);
-        if (one.first && heard_.iceStormLand >= 0) emit(heard_.iceStormLand, one.x, one.z);
-    }
     // A Tarkan boss's staffs: each under the ground an explosion 80 units up and six stones
     // (MoveHandlers.cpp:4342-4363), the eighteen heard as one.
     staffLandings_.clear();
@@ -2757,22 +2723,36 @@ void Play::update(double seconds) {
         return true;
     };
     bolt_.update(float(seconds), standing, middle);
-    drain_.update(float(seconds), middle);
     ravenShow_.update(float(seconds));
     petLights_.update(float(seconds));
     requiem_.update(float(seconds));
     // Strike of Destruction's burst, and its 5-7 stones -- the meteor's (fx/strike_of_destruction.h).
     destruction_.update(float(seconds),
                         [&](const float* at) { meteor_.stones(at[0], at[2], at[1], 1); });
-    // Sleep's rings follow their sleepers' feet (fx/sleep.h).
-    sleep_.update(float(seconds), [&](uint32_t id, float* out) {
-        const Drawn* drawn = drawnOf(id);
-        if (drawn == nullptr || !drawn->placed || !ground_) return false;
-        out[0] = drawn->crown[0];
-        out[1] = ground_->heightAt(drawn->crown[0], drawn->crown[2]);
-        out[2] = drawn->crown[2];
-        return true;
-    });
+    // Flame Strike's blade rides its caster's feet, its fire his struck bodies' bones
+    // (fx/flame_strike.h).
+    flameStrike_.update(
+        float(seconds),
+        [&](uint32_t id, float* out) {
+            const Drawn* drawn = drawnOf(id);
+            if (drawn == nullptr || !drawn->placed || !ground_) return false;
+            out[0] = drawn->crown[0];
+            out[1] = ground_->heightAt(drawn->crown[0], drawn->crown[2]);
+            out[2] = drawn->crown[2];
+            return true;
+        },
+        [&](uint32_t id, uint32_t pick, float* out) {
+            const Drawn* drawn = drawnOf(id);
+            if (drawn == nullptr || !drawn->placed || !drawn->visible) return false;
+            const FigureBody* look = drawn->figure.body();
+            if (look == nullptr || look->boneCount() < 2) {
+                for (int k = 0; k < 3; ++k) out[k] = drawn->crown[k];
+                out[1] -= (look ? look->height * look->scale : 1.0f) * 0.5f;
+                return true;
+            }
+            const float origin[3] = {0.0f, 0.0f, 0.0f};
+            return drawn->figure.pointOn(int(pick % uint32_t(look->boneCount())), origin, out);
+        });
     // Requiem's thorns out of the ground: SOUND_SUMMON_REQUIEM there (fx/requiem.h).
     {
         float at[3];

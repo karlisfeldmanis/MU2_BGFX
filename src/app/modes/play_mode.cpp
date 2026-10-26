@@ -527,17 +527,9 @@ bool PlayMode::open(Context& ctx) {
                                              world_.played().showing().table());
                 world_.played().ice().open(assets, ctx.textures,
                                            world_.played().showing().table());
-                world_.played().blizzard().open(assets, ctx.textures,
-                                                world_.played().showing().table(),
-                                                &world_.ground());
-                world_.played().weakness().open(assets, ctx.textures,
-                                                world_.played().showing().table(),
-                                                &world_.ground());
                 world_.played().pollution().open(assets, ctx.textures,
                                                  world_.played().showing().table(),
                                                  &world_.ground());
-                world_.played().drain().open(assets, ctx.textures,
-                                             world_.played().showing().table());
                 world_.played().ravenShow().open(assets, ctx.textures,
                                                  world_.played().showing().table());
                 world_.played().petLights().open(assets, ctx.textures,
@@ -545,10 +537,10 @@ bool PlayMode::open(Context& ctx) {
                 world_.played().requiem().open(assets, ctx.textures,
                                                world_.played().showing().table(),
                                                &world_.ground());
-                world_.played().sleep().open(assets, ctx.textures,
-                                             world_.played().showing().table(),
-                                             &world_.ground());
                 world_.played().destruction().open(assets, ctx.textures,
+                                                   world_.played().showing().table(),
+                                                   &world_.ground());
+                world_.played().flameStrike().open(assets, ctx.textures,
                                                    world_.played().showing().table(),
                                                    &world_.ground());
                 world_.played().chains().open(assets, ctx.textures,
@@ -1816,6 +1808,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                                                      kGatheredLights - count);
         // And Fire Slash's warm light under its ribbon -- ours (fx/fire_slash.h).
         count += world_.played().fireSlash().lights(falling + count, kGatheredLights - count);
+        // And Flame Strike's under its ring -- ours too (fx/flame_strike.h).
+        count += world_.played().flameStrike().lights(falling + count, kGatheredLights - count);
         // And Hellfire's wall, MU's orange four tiles round (fx/hellfire.h).
         count += world_.played().hellfire().lights(falling + count,
                                                    kGatheredLights - count);
@@ -2064,15 +2058,12 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().thunder().gather(ctx.renderer.effects());
         world_.played().blink().gather(ctx.renderer.effects());
         world_.played().ice().gather(ctx.renderer.effects());
-        world_.played().blizzard().gather(ctx.renderer.effects());
-        world_.played().weakness().gather(ctx.renderer.effects());
         world_.played().pollution().gather(ctx.renderer.effects());
-        world_.played().drain().gather(ctx.renderer.effects());
         world_.played().ravenShow().gather(ctx.renderer.effects());
         world_.played().petLights().gather(ctx.renderer.effects());
         world_.played().requiem().gather(ctx.renderer.effects());
-        world_.played().sleep().gather(ctx.renderer.effects());
         world_.played().destruction().gather(ctx.renderer.effects());
+        world_.played().flameStrike().gather(ctx.renderer.effects());
         world_.played().chains().gather(ctx.renderer.effects(), eye.position);
         world_.played().trapShow().gatherEffects(ctx.renderer.effects());
         world_.played().poison().gather(ctx.renderer.effects());

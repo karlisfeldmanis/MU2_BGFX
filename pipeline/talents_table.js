@@ -1,13 +1,27 @@
 // Turns the Talents canvas's data (its project/Passive.dc.html, read with the Artifact tool) into
 // src/sim/talents_table.inc:
 //   node pipeline/talents_table.js <Passive.dc.html> <talents_table.inc>
+// And the Dark Lord's, from his own canvas (https://claude.ai/artifact/1zGbUUcZYinz51tqbPW1Tr, its
+// project/Main.dc.html, kept as docs/plans/talents/Lord.dc.html) into src/sim/talents_lord.inc:
+//   node pipeline/talents_table.js --lord docs/plans/talents/Lord.dc.html src/sim/talents_lord.inc
 // Every small talent's label and every major's name must map to a sim stat or behaviour here, or it stops.
 const fs = require('fs');
-const [, , canvasPath, outPath] = process.argv;
+const lord = process.argv[2] === '--lord';
+const [canvasPath, outPath] = process.argv.slice(lord ? 3 : 2);
 const html = fs.readFileSync(canvasPath, 'utf8');
-const start = html.indexOf('const S = (');
-const end = html.indexOf('const ATLAS');
-const data = new Function(html.slice(start, end) + '; return { CLASSES, FORTUNE, PER_LEVEL };')();
+function lordData() {
+  const start = html.indexOf('const LORD = [');
+  const end = html.indexOf('\n];', start) + 3;
+  const cols = new Function(html.slice(start, end) + '; return LORD;')();
+  // The canvas types a curly apostrophe; the names here are keyed with a straight one.
+  for (const col of cols) for (const nd of col.nodes) nd.n = nd.n.replace(/’/g, "'");
+  return { CLASSES: { 'Dark Lord': cols } };
+}
+const data = lord ? lordData() : (() => {
+  const start = html.indexOf('const S = (');
+  const end = html.indexOf('const ATLAS');
+  return new Function(html.slice(start, end) + '; return { CLASSES, FORTUNE, PER_LEVEL };')();
+})();
 
 const E = { wind: 'Element::Wind', fire: 'Element::Fire', lightning: 'Element::Lightning', ice: 'Element::Ice', poison: 'Element::Poison' };
 const fx = (stat, o = {}) => Object.assign({ stat, hold: 'Any', element: 'Element::None', skills: [], special: 'None', chance: 0, seconds: 0 }, o);
@@ -88,6 +102,32 @@ const SMALL = {
   'more jewels from kills': fx('MoreJewels'),
   'potion healing': fx('PotionHealing'),
   'more items from kills': fx('MoreItems'),
+  // The game's words since 1aba88d2 (defense, max shield), as the Dark Lord's canvas has them.
+  'defense with a shield': fx('Defense', { hold: 'Shield' }),
+  'defense rate': fx('DefenseRate'),
+  'ignore defense chance': fx('IgnoreDefense'),
+  'max shield': fx('MaxShield'),
+  // The Dark Lord's (docs/plans/talents/Lord.dc.html).
+  'Force and Force Wave damage': fx('SkillDamage', { skills: [60, 66] }),
+  'Fire Burst damage': fx('SkillDamage', { skills: [61] }),
+  'Fire Scream damage': fx('SkillDamage', { skills: [78] }),
+  'Fire Burst and Fire Scream mana cost': fx('SkillManaCost', { skills: [61, 78] }),
+  'attack speed with Fire Burst and Fire Scream': fx('AttackSpeed', { skills: [61, 78] }),
+  'excellent damage chance with Fire Burst and Fire Scream': fx('ExcellentChance', { skills: [61, 78] }),
+  'Electric Spike damage': fx('SkillDamage', { skills: [65] }),
+  'Electric Spike mana cost': fx('SkillManaCost', { skills: [65] }),
+  'Earthshake damage': fx('SkillDamage', { skills: [62] }),
+  'Electric Spike critical damage chance': fx('CriticalChance', { skills: [65] }),
+  'chance Electric Spike chills: half walk and slower swings for 3 s': fx('ChillChance', { skills: [65], seconds: 3 }),
+  'damage while riding': fx('RidingDamage'),
+  'raven damage': fx('RavenDamage'),
+  'raven attack speed': fx('RavenAttackSpeed'),
+  'Command': fx('Command'),
+  'slower raven wear': fx('RavenWear'),
+  'raven critical damage chance': fx('RavenCritical'),
+  'raven damage to every monster in its ball': fx('RavenBallDamage'),
+  'Critical Damage and Summon mana cost': fx('SkillManaCost', { skills: [64, 63] }),
+  'tiles of reach for buffs': fx('AidReach'),
 };
 // A major's whole effect: `amount` is what it gives at its one point.
 const sp = (special, amount, o = {}) => Object.assign(fx('Special', o), { special, amount });
@@ -139,6 +179,19 @@ const MAJOR = {
   'Treasure Hunter': st('MoreZen', 10),
   "Jeweller's Eye": st('MoreJewels', 5),
   'Lucky Find': st('MoreExcellentItems', 20),
+  // The Dark Lord's. Force from a scepter is still Force (60) to the blow, so 66 only names it.
+  'Execution': sp('Executioner', 20, { skills: [60, 66] }),
+  "Emperor's Scepter": st('SkillDamage', 15, { skills: [60, 66] }),
+  'Wide Burst': sp('Reach', 1, { skills: [61] }),
+  'Chain Blast': sp('ChainBlast', 25, { skills: [61] }),
+  'Hellstorm': st('SkillDamage', 15, { skills: [61, 78] }),
+  'Overload': sp('VsChilled', 15, { skills: [65] }),
+  'Trample': sp('Crowd', 10),
+  'Thunderlord': st('SkillDamage', 15, { skills: [65] }),
+  'Hunting Eye': sp('RavenReach', 1),
+  'Hunting Bond': st('RavenDamage', 15),
+  'Lord of Ravens': st('RavenAttackSpeed', 10),
+  "Lord's Critical": sp('KeenMore', 15),
 };
 // The three attunements over more than one element are told apart by name.
 const MULTI = {
@@ -173,10 +226,14 @@ function node(nd, klass) {
   used.add(e.stat);
   return `{${cpp(nd.n)}, ${cpp(nd.text)}, ${nd.icon}, ${effect(e, e.amount)}}`;
 }
-const KIN = { 'Dark Wizard': 'DarkWizard', 'Elf': 'FairyElf', 'Dark Knight': 'DarkKnight', 'Magic Gladiator': 'MagicGladiator' };
-let out = '// GENERATED from the Talents canvas (https://claude.ai/artifact/RTLpPhd7Prn4G6eX86FCaL,\n' +
-  '// project/Passive.dc.html) by pipeline/talents_table.js. Do not edit by hand:\n' +
-  '// change the canvas and generate again, so the board and the game cannot drift.\n';
+const KIN = { 'Dark Wizard': 'DarkWizard', 'Elf': 'FairyElf', 'Dark Knight': 'DarkKnight', 'Magic Gladiator': 'MagicGladiator', 'Dark Lord': 'DarkLord' };
+let out = lord
+  ? '// GENERATED from the Dark Lord\'s Talents canvas (https://claude.ai/artifact/1zGbUUcZYinz51tqbPW1Tr,\n' +
+    '// project/Main.dc.html, kept as docs/plans/talents/Lord.dc.html) by pipeline/talents_table.js --lord.\n' +
+    '// Do not edit by hand: change the canvas and generate again, so the board and the game cannot drift.\n'
+  : '// GENERATED from the Talents canvas (https://claude.ai/artifact/RTLpPhd7Prn4G6eX86FCaL,\n' +
+    '// project/Passive.dc.html) by pipeline/talents_table.js. Do not edit by hand:\n' +
+    '// change the canvas and generate again, so the board and the game cannot drift.\n';
 for (const [klass, cols] of Object.entries(data.CLASSES)) {
   out += `\n// ---- ${klass} ----\n`;
   out += `inline constexpr TalentColumn k${KIN[klass]}Talents[] = {\n`;

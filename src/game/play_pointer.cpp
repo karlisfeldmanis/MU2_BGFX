@@ -87,6 +87,8 @@ void Play::point(const gfx::Camera& camera, const float* view, const float* proj
     // (column + 0.5, -(row + 0.5)) in metres to everything else.
     const float column = hit.x / metresPerTile - 0.5f;
     const float row = -hit.z / metresPerTile - 0.5f;
+    pointedX_ = column;
+    pointedY_ = row;
     pointedColumn_ = int(std::lround(column));
     pointedRow_ = int(std::lround(row));
     if (!tables_.grid.inside(pointedColumn_, pointedRow_)) {
@@ -327,6 +329,7 @@ void Play::leftClick() {
     // a self-cast: the realm keeps it for the clip's end (Realm::waits).
     if (realm_.held() && !realm_.waits() && request.kind != sim::Request::Kind::Attack) return;
     leftWalking_ = request.kind == sim::Request::Kind::WalkTo;
+    leftFar_ = false;
     // The tile pointed at, which a detour may have moved the walk off: the held button asks
     // again when the pointer leaves it (leftHeld).
     leftColumn_ = leftWalking_ ? pointedColumn_ : request.column;
@@ -351,21 +354,55 @@ void Play::leftClick() {
 // Every ask is a route planned on the server (a failed one costs milliseconds of its tick), so
 // a pointer swept across the ground does not ask one a frame.
 constexpr int64_t kLeftAskEvery = 4;
+// Steering asks a tile this far along the line to the pointer, in tiles, where that line is
+// clear. The tile under the pointer is three or four tiles off, and walked to its centre the
+// heading was up to ten degrees off the pointer's -- a new one at every tile the camera carried
+// the pointer onto, five times a second: the user, 2026-10-26, "character is not running smooth
+// but doing minimal zigzags". Twelve out, a tile's centre is within three degrees.
+constexpr float kSteerReach = 12.0f;
+// And asked again only when the pointer's line has turned this far from the walk's, or the
+// walk is half run: under it, the pointer moving with the camera is not a new heading.
+constexpr float kSteerDegrees = 6.0f;
 
 void Play::leftHeld() {
     if (!isOpen() || !leftWalking_ || pointedColumn_ < 0) return;
+    if (realm_.tick() - leftAskedTick_ < kLeftAskEvery || (realm_.held() && !realm_.waits())) return;
     // The tile under the pointer, whatever stands on it: held, the button only walks. To fight
     // or pick up is a fresh press.
-    if (pointedColumn_ == leftColumn_ && pointedRow_ == leftRow_) return;
-    if (realm_.tick() - leftAskedTick_ < kLeftAskEvery || (realm_.held() && !realm_.waits())) return;
+    const sim::Body& hero = realm_.hero();
+    const float toX = pointedX_ - hero.x, toY = pointedY_ - hero.y;
+    const float length = std::sqrt(toX * toX + toY * toY);
+    int column = pointedColumn_, row = pointedRow_;
+    bool far = false;
+    if (length > 1.0f && openClickRouter()) {
+        const float reach = std::max(length, kSteerReach) / length;
+        const int farColumn = int(std::lround(hero.x + toX * reach));
+        const int farRow = int(std::lround(hero.y + toY * reach));
+        if (realm_.tables()->grid.inside(farColumn, farRow) &&
+            clickRouter_.sees(hero.x, hero.y, float(farColumn), float(farRow),
+                              content::kWallCharacter)) {
+            column = farColumn;
+            row = farRow;
+            far = true;
+        }
+    }
+    if (column == leftColumn_ && row == leftRow_) return;
+    if (far && leftFar_ && hero.walking) {
+        // Still on the line asked, and not yet half way down it: no new ask.
+        const float goalX = float(leftColumn_) - hero.x, goalY = float(leftRow_) - hero.y;
+        const float goal = std::sqrt(goalX * goalX + goalY * goalY);
+        const float cosine = (goalX * toX + goalY * toY) / std::max(goal * length, 1e-6f);
+        if (goal > kSteerReach * 0.5f && cosine > std::cos(kSteerDegrees * 3.14159265f / 180.0f)) return;
+    }
     sim::Request request;
     request.kind = sim::Request::Kind::WalkTo;
-    request.column = pointedColumn_;
-    request.row = pointedRow_;
-    leftColumn_ = pointedColumn_;
-    leftRow_ = pointedRow_;
+    request.column = column;
+    request.row = row;
+    leftColumn_ = column;
+    leftRow_ = row;
+    leftFar_ = far;
     leftAskedTick_ = realm_.tick();
-    clickGoal(&request.column, &request.row);
+    if (!far) clickGoal(&request.column, &request.row);
     orderHero(request);
     // No marker while steering: put down at every new tile it read as the click being spammed
     // (the user, 2026-10-16: "i dont like that click to move is spaming"). No early tick either;
@@ -379,6 +416,21 @@ void Play::leftLetGo() {
     leftWalking_ = false;
     if (!leftSteered_) return;
     leftSteered_ = false;
+    // Steered past the pointer: the tile pointed at now, where the walk was meant to end. The
+    // marker goes down from its `Walked` (Play::update).
+    if (leftFar_) {
+        leftFar_ = false;
+        if (pointedColumn_ >= 0 && isOpen() && !(realm_.held() && !realm_.waits())) {
+            sim::Request request;
+            request.kind = sim::Request::Kind::WalkTo;
+            request.column = pointedColumn_;
+            request.row = pointedRow_;
+            clickGoal(&request.column, &request.row);
+            orderHero(request);
+            mark_ = true;
+            return;
+        }
+    }
     // Once, where the last walk ends: the realm's `Walked` puts it there, or already has, in
     // which case it is the last goal it said (Play::update keeps it).
     if (walkedColumn_ >= 0 && ground_) {
@@ -910,15 +962,20 @@ void Play::walkTo(int column, int row) {
 // route the router cannot find is left for the realm to refuse.
 constexpr int kDetourSlack = 4;
 
-void Play::clickGoal(int* column, int* row) {
-    const sim::Body& hero = realm_.hero();
+bool Play::openClickRouter() {
     const content::Grid* grid = &realm_.tables()->grid;
-    if (grid->empty()) return;
+    if (grid->empty()) return false;
     if (clickGrid_ != grid || clickGridSize_ != grid->size()) {
         clickRouter_.open(grid);
         clickGrid_ = grid;
         clickGridSize_ = grid->size();
     }
+    return true;
+}
+
+void Play::clickGoal(int* column, int* row) {
+    const sim::Body& hero = realm_.hero();
+    if (!openClickRouter()) return;
     const uint16_t wall = content::kWallCharacter;
     if (!clickRouter_.plan(hero.column(), hero.row(), *column, *row, wall, clickRoute_)) return;
     // Against the tile the walk would end on, which for a click in a wall is the router's.

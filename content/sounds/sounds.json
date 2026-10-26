@@ -2742,20 +2742,6 @@
       ],
       "from": "MONSTER_BLOODY_WITCH_QUEEN shares the Witch Queen's sounds (GMAida.cpp:1255-1283); as witchqueen_die."
     },
-    "spell_ice_storm": {
-      "files": [
-        "eSuddenIce_1.wav"
-      ],
-      "from": "SOUND_SUDDEN_ICE1, which ZzzOpenData loads from Data\\\\Sound\\\\eSuddenIce_1.wav with two voices (:8457). ZzzCharacter plays it for AT_SKILL_BLAST_FREEZE, Ice Storm, on the let-go under its ten MODEL_BLIZZARD crystals (:5275).",
-      "note": "The Ancient rune Ice Storm (sim/items.h kIceStorm), played where its blizzard comes down (game/fx/blizzard)."
-    },
-    "spell_ice_storm_land": {
-      "files": [
-        "eSuddenIce_2.wav"
-      ],
-      "from": "SOUND_SUDDEN_ICE2, Data\\\\Sound\\\\eSuddenIce_2.wav. MoveEffect plays it for the first crystal of an Ice Storm two frames after it stands in the ground (ZzzEffect.cpp, MODEL_BLIZZARD subtype 1, LifeTime == 18 && PKKey == 1).",
-      "note": "Once a storm, as MU: the first crystal down."
-    },
     "elite_bell": {
       "files": [
         "elite_bell.wav"
@@ -2764,20 +2750,6 @@
       "gain_db": -3.0,
       "gain_note": "Three down: it rings every two seconds while the Elite is on the minimap, so it is a bell heard, not a bell that interrupts. Worth a pass by ear.",
       "note": "**An invention, marked.** The user (2026-10-21): 'use this sound for minimap pulsating dot perfectly synced with sound', 'it will be notification loop when char is nearby when point is visible on minimap'. Played on every pulse of the Elite's gold mark (game/ui/minimap.cpp, Minimap::eliteRang), the mark brightening on the strike and easing off with the ring. Unplaced, as every interface sound is."
-    },
-    "spell_weakness": {
-      "files": [
-        "SE_Ch_summoner_weakness.wav"
-      ],
-      "from": "SOUND_SKILL_WEAKNESS, which ZzzOpenData loads from Data\\\\Sound\\\\SE_Ch_summoner_weakness.wav with one voice (:4920). ZzzCharacter plays it at the Summoner's Weakness let-go, AT_SKILL_ALICE_WEAKNESS, under its red circles (:4739).",
-      "note": "The Ancient rune Weakness (sim/items.h kWeakness...), played where its field is laid (game/fx/weakness)."
-    },
-    "spell_pollution": {
-      "files": [
-        "Rargle.wav"
-      ],
-      "from": "SOUND_SUMMOM_RARGLE (sic), which ZzzOpenData loads from Data\\\\Sound\\\\Rargle.wav with one voice (:4913). CSummonSystem::CreateSummonObject plays it as Pollution lets Lagle loose at the target (SummonSystem.cpp:184).",
-      "note": "The Ancient rune Pollution (sim/items.h kPollution...), played where its ghosts are let loose (game/fx/pollution)."
     },
     "world_kanturu": {
       "files": [
@@ -2844,13 +2816,6 @@
       ],
       "from": "SOUND_SKILL_CHAIN_LIGHTNING, which ZzzOpenData loads from Data\\\\Sound\\\\SE_Ch_summoner_skill08_chainlightning.wav with one voice (:4918). ZzzCharacter plays it as the Summoner throws Chain Lightning (:5208-5212).",
       "note": "The wizard's Lightning (game/play_open.cpp), once a cast on the strike from his hands -- the user, 2026-10-22: \"new lighting chaiin has to work how its now but with new animation and sound\". Was the Ancient rune Chain Lightning's, retired the same day."
-    },
-    "spell_drain_life": {
-      "files": [
-        "SE_Ch_summoner_skill07_lifedrain.wav"
-      ],
-      "from": "SOUND_SKILL_DRAIN_LIFE, which ZzzOpenData loads from Data\\\\Sound\\\\SE_Ch_summoner_skill07_lifedrain.wav with one voice (:4919). ZzzCharacter plays it as Drain Life lets MODEL_ALICE_DRAIN_LIFE go (:5214-5223).",
-      "note": "The Ancient rune Drain Life (sim/items.h kDrain...), played where it drains (game/fx/drain)."
     },
     "dark_spear": {
       "files": [
@@ -3190,13 +3155,6 @@
       ],
       "from": "SOUND_KANTURU_2ND_PERSO_DIE as it dies (GM_Kanturu_2nd.cpp:788-792); w38/perso_death.wav (MapManager.cpp:447)."
     },
-    "spell_sleep": {
-      "files": [
-        "SE_Ch_summoner_skill03_sleep.wav"
-      ],
-      "from": "SOUND_SUMMON_SKILL_SLEEP, which ZzzOpenData loads from Data\\\\Sound\\\\SE_Ch_summoner_skill03_sleep.wav (:4915). ReceiveMagic plays it at the cast of AT_SKILL_SLEEP (219), with the pose (WSclient.cpp:4839).",
-      "note": "The Ancient rune Sleep (sim/items.h kSleep...), played once a roll where the violet circle opens under him (game/fx/sleep)."
-    },
     "dreadfear_move": {
       "files": [
         "dred_idle-01.wav",
@@ -3228,6 +3186,13 @@
       ],
       "from": "SOUND_SKILL_BLOWOFDESTRUCTION, which ZzzOpenData loads from Data\\\\Sound\\\\BLOW_OF_DESTRUCTION.wav with one voice (:4925). MoveCharacter plays it as the MODEL_BLOW_OF_DESTRUCTION controller is born, the server echo of AT_SKILL_STRIKE_OF_DESTRUCTION (232) (ZzzCharacter.cpp:4170-4180).",
       "note": "The Ancient rune Strike of Destruction (sim/items.h kSoD...), played once a roll where the ground bursts at the point (game/fx/strike_of_destruction)."
+    },
+    "spell_flame_strike": {
+      "files": [
+        "flame_strike.wav"
+      ],
+      "from": "SOUND_SKILL_FLAME_STRIKE, which ZzzOpenData loads from Data\\\\Sound\\\\flame_strike.wav (:4926). MoveCharacter plays it as MODEL_EFFECT_FLAME_STRIKE is born, the server echo of AT_SKILL_FLAME_STRIKE (236) (ZzzCharacter.cpp:4755-4760).",
+      "note": "The Ancient rune Flame Strike (sim/items.h kFlameStrike...), played once a roll at the gladiator, as the blade whirls (game/fx/flame_strike)."
     }
   },
   "not_built_yet": "Built: a monster's Sounds[0]/[1] while it walks (SetPlayerWalk's rand_fps_check(16), every frame it moves, ZzzCharacter.cpp:788-804) and once as its walk ends (SetPlayerStop's, one in sixteen, :429-443) -- game/play_show.cpp. MuMain has no cry on an idle loop: PlayMonsterSound (:216-237) is map-specific and handles no 0.75 monster. Not built: SetPlayerStop's other callers (a refused path, a server stand), which the realm has no counterpart for."

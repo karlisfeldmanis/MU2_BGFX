@@ -1,0 +1,49 @@
+{
+  "item": "FlameStrike",
+  "mu_name": "Flame Strike's flaming blade, 2.5 m at rest and 4.5 m while he whirls it",
+  "mu_name_from": "Data/Effect/FlameStrike.bmd. MuMain (Season 6).",
+  "kind": "flame_strike",
+  "why_this_one": "MODEL_EFFECT_FLAME_STRIKE (ZzzOpenData.cpp:4590-4591), born on the caster's bone 33 at the echo of AT_SKILL_FLAME_STRIKE (236; ZzzCharacter.cpp:4755-4760). LifeTime 35, alpha +0.1 a frame and -0.1 once under 20 (MoveHandlers.cpp:7706-7795). Here the Ancient rune Flame Strike's: see game/fx/flame_strike.",
+  "mesh": "FlameStrike_00.obj",
+  "mesh_from": "muextract export-obj --action=0 --key=N on Data/Effect/FlameStrike.bmd, from MuMain: one action of 14 keys, 2 meshes, 280 triangles.",
+  "poses": [
+    "FlameStrike_00.obj",
+    "FlameStrike_05.obj"
+  ],
+  "poses_from": "Its only two shapes: keys 0 and 10-13 are the short blade, keys 1-9 the long one (its bones Sphere02/03 and Bone04 out from 1.6 m to 3.6 m); blended as the key passes 0-1 and 9-10.",
+  "parts": [
+    {
+      "group": "firehik02",
+      "sheet": "firehik02.png",
+      "blend": "additive",
+      "note": "Data/Effect/firehik02.OZJ, 64 square, an orange-yellow flame: the blade, RENDER_BRIGHT, added at its alpha; also the third of the struck body's flames (BITMAP_FIRE_CURSEDLICH subtype 4)."
+    },
+    {
+      "group": "flamestani",
+      "sheet": "flamestani.png",
+      "blend": "additive",
+      "note": "Data/Effect/flamestani.OZJ, 256 square, four flame frames down V: added, a quarter every 80 ms (ZzzEffect.cpp:9248-9274)."
+    },
+    {
+      "group": "",
+      "sheet": "lava.png",
+      "blend": "additive",
+      "note": "Data/Effect/lava.OZJ, 128 by 64: BITMAP_LAVA, ribbon C, Sphere01 to Sphere03 (ZzzEffectBlurSpark.cpp:352-364). Not a group of the mesh."
+    },
+    {
+      "group": "",
+      "sheet": "firehik01.png",
+      "blend": "additive",
+      "note": "Data/Effect/firehik01.OZJ, 64 square: BITMAP_FIRE_HIK1, a struck body's rising flame (ZzzEffectParticle.cpp:1843-1852). Not a group of the mesh."
+    },
+    {
+      "group": "",
+      "sheet": "firehik03.png",
+      "blend": "additive",
+      "note": "Data/Effect/firehik03.OZJ, 64 square: BITMAP_FIRE_HIK3, a struck body's rising flame (ZzzEffectParticle.cpp:1920-1929). Not a group of the mesh."
+    }
+  ],
+  "scale": 1.0,
+  "frames": 35,
+  "frames_from": "`o->LifeTime = 35`."
+}

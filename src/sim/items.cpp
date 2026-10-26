@@ -767,31 +767,21 @@ const PowerRow* powerOf(uint8_t power) {
         {Power::Hemorrhage, "Hemorrhage",
          "25% on hit: the target bleeds 12% of the hit per second for 5 s; bleeds add up",
          kKnightOnly | kGladiatorOnly, kInWeapon, Rarity::Legendary},
-        // The Ancient runes (sim/items.h kIceStorm...), each one of MU's later spells.
-        {Power::IceStorm, "Ice Storm",
-         "10% on a cast or a hit: an ice storm freezes monsters within 3 tiles for 1.5 s",
-         kWizardOnly, kInWeapon, Rarity::Ancient, true, true},
-        {Power::Weakness, "Weakness",
-         "10% on a cast or a hit: a 30 s curse on the ground weakens monsters within 4 tiles",
-         kWizardOnly, kInWeapon, Rarity::Ancient, true, true},
-        {Power::Pollution, "Pollution",
-         "10% on a cast or a hit: ghosts strike up to 4 monsters within 3 tiles",
-         kWizardOnly, kInWeapon, Rarity::Ancient, true, true},
-        {Power::DrainLife, "Drain Life",
-         "10% on a cast or a hit: drains life from the monster and heals you",
-         kWizardOnly, kInWeapon, Rarity::Ancient, true, true},
+        // The Ancient runes (sim/items.h kRequiem...), each one of MU's later spells, one a
+        // class. 74-77 and 79 (Ice Storm, Weakness, Pollution, Drain Life, Sleep) are retired
+        // and have no row: a rune held with one is inert.
         {Power::Requiem, "Requiem",
          "15% on a cast or a hit: thorns strike up to 8 monsters within 3 tiles, "
          "which bleed 20% of the hit per second for 5 s",
-         kWizardOnly, kInWeapon, Rarity::Ancient, true, true},
-        {Power::Sleep, "Sleep",
-         "10% on a cast or a hit: puts up to 3 nearby monsters to sleep for up to 8 s; "
-         "a hit wakes them",
          kWizardOnly, kInWeapon, Rarity::Ancient, true, true},
         {Power::StrikeOfDestruction, "Strike of Destruction",
          "15% on a hit or a skill: the ground breaks in fire under the target, striking up to 8 "
          "monsters within 3 tiles and setting them burning",
          kKnightOnly, kInWeapon, Rarity::Ancient, true, true},
+        {Power::FlameStrike, "Flame Strike",
+         "15% on a hit, a spell or a skill: a flaming blade whirls round you, striking up to 12 "
+         "monsters in front of you twice with fire",
+         kGladiatorOnly, kInWeapon, Rarity::Ancient, false, true},
     };
     for (const PowerRow& row : kPowers) {
         if (uint8_t(row.power) == power) return &row;
@@ -812,13 +802,9 @@ Stacking stackingOf(Power power) {
         case Power::Volley:
         case Power::ScatterVolley:
         case Power::SplitArrow:
-        case Power::IceStorm:
-        case Power::Weakness:
-        case Power::Pollution:
-        case Power::DrainLife:
         case Power::Requiem:
-        case Power::Sleep:
-        case Power::StrikeOfDestruction: return {false, "Doesn't stack"};
+        case Power::StrikeOfDestruction:
+        case Power::FlameStrike: return {false, "Doesn't stack"};
         // Half of each: whirlDamage summed and whirlPull the best; every Pyroblaster rolls its
         // burst but Fire Ball's +50% is asked `pyroblasts() > 0`.
         case Power::Whirlwind:
