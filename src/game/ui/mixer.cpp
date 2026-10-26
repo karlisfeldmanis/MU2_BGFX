@@ -248,7 +248,8 @@ std::string needCount(const sim::Need& n) {
 }
 
 // The confirm's question, MU's for a Combine.
-std::string question(sim::Service service, const sim::Judged& j) {
+// `cape`: the 2nd wings' page making the Cape of Lord, which is no wing (sim::capeOfLord).
+std::string question(sim::Service service, const sim::Judged& j, bool cape) {
     switch (service) {
         case sim::Service::Combine: return "Do you want to combine your items?";
         case sim::Service::RemoveRune: return j.title + "?";
@@ -258,8 +259,9 @@ std::string question(sim::Service service, const sim::Judged& j) {
         case sim::Service::Smelt: return "Smelt them? Every piece is eaten.";
         case sim::Service::RemoveHarmony: return j.title + " for " + std::to_string(j.zen) + " Zen?";
         case sim::Service::FuseRunes: return "Fuse the three runes?";
-        case sim::Service::FirstWings:
-        case sim::Service::SecondWings: return "Do you want to create the wings?";
+        case sim::Service::FirstWings: return "Do you want to create the wings?";
+        case sim::Service::SecondWings:
+            return cape ? "Do you want to create the Cape of Lord?" : "Do you want to create the wings?";
         case sim::Service::ChaosWeapon: return "Do you want to create a Chaos weapon?";
         case sim::Service::Upgrade: return "Do you want to upgrade the item?";
         case sim::Service::Dinorant: return "Do you want to create the Dinorant?";
@@ -273,7 +275,7 @@ std::string question(sim::Service service, const sim::Judged& j) {
 }
 
 // The answer's head, gold for a success.
-const char* madeHead(sim::Service service) {
+const char* madeHead(sim::Service service, bool cape) {
     switch (service) {
         case sim::Service::Combine: return "Combined";
         case sim::Service::RemoveRune: return "Rune removed";
@@ -283,8 +285,8 @@ const char* madeHead(sim::Service service) {
         case sim::Service::Smelt: return "Refining Stones smelted";
         case sim::Service::RemoveHarmony: return "Harmony removed";
         case sim::Service::FuseRunes: return "Runes fused";
-        case sim::Service::FirstWings:
-        case sim::Service::SecondWings: return "Wings created";
+        case sim::Service::FirstWings: return "Wings created";
+        case sim::Service::SecondWings: return cape ? "Cape of Lord created" : "Wings created";
         case sim::Service::ChaosWeapon: return "Chaos weapon created";
         case sim::Service::Upgrade: return "Upgraded";
         case sim::Service::Dinorant: return "Dinorant created";
@@ -617,6 +619,12 @@ void Mixer::rebuild(const sim::Realm& realm, Stage* stage) {
     const bool ready = j.ready && !realm.mixed();
     // The answer stands on the page of the service that gave it, not on every page picked after.
     const int answer = service_ == ranService_ ? answer_ : -1;
+    // The cape's mix, asked or made: the judgement names it before, and the box holds it after.
+    bool cape = j.success == "Cape of Lord";
+    for (int cell = 0; cell < sim::kMachineCells && !cape; ++cell) {
+        cape = !box[cell].empty() && size_t(box[cell].item) < tables.items.size() &&
+               sim::capeOfLord(tables.items[size_t(box[cell].item)]);
+    }
 
     controls::frame(canvas_, P({0.0f, 0.0f, kWide, panel::kHeight}), u,
                     trainer_ ? "Pet Trainer" : "Chaos Machine", nullptr,
@@ -829,7 +837,7 @@ void Mixer::rebuild(const sim::Realm& realm, Stage* stage) {
         canvas_.rect(P(well), answer == 1 ? kGoldFloor : kLostFloor);
         canvas_.outline(P(well), line, answer == 1 ? kGoldDk : kLostRim);
         const float head = 10.0f * k;
-        const char* said = answer == 1 ? madeHead(service) : "Failed";
+        const char* said = answer == 1 ? madeHead(service, cape) : "Failed";
         const uint32_t ink = answer == 1 ? kGoldHi : style::kDanger;
         if (const gfx::Face* tf = panel::titleFace()) {
             const float baseline = std::round(y + (well.y + 14.0f) * k);
@@ -918,7 +926,7 @@ void Mixer::rebuild(const sim::Realm& realm, Stage* stage) {
         return state;
     };
     if (confirming_) {
-        at(kLeft, kAskTop, style::kBoneHi, question(service, j));
+        at(kLeft, kAskTop, style::kBoneHi, question(service, j, cape));
         controls::button(canvas_, P(kConfirmCancel), "Cancel", controls::Kind::Secondary,
                          stateOf(kCancel, false), u);
         controls::button(canvas_, P(kConfirmRun), sim::serviceVerb(service),

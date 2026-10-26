@@ -464,7 +464,9 @@ void combine(const content::Tables& tables, const Machine& box, const Sorted& s,
         }
         case Recipe::SecondWings: {
             // The Crest asked in the feather's place once one is in (the cape's mix), else the feather.
-            const bool cape = s.crests > 0;
+            // A Dark Lord with no feather in is asked the Crest from the start: the cape is the one
+            // thing this page makes for him, and the feather's line hid it (the user, 2026-10-26).
+            const bool cape = s.crests > 0 || (s.feathers == 0 && kin == Kin::DarkLord);
             need(j, "1st level wing", s.firstWings, 1);
             if (cape) need(j, "Crest of Monarch", s.crests, 1);
             else need(j, "Loch's Feather", s.feathers, 1);

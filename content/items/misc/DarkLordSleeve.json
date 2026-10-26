@@ -5,8 +5,8 @@
   "why_this_one": "The Cape of Lord's ingredient: the 2nd wings' mix with the Crest in Loch's Feather's place (WebZen 1.00.93 MixSystem.cpp WingChaosMix:2545-2553; docs/plans/dark-lord-cape.md section 2).",
   "profile": "weapon",
   "profile_note": "As Loch's Feather: a small object in the bag and on the ground.",
-  "tells": "Used to make the Cape of Lord",
-  "tells_from": "Ours: MU prints the feather's 'Used to upgrade wings' under it too (GT 748, ZzzInventory.cpp:4384), and the Crest makes the cape alone. Its name purple as the feather's (game/ui/describe.cpp, Tone::Quest).",
+  "tells": "Mix with a 1st level wing and a Jewel of Chaos to make the Cape of Lord",
+  "tells_from": "Ours: MU prints the feather's 'Used to upgrade wings' under it too (GT 748, ZzzInventory.cpp:4384), and the Crest makes the cape alone. The recipe in full (the user, 2026-10-26: 'fix weak points' -- nothing told a player where the Crest goes). Its name purple as the feather's (game/ui/describe.cpp, Tone::Quest).",
   "ground_note": "MuMain lays it at angle 45 and scale 0.5 (ZzzObject.cpp:5806-5810) and turns it (-90, 0, 0) in the bag (ZzzInventory.cpp:8222-8225); ours lays every drop by its bounds (game/fx/litter.cpp) and frames every bag model by them, so neither number is carried. It stands in the feather's violet column on the ground.",
   "effects_note": "No effect in MuMain: no glow, chrome, sprite or light names MODEL_EVENT+16 outside the model swap.",
   "stats": {
