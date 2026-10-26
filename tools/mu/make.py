@@ -162,6 +162,13 @@ def index_test(things):
             nests = os.path.join(worlds, world, "nests.json")
             if os.path.exists(nests) and mtime(nests) > at:
                 return True, f"{world}'s nests.json is newer than the index"
+        # Every item's row is read by the index too, named or not: `mu make tables` names none,
+        # and an edited tooltip line (an item's `tells`) cooked into the old tables, "0 steps"
+        # (2026-10-26, the Crest of Monarch's).
+        items = os.path.join(SOURCE, "items")
+        for kind in sorted(os.listdir(items)):
+            if os.path.isdir(os.path.join(items, kind)) and newest_in(os.path.join(items, kind), ".json") > at:
+                return True, f"an item in content/items/{kind} is newer than the index"
         # pipeline/index.py reads neither a recipe's show, its rules nor its checklist.
         for thing in things:
             if max(mtime(thing.recipe, BUILD_IGNORES), mtime(thing.glb())) > at:
