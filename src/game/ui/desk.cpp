@@ -1178,9 +1178,10 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         card_.setGuild(play.guild().name);
         const int page = card_.tab();
         card_.update(float(window.width()), float(window.height()), hero, &play.realm(), name,
-                     pointer, &spend, &count, &reset, &close);
-        // A tab changing its page clicks, as every button does (the user, 2026-10-16).
-        if (card_.tab() != page) click();
+                     pointer, typing ? 0.0f : window.scroll(), &spend, &count, &reset, &close);
+        // A tab changing its page clicks, as every button does (the user, 2026-10-16), and a
+        // Bonuses heading opening or shutting its group.
+        if (card_.tab() != page || card_.folded()) click();
         // The stat button clicks whether or not the point lands: CNewUICharacterInfoWindow
         // sends the request and plays SOUND_CLICK01 on the next line without waiting.
         if (spend >= 0) {
@@ -3034,6 +3035,7 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     if (chat_.inviting()) interface_.add(chat_.invite());
     if (characterOpen_) {
         interface_.add(card_.canvas());
+        interface_.add(card_.pageCanvas());
     }
     if (inspecting()) interface_.add(inspect_.canvas());
     if (questLog_.up()) {

@@ -30,7 +30,8 @@ using gfx::Box;
 // lives by; and three
 // pages under underline tabs -- Attributes (MU's four wells, each with what it buys under it, the
 // plus beside it while there is a point to spend), Combat and Bonuses. Every page is laid out to
-// fit between the tabs and the foot; nothing in the window scrolls or grows it.
+// fit between the tabs and the foot; nothing grows the window, and a page still too tall scrolls
+// inside its room (Bonuses's groups also open and shut, Card::Head).
 
 // The head's rows, in MU's panel units.
 constexpr float kIdTop = 45.0f;
@@ -55,6 +56,10 @@ constexpr float kAttrTall = 20.0f, kLineStep = 12.0f, kLineTop = 3.0f, kAttrGap 
 constexpr float kPlusSide = 13.0f;
 // A Combat or Bonuses group: its heading, its rows, the air after it.
 constexpr float kGroupHead = 10.0f, kGroupGap = 6.0f;
+// The page's scroller, when it is too tall for its room: a notch of the wheel, and the thumb's
+// track in the margin right of the wells. A Bonuses heading's chevron, its half-size.
+constexpr float kWheelStep = 24.0f, kTrackX = panel::kWellRight + 3.0f, kTrackW = 2.0f, kThumbLeast = 20.0f;
+constexpr float kChevron = 2.0f;
 
 // The foot: the level's progress, at the panel's shared rule.
 constexpr float kFootRule = panel::kFootRule;
@@ -123,6 +128,15 @@ constexpr float kSwitchTop = kKeysTop + kKeysTall + 6.0f;
 constexpr float kSwitchRow = kCtlTall + 6.0f;
 // How far the tabs and the page come down: the switch's row while there are points to spend.
 float dropFor(int points) { return points > 0 ? kSwitchRow : 0.0f; }
+
+// The Combat or Bonuses page's room, between the tabs' floor and the foot.
+Box pageBox(float drop) { return {0.0f, kBodyTop + drop, panel::kWidth, kBodyBottom - kBodyTop - drop}; }
+// The scroller's thumb on a page `content` tall, `scroll` down it.
+Box thumbBox(const Box& view, float content, float scroll) {
+    const float tall = std::max(kThumbLeast, view.h * view.h / std::max(content, view.h));
+    const float most = content - view.h;
+    return {kTrackX, view.y + (view.h - tall) * (most > 0.0f ? scroll / most : 0.0f), kTrackW, tall};
+}
 
 Box tabBox(int i, float drop) {
     const float w = kWellW / float(kTabCount);
@@ -465,6 +479,7 @@ tip::Sheet partsSheet(const Parts& p) {
 
 void Card::open(const gfx::Interface& interface, panel::Arts* arts) {
     interface.adopt(canvas_);
+    interface.adopt(page_);
     interface.adopt(tip_);
     arts_ = arts;
 }
@@ -475,8 +490,8 @@ bool Card::covers(float x, float y) const {
 }
 
 void Card::update(float width, float height, const sim::Body* hero, const sim::Realm* realm,
-                  const std::string& name, const Pointer& pointer, int* spend, int* count, bool* reset,
-                  bool* close) {
+                  const std::string& name, const Pointer& pointer, float wheel, int* spend, int* count,
+                  bool* reset, bool* close) {
     // The right-hand column, always.
     x_ = panel::columnX(width, 1);
     y_ = panel::panelY(height);
@@ -745,6 +760,32 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
         };
         over_ = controlUnder();
         const int overTab = tabUnder();
+        // The page's scroll: the wheel over it, or its thumb dragged.
+        folded_ = false;
+        const Box view = pageBox(drop);
+        const float most = tab_ == 0 ? 0.0f : std::max(0.0f, content_ - view.h);
+        const Box track{kTrackX - 3.0f, view.y, kTrackW + 6.0f, view.h};
+        if (wheel != 0.0f && under(view)) scroll_ -= wheel * kWheelStep;
+        if (dragging_ && !pointer.held) dragging_ = false;
+        if (dragging_) {
+            const Box thumb = thumbBox(view, content_, scroll_);
+            if (view.h > thumb.h) {
+                scroll_ = dragScroll_ + (pointer.y - dragFrom_) / panel::scale() * most / (view.h - thumb.h);
+            }
+        }
+        scroll_ = std::clamp(scroll_, 0.0f, most);
+        // A row or heading as it stands on the page now, and whether the pointer is on its
+        // shown part.
+        const auto seen = [&](Box b) {
+            b.y -= scroll_;
+            return b;
+        };
+        const auto onPage = [&](const Box& b) { return under(view) && under(seen(b)); };
+        int overHead = -1;
+        if (tab_ == 2 && over_ < 0 && !dragging_) {
+            for (size_t i = 0; i < heads_.size(); ++i)
+                if (onPage(heads_[i].box)) overHead = int(i);
+        }
         // A figure off any control: what it is the sum of.
         const auto explainAt = [&](const Line& line, const Box& at) {
             if (now_.parts.up) return;
@@ -763,25 +804,9 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
             if (tab_ == 1) {
                 for (const Drawn& row : rows_) {
                     if (size_t(row.group) < now_.groups.size() &&
-                        size_t(row.line) < now_.groups[size_t(row.group)].lines.size() && under(row.box)) {
-                        explainAt(now_.groups[size_t(row.group)].lines[size_t(row.line)], row.box);
+                        size_t(row.line) < now_.groups[size_t(row.group)].lines.size() && onPage(row.box)) {
+                        explainAt(now_.groups[size_t(row.group)].lines[size_t(row.line)], seen(row.box));
                     }
-                }
-            }
-            // A Bonuses row folded to fit: its name and what it does.
-            if (tab_ == 2 && !now_.parts.up) {
-                for (const Drawn& row : rows_) {
-                    if (!row.folded || size_t(row.group) >= now_.groups.size() ||
-                        size_t(row.line) >= now_.groups[size_t(row.group)].lines.size() || !under(row.box)) {
-                        continue;
-                    }
-                    const Line& line = now_.groups[size_t(row.group)].lines[size_t(row.line)];
-                    LineParts p;
-                    p.up = true;
-                    p.name = line.label;
-                    p.note = line.note;
-                    p.x = row.box.x, p.y = row.box.y, p.w = row.box.w, p.h = row.box.h;
-                    now_.parts = std::move(p);
                 }
             }
         }
@@ -807,6 +832,18 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
             if (overClose_) closing_ = true;
             pushed_ = over_;
             pressTab_ = overTab;
+            pressHead_ = overHead;
+            // The track: the thumb taken where it is, or brought under the pointer first.
+            if (most > 0.0f && over_ < 0 && under(track)) {
+                const Box at = thumbBox(view, content_, scroll_);
+                if (!under(at) && view.h > at.h) {
+                    const float uy = (pointer.y - y_) / panel::scale();
+                    scroll_ = std::clamp((uy - view.y - at.h * 0.5f) / (view.h - at.h) * most, 0.0f, most);
+                }
+                dragging_ = true;
+                dragFrom_ = pointer.y;
+                dragScroll_ = scroll_;
+            }
         }
         if (pointer.released) {
             // Only if the pointer is still on it, which is how a press is taken back.
@@ -828,7 +865,23 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
                     asking_ = false;
                 }
             }
-            if (pressTab_ >= 0 && pressTab_ == overTab && pressTab_ != tab_) tab_ = pressTab_;
+            if (pressTab_ >= 0 && pressTab_ == overTab && pressTab_ != tab_) {
+                tab_ = pressTab_;
+                scroll_ = 0.0f;
+            }
+            // A heading opens or shuts its group.
+            if (pressHead_ >= 0 && pressHead_ == overHead && size_t(pressHead_) < heads_.size()) {
+                const std::string& group = heads_[size_t(pressHead_)].name;
+                const auto it = std::find(shut_.begin(), shut_.end(), group);
+                if (it == shut_.end()) {
+                    shut_.push_back(group);
+                } else {
+                    shut_.erase(it);
+                }
+                folded_ = true;
+            }
+            pressHead_ = -1;
+            dragging_ = false;
             closing_ = false;
             pushed_ = -1;
             pressTab_ = -1;
@@ -919,6 +972,10 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
         now_.over = over_;
         now_.closing = closing_;
         now_.overClose = overClose_;
+        now_.scroll = scroll_;
+        now_.shut = shut_;
+        now_.overHead = overHead;
+        now_.dragging = dragging_;
     }
     // A tab changed this frame draws its page on the next, which has built it.
     if (now_ == drawn_ && rebuilds_ > 0) return;
@@ -929,7 +986,7 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
 // A rune row's pips on the Bonuses page (Line::pips), as the item card draws them: a solid
 // stone for each worn in its rarity, an outlined ring for room left, past the limit dim and
 // struck through.
-void Card::pipsAt(const Line& line, float px, float cy, float k) {
+void Card::pipsAt(gfx::Canvas& canvas, const Line& line, float px, float cy, float k) {
     const float r = kPipRadius * k, line1 = std::max(1.0f, 0.5f * k);
     const auto disc = [&](float cx, float radius, uint32_t colour) {
         constexpr int kSides = 16;
@@ -939,7 +996,7 @@ void Card::pipsAt(const Line& line, float px, float cy, float k) {
             xy[i * 2] = cx + radius * std::cos(a);
             xy[i * 2 + 1] = cy + radius * std::sin(a);
         }
-        canvas_.polygon(nullptr, xy, nullptr, kSides, colour);
+        canvas.polygon(nullptr, xy, nullptr, kSides, colour);
     };
     const int slots = std::max(line.pips, int(line.stones.size()));
     for (int i = 0; i < slots; ++i) {
@@ -947,7 +1004,7 @@ void Card::pipsAt(const Line& line, float px, float cy, float k) {
         const bool worn = i < int(line.stones.size());
         if (i >= line.pips) {
             disc(cx, r, kDim);
-            canvas_.rect({cx - r * 1.4f, cy - line1 * 0.5f, r * 2.8f, line1}, line.stones[size_t(i)]);
+            canvas.rect({cx - r * 1.4f, cy - line1 * 0.5f, r * 2.8f, line1}, line.stones[size_t(i)]);
         } else if (worn) {
             disc(cx, r, line.stones[size_t(i)]);
         } else {
@@ -960,6 +1017,7 @@ void Card::pipsAt(const Line& line, float px, float cy, float k) {
 void Card::rebuild() {
     ++rebuilds_;
     canvas_.clear();
+    page_.clear();
     tip_.clear();
     if (!now_.who || !arts_) return;
     panel::Arts& arts = *arts_;
@@ -1164,7 +1222,18 @@ void Card::rebuild() {
     } else {
         // A group with nothing in it yet is its heading and a quiet "none" on one line, no well,
         // so the room goes to what he has. A rune is a block: its name, pips and total on a
-        // line, what it does under it, wrapped at its words.
+        // line, what it does under it, wrapped at its words. On Bonuses a heading with something
+        // under it opens and shuts its group, a chevron at its right; shut, it says how many
+        // rows it holds. The page is its own canvas, clipped to its room, and scrolls in it.
+        gfx::Canvas& pg = page_;
+        const Box view = pageBox(drop);
+        pg.clip(panel::scaled(x, y, view));
+        const float py = y - now_.scroll * k;
+        const auto pat = [&](float uy, float size) { return py + uy * k + face.ascent(size * k); };
+        const bool folds = now_.tab == 2;
+        const auto shutOf = [&](const Group& group) {
+            return folds && std::find(now_.shut.begin(), now_.shut.end(), group.name) != now_.shut.end();
+        };
         const float noteRoom = (kRowRight - kRowLeft) * k;
         const auto wrapped = [&](const std::string& note) {
             std::vector<std::string> out;
@@ -1194,125 +1263,107 @@ void Card::rebuild() {
         // below. Capitals stand kCapShare of the ascent.
         const float nameCap = face.ascent(kRowSize * k) * kCapShare / k;
         const float noteCap = face.ascent(kNoteSize * k) * kCapShare / k;
-        // **A page too long folds** (Piddy on Discord, 2026-10-26: "The character window resize
-        // doesn't look good on the bonuses tab" -- eight runes' notes ran the page under the
-        // foot): first the room round the words closes up; then the tallest notes fold away, one
-        // at a time, each kept on its row's hover card; then a group's noughts go, where it has a
-        // figure too. Whatever is left past the page's floor is not drawn.
-        std::vector<std::vector<char>> told(now_.groups.size()), kept(now_.groups.size());
-        for (size_t g = 0; g < now_.groups.size(); ++g) {
-            told[g].assign(now_.groups[g].lines.size(), 1);
-            kept[g].assign(now_.groups[g].lines.size(), 1);
-        }
-        const auto words = [&](const Line& line, bool tell) {
-            if (line.note.empty() || !tell) return nameCap;
+        const auto words = [&](const Line& line) {
+            if (line.note.empty()) return nameCap;
             return nameCap + kNoteGap + noteCap + kNoteStep * float(wrapped(line.note).size() - 1);
         };
+        // A page a little too long closes up, and only the room round the words; one that
+        // would still not fit keeps its room and scrolls.
         float text = 0.0f, rows = 0.0f;
         float heads = 0.0f;
-        const auto measure = [&]() {
-            text = rows = heads = 0.0f;
-            for (size_t g = 0; g < now_.groups.size(); ++g) {
-                heads += kGroupHead + kGroupGap;
-                if (empty(now_.groups[g])) continue;
-                for (size_t l = 0; l < now_.groups[g].lines.size(); ++l) {
-                    if (!kept[g][l]) continue;
-                    text += words(now_.groups[g].lines[l], told[g][l]);
-                    rows += 1.0f;
-                }
+        for (const Group& group : now_.groups) {
+            heads += kGroupHead + kGroupGap;
+            if (empty(group) || shutOf(group)) continue;
+            for (const Line& line : group.lines) {
+                text += words(line);
+                rows += 1.0f;
             }
-            return kBodyBottom - kBodyTop - drop - heads - text - 2.0f * kRowPadLeast * rows;
-        };
-        while (measure() < 0.0f) {
-            size_t bestG = 0, bestL = 0;
-            float tallest = 0.0f;
-            for (size_t g = 0; g < now_.groups.size(); ++g) {
-                for (size_t l = 0; l < now_.groups[g].lines.size(); ++l) {
-                    const Line& line = now_.groups[g].lines[l];
-                    if (!told[g][l] || line.note.empty()) continue;
-                    const float tall = words(line, true) - nameCap;
-                    if (tall >= tallest) tallest = tall, bestG = g, bestL = l;
-                }
-            }
-            if (tallest <= 0.0f) break;
-            told[bestG][bestL] = 0;
         }
-        if (measure() < 0.0f) {
-            for (size_t g = 0; g < now_.groups.size(); ++g) {
-                if (empty(now_.groups[g])) continue;
-                for (size_t l = 0; l < now_.groups[g].lines.size(); ++l) {
-                    if (now_.groups[g].lines[l].dim) kept[g][l] = 0;
-                }
-            }
-            measure();
-        }
-        const float room = kBodyBottom - kBodyTop - drop - heads - text;
-        const float pad = rows > 0.0f ? std::clamp(room / (2.0f * rows), kRowPadLeast, kRowPad) : kRowPad;
+        const float room = view.h + kGroupGap - heads - text;
+        const float pad = rows <= 0.0f || room < 2.0f * kRowPadLeast * rows
+                              ? kRowPad
+                              : std::clamp(room / (2.0f * rows), kRowPadLeast, kRowPad);
         const float stroke = std::max(1.0f, std::round(0.5f * k));
-        float uy = kBodyTop + drop;
+        float uy = view.y;
         rows_.clear();
+        heads_.clear();
         int groupAt = -1;
         for (const Group& group : now_.groups) {
             ++groupAt;
-            const size_t g = size_t(groupAt);
-            if (uy + kGroupHead > kBodyBottom) break;
-            smallCaps(kWellX + 2.0f, at(uy + 1.0f, kSmallCaps), kDim, group.name);
-            if (empty(group)) {
-                const float base = at(uy + 1.0f, kSmallCaps);
-                controls::ranged(canvas_, x + kRowRight * k, base, kSmallCaps * k, kDim, "none");
+            const bool none = empty(group), shut = shutOf(group);
+            const bool lit = folds && !none && now_.overHead == int(heads_.size());
+            const float base = pat(uy + 1.0f, kSmallCaps);
+            controls::caps(pg, x + (kWellX + 2.0f) * k, base, kSmallCaps * k, lit ? kChosen : kDim, group.name, 0.04f);
+            if (none) {
+                controls::ranged(pg, x + kRowRight * k, base, kSmallCaps * k, kDim, "none");
                 uy += kGroupHead + kGroupGap;
                 continue;
             }
-            uy += kGroupHead;
-            // The rows that fit above the page's floor.
-            float tall = 0.0f;
-            size_t fits = 0;
-            for (size_t l = 0; l < group.lines.size(); ++l) {
-                if (!kept[g][l]) continue;
-                const float row = words(group.lines[l], told[g][l]) + 2.0f * pad;
-                if (uy + tall + row > kBodyBottom + 0.5f) break;
-                tall += row;
-                fits = l + 1;
+            if (folds) {
+                heads_.push_back({{kWellX, uy, kWellW, kGroupHead}, group.name});
+                // Down while open, right while shut.
+                const float c = kChevron * k, cx = x + (kRowRight - kChevron) * k;
+                const float cy = base - kSmallCaps * k * kCapShare * 0.5f;
+                float xy[6];
+                if (shut) {
+                    const float v[6] = {cx - c * 0.6f, cy - c, cx + c * 0.6f, cy, cx - c * 0.6f, cy + c};
+                    std::copy(v, v + 6, xy);
+                } else {
+                    const float v[6] = {cx - c, cy - c * 0.6f, cx + c, cy - c * 0.6f, cx, cy + c * 0.6f};
+                    std::copy(v, v + 6, xy);
+                }
+                pg.polygon(nullptr, xy, nullptr, 3, lit ? kChosen : kDim);
+                if (shut) {
+                    const long held = std::count_if(group.lines.begin(), group.lines.end(),
+                                                    [](const Line& line) { return !line.dim; });
+                    controls::ranged(pg, x + (kRowRight - kChevron * 2.0f - 4.0f) * k, base, kSmallCaps * k,
+                                     lit ? kChosen : kDim, std::to_string(held));
+                    uy += kGroupHead + kGroupGap;
+                    continue;
+                }
             }
-            if (tall <= 0.0f) break;
-            panel::cell(canvas_, x, y, {kWellX, uy, kWellW, tall}, sheet::Cell::Rest);
+            uy += kGroupHead;
+            float tall = 0.0f;
+            for (const Line& line : group.lines) tall += words(line) + 2.0f * pad;
+            panel::cell(pg, x, py, {kWellX, uy, kWellW, tall}, sheet::Cell::Rest);
             // The pips stand in one column, right against the group's widest figure, so every
             // row's pips end where the next one's do, whatever its name.
             float widest = 0.0f;
             for (const Line& line : group.lines) widest = std::max(widest, controls::labelWidth(kRowSize * k, line.value));
             const float pipsEnd = x + kRowRight * k - widest - (widest > 0.0f ? kPipPitch * k : 0.0f);
             float ly = uy;
-            bool first = true;
-            for (size_t l = 0; l < fits; ++l) {
-                if (!kept[g][l]) continue;
+            for (size_t l = 0; l < group.lines.size(); ++l) {
                 const Line& line = group.lines[l];
-                const bool tell = told[g][l];
-                const std::vector<std::string> said =
-                    line.note.empty() || !tell ? std::vector<std::string>{} : wrapped(line.note);
-                if (!std::exchange(first, false)) {
-                    canvas_.rect({std::round(x + (kWellX + 1.0f) * k), std::round(y + ly * k), (kWellW - 2.0f) * k, stroke},
-                                 kRowStroke);
+                const std::vector<std::string> said = line.note.empty() ? std::vector<std::string>{} : wrapped(line.note);
+                if (l > 0) {
+                    pg.rect({std::round(x + (kWellX + 1.0f) * k), std::round(py + ly * k), (kWellW - 2.0f) * k, stroke},
+                            kRowStroke);
                 }
-                const float base = std::round(y + (ly + pad + nameCap) * k);
-                controls::label(canvas_, x + kRowLeft * k, base, kRowSize * k,
+                const float base = std::round(py + (ly + pad + nameCap) * k);
+                controls::label(pg, x + kRowLeft * k, base, kRowSize * k,
                                 line.dim ? kDim : line.labelInk ? line.labelInk : kPlain, line.label);
                 const int slots = std::max(line.pips, int(line.stones.size()));
                 if (slots > 0) {
                     const float r = kPipRadius * k;
-                    pipsAt(line, pipsEnd - 2.0f * r - kPipPitch * k * float(slots - 1), base - nameCap * k * 0.5f, k);
+                    pipsAt(pg, line, pipsEnd - 2.0f * r - kPipPitch * k * float(slots - 1), base - nameCap * k * 0.5f, k);
                 }
-                controls::ranged(canvas_, x + kRowRight * k, base, kRowSize * k, line.dim ? kDim : line.ink ? line.ink : kHeading,
+                controls::ranged(pg, x + kRowRight * k, base, kRowSize * k, line.dim ? kDim : line.ink ? line.ink : kHeading,
                                  line.value);
                 for (size_t n = 0; n < said.size(); ++n) {
                     // What the rune does, quiet under its name.
                     const float under = ly + pad + nameCap + kNoteGap + noteCap + kNoteStep * float(n);
-                    controls::label(canvas_, x + kRowLeft * k, std::round(y + under * k), kNoteSize * k, kQuiet, said[n]);
+                    controls::label(pg, x + kRowLeft * k, std::round(py + under * k), kNoteSize * k, kQuiet, said[n]);
                 }
-                rows_.push_back({{kWellX, ly, kWellW, words(line, tell) + 2.0f * pad}, groupAt, int(l),
-                                 !tell && !line.note.empty()});
-                ly += words(line, tell) + 2.0f * pad;
+                rows_.push_back({{kWellX, ly, kWellW, words(line) + 2.0f * pad}, groupAt, int(l)});
+                ly += words(line) + 2.0f * pad;
             }
             uy += tall + kGroupGap;
+        }
+        // How tall the page stands, for the pointer's next frame; past its room, the scroller.
+        content_ = uy - kGroupGap - view.y;
+        if (content_ > view.h + 0.5f) {
+            pg.rect(panel::scaled(x, y, {kTrackX, view.y, kTrackW, view.h}), kRowStroke);
+            pg.rect(panel::scaled(x, y, thumbBox(view, content_, now_.scroll)), now_.dragging ? kChosenBar : style::kIron);
         }
     }
 
