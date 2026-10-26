@@ -46,7 +46,7 @@ public:
                 const std::string& name, const Pointer& pointer, float wheel, int* spend, int* count,
                 bool* reset, bool* close);
 
-    int tab() const { return tab_; }  // the open page: 0 Attributes, 1 Combat, 2 Bonuses
+    int tab() const { return tab_; }  // the open page: 0 Attributes, 1 Combat, 2 Bonuses, 3 Runes
     bool covers(float x, float y) const;
     // His guild's name, in brackets after his own (docs/game/guild.md); empty for none.
     void setGuild(const std::string& guild) { guild_ = guild; }
@@ -54,8 +54,6 @@ public:
     // The Combat or Bonuses page, clipped to its room between the tabs and the foot: over the
     // window, under the tip.
     const gfx::Canvas& pageCanvas() const { return page_; }
-    // Whether a Bonuses heading opened or shut its group this frame, for the desk's click.
-    bool folded() const { return folded_; }
     // The card a stat's name raises under the pointer (what a point of it buys his class), over
     // every window as the other tips are.
     const gfx::Canvas& tipCanvas() const { return tip_; }
@@ -113,11 +111,8 @@ private:
         int totals[5] = {};
         // The figure the pointer is on, any page or the three at the top: its card.
         LineParts parts;
-        // The page's scroll, in units; the Bonuses groups shut by their headings, and the
-        // heading under the pointer (-1 none).
+        // The page's scroll, in units.
         float scroll = 0.0f;
-        std::vector<std::string> shut;
-        int overHead = -1;
         bool dragging = false;
         bool closing = false, overClose = false;
         int step = 1;          // 1, 10 or 0 for all, as a press now spends (10 is All under ten)
@@ -134,7 +129,7 @@ private:
     panel::Arts* arts_ = nullptr;
     Sheet drawn_, now_;
     float x_ = 0.0f, y_ = 0.0f;
-    int tab_ = 0;         // 0 Attributes, 1 Combat, 2 Bonuses
+    int tab_ = 0;         // 0 Attributes, 1 Combat, 2 Bonuses, 3 Runes
     int pressTab_ = -1;   // the tab a press went down on
     int pushed_ = -1;
     int over_ = -1;       // the control under the pointer, as Sheet::over
@@ -152,18 +147,9 @@ private:
         int group = 0, line = 0;
     };
     std::vector<Drawn> rows_;
-    // **The Bonuses page is an accordion, and a page too tall scrolls** (the user, 2026-10-26:
-    // "lets implement accordion, with inline scroller if there is a lot of stats"). Each group's
-    // heading as last drawn (in page units, unscrolled), with its name; the groups shut, by name,
-    // kept while the game runs; the page's scroll and its height as last drawn; the thumb's drag.
-    struct Head {
-        gfx::Box box;
-        std::string name;
-    };
-    std::vector<Head> heads_;
-    std::vector<std::string> shut_;
-    int pressHead_ = -1;
-    bool folded_ = false;
+    // A page still too tall for its room scrolls (the user, 2026-10-26, "inline scroller"; since
+    // Runes has its tab, only a hero wearing a great many kinds): its scroll and its height as
+    // last drawn, in units, and the thumb's drag.
     float scroll_ = 0.0f, content_ = 0.0f;
     bool dragging_ = false;
     float dragFrom_ = 0.0f, dragScroll_ = 0.0f;

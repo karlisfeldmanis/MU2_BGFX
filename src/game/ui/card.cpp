@@ -31,14 +31,16 @@ using gfx::Box;
 // pages under underline tabs -- Attributes (MU's four wells, each with what it buys under it, the
 // plus beside it while there is a point to spend), Combat and Bonuses. Every page is laid out to
 // fit between the tabs and the foot; nothing grows the window, and a page still too tall scrolls
-// inside its room (Bonuses's groups also open and shut, Card::Head).
+// inside its room.
 
 // The head's rows, in MU's panel units.
 constexpr float kIdTop = 45.0f;
 constexpr float kKeysTop = 61.0f, kKeysTall = 25.0f;
 constexpr float kTabsTop = kKeysTop + kKeysTall + 8.0f, kTabsTall = 16.0f;
-constexpr int kTabCount = 3;
-const char* const kTabWords[kTabCount] = {"Attributes", "Combat", "Bonuses"};
+// **Runes is a page of its own** (the user, 2026-10-26: "lets make new tab Runes so we dont have
+// to use inline scroller and accordion"), after Bonuses, which keeps the jewellery's.
+constexpr int kTabCount = 4;
+const char* const kTabWords[kTabCount] = {"Attributes", "Combat", "Bonuses", "Runes"};
 // The page between the tabs' floor and the foot's rule.
 constexpr float kBodyTop = kTabsTop + 23.0f;
 // And where it must end: four units over the foot's rule.
@@ -56,18 +58,10 @@ constexpr float kAttrTall = 20.0f, kLineStep = 12.0f, kLineTop = 3.0f, kAttrGap 
 constexpr float kPlusSide = 13.0f;
 // A Combat or Bonuses group: its heading, its rows, the air after it.
 constexpr float kGroupHead = 10.0f, kGroupGap = 6.0f;
-// The page's scroller, when it is too tall for its room: a notch of the wheel, and the thumb's
-// track in the margin right of the wells. A Bonuses heading's chevron, its half-size.
+// The page's scroller, only for a page too tall for its room even closed up (a hero wearing
+// a great many kinds of rune): a notch of the wheel, and the thumb's track in the margin right
+// of the wells.
 constexpr float kWheelStep = 24.0f, kTrackX = panel::kWellRight + 3.0f, kTrackW = 2.0f, kThumbLeast = 20.0f;
-constexpr float kChevron = 2.0f;
-// **A Bonuses heading is a bar** (the user, 2026-10-26: "need beeter design for wthat accoridion
-// so user can understand that its clicable/foldable"): a raised strip the width of the wells, 14
-// units, its chevron at the left and its name in bone after it, how many rows it holds at the
-// right; under the pointer its rim and words light gold. An open group's well hangs 2 under it.
-constexpr float kFoldHead = 14.0f, kFoldGap = 2.0f;
-constexpr uint32_t kBarTop = gfx::rgba(0.137f, 0.106f, 0.082f), kBarFoot = gfx::rgba(0.094f, 0.071f, 0.055f);
-constexpr uint32_t kBarTopLit = gfx::rgba(0.196f, 0.149f, 0.106f), kBarFootLit = gfx::rgba(0.129f, 0.098f, 0.071f);
-constexpr uint32_t kBarRim = gfx::rgba(0.267f, 0.208f, 0.165f);
 
 // The foot: the level's progress, at the panel's shared rule.
 constexpr float kFootRule = panel::kFootRule;
@@ -587,9 +581,9 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
             if (elf) now_.groups.push_back({"Blessings", {might, ward, heal}});
             now_.groups.push_back(std::move(guard));
             now_.groups.push_back(std::move(endure));
-        } else if (tab_ == 2) {
-            // Bonuses: the jewellery's, every row shown, a nought dimmed, so a player learns
-            // what there is to find.
+        } else {
+            // Bonuses (2) and Runes (3). Bonuses: the jewellery's, every row shown, a nought
+            // dimmed, so a player learns what there is to find.
             const auto row = [](const char* label, int v, bool percentSign, uint32_t ink) {
                 Line line{label, v <= 0 ? (percentSign ? "0%" : "0") : (percentSign ? plusPercent(v) : plus(v)), v <= 0};
                 line.ink = ink;
@@ -680,20 +674,23 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
                 }
                 if (runes.lines.empty()) runes.lines.push_back(Line{"No runes worn", "", true});
             }
-            now_.groups.push_back(std::move(runes));
-            now_.groups.push_back({"Resistances",
-                                   {row("Ice", ex.iceResistance, false, kIceInk),
-                                    row("Poison", ex.poisonResistance, false, kPoisonInk),
-                                    row("Lightning", ex.lightningResistance, false, kLightningInk),
-                                    row("Fire", ex.fireResistance, false, kFireInk),
-                                    row("Wind", ex.windResistance, false, kWindInk)}});
-            now_.groups.push_back({"Fortune",
-                                   {row("Experience", ex.moreExperience, true, kExperienceInk),
-                                    row("Zen", ex.moreZen, true, kZenInk),
-                                    row("Item find", ex.itemFind, true, kFindInk)}});
-            now_.groups.push_back({"On hit",
-                                   {row("Life on hit", ex.lifeOnHit, false, kLifeOnHitInk),
-                                    row("Critical damage", ex.criticalDamage, true, kCriticalInk)}});
+            if (tab_ == 3) {
+                now_.groups.push_back(std::move(runes));
+            } else {
+                now_.groups.push_back({"Resistances",
+                                       {row("Ice", ex.iceResistance, false, kIceInk),
+                                        row("Poison", ex.poisonResistance, false, kPoisonInk),
+                                        row("Lightning", ex.lightningResistance, false, kLightningInk),
+                                        row("Fire", ex.fireResistance, false, kFireInk),
+                                        row("Wind", ex.windResistance, false, kWindInk)}});
+                now_.groups.push_back({"Fortune",
+                                       {row("Experience", ex.moreExperience, true, kExperienceInk),
+                                        row("Zen", ex.moreZen, true, kZenInk),
+                                        row("Item find", ex.itemFind, true, kFindInk)}});
+                now_.groups.push_back({"On hit",
+                                       {row("Life on hit", ex.lifeOnHit, false, kLifeOnHitInk),
+                                        row("Critical damage", ex.criticalDamage, true, kCriticalInk)}});
+            }
         }
 
         now_.who = hero;
@@ -769,7 +766,6 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
         over_ = controlUnder();
         const int overTab = tabUnder();
         // The page's scroll: the wheel over it, or its thumb dragged.
-        folded_ = false;
         const Box view = pageBox(drop);
         const float most = tab_ == 0 ? 0.0f : std::max(0.0f, content_ - view.h);
         const Box track{kTrackX - 3.0f, view.y, kTrackW + 6.0f, view.h};
@@ -789,11 +785,6 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
             return b;
         };
         const auto onPage = [&](const Box& b) { return under(view) && under(seen(b)); };
-        int overHead = -1;
-        if (tab_ == 2 && over_ < 0 && !dragging_) {
-            for (size_t i = 0; i < heads_.size(); ++i)
-                if (onPage(heads_[i].box)) overHead = int(i);
-        }
         // A figure off any control: what it is the sum of.
         const auto explainAt = [&](const Line& line, const Box& at) {
             if (now_.parts.up) return;
@@ -840,7 +831,6 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
             if (overClose_) closing_ = true;
             pushed_ = over_;
             pressTab_ = overTab;
-            pressHead_ = overHead;
             // The track: the thumb taken where it is, or brought under the pointer first.
             if (most > 0.0f && over_ < 0 && under(track)) {
                 const Box at = thumbBox(view, content_, scroll_);
@@ -877,18 +867,6 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
                 tab_ = pressTab_;
                 scroll_ = 0.0f;
             }
-            // A heading opens or shuts its group.
-            if (pressHead_ >= 0 && pressHead_ == overHead && size_t(pressHead_) < heads_.size()) {
-                const std::string& group = heads_[size_t(pressHead_)].name;
-                const auto it = std::find(shut_.begin(), shut_.end(), group);
-                if (it == shut_.end()) {
-                    shut_.push_back(group);
-                } else {
-                    shut_.erase(it);
-                }
-                folded_ = true;
-            }
-            pressHead_ = -1;
             dragging_ = false;
             closing_ = false;
             pushed_ = -1;
@@ -981,8 +959,6 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
         now_.closing = closing_;
         now_.overClose = overClose_;
         now_.scroll = scroll_;
-        now_.shut = shut_;
-        now_.overHead = overHead;
         now_.dragging = dragging_;
     }
     // A tab changed this frame draws its page on the next, which has built it.
@@ -1230,18 +1206,13 @@ void Card::rebuild() {
     } else {
         // A group with nothing in it yet is its heading and a quiet "none" on one line, no well,
         // so the room goes to what he has. A rune is a block: its name, pips and total on a
-        // line, what it does under it, wrapped at its words. On Bonuses a heading with something
-        // under it opens and shuts its group, a chevron at its right; shut, it says how many
-        // rows it holds. The page is its own canvas, clipped to its room, and scrolls in it.
+        // line, what it does under it, wrapped at its words. The page is its own canvas, clipped
+        // to its room, and scrolls in it should it still not fit.
         gfx::Canvas& pg = page_;
         const Box view = pageBox(drop);
         pg.clip(panel::scaled(x, y, view));
         const float py = y - now_.scroll * k;
         const auto pat = [&](float uy, float size) { return py + uy * k + face.ascent(size * k); };
-        const bool folds = now_.tab == 2;
-        const auto shutOf = [&](const Group& group) {
-            return folds && std::find(now_.shut.begin(), now_.shut.end(), group.name) != now_.shut.end();
-        };
         const float noteRoom = (kRowRight - kRowLeft) * k;
         const auto wrapped = [&](const std::string& note) {
             std::vector<std::string> out;
@@ -1279,14 +1250,9 @@ void Card::rebuild() {
         // would still not fit keeps its room and scrolls.
         float text = 0.0f, rows = 0.0f;
         float heads = 0.0f;
-        // A heading's height with the air under it: a bar on Bonuses, a small-caps line else.
-        const auto headOf = [&](const Group& group) {
-            if (!folds || empty(group)) return kGroupHead;
-            return kFoldHead + (shutOf(group) ? 0.0f : kFoldGap);
-        };
         for (const Group& group : now_.groups) {
-            heads += headOf(group) + kGroupGap;
-            if (empty(group) || shutOf(group)) continue;
+            heads += kGroupHead + kGroupGap;
+            if (empty(group)) continue;
             for (const Line& line : group.lines) {
                 text += words(line);
                 rows += 1.0f;
@@ -1299,53 +1265,17 @@ void Card::rebuild() {
         const float stroke = std::max(1.0f, std::round(0.5f * k));
         float uy = view.y;
         rows_.clear();
-        heads_.clear();
         int groupAt = -1;
         for (const Group& group : now_.groups) {
             ++groupAt;
-            const bool none = empty(group), shut = shutOf(group);
-            const bool lit = folds && !none && now_.overHead == int(heads_.size());
-            if (none || !folds) {
-                const float base = pat(uy + 1.0f, kSmallCaps);
-                controls::caps(pg, x + (kWellX + 2.0f) * k, base, kSmallCaps * k, kDim, group.name, 0.04f);
-                if (none) {
-                    controls::ranged(pg, x + kRowRight * k, base, kSmallCaps * k, kDim, "none");
-                    uy += kGroupHead + kGroupGap;
-                    continue;
-                }
-                uy += kGroupHead;
-            } else {
-                const Box barUnits{kWellX, uy, kWellW, kFoldHead};
-                heads_.push_back({barUnits, group.name});
-                const Box bar = panel::scaled(x, py, barUnits);
-                const Box b{std::round(bar.x), std::round(bar.y), std::round(bar.w), std::round(bar.h)};
-                const float line1 = std::max(1.0f, std::round(0.5f * k)), r = style::kRadiusControl * k * 0.5f;
-                tip::panel(pg, b, r, lit ? kChosenBar : kBarRim, lit ? kChosenBar : kBarRim);
-                tip::panel(pg, b.grown(-line1), r - line1, lit ? kBarTopLit : kBarTop, lit ? kBarFootLit : kBarFoot);
-                const float base = controls::capsMiddle(b.y, b.h, kSmallCaps * k);
-                const uint32_t ink = lit ? kChosen : kPlain;
-                // The chevron: right while shut, down while open.
-                const float c = kChevron * k, cx = x + (kRowLeft + kChevron) * k, cy = b.y + b.h * 0.5f;
-                float xy[6];
-                if (shut) {
-                    const float v[6] = {cx - c * 0.6f, cy - c, cx + c * 0.6f, cy, cx - c * 0.6f, cy + c};
-                    std::copy(v, v + 6, xy);
-                } else {
-                    const float v[6] = {cx - c, cy - c * 0.6f, cx + c, cy - c * 0.6f, cx, cy + c * 0.6f};
-                    std::copy(v, v + 6, xy);
-                }
-                pg.polygon(nullptr, xy, nullptr, 3, lit ? kChosen : kChosenBar);
-                controls::caps(pg, x + (kRowLeft + kChevron * 2.0f + 4.0f) * k, base, kSmallCaps * k, ink, group.name,
-                               0.04f);
-                const long held =
-                    std::count_if(group.lines.begin(), group.lines.end(), [](const Line& line) { return !line.dim; });
-                controls::ranged(pg, x + kRowRight * k, base, kSmallCaps * k, lit ? kChosen : kQuiet, std::to_string(held));
-                if (shut) {
-                    uy += kFoldHead + kGroupGap;
-                    continue;
-                }
-                uy += kFoldHead + kFoldGap;
+            const float base = pat(uy + 1.0f, kSmallCaps);
+            controls::caps(pg, x + (kWellX + 2.0f) * k, base, kSmallCaps * k, kDim, group.name, 0.04f);
+            if (empty(group)) {
+                controls::ranged(pg, x + kRowRight * k, base, kSmallCaps * k, kDim, "none");
+                uy += kGroupHead + kGroupGap;
+                continue;
             }
+            uy += kGroupHead;
             float tall = 0.0f;
             for (const Line& line : group.lines) tall += words(line) + 2.0f * pad;
             panel::cell(pg, x, py, {kWellX, uy, kWellW, tall}, sheet::Cell::Rest);
