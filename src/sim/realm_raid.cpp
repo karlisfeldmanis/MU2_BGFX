@@ -1265,7 +1265,7 @@ void Realm::raid(Body& one, int index) {
             // user, 2026-10-06: 'give always buffs', 'every class shoudl use defense auras'). Ours.
             if (row.boonTicks > 0 || row.mightTicks > 0) one.cools[skillAt] = tick_ + clip;
         }
-        one.mana = std::max(0, one.mana - row.mana);
+        one.mana = std::max(0, one.mana - manaCostOf(one, row));  // a Dark Lord's Magic Shield at 30
         one.castUntil = tick_ + clip;
         one.swingsAt = tick_ + std::max(clip, one.swingTicks);
         say(What::Raid, one, int32_t(RaidEvent::Raider), int32_t(RaiderAct::Cast), row.number, at.id);
@@ -1284,7 +1284,7 @@ void Realm::raid(Body& one, int index) {
     const auto ready = [&](const SkillRow& row) {
         const int skillAt = skillIndexOf(row.number);
         if (skillAt < 0 || one.cools[skillAt] > tick_ || !skillFor(row, one.kin)) return false;
-        if (one.mana < row.mana) return false;
+        if (one.mana < manaCostOf(one, row)) return false;
         return row.onSelf() ? row.suits(armFamily(one, armAt(one.shield)))
                             : row.suits(familyOf(armAt(one.weapon)));
     };
