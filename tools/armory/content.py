@@ -15,7 +15,7 @@ from pathlib import Path
 
 from common import load, plain
 
-CLASS = {"knight": "DK", "wizard": "DW", "elf": "FE", "gladiator": "MG"}
+CLASS = {"knight": "DK", "wizard": "DW", "elf": "FE", "gladiator": "MG", "lord": "DL"}
 SLOT = {2: "Helms", 3: "Armour", 4: "Pants", 5: "Gloves", 6: "Boots"}
 WEAPON = {"Sword": "Swords", "Axe": "Axes", "Mace": "Maces", "Spear": "Spears", "Bow": "Bows",
           "Staff": "Staffs", "Arrows": "Ammo"}

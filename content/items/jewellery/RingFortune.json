@@ -27,7 +27,8 @@
       "wizard",
       "knight",
       "elf",
-      "gladiator"
+      "gladiator",
+      "lord"
     ],
     "classes_note": "Every class (CreateJewelery :176-179).",
     "power": "Item find, +1% at +0 to +10% at +9: both item rolls of a kill raised."

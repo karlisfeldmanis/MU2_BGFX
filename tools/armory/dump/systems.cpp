@@ -49,6 +49,7 @@ const char* kinName(sim::Kin k) {
         case sim::Kin::FairyElf: return "Elf";
         case sim::Kin::DarkKnight: return "DK";
         case sim::Kin::MagicGladiator: return "MG";
+        case sim::Kin::DarkLord: return "DL";
     }
     return "?";
 }

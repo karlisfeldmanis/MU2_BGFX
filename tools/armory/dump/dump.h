@@ -44,7 +44,7 @@ struct Dump {
     }
 };
 
-const char* kinName(sim::Kin kin);  // "DK", "DW", "Elf", "MG"
+const char* kinName(sim::Kin kin);  // "DK", "DW", "Elf", "MG", "DL"
 inline constexpr sim::Kin kKins[4] = {sim::Kin::DarkKnight, sim::Kin::DarkWizard, sim::Kin::FairyElf,
                                       sim::Kin::MagicGladiator};
 

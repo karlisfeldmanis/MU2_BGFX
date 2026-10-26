@@ -168,7 +168,7 @@ def same(x, y):
     return x == y
 
 
-CLASS_NAMES = {"DK": "Dark Knight", "DW": "Dark Wizard", "Elf": "Fairy Elf", "FE": "Fairy Elf", "MG": "Magic Gladiator"}
+CLASS_NAMES = {"DK": "Dark Knight", "DW": "Dark Wizard", "Elf": "Fairy Elf", "FE": "Fairy Elf", "MG": "Magic Gladiator", "DL": "Dark Lord"}
 
 
 def direction(was, now, better):
