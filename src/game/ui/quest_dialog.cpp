@@ -334,7 +334,12 @@ void QuestDialog::layout(const Play& play) {
     const bool gate = mode_ == Mode::Gate;
     const bool angel = mode_ == Mode::Angel;
     const bool list = mode_ == Mode::List;
-    const sim::QuestRow& row = sim::questAt(quest_ >= kGate ? 0 : quest_);
+    // A trip's page is headed by its keeper, as her list is: her first quest's row, never row 0's
+    // (Piddy on Discord, 2026-10-26: Elpis's third row showed Marlon's quest).
+    const bool trip = mode_ == Mode::Trip;
+    const sim::QuestRow& row = sim::questAt(quest_ < kGate             ? quest_
+                                            : (list || trip) && !entries_.empty() ? entries_[0].quest
+                                                                                  : 0);
     const content::Tables& tables = *realm.tables();
     lines_.clear();
     cells_.clear();
@@ -469,7 +474,7 @@ void QuestDialog::layout(const Play& play) {
             }
             y += kSection;
         }
-    } else if (mode_ != Mode::Resting && mode_ != Mode::Stranger) {
+    } else if (mode_ != Mode::Resting && mode_ != Mode::Stranger && !trip) {
         // The hand-in leaves the objectives out: every one is done, and the room is the
         // reward's (the user, 2026-09-29).
         if (mode_ == Mode::HandIn) {
@@ -955,10 +960,12 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
     const bool gate = mode_ == Mode::Gate;
     const bool angel = mode_ == Mode::Angel;
     const bool list = mode_ == Mode::List;
-    // The list is headed with its giver, whose name and town every row of his carries.
-    const sim::QuestRow& row = sim::questAt(quest_ < kGate ? quest_
-                                            : list && !entries_.empty() ? entries_[0].quest
-                                                                        : 0);
+    const bool trip = mode_ == Mode::Trip;
+    // The list is headed with its giver, whose name and town every row of his carries, and so is
+    // a trip he keeps.
+    const sim::QuestRow& row = sim::questAt(quest_ < kGate             ? quest_
+                                            : (list || trip) && !entries_.empty() ? entries_[0].quest
+                                                                                  : 0);
     const sim::QuestProgress& progress = quest_ >= kGate ? kNoProgress : realm.quest(quest_);
     const float u = unit_, x = x_, y = y_;
     // Window units to the screen, and the body's own units (which scroll) to the screen.
@@ -989,6 +996,7 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
                                  : gate  ? "Blood Castle " + std::to_string(castle_)
                                  : angel ? "Blood Castle " + std::to_string(castle_)
                                  : list  ? std::string(row.giverName)
+                                 : trip  ? "To the " + std::string(sim::travelAt(trip_).name)
                                          : row.title;
         const size_t turning = canvas_.mark();
         controls::label(canvas_, sx(kWide * 0.5f) - controls::labelWidth(title, name) * 0.5f,
@@ -1075,7 +1083,7 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
                    std::round(one.box.h * u)};
     };
     const bool offered =
-        mode_ != Mode::Stranger && mode_ != Mode::Resting && !gate && !angel && !list;
+        mode_ != Mode::Stranger && mode_ != Mode::Resting && !gate && !angel && !list && !trip;
     // A thing asked for, one look wherever a quest or an event asks one (the user, 2026-10-04:
     // 'we need unificied UI when there is item requirments in quests'): its picture in a cell, its
     // name in its tone, and under it whether he carries it -- green, or red. The Messenger's
@@ -1327,7 +1335,7 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
             controls::ranged(body_, sx(kInset + inner()), by(rowY + 13.0f), kBody * u,
                              needs[i].met ? style::kFits : style::kDanger, needs[i].figure);
         }
-    } else if (mode_ == Mode::Stranger) {
+    } else if (mode_ == Mode::Stranger || trip) {
         // His words are the whole of it: nothing offered, so nothing to count or pay.
     } else if (mode_ == Mode::Resting) {
         const int64_t left = std::max<int64_t>(0, progress.availableAt - realm.wallClock());
