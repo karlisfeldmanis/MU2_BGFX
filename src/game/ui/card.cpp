@@ -768,6 +768,22 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
                     }
                 }
             }
+            // A Bonuses row folded to fit: its name and what it does.
+            if (tab_ == 2 && !now_.parts.up) {
+                for (const Drawn& row : rows_) {
+                    if (!row.folded || size_t(row.group) >= now_.groups.size() ||
+                        size_t(row.line) >= now_.groups[size_t(row.group)].lines.size() || !under(row.box)) {
+                        continue;
+                    }
+                    const Line& line = now_.groups[size_t(row.group)].lines[size_t(row.line)];
+                    LineParts p;
+                    p.up = true;
+                    p.name = line.label;
+                    p.note = line.note;
+                    p.x = row.box.x, p.y = row.box.y, p.w = row.box.w, p.h = row.box.h;
+                    now_.parts = std::move(p);
+                }
+            }
         }
         // A stat's well, off its plus: its card.
         if (tab_ == 0 && (over_ < 0 || over_ >= wells)) {
@@ -1178,20 +1194,57 @@ void Card::rebuild() {
         // below. Capitals stand kCapShare of the ascent.
         const float nameCap = face.ascent(kRowSize * k) * kCapShare / k;
         const float noteCap = face.ascent(kNoteSize * k) * kCapShare / k;
-        const auto words = [&](const Line& line) {
-            if (line.note.empty()) return nameCap;
+        // **A page too long folds** (Piddy on Discord, 2026-10-26: "The character window resize
+        // doesn't look good on the bonuses tab" -- eight runes' notes ran the page under the
+        // foot): first the room round the words closes up; then the tallest notes fold away, one
+        // at a time, each kept on its row's hover card; then a group's noughts go, where it has a
+        // figure too. Whatever is left past the page's floor is not drawn.
+        std::vector<std::vector<char>> told(now_.groups.size()), kept(now_.groups.size());
+        for (size_t g = 0; g < now_.groups.size(); ++g) {
+            told[g].assign(now_.groups[g].lines.size(), 1);
+            kept[g].assign(now_.groups[g].lines.size(), 1);
+        }
+        const auto words = [&](const Line& line, bool tell) {
+            if (line.note.empty() || !tell) return nameCap;
             return nameCap + kNoteGap + noteCap + kNoteStep * float(wrapped(line.note).size() - 1);
         };
-        // Only a page still too long closes up, and only the room round the words.
         float text = 0.0f, rows = 0.0f;
         float heads = 0.0f;
-        for (const Group& group : now_.groups) {
-            heads += kGroupHead + kGroupGap;
-            if (empty(group)) continue;
-            for (const Line& line : group.lines) {
-                text += words(line);
-                rows += 1.0f;
+        const auto measure = [&]() {
+            text = rows = heads = 0.0f;
+            for (size_t g = 0; g < now_.groups.size(); ++g) {
+                heads += kGroupHead + kGroupGap;
+                if (empty(now_.groups[g])) continue;
+                for (size_t l = 0; l < now_.groups[g].lines.size(); ++l) {
+                    if (!kept[g][l]) continue;
+                    text += words(now_.groups[g].lines[l], told[g][l]);
+                    rows += 1.0f;
+                }
             }
+            return kBodyBottom - kBodyTop - drop - heads - text - 2.0f * kRowPadLeast * rows;
+        };
+        while (measure() < 0.0f) {
+            size_t bestG = 0, bestL = 0;
+            float tallest = 0.0f;
+            for (size_t g = 0; g < now_.groups.size(); ++g) {
+                for (size_t l = 0; l < now_.groups[g].lines.size(); ++l) {
+                    const Line& line = now_.groups[g].lines[l];
+                    if (!told[g][l] || line.note.empty()) continue;
+                    const float tall = words(line, true) - nameCap;
+                    if (tall >= tallest) tallest = tall, bestG = g, bestL = l;
+                }
+            }
+            if (tallest <= 0.0f) break;
+            told[bestG][bestL] = 0;
+        }
+        if (measure() < 0.0f) {
+            for (size_t g = 0; g < now_.groups.size(); ++g) {
+                if (empty(now_.groups[g])) continue;
+                for (size_t l = 0; l < now_.groups[g].lines.size(); ++l) {
+                    if (now_.groups[g].lines[l].dim) kept[g][l] = 0;
+                }
+            }
+            measure();
         }
         const float room = kBodyBottom - kBodyTop - drop - heads - text;
         const float pad = rows > 0.0f ? std::clamp(room / (2.0f * rows), kRowPadLeast, kRowPad) : kRowPad;
@@ -1201,6 +1254,8 @@ void Card::rebuild() {
         int groupAt = -1;
         for (const Group& group : now_.groups) {
             ++groupAt;
+            const size_t g = size_t(groupAt);
+            if (uy + kGroupHead > kBodyBottom) break;
             smallCaps(kWellX + 2.0f, at(uy + 1.0f, kSmallCaps), kDim, group.name);
             if (empty(group)) {
                 const float base = at(uy + 1.0f, kSmallCaps);
@@ -1209,8 +1264,17 @@ void Card::rebuild() {
                 continue;
             }
             uy += kGroupHead;
+            // The rows that fit above the page's floor.
             float tall = 0.0f;
-            for (const Line& line : group.lines) tall += words(line) + 2.0f * pad;
+            size_t fits = 0;
+            for (size_t l = 0; l < group.lines.size(); ++l) {
+                if (!kept[g][l]) continue;
+                const float row = words(group.lines[l], told[g][l]) + 2.0f * pad;
+                if (uy + tall + row > kBodyBottom + 0.5f) break;
+                tall += row;
+                fits = l + 1;
+            }
+            if (tall <= 0.0f) break;
             panel::cell(canvas_, x, y, {kWellX, uy, kWellW, tall}, sheet::Cell::Rest);
             // The pips stand in one column, right against the group's widest figure, so every
             // row's pips end where the next one's do, whatever its name.
@@ -1218,10 +1282,14 @@ void Card::rebuild() {
             for (const Line& line : group.lines) widest = std::max(widest, controls::labelWidth(kRowSize * k, line.value));
             const float pipsEnd = x + kRowRight * k - widest - (widest > 0.0f ? kPipPitch * k : 0.0f);
             float ly = uy;
-            for (size_t l = 0; l < group.lines.size(); ++l) {
+            bool first = true;
+            for (size_t l = 0; l < fits; ++l) {
+                if (!kept[g][l]) continue;
                 const Line& line = group.lines[l];
-                const std::vector<std::string> said = line.note.empty() ? std::vector<std::string>{} : wrapped(line.note);
-                if (l > 0) {
+                const bool tell = told[g][l];
+                const std::vector<std::string> said =
+                    line.note.empty() || !tell ? std::vector<std::string>{} : wrapped(line.note);
+                if (!std::exchange(first, false)) {
                     canvas_.rect({std::round(x + (kWellX + 1.0f) * k), std::round(y + ly * k), (kWellW - 2.0f) * k, stroke},
                                  kRowStroke);
                 }
@@ -1240,8 +1308,9 @@ void Card::rebuild() {
                     const float under = ly + pad + nameCap + kNoteGap + noteCap + kNoteStep * float(n);
                     controls::label(canvas_, x + kRowLeft * k, std::round(y + under * k), kNoteSize * k, kQuiet, said[n]);
                 }
-                rows_.push_back({{kWellX, ly, kWellW, words(line) + 2.0f * pad}, groupAt, int(l)});
-                ly += words(line) + 2.0f * pad;
+                rows_.push_back({{kWellX, ly, kWellW, words(line, tell) + 2.0f * pad}, groupAt, int(l),
+                                 !tell && !line.note.empty()});
+                ly += words(line, tell) + 2.0f * pad;
             }
             uy += tall + kGroupGap;
         }

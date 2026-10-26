@@ -137,6 +137,8 @@ private:
     struct Drawn {
         gfx::Box box;
         int group = 0, line = 0;
+        // A Bonuses row whose note folded away to fit: its hover card says it.
+        bool folded = false;
     };
     std::vector<Drawn> rows_;
     std::string guild_;
